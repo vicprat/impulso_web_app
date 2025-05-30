@@ -21,9 +21,9 @@ export type SelectedOption = {
 export type Variant = {
   id: string;
   title: string;
+  availableForSale: boolean;
   price: Money;
   compareAtPrice: Money | null;
-  availableForSale: boolean;
   sku: string;
   selectedOptions: SelectedOption[];
 };
@@ -46,6 +46,56 @@ export type Product = {
   variants: Variant[];
 };
 
+export type Collection = {
+  id: string;
+  title: string;
+  handle: string;
+  description: string;
+  descriptionHtml: string;
+  image: Image | null;
+  products: Product[];
+};
+
+export type RawProduct = {
+  id: string;
+  title: string;
+  handle: string;
+  description: string;
+  descriptionHtml: string;
+  availableForSale: boolean;
+  productType: string;
+  vendor: string;
+  createdAt: string;
+  priceRange: {
+    minVariantPrice: Money;
+    maxVariantPrice: Money;
+  };
+  images?: {
+    edges: Array<{
+      node: Image;
+    }>;
+  };
+  variants?: {
+    edges: Array<{
+      node: Variant;
+    }>;
+  };
+};
+
+export type RawCollection = {
+  id: string;
+  title: string;
+  handle: string;
+  description: string;
+  descriptionHtml: string;
+  image: Image | null;
+  products?: {
+    edges: Array<{
+      node: RawProduct;
+    }>;
+  };
+};
+
 export type ShopInfo = {
   name: string;
   primaryDomain: {
@@ -59,17 +109,10 @@ export type ShopInfo = {
   };
 };
 
-export type Collection = {
-  id: string;
-  title: string;
-  handle: string;
-  description: string;
-  descriptionHtml: string;
-  image: Image | null;
-  products: Product[];
+export type Edge<T> = {
+  node: T;
 };
 
-// Tipos para parámetros de consulta
 export type ProductSearchParams = {
   first?: number;
   after?: string | null;
@@ -84,7 +127,6 @@ export type CollectionSearchParams = {
   query?: string;
 };
 
-// Tipos para respuestas
 export type ShopInfoResponse = ApiResponse<ShopInfo>;
 export type ProductResponse = ApiResponse<Product>;
 export type ProductsResponse = ApiResponse<{

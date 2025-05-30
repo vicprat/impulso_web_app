@@ -1,120 +1,144 @@
-'use client';
-
-import { useState } from 'react';
-import { ProductCard } from '@/components/ProductCard/ProductCard';
-import { useShopInfo, useProducts, useCollections } from '@/modules/shopify/hooks';
-import { Pagination } from '@/components/Pagination';
+/* eslint-disable @next/next/no-img-element */
 import Link from 'next/link';
+import { api } from '@/modules/shopify/api';
 
-export default function ShopPage() {
-  // Enable real-time updates
-  
-  // Estado para la paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [pageHistory, setPageHistory] = useState<Array<string | null>>([null]); // Histórico de cursores para navegación
-  
-  // Cantidad de productos por página
-  const productsPerPage = 8;
-  
-  // Obtener información de la tienda
-  const { data: shopInfo, isLoading: shopLoading } = useShopInfo();
-  
-  // Consulta de productos con paginación
-  const { data: productsData, isLoading: productsLoading } = useProducts({
-    first: productsPerPage,
-    after: cursor,
-    sortKey: 'BEST_SELLING'
-  });
-
-  const { data: collectionsData } = useCollections();
-
-  // Función para cambiar de página
-  const handlePageChange = (newPage: number) => {
-    // Si vamos a una página siguiente
-    if (newPage > currentPage) {
-      const nextCursor = productsData?.pageInfo.endCursor || null;
-      
-      if (nextCursor) {
-        // Guardamos el nuevo cursor en el historial
-        const newHistory = [...pageHistory];
-        if (newHistory.length <= newPage) {
-          newHistory.push(nextCursor);
-        }
-        setPageHistory(newHistory);
-        setCursor(nextCursor);
-        setCurrentPage(newPage);
-      }
-    } 
-    // Si vamos a una página anterior
-    else if (newPage < currentPage && newPage >= 1) {
-      // Obtenemos el cursor de la página a la que queremos ir
-      const previousCursor = pageHistory[newPage - 1];
-      setCursor(previousCursor);
-      setCurrentPage(newPage);
-    }
-  };
-
-  // Calcular el número total de páginas (estimado)
-  const totalPages = productsData?.pageInfo.hasNextPage 
-    ? currentPage + 1 
-    : currentPage;
-
-  if (shopLoading || productsLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+async function getHomepageData() {
+  try {
+    const response = await api.getHomepageData();
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching homepage data:', error);
+    return { collections: [], featuredProducts: [] };
   }
+}
+
+export default async function Page() {
+  const { collections, featuredProducts } = await getHomepageData();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">{shopInfo?.name || 'Tienda'}</h1>
-        <p className="text-gray-600 mt-2">Explora nuestra colección de productos</p>
-      </div>
-
-      {collectionsData?.collections && collectionsData.collections.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold mb-4">Colecciones</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {collectionsData.collections.map(collection => (
-              <div key={collection.id} className="border rounded-lg p-4">
-                <h3 className="text-lg font-semibold">{collection.title}</h3>
-                <p className="text-gray-600 mt-2">{collection.description}</p>
-                <div className="mt-4">
-                  <Link href={`/collections/${collection.handle}`} className="text-blue-500 hover:underline">
-                    Ver colección
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-5xl font-bold mb-6">Bienvenido a nuestra tienda</h1>
+          <p className="text-xl mb-8">Descubre productos increíbles a precios excepcionales</p>
+          <Link 
+            href="/store" 
+            className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+          >
+            Explorar Tienda
+          </Link>
         </div>
-      )}
-      
-      {productsData?.products && productsData.products.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
-            {productsData.products.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+      </section>
+
+      {/* Featured Collections */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Colecciones Destacadas</h2>
+            <p className="text-gray-600">Explora nuestras colecciones más populares</p>
           </div>
           
-          <div className="flex justify-center mt-8">
-            <Pagination 
-              currentPage={currentPage} 
-              totalPages={totalPages} 
-              onPageChange={handlePageChange} 
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+            {collections.slice(0, 6).map((collection) => (
+              <Link 
+                key={collection.id} 
+                href={`/store/collections/${collection.handle}`}
+                className="group"
+              >
+                <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  {collection.image && (
+                    <div className="aspect-video overflow-hidden">
+                      <img 
+                        src={collection.image.url} 
+                        alt={collection.image.altText || collection.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+                  )}
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold mb-2">{collection.title}</h3>
+                    <p className="text-gray-600 line-clamp-2">{collection.description}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
-        </>
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-lg text-gray-600">No se encontraron productos</p>
+
+          <div className="text-center">
+            <Link 
+              href="/store/collections" 
+              className="text-blue-600 hover:text-blue-800 font-semibold"
+            >
+              Ver todas las colecciones →
+            </Link>
+          </div>
         </div>
-      )}
+      </section>
+
+      {/* Featured Products */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Productos Destacados</h2>
+            <p className="text-gray-600">Los productos más populares y mejor valorados</p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {featuredProducts.map((product) => (
+              <Link 
+                key={product.id} 
+                href={`/store/product/${product.handle}`}
+                className="group"
+              >
+                <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  {product.images[0] && (
+                    <div className="aspect-square overflow-hidden">
+                      <img 
+                        src={product.images[0].url} 
+                        alt={product.images[0].altText || product.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <h3 className="font-semibold mb-2 line-clamp-2">{product.title}</h3>
+                    <p className="text-lg font-bold text-blue-600">
+                      ${product.priceRange.minVariantPrice.amount} {product.priceRange.minVariantPrice.currencyCode}
+                    </p>
+                    {!product.availableForSale && (
+                      <span className="text-red-500 text-sm">Agotado</span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Link 
+              href="/store" 
+              className="text-blue-600 hover:text-blue-800 font-semibold"
+            >
+              Ver todos los productos →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-blue-600 text-white py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-4">¿No encuentras lo que buscas?</h2>
+          <p className="text-xl mb-8">Explora toda nuestra tienda con filtros avanzados</p>
+          <Link 
+            href="/store" 
+            className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+          >
+            Ir a la tienda completa
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

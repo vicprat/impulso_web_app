@@ -1,268 +1,35 @@
-
 import { storeClient } from "@/lib/shopify";
 import {
-  Product,
-  Collection,
   ProductSearchParams,
   CollectionSearchParams,
   ShopInfoResponse,
   ProductResponse,
   ProductsResponse,
   CollectionResponse,
-  CollectionsResponse
+  CollectionsResponse,
+  Edge,
+  RawProduct,
+  RawCollection,
+  Collection,
+  Product,
 } from "./types";
-
-
-const SHOP_INFO_QUERY = `
-  query ShopInfo {
-    shop {
-      name
-      primaryDomain {
-        host
-        url
-      }
-      paymentSettings {
-        currencyCode
-        acceptedCardBrands
-        enabledPresentmentCurrencies
-      }
-    }
-  }
-`;
-
-const PRODUCTS_QUERY = `
-  query Products($first: Int!, $after: String, $query: String, $sortKey: ProductSortKeys, $reverse: Boolean) {
-    products(first: $first, after: $after, query: $query, sortKey: $sortKey, reverse: $reverse) {
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-      edges {
-        node {
-          id
-          title
-          handle
-          description
-          descriptionHtml
-          availableForSale
-          productType
-          vendor
-          createdAt
-          priceRange {
-            minVariantPrice {
-              amount
-              currencyCode
-            }
-            maxVariantPrice {
-              amount
-              currencyCode
-            }
-          }
-          images(first: 5) {
-            edges {
-              node {
-                id
-                url
-                altText
-                width
-                height
-              }
-            }
-          }
-          variants(first: 10) {
-            edges {
-              node {
-                id
-                title
-                availableForSale
-                price {
-                  amount
-                  currencyCode
-                }
-                compareAtPrice {
-                  amount
-                  currencyCode
-                }
-                sku
-                selectedOptions {
-                  name
-                  value
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-const PRODUCT_BY_HANDLE_QUERY = `
-  query ProductByHandle($handle: String!) {
-    product(handle: $handle) {
-      id
-      title
-      handle
-      description
-      descriptionHtml
-      availableForSale
-      productType
-      vendor
-      createdAt
-      priceRange {
-        minVariantPrice {
-          amount
-          currencyCode
-        }
-        maxVariantPrice {
-          amount
-          currencyCode
-        }
-      }
-      images(first: 10) {
-        edges {
-          node {
-            id
-            url
-            altText
-            width
-            height
-          }
-        }
-      }
-      variants(first: 20) {
-        edges {
-          node {
-            id
-            title
-            availableForSale
-            price {
-              amount
-              currencyCode
-            }
-            compareAtPrice {
-              amount
-              currencyCode
-            }
-            sku
-            selectedOptions {
-              name
-              value
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-const COLLECTIONS_QUERY = `
-  query Collections($first: Int!, $after: String, $query: String) {
-    collections(first: $first, after: $after, query: $query) {
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-      edges {
-        node {
-          id
-          title
-          handle
-          description
-          descriptionHtml
-          image {
-            id
-            url
-            altText
-            width
-            height
-          }
-        }
-      }
-    }
-  }
-`;
-
-const COLLECTION_BY_HANDLE_QUERY = `
-  query CollectionByHandle($handle: String!, $productsFirst: Int!) {
-    collection(handle: $handle) {
-      id
-      title
-      handle
-      description
-      descriptionHtml
-      image {
-        id
-        url
-        altText
-        width
-        height
-      }
-      products(first: $productsFirst) {
-        edges {
-          node {
-            id
-            title
-            handle
-            priceRange {
-              minVariantPrice {
-                amount
-                currencyCode
-              }
-            }
-            images(first: 1) {
-              edges {
-                node {
-                  id
-                  url
-                  altText
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-// Helper para transformar la estructura de datos de GraphQL
-const transformProductData = (product: any): Product => {
-  return {
-    id: product.id,
-    title: product.title,
-    handle: product.handle,
-    description: product.description,
-    descriptionHtml: product.descriptionHtml,
-    availableForSale: product.availableForSale,
-    productType: product.productType,
-    vendor: product.vendor,
-    createdAt: product.createdAt,
-    priceRange: product.priceRange,
-    images: product.images.edges.map((edge: any) => edge.node),
-    variants: product.variants.edges.map((edge: any) => edge.node)
-  };
-};
-
-const transformCollectionData = (collection: any): Collection => {
-  return {
-    id: collection.id,
-    title: collection.title,
-    handle: collection.handle,
-    description: collection.description,
-    descriptionHtml: collection.descriptionHtml,
-    image: collection.image,
-    products: collection.products?.edges.map((edge: any) => transformProductData(edge.node)) || []
-  };
-};
-
-export const shopifyApi = {
+import { 
+  SHOP_INFO_QUERY, 
+  COLLECTIONS_QUERY, 
+  COLLECTION_BY_HANDLE_QUERY, 
+  PRODUCTS_QUERY, 
+  PRODUCT_BY_HANDLE_QUERY, 
+  HOMEPAGE_QUERY
+} from "./queries";
+import { transformCollectionData, transformProductData } from "./helpers";
+import { handleGraphQLErrors } from "@/lib/graphql";
+export const api = {
   getShopInfo: async (): Promise<ShopInfoResponse> => {
     try {
       const { data, errors } = await storeClient.request(SHOP_INFO_QUERY);
       
       if (errors) {
-        throw new Error(errors[0].message);
+        handleGraphQLErrors(errors);
       }
       
       return {
@@ -290,12 +57,14 @@ export const shopifyApi = {
       });
       
       if (errors) {
-        throw new Error(errors[0].message);
+        handleGraphQLErrors(errors);
       }
       
       return {
         data: {
-          products: data.products.edges.map((edge: any) => transformProductData(edge.node)),
+          products: data.products.edges.map((edge: Edge<RawProduct>) => 
+            transformProductData(edge.node)
+          ),
           pageInfo: data.products.pageInfo
         },
         statusCode: 200
@@ -315,7 +84,7 @@ export const shopifyApi = {
       });
       
       if (errors) {
-        throw new Error(errors[0].message);
+        handleGraphQLErrors(errors);
       }
       
       if (!data.product) {
@@ -323,7 +92,7 @@ export const shopifyApi = {
       }
       
       return {
-        data: transformProductData(data.product),
+        data: transformProductData(data.product as RawProduct),
         statusCode: 200
       };
     } catch (error) {
@@ -345,12 +114,14 @@ export const shopifyApi = {
       });
       
       if (errors) {
-        throw new Error(errors[0].message);
+        handleGraphQLErrors(errors);
       }
       
       return {
         data: {
-          collections: data.collections.edges.map((edge: any) => transformCollectionData(edge.node)),
+          collections: data.collections.edges.map((edge: Edge<RawCollection>) => 
+            transformCollectionData(edge.node)
+          ),
           pageInfo: data.collections.pageInfo
         },
         statusCode: 200
@@ -371,7 +142,7 @@ export const shopifyApi = {
       });
       
       if (errors) {
-        throw new Error(errors[0].message);
+        handleGraphQLErrors(errors);
       }
       
       if (!data.collection) {
@@ -379,11 +150,50 @@ export const shopifyApi = {
       }
       
       return {
-        data: transformCollectionData(data.collection),
+        data: transformCollectionData(data.collection as RawCollection),
         statusCode: 200
       };
     } catch (error) {
       console.error(`Error fetching collection with handle "${handle}":`, error);
+      throw error;
+    }
+  },
+
+  getHomepageData: async (): Promise<{
+    data: {
+      collections: Collection[];
+      featuredProducts: Product[];
+    };
+    statusCode: number;
+  }> => {
+    try {
+      const { data, errors } = await storeClient.request(HOMEPAGE_QUERY);
+      
+      if (errors) {
+        handleGraphQLErrors(errors);
+      }
+      
+      const collections: Collection[] = data.collections.edges.map((edge: Edge<RawCollection>) => {
+        const rawCollection: RawCollection = {
+          ...edge.node,
+          products: undefined 
+        };
+        return transformCollectionData(rawCollection);
+      });
+
+      const featuredProducts: Product[] = data.products.edges.map((edge: Edge<RawProduct>) => 
+        transformProductData(edge.node)
+      );
+
+      return {
+        data: {
+          collections,
+          featuredProducts
+        },
+        statusCode: 200
+      };
+    } catch (error) {
+      console.error('Error fetching homepage data:', error);
       throw error;
     }
   }
