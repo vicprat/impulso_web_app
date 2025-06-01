@@ -7,7 +7,7 @@ import { useCollectionByHandle } from '@/modules/shopify/hooks';
 import { Pagination } from '@/components/Pagination';
 import { Card } from '@/components/Card.tsx';
 
-export default function CollectionPage() {
+export default function Page() {
   const params = useParams();
   const collectionHandle = params.collection as string;
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +21,7 @@ export default function CollectionPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-blue-600"></div>
       </div>
     );
   }

@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from 'next/link';
 import { api } from '@/modules/shopify/api';
+import { Card } from '@/components/Card.tsx';
 
 async function getHomepageData() {
   try {
@@ -86,32 +87,7 @@ export default async function Page() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {featuredProducts.map((product) => (
-              <Link 
-                key={product.id} 
-                href={`/store/product/${product.handle}`}
-                className="group"
-              >
-                <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                  {product.images[0] && (
-                    <div className="aspect-square overflow-hidden">
-                      <img 
-                        src={product.images[0].url} 
-                        alt={product.images[0].altText || product.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <h3 className="font-semibold mb-2 line-clamp-2">{product.title}</h3>
-                    <p className="text-lg font-bold text-blue-600">
-                      ${product.priceRange.minVariantPrice.amount} {product.priceRange.minVariantPrice.currencyCode}
-                    </p>
-                    {!product.availableForSale && (
-                      <span className="text-red-500 text-sm">Agotado</span>
-                    )}
-                  </div>
-                </div>
-              </Link>
+              <Card.Product key={product.id} product={product} />
             ))}
           </div>
 

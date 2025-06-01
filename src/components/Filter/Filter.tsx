@@ -1,7 +1,27 @@
 'use client';
+
 import { useCollections } from "@/modules/shopify/hooks";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+} from "@/components/ui/sidebar";
+import { Filter as FilterIcon, SlidersHorizontal } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type State = {
   collections: string[];
@@ -22,9 +42,27 @@ const defaultFilters: State = {
   sortOrder: 'asc'
 };
 
+const availabilityOptions = [
+  { value: 'all', label: 'Todos los productos' },
+  { value: 'available', label: 'Solo disponibles' },
+  { value: 'unavailable', label: 'Agotados' }
+] as const;
+
+const sortOptions = [
+  { value: 'BEST_SELLING', label: 'Más vendidos' },
+  { value: 'PRICE', label: 'Precio' },
+  { value: 'TITLE', label: 'Nombre A-Z' },
+  { value: 'CREATED', label: 'Más recientes' }
+] as const;
+
+const sortOrderOptions = [
+  { value: 'asc', label: 'Ascendente' },
+  { value: 'desc', label: 'Descendente' }
+] as const;
+
 export const Filter = () => {
   const [filters, setFilters] = useState(defaultFilters);
-  const [isOpen, setIsOpen] = useState(false);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   
@@ -34,12 +72,12 @@ export const Filter = () => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleCollectionToggle = (collectionHandle: string) => {
+  const handleCollectionToggle = (collectionHandle: string, checked: boolean) => {
     setFilters(prev => ({
       ...prev,
-      collections: prev.collections.includes(collectionHandle)
-        ? prev.collections.filter(c => c !== collectionHandle)
-        : [...prev.collections, collectionHandle]
+      collections: checked
+        ? [...prev.collections, collectionHandle]
+        : prev.collections.filter(c => c !== collectionHandle)
     }));
   };
 
@@ -67,7 +105,6 @@ export const Filter = () => {
 
     const queryString = searchParams.toString();
     
-    // Decidir a qué página redirigir basado en la página actual
     let targetPath = '/store';
     if (pathname.includes('/search') || queryString) {
       targetPath = '/store/search';
@@ -75,164 +112,293 @@ export const Filter = () => {
     
     const newPath = queryString ? `${targetPath}?${queryString}` : '/store';
     router.push(newPath);
-    setIsOpen(false);
+    setMobileSheetOpen(false);
   };
 
   const clearFilters = () => {
     setFilters(defaultFilters);
     router.push('/store');
+    setMobileSheetOpen(false);
   };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (filters.collections.length > 0) count++;
+    if (filters.priceRange.min || filters.priceRange.max) count++;
+    if (filters.availability !== 'all') count++;
+    if (filters.sortBy !== 'BEST_SELLING' || filters.sortOrder !== 'asc') count++;
+    return count;
+  };
+
+  const FilterContent = () => (
+    <div className="space-y-4">
+      {/* Collections Filter */}
+      {collectionsData?.collections && collectionsData.collections.length > 0 && (
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground font-medium">
+            Colecciones
+          </SidebarGroupLabel>
+          <SidebarGroupContent className="space-y-2">
+            {collectionsData.collections.map(collection => (
+              <div key={collection.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`collection-${collection.id}`}
+                  checked={filters.collections.includes(collection.handle)}
+                  onCheckedChange={(checked) => 
+                    handleCollectionToggle(collection.handle, checked as boolean)
+                  }
+                  className="data-[state=checked]:bg-sidebar-primary data-[state=checked]:border-sidebar-primary"
+                />
+                <Label 
+                  htmlFor={`collection-${collection.id}`}
+                  className="text-sm text-sidebar-foreground cursor-pointer flex-1"
+                >
+                  {collection.title}
+                </Label>
+              </div>
+            ))}
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
+
+      <Separator className="bg-sidebar-border" />
+
+      {/* Price Range Filter */}
+      <SidebarGroup>
+        <SidebarGroupLabel className="text-sidebar-foreground font-medium">
+          Rango de precio
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="price-min" className="text-xs text-sidebar-foreground/70">
+                Mínimo
+              </Label>
+              <Input
+                id="price-min"
+                type="number"
+                placeholder="$0"
+                value={filters.priceRange.min}
+                onChange={(e) => handleFilterChange('priceRange', { 
+                  ...filters.priceRange, 
+                  min: e.target.value 
+                })}
+                className="h-9 bg-sidebar-accent border-sidebar-border focus:border-sidebar-primary text-sidebar-foreground"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="price-max" className="text-xs text-sidebar-foreground/70">
+                Máximo
+              </Label>
+              <Input
+                id="price-max"
+                type="number"
+                placeholder="$999"
+                value={filters.priceRange.max}
+                onChange={(e) => handleFilterChange('priceRange', { 
+                  ...filters.priceRange, 
+                  max: e.target.value 
+                })}
+                className="h-9 bg-sidebar-accent border-sidebar-border focus:border-sidebar-primary text-sidebar-foreground"
+              />
+            </div>
+          </div>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <Separator className="bg-sidebar-border" />
+
+      {/* Availability Filter */}
+      <SidebarGroup>
+        <SidebarGroupLabel className="text-sidebar-foreground font-medium">
+          Disponibilidad
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <RadioGroup
+            value={filters.availability}
+            onValueChange={(value) => handleFilterChange('availability', value as State['availability'])}
+            className="space-y-2"
+          >
+            {availabilityOptions.map(option => (
+              <div key={option.value} className="flex items-center space-x-2">
+                <RadioGroupItem
+                  value={option.value}
+                  id={`availability-${option.value}`}
+                  className="border-sidebar-border data-[state=checked]:bg-sidebar-primary data-[state=checked]:border-sidebar-primary"
+                />
+                <Label 
+                  htmlFor={`availability-${option.value}`}
+                  className="text-sm text-sidebar-foreground cursor-pointer"
+                >
+                  {option.label}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <Separator className="bg-sidebar-border" />
+
+      {/* Sort Options */}
+      <SidebarGroup>
+        <SidebarGroupLabel className="text-sidebar-foreground font-medium">
+          Ordenamiento
+        </SidebarGroupLabel>
+        <SidebarGroupContent className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-sidebar-foreground/70">Ordenar por</Label>
+            <Select
+              value={filters.sortBy}
+              onValueChange={(value) => handleFilterChange('sortBy', value as State['sortBy'])}
+            >
+              <SelectTrigger className="h-9 bg-sidebar-accent border-sidebar-border focus:border-sidebar-primary text-sidebar-foreground">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-sidebar-accent border-sidebar-border">
+                {sortOptions.map(option => (
+                  <SelectItem 
+                    key={option.value} 
+                    value={option.value}
+                    className="focus:bg-sidebar-primary focus:text-sidebar-primary-foreground"
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-1">
+            <Label className="text-xs text-sidebar-foreground/70">Orden</Label>
+            <Select
+              value={filters.sortOrder}
+              onValueChange={(value) => handleFilterChange('sortOrder', value as State['sortOrder'])}
+            >
+              <SelectTrigger className="h-9 bg-sidebar-accent border-sidebar-border focus:border-sidebar-primary text-sidebar-foreground">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-sidebar-accent border-sidebar-border">
+                {sortOrderOptions.map(option => (
+                  <SelectItem 
+                    key={option.value} 
+                    value={option.value}
+                    className="focus:bg-sidebar-primary focus:text-sidebar-primary-foreground"
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </div>
+  );
 
   return (
     <>
-      {/* Mobile Filter Toggle */}
-      <div className="lg:hidden mb-4">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-          </svg>
-          Filtros
-        </button>
-      </div>
-
-      {/* Filter Sidebar */}
-      <div className={`
-        lg:block lg:w-64 bg-white border-r border-gray-200 h-full
-        ${isOpen ? 'block fixed inset-0 z-50 lg:relative lg:inset-auto' : 'hidden'}
-      `}>
-        <div className="p-6 h-full overflow-y-auto">
-          {/* Mobile Close Button */}
-          <div className="lg:hidden flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Filtros</h2>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-gray-500 hover:text-gray-700"
+      {/* Mobile Filter Trigger */}
+      <div className="lg:hidden fixed bottom-4 left-4 z-40">
+        <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+          <SheetTrigger asChild>
+            <Button 
+              size="lg"
+              className={cn(
+                "shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground",
+                "rounded-full h-14 px-6"
+              )}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <h2 className="text-xl font-semibold mb-6 hidden lg:block">Filtros</h2>
-
-          {/* Collections Filter */}
-          {collectionsData?.collections && collectionsData.collections.length > 0 && (
-            <div className="mb-6">
-              <h3 className="font-semibold mb-3">Colecciones</h3>
-              <div className="space-y-2">
-                {collectionsData.collections.map(collection => (
-                  <label key={collection.id} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={filters.collections.includes(collection.handle)}
-                      onChange={() => handleCollectionToggle(collection.handle)}
-                      className="mr-2 rounded"
-                    />
-                    <span className="text-sm">{collection.title}</span>
-                  </label>
-                ))}
+              <SlidersHorizontal className="w-5 h-5 mr-2" />
+              Filtros
+              {getActiveFiltersCount() > 0 && (
+                <Badge 
+                  variant="secondary" 
+                  className="ml-2 bg-primary-foreground text-primary rounded-full min-w-[20px] h-5 text-xs"
+                >
+                  {getActiveFiltersCount()}
+                </Badge>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent 
+            side="left" 
+            className="w-80 bg-sidebar border-sidebar-border p-0"
+          >
+            <SheetHeader className="p-6 pb-4 border-b border-sidebar-border">
+              <SheetTitle className="text-lg font-semibold text-sidebar-foreground flex items-center">
+                <FilterIcon className="w-5 h-5 mr-2 text-sidebar-primary" />
+                Filtros
+                {getActiveFiltersCount() > 0 && (
+                  <Badge 
+                    variant="secondary" 
+                    className="ml-2 bg-sidebar-primary text-sidebar-primary-foreground rounded-full"
+                  >
+                    {getActiveFiltersCount()}
+                  </Badge>
+                )}
+              </SheetTitle>
+            </SheetHeader>
+            <div className="p-6 h-full overflow-y-auto">
+              <FilterContent />
+              
+              <div className="space-y-3 pt-6 mt-6 border-t border-sidebar-border">
+                <Button
+                  onClick={applyFilters}
+                  className="w-full h-10 bg-sidebar-primary hover:bg-sidebar-primary/90 text-sidebar-primary-foreground"
+                >
+                  Aplicar filtros
+                </Button>
+                <Button
+                  onClick={clearFilters}
+                  variant="outline"
+                  className="w-full h-10 border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent"
+                >
+                  Limpiar filtros
+                </Button>
               </div>
             </div>
-          )}
-
-          {/* Price Range Filter */}
-          <div className="mb-6">
-            <h3 className="font-semibold mb-3">Rango de precio</h3>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder="Min"
-                value={filters.priceRange.min}
-                onChange={(e) => handleFilterChange('priceRange', { ...filters.priceRange, min: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded text-sm"
-              />
-              <input
-                type="number"
-                placeholder="Max"
-                value={filters.priceRange.max}
-                onChange={(e) => handleFilterChange('priceRange', { ...filters.priceRange, max: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Availability Filter */}
-          <div className="mb-6">
-            <h3 className="font-semibold mb-3">Disponibilidad</h3>
-            <div className="space-y-2">
-              {[
-                { value: 'all', label: 'Todos' },
-                { value: 'available', label: 'Disponible' },
-                { value: 'unavailable', label: 'Agotado' }
-              ].map(option => (
-                <label key={option.value} className="flex items-center">
-                  <input
-                    type="radio"
-                    name="availability"
-                    value={option.value}
-                    checked={filters.availability === option.value}
-                    onChange={(e) => handleFilterChange('availability', e.target.value as State['availability'])}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">{option.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Sort Options */}
-          <div className="mb-6">
-            <h3 className="font-semibold mb-3">Ordenar por</h3>
-            <select
-              value={filters.sortBy}
-              onChange={(e) => handleFilterChange('sortBy', e.target.value as State['sortBy'])}
-              className="w-full p-2 border border-gray-300 rounded text-sm mb-2"
-            >
-              <option value="BEST_SELLING">Más vendidos</option>
-              <option value="PRICE">Precio</option>
-              <option value="TITLE">Nombre</option>
-              <option value="CREATED">Fecha de creación</option>
-            </select>
-            
-            <select
-              value={filters.sortOrder}
-              onChange={(e) => handleFilterChange('sortOrder', e.target.value as State['sortOrder'])}
-              className="w-full p-2 border border-gray-300 rounded text-sm"
-            >
-              <option value="asc">Ascendente</option>
-              <option value="desc">Descendente</option>
-            </select>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="space-y-2">
-            <button
-              onClick={applyFilters}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Aplicar filtros
-            </button>
-            <button
-              onClick={clearFilters}
-              className="w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Limpiar filtros
-            </button>
-          </div>
-        </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
-      {/* Mobile Overlay */}
-      {isOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      {/* Desktop Sidebar */}
+    
+
+<Sidebar
+  side="left"
+  variant="sidebar"
+  collapsible="offcanvas" 
+  className="hidden lg:flex border-r border-sidebar-border"
+>
+     
+        
+        <SidebarContent className="p-4 group-data-[collapsible=icon]:p-2">
+          <div className="group-data-[collapsible=icon]:hidden">
+            <FilterContent />
+          </div>
+        </SidebarContent>
+
+        <SidebarFooter className="p-4 border-t border-sidebar-border group-data-[collapsible=icon]:p-2">
+          <div className="space-y-2 group-data-[collapsible=icon]:hidden">
+            <Button
+              onClick={applyFilters}
+              size="sm"
+              className="w-full bg-sidebar-primary hover:bg-sidebar-primary/90 text-sidebar-primary-foreground"
+            >
+              Aplicar filtros
+            </Button>
+            <Button
+              onClick={clearFilters}
+              variant="outline"
+              size="sm"
+              className="w-full border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent"
+            >
+              Limpiar filtros
+            </Button>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
     </>
   );
-}
+};
