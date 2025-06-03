@@ -18,6 +18,7 @@ export default async function Page() {
 
   return (
     <div className="min-h-screen">
+      
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
         <div className="container mx-auto px-4 text-center">
@@ -29,6 +30,9 @@ export default async function Page() {
           >
             Explorar Tienda
           </Link>
+          <Link href="/auth/login" className="sr-only">
+        Iniciar sesión
+      </Link>
         </div>
       </section>
 
