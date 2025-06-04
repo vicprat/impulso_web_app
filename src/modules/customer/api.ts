@@ -1,32 +1,85 @@
+import { handleGraphQLErrors } from "@/lib/graphql";
 import {
+  Customer,
+  CustomerAddress,
   CustomerAddressInput,
   CustomerUpdateInput,
+  Order,
   OrdersSearchParams,
   CustomerProfileResponse,
   CustomerAddressesResponse,
   CustomerAddressResponse,
   CustomerOrdersResponse,
   CustomerUpdateResponse,
+  RawOrder,
+  UserError,
 } from "./types";
+import {
+  GET_CUSTOMER_PROFILE_QUERY,
+  GET_CUSTOMER_ADDRESSES_QUERY,
+  GET_CUSTOMER_ORDERS_QUERY,
+  UPDATE_CUSTOMER_MUTATION,
+  CREATE_CUSTOMER_ADDRESS_MUTATION,
+  UPDATE_CUSTOMER_ADDRESS_MUTATION,
+  DELETE_CUSTOMER_ADDRESS_MUTATION,
+  SET_DEFAULT_ADDRESS_MUTATION,
+} from "./queries";
+import { transformOrderData } from "./helpers";
+import { Edge } from "../shopify/types";
 
+/**
+ * Simple GraphQL request function (similar to what you already do in endpoints)
+ */
+const makeGraphQLRequest = async (
+  query: string,
+  variables: Record<string, unknown> = {},
+  accessToken: string
+) => {
+  const apiUrl = `https://shopify.com/${process.env.SHOPIFY_SHOP_ID}/account/customer/api/${process.env.SHOPIFY_API_VERSION}/graphql`;
+
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': accessToken,
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      variables,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Shopify API error: ${response.status} ${response.statusText} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  
+  if (result.errors) {
+    handleGraphQLErrors(result.errors);
+  }
+
+  return result;
+};
 
 export const customerApi = {
-  getProfile: async (): Promise<CustomerProfileResponse> => {
+  /**
+   * Get customer profile
+   */
+  getProfile: async (accessToken: string): Promise<CustomerProfileResponse> => {
     try {
-      const response = await fetch('/api/customer/profile', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
+      const { data } = await makeGraphQLRequest(GET_CUSTOMER_PROFILE_QUERY, {}, accessToken);
+      
+      const responseData = data as { customer?: Customer };
+      if (!responseData.customer) {
+        throw new Error('Customer data not found');
       }
 
-      const data = await response.json();
       return {
-        data,
-        statusCode: response.status
+        data: responseData.customer,
+        statusCode: 200
       };
     } catch (error) {
       console.error("Error fetching customer profile:", error);
@@ -37,26 +90,26 @@ export const customerApi = {
   /**
    * Update customer profile
    */
-  updateProfile: async (input: CustomerUpdateInput): Promise<CustomerUpdateResponse> => {
+  updateProfile: async (input: CustomerUpdateInput, accessToken: string): Promise<CustomerUpdateResponse> => {
     try {
-      const response = await fetch('/api/customer/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(input),
-      });
+      const { data } = await makeGraphQLRequest(UPDATE_CUSTOMER_MUTATION, { input }, accessToken);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
+      const responseData = data as { 
+        customerUpdate: { 
+          customer: Customer; 
+          userErrors: UserError[]; 
+        }; 
+      };
+      
+      const result = responseData.customerUpdate;
+      
+      if (result.userErrors && result.userErrors.length > 0) {
+        throw new Error(`Validation errors: ${result.userErrors.map((e: UserError) => e.message).join(', ')}`);
       }
 
-      const data = await response.json();
       return {
-        data,
-        statusCode: response.status
+        data: result.customer,
+        statusCode: 200
       };
     } catch (error) {
       console.error("Error updating customer profile:", error);
@@ -67,22 +120,18 @@ export const customerApi = {
   /**
    * Get customer addresses
    */
-  getAddresses: async (): Promise<CustomerAddressesResponse> => {
+  getAddresses: async (accessToken: string): Promise<CustomerAddressesResponse> => {
     try {
-      const response = await fetch('/api/customer/addresses', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
+      const { data } = await makeGraphQLRequest(GET_CUSTOMER_ADDRESSES_QUERY, {}, accessToken);
+      
+      const responseData = data as { customer?: { addresses: CustomerAddress[] } };
+      if (!responseData.customer) {
+        throw new Error('Customer data not found');
       }
 
-      const data = await response.json();
       return {
-        data: data.addresses,
-        statusCode: response.status
+        data: responseData.customer.addresses,
+        statusCode: 200
       };
     } catch (error) {
       console.error("Error fetching customer addresses:", error);
@@ -93,26 +142,26 @@ export const customerApi = {
   /**
    * Create customer address
    */
-  createAddress: async (address: CustomerAddressInput): Promise<CustomerAddressResponse> => {
+  createAddress: async (address: CustomerAddressInput, accessToken: string): Promise<CustomerAddressResponse> => {
     try {
-      const response = await fetch('/api/customer/addresses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(address),
-      });
+      const { data } = await makeGraphQLRequest(CREATE_CUSTOMER_ADDRESS_MUTATION, { address }, accessToken);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
+      const responseData = data as { 
+        customerAddressCreate: { 
+          customerAddress: CustomerAddress; 
+          userErrors: UserError[]; 
+        }; 
+      };
+      
+      const result = responseData.customerAddressCreate;
+      
+      if (result.userErrors && result.userErrors.length > 0) {
+        throw new Error(`Validation errors: ${result.userErrors.map((e: UserError) => e.message).join(', ')}`);
       }
 
-      const data = await response.json();
       return {
-        data: data.address,
-        statusCode: response.status
+        data: result.customerAddress,
+        statusCode: 201
       };
     } catch (error) {
       console.error("Error creating customer address:", error);
@@ -123,26 +172,26 @@ export const customerApi = {
   /**
    * Update customer address
    */
-  updateAddress: async (id: string, address: CustomerAddressInput): Promise<CustomerAddressResponse> => {
+  updateAddress: async (id: string, address: CustomerAddressInput, accessToken: string): Promise<CustomerAddressResponse> => {
     try {
-      const response = await fetch('/api/customer/addresses', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ id, address }),
-      });
+      const { data } = await makeGraphQLRequest(UPDATE_CUSTOMER_ADDRESS_MUTATION, { id, address }, accessToken);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
+      const responseData = data as { 
+        customerAddressUpdate: { 
+          customerAddress: CustomerAddress; 
+          userErrors: UserError[]; 
+        }; 
+      };
+      
+      const result = responseData.customerAddressUpdate;
+      
+      if (result.userErrors && result.userErrors.length > 0) {
+        throw new Error(`Validation errors: ${result.userErrors.map((e: UserError) => e.message).join(', ')}`);
       }
 
-      const data = await response.json();
       return {
-        data: data.address,
-        statusCode: response.status
+        data: result.customerAddress,
+        statusCode: 200
       };
     } catch (error) {
       console.error("Error updating customer address:", error);
@@ -153,26 +202,26 @@ export const customerApi = {
   /**
    * Delete customer address
    */
-  deleteAddress: async (id: string): Promise<{ data: { deletedId: string }; statusCode: number }> => {
+  deleteAddress: async (id: string, accessToken: string): Promise<{ data: { deletedId: string }; statusCode: number }> => {
     try {
-      const response = await fetch('/api/customer/addresses', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ id }),
-      });
+      const { data } = await makeGraphQLRequest(DELETE_CUSTOMER_ADDRESS_MUTATION, { id }, accessToken);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
+      const responseData = data as { 
+        customerAddressDelete: { 
+          deletedCustomerAddressId: string; 
+          userErrors: UserError[]; 
+        }; 
+      };
+      
+      const result = responseData.customerAddressDelete;
+      
+      if (result.userErrors && result.userErrors.length > 0) {
+        throw new Error(`Validation errors: ${result.userErrors.map((e: UserError) => e.message).join(', ')}`);
       }
 
-      const data = await response.json();
       return {
-        data: { deletedId: data.deletedId },
-        statusCode: response.status
+        data: { deletedId: result.deletedCustomerAddressId },
+        statusCode: 200
       };
     } catch (error) {
       console.error("Error deleting customer address:", error);
@@ -183,26 +232,26 @@ export const customerApi = {
   /**
    * Set default customer address
    */
-  setDefaultAddress: async (id: string): Promise<CustomerProfileResponse> => {
+  setDefaultAddress: async (id: string, accessToken: string): Promise<CustomerProfileResponse> => {
     try {
-      const response = await fetch('/api/customer/addresses/default', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ id }),
-      });
+      const { data } = await makeGraphQLRequest(SET_DEFAULT_ADDRESS_MUTATION, { id }, accessToken);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
+      const responseData = data as { 
+        customerDefaultAddressUpdate: { 
+          customer: Customer; 
+          userErrors: UserError[]; 
+        }; 
+      };
+      
+      const result = responseData.customerDefaultAddressUpdate;
+      
+      if (result.userErrors && result.userErrors.length > 0) {
+        throw new Error(`Validation errors: ${result.userErrors.map((e: UserError) => e.message).join(', ')}`);
       }
 
-      const data = await response.json();
       return {
-        data: data.customer,
-        statusCode: response.status
+        data: result.customer,
+        statusCode: 200
       };
     } catch (error) {
       console.error("Error setting default address:", error);
@@ -213,29 +262,35 @@ export const customerApi = {
   /**
    * Get customer orders
    */
-  getOrders: async (params: OrdersSearchParams = {}): Promise<CustomerOrdersResponse> => {
+  getOrders: async (params: OrdersSearchParams = {}, accessToken: string): Promise<CustomerOrdersResponse> => {
+    const { first = 10, after = null } = params;
+    
     try {
-      const searchParams = new URLSearchParams();
-      if (params.first) searchParams.append('first', params.first.toString());
-      if (params.after) searchParams.append('after', params.after);
-
-      const response = await fetch(`/api/customer/orders?${searchParams.toString()}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
+      const { data } = await makeGraphQLRequest(GET_CUSTOMER_ORDERS_QUERY, { first, after }, accessToken);
+      
+      const responseData = data as { 
+        customer?: { 
+          orders: { 
+            edges: Array<Edge<RawOrder>>; 
+            pageInfo: { hasNextPage: boolean; endCursor: string | null }; 
+          }; 
+        }; 
+      };
+      
+      if (!responseData.customer) {
+        throw new Error('Customer data not found');
       }
 
-      const data = await response.json();
+      const orders: Order[] = responseData.customer.orders.edges.map((edge: Edge<RawOrder>) => 
+        transformOrderData(edge.node)
+      );
+
       return {
         data: {
-          orders: data.orders,
-          pageInfo: data.pageInfo,
+          orders,
+          pageInfo: responseData.customer.orders.pageInfo,
         },
-        statusCode: response.status
+        statusCode: 200
       };
     } catch (error) {
       console.error("Error fetching customer orders:", error);
@@ -248,27 +303,15 @@ export const customerApi = {
    */
   executeGraphQL: async (
     query: string,
-    variables: Record<string, unknown> = {}
+    variables: Record<string, unknown> = {},
+    accessToken: string
   ): Promise<{ data: unknown; statusCode: number }> => {
     try {
-      const response = await fetch('/api/customer/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ query, variables }),
-      });
+      const { data } = await makeGraphQLRequest(query, variables, accessToken);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.status}`);
-      }
-
-      const data = await response.json();
       return {
         data,
-        statusCode: response.status
+        statusCode: 200
       };
     } catch (error) {
       console.error("Error executing GraphQL query:", error);

@@ -30,7 +30,6 @@ export const GET_CUSTOMER_PROFILE_QUERY = `
   }
 `;
 
-// Customer Address Queries
 export const GET_CUSTOMER_ADDRESSES_QUERY = `
   query GetCustomerAddresses {
     customer {
@@ -51,7 +50,6 @@ export const GET_CUSTOMER_ADDRESSES_QUERY = `
   }
 `;
 
-// Customer Orders Queries
 export const GET_CUSTOMER_ORDERS_QUERY = `
   query GetCustomerOrders($first: Int!, $after: String) {
     customer {
@@ -108,7 +106,6 @@ export const GET_CUSTOMER_ORDERS_QUERY = `
   }
 `;
 
-// Customer Mutations
 export const UPDATE_CUSTOMER_MUTATION = `
   mutation UpdateCustomer($input: CustomerUpdateInput!) {
     customerUpdate(input: $input) {
