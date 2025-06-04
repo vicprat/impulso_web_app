@@ -1,6 +1,7 @@
 'use client';
 
-import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { useAuth } from "@/modules/auth/context/useAuth";
+
 
 export function Login() {
   const { login, isLoading } = useAuth();

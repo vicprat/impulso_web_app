@@ -1,22 +1,16 @@
-// src/app/api/auth/refresh/route.ts
+import { AuthService } from '@/modules/auth/service';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth/service';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔄 Refresh token endpoint called');
-    
     const refreshToken = request.cookies.get('refresh_token')?.value?.trim();
     
     if (!refreshToken) {
-      console.log('❌ No refresh token found in cookies');
       return NextResponse.json(
         { error: 'No refresh token available' },
         { status: 401 }
       );
     }
-
-    console.log('✅ Refresh token found, attempting refresh...');
 
     const authConfig = {
       shopId: process.env.SHOPIFY_SHOP_ID!,
@@ -29,16 +23,12 @@ export async function POST(request: NextRequest) {
     const refreshedSession = await authService.refreshSession(refreshToken);
 
     if (!refreshedSession) {
-      console.log('❌ Refresh session failed');
       return NextResponse.json(
         { error: 'Failed to refresh session' },
         { status: 401 }
       );
     }
 
-    console.log('✅ Session refreshed successfully');
-
-    // Actualizar cookies con los nuevos tokens
     const response = NextResponse.json({
       user: refreshedSession.user,
       expiresAt: refreshedSession.tokens.expiresAt,
@@ -58,7 +48,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax' as const,
-      maxAge: 30 * 24 * 60 * 60, // 30 días
+      maxAge: 30 * 24 * 60 * 60,
       path: '/',
     };
 
@@ -70,7 +60,6 @@ export async function POST(request: NextRequest) {
     return response;
     
   } catch (error) {
-    console.error('❌ Refresh failed:', error);
     return NextResponse.json(
       { 
         error: 'Failed to refresh session',

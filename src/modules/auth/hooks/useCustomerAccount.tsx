@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useAuth } from './useAuth';
+import { useAuth } from '../context/useAuth';
 import { Edge } from '@/modules/shopify/types';
 import { CustomerAddress, CustomerOrder } from '../types';
 
@@ -16,10 +16,6 @@ export function useCustomerAccount() {
 
     try {
       setIsLoading(true);
-      
-      console.log('🔍 fetchCustomerData called');
-      console.log('📝 Query:', query.substring(0, 100) + '...');
-      console.log('📝 Variables:', variables);
 
       const response = await fetch('/api/customer/graphql', {
         method: 'POST',
@@ -33,46 +29,35 @@ export function useCustomerAccount() {
         }),
       });
 
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response ok:', response.ok);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ API Error Response:', errorText);
         
         let errorMessage = 'Failed to fetch customer data';
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorData.details || errorMessage;
-        } catch (parseError) {
-          console.error('Could not parse error response:', parseError);
+        } catch  {
+          throw new Error(`${errorMessage}: ${errorText}`);
         }
         
         throw new Error(`${errorMessage} (Status: ${response.status})`);
       }
 
       const data = await response.json();
-      console.log('✅ Data received successfully');
-      console.log('📊 Data keys:', Object.keys(data));
       
       if (data.errors) {
-        console.error('❌ GraphQL Errors:', data.errors);
         throw new Error(data.errors[0]?.message || 'GraphQL error');
       }
 
       return data.data;
     } catch (error) {
-      console.error('❌ fetchCustomerData error:', error);
       throw error;
     } finally {
       setIsLoading(false);
     }
   }, [isAuthenticated]);
 
-  // ✅ QUERY FINAL CORREGIDO - Órdenes (sin product field)
   const getOrders = useCallback(async (first: number = 10) => {
-    console.log('🛒 getOrders called with first:', first);
-    
     const query = `
       query GetOrders($first: Int!) {
         customer {
@@ -124,18 +109,13 @@ export function useCustomerAccount() {
 
     try {
       const data = await fetchCustomerData(query, { first });
-      console.log('✅ Orders data received:', data.customer.orders.edges.length, 'orders');
       return data.customer.orders.edges.map((edge: Edge<CustomerOrder>) => edge.node) as CustomerOrder[];
     } catch (error) {
-      console.error('❌ getOrders error:', error);
       throw error;
     }
   }, [fetchCustomerData]);
 
-  // ✅ QUERY FINAL CORREGIDO - Direcciones (sin phone field)
   const getAddresses = useCallback(async () => {
-    console.log('🏠 getAddresses called');
-    
     const query = `
       query GetAddresses {
         customer {
@@ -160,18 +140,13 @@ export function useCustomerAccount() {
 
     try {
       const data = await fetchCustomerData(query);
-      console.log('✅ Addresses data received:', data.customer.addresses.edges.length, 'addresses');
       return data.customer.addresses.edges.map((edge: Edge<CustomerAddress>) => edge.node) as CustomerAddress[];
     } catch (error) {
-      console.error('❌ getAddresses error:', error);
       throw error;
     }
   }, [fetchCustomerData]);
 
-  // ✅ QUERY FINAL CORREGIDO - Perfil (sin phone en defaultAddress)
   const getProfile = useCallback(async () => {
-    console.log('👤 getProfile called');
-    
     const query = `
       query GetProfile {
         customer {
@@ -201,22 +176,17 @@ export function useCustomerAccount() {
 
     try {
       const data = await fetchCustomerData(query);
-      console.log('✅ Profile data received');
       return data.customer;
     } catch (error) {
-      console.error('❌ getProfile error:', error);
       throw error;
     }
   }, [fetchCustomerData]);
 
-  // ✅ MUTATION FINAL - Actualizar perfil
   const updateProfile = useCallback(async (input: {
     firstName?: string;
     lastName?: string;
     phoneNumber?: string;
   }) => {
-    console.log('👤 updateProfile called with:', input);
-    
     const mutation = `
       mutation UpdateCustomer($input: CustomerUpdateInput!) {
         customerUpdate(input: $input) {
@@ -253,32 +223,25 @@ export function useCustomerAccount() {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Update profile API error:', errorText);
         throw new Error(`Failed to update profile (Status: ${response.status})`);
       }
 
       const data = await response.json();
       
       if (data.errors) {
-        console.error('❌ GraphQL errors:', data.errors);
         throw new Error(data.errors[0]?.message || 'GraphQL error');
       }
 
       if (data.data.customerUpdate.userErrors.length > 0) {
-        console.error('❌ User errors:', data.data.customerUpdate.userErrors);
         throw new Error(data.data.customerUpdate.userErrors[0]?.message || 'Validation error');
       }
 
-      console.log('✅ Profile updated successfully');
       return data.data.customerUpdate.customer;
     } catch (error) {
-      console.error('❌ updateProfile error:', error);
       throw error;
     }
   }, []);
 
-  // ✅ MUTATION FINAL - Crear dirección (sin phone)
   const createAddress = useCallback(async (addressInput: {
     firstName: string;
     lastName: string;
@@ -289,8 +252,6 @@ export function useCustomerAccount() {
     zip: string;
     country: string;
   }) => {
-    console.log('🏠 createAddress called with:', addressInput);
-    
     const mutation = `
       mutation CreateAddress($address: CustomerAddressInput!) {
         customerAddressCreate(address: $address) {
@@ -327,35 +288,26 @@ export function useCustomerAccount() {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Create address API error:', errorText);
         throw new Error(`Failed to create address (Status: ${response.status})`);
       }
 
       const data = await response.json();
       
       if (data.errors) {
-        console.error('❌ GraphQL errors:', data.errors);
         throw new Error(data.errors[0]?.message || 'GraphQL error');
       }
 
       if (data.data.customerAddressCreate.userErrors.length > 0) {
-        console.error('❌ User errors:', data.data.customerAddressCreate.userErrors);
         throw new Error(data.data.customerAddressCreate.userErrors[0]?.message || 'Validation error');
       }
 
-      console.log('✅ Address created successfully');
       return data.data.customerAddressCreate.customerAddress;
     } catch (error) {
-      console.error('❌ createAddress error:', error);
       throw error;
     }
   }, []);
 
-  // ✅ QUERY SIMPLE PARA PRUEBAS
   const getBasicInfo = useCallback(async () => {
-    console.log('ℹ️ getBasicInfo called');
-    
     const query = `
       query GetBasicInfo {
         customer {
@@ -369,10 +321,8 @@ export function useCustomerAccount() {
 
     try {
       const data = await fetchCustomerData(query);
-      console.log('✅ Basic info received');
       return data.customer;
     } catch (error) {
-      console.error('❌ getBasicInfo error:', error);
       throw error;
     }
   }, [fetchCustomerData]);

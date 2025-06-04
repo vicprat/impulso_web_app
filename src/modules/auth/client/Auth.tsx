@@ -1,22 +1,22 @@
 
 'use client';
 
+import { Login } from '@/components/Auth/Login';
 import { useAuthGuard } from '@/modules/auth/hooks/useAuthGuard';
-import { Login } from './Login';
 
-interface AuthGuardProps {
+type Props = {
   children: React.ReactNode;
   requiredPermission?: string;
   requiredRole?: string;
   fallback?: React.ReactNode;
 }
 
-export function AuthGuard({ 
+export const Auth: React.FC<Props> = ({ 
   children, 
   requiredPermission, 
   requiredRole, 
   fallback 
-}: AuthGuardProps) {
+}) => {
   const { isLoading, hasAccess } = useAuthGuard({
     requiredPermission,
     requiredRole,

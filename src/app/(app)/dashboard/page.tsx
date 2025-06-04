@@ -1,8 +1,7 @@
 'use client';
 
-import { AuthGuard } from '@/components/Auth/AuthGuard';
-import { PermissionGuard } from '@/components/Auth/PermissionGuard';
 import { UserProfile } from '@/components/Auth/UserProfile';
+import { Guard } from '@/modules/auth/client';
 import { useCustomerAccount } from '@/modules/auth/hooks/useCustomerAccount';
 import { CustomerOrder } from '@/modules/auth/types';
 import { useState, useEffect } from 'react';
@@ -95,7 +94,7 @@ function DashboardContent() {
         </div>
         
         {/* Sección de administración (solo para admins) */}
-        <PermissionGuard 
+        <Guard.Permission 
           permission="access_admin"
           fallback={null}
         >
@@ -112,7 +111,7 @@ function DashboardContent() {
               </button>
             </div>
           </div>
-        </PermissionGuard>
+        </Guard.Permission>
       </div>
     </div>
   );
@@ -120,8 +119,8 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <AuthGuard>
+    <Guard.Auth>
       <DashboardContent />
-    </AuthGuard>
+    </Guard.Auth>
   );
 }

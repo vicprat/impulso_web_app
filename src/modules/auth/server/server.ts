@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { AuthService } from './service';
+import { AuthService } from '../service';
 
 export async function getServerSession() {
   const cookieStore = cookies();

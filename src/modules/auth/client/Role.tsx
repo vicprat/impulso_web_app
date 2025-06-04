@@ -1,20 +1,21 @@
 
 'use client';
 
-import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { useAuth } from "../context/useAuth";
 
 
-interface RoleGuardProps {
+
+type Props = {
   role: string;
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
 
-export function RoleGuard({ 
+export const Role: React.FC<Props> = ({ 
   role, 
   children, 
   fallback 
-}: RoleGuardProps) {
+}) => {
   const { hasRole, isLoading } = useAuth();
 
   if (isLoading) {

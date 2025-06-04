@@ -1,5 +1,5 @@
+import { AuthService } from '@/modules/auth/service';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth/service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,8 +31,7 @@ export async function GET(request: NextRequest) {
     const hasPermission = await authService.hasPermission(session.user.id, permission);
 
     return NextResponse.json({ hasPermission });
-  } catch (error) {
-    console.error('Permission check failed:', error);
+  } catch  {
     return NextResponse.json({ hasPermission: false }, { status: 500 });
   }
 }

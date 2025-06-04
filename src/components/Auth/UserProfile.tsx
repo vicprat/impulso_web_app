@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/modules/auth/hooks/useAuth';
+import { useAuth } from '@/modules/auth/context/useAuth';
 import { Logout } from './Logout';
 
 export function UserProfile() {

@@ -1,5 +1,6 @@
-import { AuthService } from "@/lib/auth/service";
+
 import { NextRequest, NextResponse } from "next/server";
+import { AuthService } from "../service";
 
 export async function requirePermission(permission: string) {
   return async (req: NextRequest) => {

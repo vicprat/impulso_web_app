@@ -22,15 +22,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUser(null);
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
+    } catch  {
       setUser(null);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-    // Verificar autenticación inicial
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
@@ -50,15 +48,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       setUser(null);
 
-      // Si Shopify devuelve una URL de logout, redirigir ahí
       if (data.shopifyLogoutUrl) {
         window.location.href = data.shopifyLogoutUrl;
       } else {
         window.location.href = '/';
       }
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // Aunque falle, limpiar el estado local
+    } catch  {
       setUser(null);
       window.location.href = '/';
     }
@@ -77,8 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUser(null);
       }
-    } catch (error) {
-      console.error('Token refresh failed:', error);
+    } catch  {
       setUser(null);
     }
   }, []);
@@ -116,4 +110,3 @@ export function useAuth() {
   }
   return context;
 }
-

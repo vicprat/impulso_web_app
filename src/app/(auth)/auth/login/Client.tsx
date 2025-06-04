@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { Login } from '@/components/Auth/Login';
+import { useAuth } from '@/modules/auth/context/useAuth';
 
 export const Client= () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -26,7 +26,7 @@ export const Client= () => {
   }
 
   if (isAuthenticated) {
-    return null; // Se redirigirá automáticamente
+    return null; 
   }
 
   return (

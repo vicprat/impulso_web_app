@@ -1,20 +1,21 @@
 
 'use client';
 
-import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { useAuth } from "../context/useAuth";
 
 
-interface PermissionGuardProps {
+
+type Props = {
   permission: string;
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
 
-export function PermissionGuard({ 
+export const Permission: React.FC<Props> = ({ 
   permission, 
   children, 
   fallback 
-}: PermissionGuardProps) {
+}) => {
   const { hasPermission, isLoading } = useAuth();
 
   if (isLoading) {
