@@ -1,18 +1,19 @@
 export const GET_CUSTOMER_PROFILE_QUERY = `
-  query GetCustomerProfile {
+  query GetProfile {
     customer {
       id
       firstName
       lastName
+      displayName
+      creationDate
       emailAddress {
         emailAddress
       }
       phoneNumber {
         phoneNumber
       }
-      createdAt
-      updatedAt
-      acceptsMarketing
+      imageUrl
+      tags
       defaultAddress {
         id
         firstName
@@ -21,86 +22,222 @@ export const GET_CUSTOMER_PROFILE_QUERY = `
         address1
         address2
         city
-        province
         zip
         country
-        phone
+        phoneNumber
       }
     }
   }
 `;
 
 export const GET_CUSTOMER_ADDRESSES_QUERY = `
-  query GetCustomerAddresses {
+  query GetAddresses($first: Int!) {
     customer {
-      addresses {
-        id
-        firstName
-        lastName
-        company
-        address1
-        address2
-        city
-        province
-        zip
-        country
-        phone
+      addresses(first: $first) {
+        edges {
+          node {
+            id
+            firstName
+            lastName
+            company
+            address1
+            address2
+            city
+            zip
+            country
+            province
+            phoneNumber
+            territoryCode
+            zoneCode
+            formattedArea
+          }
+        }
       }
     }
   }
 `;
 
 export const GET_CUSTOMER_ORDERS_QUERY = `
-  query GetCustomerOrders($first: Int!, $after: String) {
+  query GetOrders($first: Int!, $after: String) {
     customer {
       orders(first: $first, after: $after) {
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
         edges {
+          cursor
           node {
             id
             name
             processedAt
-            fulfillmentStatus
-            financialStatus
-            currentTotalPrice {
+            createdAt
+            updatedAt
+            totalPrice {
               amount
               currencyCode
             }
+            fulfillmentStatus
+            financialStatus
+            currencyCode
+            email
+            cancelledAt
+            cancelReason
+            confirmationNumber
+            edited
+            requiresShipping
+            statusPageUrl
             lineItems(first: 10) {
               edges {
                 node {
+                  id
                   title
                   quantity
-                  variant {
-                    id
-                    title
-                    image {
-                      url
-                      altText
-                    }
-                    price {
-                      amount
-                      currencyCode
-                    }
+                  price {
+                    amount
+                    currencyCode
                   }
                 }
               }
             }
             shippingAddress {
+              id
               firstName
               lastName
               address1
               address2
               city
-              province
               zip
               country
             }
+            billingAddress {
+              id
+              firstName
+              lastName
+              address1
+              address2
+              city
+              zip
+              country
+            }
+            subtotal {
+              amount
+              currencyCode
+            }
+            totalRefunded {
+              amount
+              currencyCode
+            }
+            totalShipping {
+              amount
+              currencyCode
+            }
+            totalTax {
+              amount
+              currencyCode
+            }
           }
         }
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+          startCursor
+          endCursor
+        }
+      }
+    }
+  }
+`;
+
+export const GET_SINGLE_ORDER_QUERY = `
+  query GetOrder($id: ID!) {
+    order(id: $id) {
+      id
+      name
+      processedAt
+      createdAt
+      updatedAt
+      totalPrice {
+        amount
+        currencyCode
+      }
+      fulfillmentStatus
+      financialStatus
+      currencyCode
+      email
+      cancelledAt
+      cancelReason
+      confirmationNumber
+      edited
+      requiresShipping
+      statusPageUrl
+      lineItems(first: 50) {
+        edges {
+          node {
+            id
+            title
+            quantity
+            price {
+              amount
+              currencyCode
+            }
+          }
+        }
+      }
+      shippingAddress {
+        id
+        firstName
+        lastName
+        address1
+        address2
+        city
+        zip
+        country
+      }
+      billingAddress {
+        id
+        firstName
+        lastName
+        address1
+        address2
+        city
+        zip
+        country
+      }
+      subtotal {
+        amount
+        currencyCode
+      }
+      totalRefunded {
+        amount
+        currencyCode
+      }
+      totalShipping {
+        amount
+        currencyCode
+      }
+      totalTax {
+        amount
+        currencyCode
+      }
+      fulfillments {
+        edges {
+          node {
+            id
+            status
+            trackingCompany
+            trackingNumbers
+            updatedAt
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_BASIC_INFO_QUERY = `
+  query GetBasicInfo {
+    customer {
+      id
+      displayName
+      emailAddress {
+        emailAddress
       }
     }
   }
@@ -113,24 +250,25 @@ export const UPDATE_CUSTOMER_MUTATION = `
         id
         firstName
         lastName
+        displayName
         emailAddress {
           emailAddress
         }
         phoneNumber {
           phoneNumber
         }
-        acceptsMarketing
       }
       userErrors {
         field
         message
+        code
       }
     }
   }
 `;
 
 export const CREATE_CUSTOMER_ADDRESS_MUTATION = `
-  mutation CreateCustomerAddress($address: CustomerAddressInput!) {
+  mutation CreateAddress($address: CustomerAddressInput!) {
     customerAddressCreate(address: $address) {
       customerAddress {
         id
@@ -140,22 +278,25 @@ export const CREATE_CUSTOMER_ADDRESS_MUTATION = `
         address1
         address2
         city
-        province
         zip
         country
-        phone
+        province
+        phoneNumber
+        territoryCode
+        zoneCode
       }
       userErrors {
         field
         message
+        code
       }
     }
   }
 `;
 
 export const UPDATE_CUSTOMER_ADDRESS_MUTATION = `
-  mutation UpdateCustomerAddress($id: ID!, $address: CustomerAddressInput!) {
-    customerAddressUpdate(id: $id, address: $address) {
+  mutation UpdateAddress($addressId: ID!, $address: CustomerAddressInput) {
+    customerAddressUpdate(addressId: $addressId, address: $address) {
       customerAddress {
         id
         firstName
@@ -164,34 +305,38 @@ export const UPDATE_CUSTOMER_ADDRESS_MUTATION = `
         address1
         address2
         city
-        province
         zip
         country
-        phone
+        province
+        phoneNumber
+        territoryCode
+        zoneCode
       }
       userErrors {
         field
         message
+        code
       }
     }
   }
 `;
 
 export const DELETE_CUSTOMER_ADDRESS_MUTATION = `
-  mutation DeleteCustomerAddress($id: ID!) {
-    customerAddressDelete(id: $id) {
+  mutation DeleteAddress($addressId: ID!) {
+    customerAddressDelete(addressId: $addressId) {
       deletedCustomerAddressId
       userErrors {
         field
         message
+        code
       }
     }
   }
 `;
 
 export const SET_DEFAULT_ADDRESS_MUTATION = `
-  mutation SetDefaultAddress($id: ID!) {
-    customerDefaultAddressUpdate(addressId: $id) {
+  mutation SetDefaultAddress($addressId: ID!) {
+    customerDefaultAddressUpdate(addressId: $addressId) {
       customer {
         id
         defaultAddress {
@@ -201,6 +346,7 @@ export const SET_DEFAULT_ADDRESS_MUTATION = `
       userErrors {
         field
         message
+        code
       }
     }
   }

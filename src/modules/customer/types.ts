@@ -1,171 +1,207 @@
-import { ApiResponse } from "@/types";
-
-export type Money = {
-  amount: string;
-  currencyCode: string;
-};
-
-export type CustomerAddress = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  company?: string;
-  address1: string;
-  address2?: string;
-  city: string;
-  province: string;
-  zip: string;
-  country: string;
-  phone?: string;
-};
-
-export type CustomerAddressInput = {
-  firstName: string;
-  lastName: string;
-  company?: string;
-  address1: string;
-  address2?: string;
-  city: string;
-  province: string;
-  zip: string;
-  country: string;
-  phone?: string;
-};
-
-export type EmailAddress = {
-  emailAddress: string;
-};
-
-export type PhoneNumber = {
-  phoneNumber: string;
-};
-
-export type Customer = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  emailAddress: EmailAddress;
-  phoneNumber?: PhoneNumber;
-  createdAt: string;
-  updatedAt: string;
-  acceptsMarketing: boolean;
-  defaultAddress?: CustomerAddress;
-};
-
-export type CustomerUpdateInput = {
+export interface CustomerUpdateInput {
   firstName?: string;
   lastName?: string;
-  emailAddress?: string;
-  phoneNumber?: string;
-  acceptsMarketing?: boolean;
-};
+}
 
-export type OrderLineItemVariant = {
-  id: string;
-  title: string;
-  image?: {
-    url: string;
-    altText: string | null;
-  };
-  price: Money;
-};
-
-export type OrderLineItem = {
-  title: string;
-  quantity: number;
-  variant?: OrderLineItemVariant;
-};
-
-export type OrderShippingAddress = {
-  firstName: string;
-  lastName: string;
-  address1: string;
+export interface CustomerAddressInput {
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  address1?: string;
   address2?: string;
-  city: string;
-  province: string;
-  zip: string;
-  country: string;
-};
+  city?: string;
+  zip?: string;
+  territoryCode?: string;
+  zoneCode?: string;
+  phoneNumber?: string;
+}
 
-export type Order = {
+export interface CustomerAddress {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  zip?: string;
+  country?: string;
+  province?: string;
+  phoneNumber?: string;
+  territoryCode?: string;
+  zoneCode?: string;
+  formattedArea?: string;
+}
+
+export interface CustomerOrder {
   id: string;
   name: string;
   processedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  totalPrice: {
+    amount: string;
+    currencyCode: string;
+  };
   fulfillmentStatus: string;
   financialStatus: string;
-  currentTotalPrice: Money;
-  lineItems: OrderLineItem[];
-  shippingAddress?: OrderShippingAddress;
-};
-
-export type OrdersPageInfo = {
-  hasNextPage: boolean;
-  endCursor: string | null;
-};
-
-export type UserError = {
-  field: string[];
-  message: string;
-};
-
-export type GraphQLError = {
-  message: string;
-  locations?: Array<{
-    line: number;
-    column: number;
-  }>;
-  path?: string[];
-  extensions?: Record<string, unknown>;
-};
-export type CustomerProfileResponse = ApiResponse<Customer>;
-export type CustomerAddressesResponse = ApiResponse<CustomerAddress[]>;
-export type CustomerAddressResponse = ApiResponse<CustomerAddress>;
-export type CustomerOrdersResponse = ApiResponse<{
-  orders: Order[];
-  pageInfo: OrdersPageInfo;
-}>;
-export type CustomerUpdateResponse = ApiResponse<Customer>;
-
-export type OrdersSearchParams = {
-  first?: number;
-  after?: string | null;
-};
-
-export type RawOrderLineItem = {
-  title: string;
-  quantity: number;
-  variant: {
-    id: string;
-    title: string;
-    image: {
-      url: string;
-      altText: string | null;
-    } | null;
-    price: Money;
-  } | null;
-};
-
-export type RawOrder = {
-  id: string;
-  name: string;
-  processedAt: string;
-  fulfillmentStatus: string;
-  financialStatus: string;
-  currentTotalPrice: Money;
+  currencyCode: string;
+  email: string;
+  cancelledAt?: string;
+  cancelReason?: string;
+  confirmationNumber: string;
+  edited: boolean;
+  requiresShipping: boolean;
+  statusPageUrl: string;
   lineItems: {
     edges: Array<{
-      node: RawOrderLineItem;
+      node: {
+        id: string;
+        title: string;
+        quantity: number;
+        price: {
+          amount: string;
+          currencyCode: string;
+        };
+      };
     }>;
   };
-  shippingAddress: OrderShippingAddress | null;
-};
+  shippingAddress?: CustomerAddress;
+  billingAddress?: CustomerAddress;
+  subtotal: {
+    amount: string;
+    currencyCode: string;
+  };
+  totalRefunded: {
+    amount: string;
+    currencyCode: string;
+  };
+  totalShipping: {
+    amount: string;
+    currencyCode: string;
+  };
+  totalTax: {
+    amount: string;
+    currencyCode: string;
+  };
+  fulfillments?: {
+    edges: Array<{
+      node: {
+        id: string;
+        status: string;
+        trackingCompany?: string;
+        trackingNumbers: string[];
+        updatedAt: string;
+      };
+    }>;
+  };
+}
 
-export type CustomerAddressCreateResult = {
-  customerAddress: CustomerAddress;
-  userErrors: UserError[];
-};
+export interface ShopifyCustomerProfile {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  creationDate: string;
+  emailAddress: {
+    emailAddress: string;
+  };
+  phoneNumber?: {
+    phoneNumber: string;
+  };
+  imageUrl?: string;
+  tags: string[];
+  defaultAddress?: CustomerAddress;
+}
 
-export type CustomerUpdateResult = {
-  customer: Customer;
-  userErrors: UserError[];
-};
+
+export interface UserProfile {
+  id: string;
+  shopifyCustomerId: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  roles: string[];
+  permissions: string[];
+  
+  // Datos extendidos de Postgres
+  postgresData?: {
+    lastLoginAt?: Date;
+    preferences?: UserPreferences;
+    // Agregar más campos custom aquí
+  };
+  
+  // Datos de Shopify
+  shopifyData?: {
+    displayName?: string;
+    imageUrl?: string;
+    phoneNumber?: string;
+    tags: string[];
+    defaultAddress?: CustomerAddress;
+    addresses: CustomerAddress[];
+    orderCount: number;
+  };
+  
+  // Estados de sincronización
+  syncStatus: {
+    shopifyLoading: boolean;
+    postgresLoading: boolean;
+    hasShopifyData: boolean;
+    hasPostgresData: boolean;
+    shopifyError: any;
+    postgresError: any;
+  };
+  
+  // Flag para cambios pendientes
+  needsShopifySync?: boolean;
+}
+
+export interface UserPreferences {
+  language?: string;
+  timezone?: string;
+  notifications?: {
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  };
+  theme?: 'light' | 'dark' | 'system';
+  // Agregar más preferencias custom aquí
+}
+
+export interface UserFilters {
+  search?: string;
+  role?: string;
+  isActive?: boolean;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+// /types/sync.ts - Types para sincronización
+export interface SyncOperation {
+  id: string;
+  timestamp: Date;
+  status: 'success' | 'error' | 'pending';
+  changes: string[];
+  direction: 'local_to_shopify' | 'shopify_to_local';
+  error?: string;
+}
+
+export interface SyncDifference {
+  field: string;
+  local: any;
+  shopify: any;
+  type: 'update' | 'create' | 'delete';
+}

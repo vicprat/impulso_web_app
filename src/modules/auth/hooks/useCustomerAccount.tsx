@@ -57,23 +57,34 @@ export function useCustomerAccount() {
     }
   }, [isAuthenticated]);
 
-  const getOrders = useCallback(async (first: number = 10) => {
+  const getOrders = useCallback(async (first: number = 10, after?: string) => {
     const query = `
-      query GetOrders($first: Int!) {
+      query GetOrders($first: Int!, $after: String) {
         customer {
-          orders(first: $first) {
+          orders(first: $first, after: $after) {
             edges {
+              cursor
               node {
                 id
                 name
                 processedAt
+                createdAt
+                updatedAt
                 totalPrice {
                   amount
                   currencyCode
                 }
                 fulfillmentStatus
                 financialStatus
-                lineItems(first: 5) {
+                currencyCode
+                email
+                cancelledAt
+                cancelReason
+                confirmationNumber
+                edited
+                requiresShipping
+                statusPageUrl
+                lineItems(first: 10) {
                   edges {
                     node {
                       id
@@ -87,19 +98,47 @@ export function useCustomerAccount() {
                   }
                 }
                 shippingAddress {
+                  id
                   firstName
                   lastName
                   address1
                   address2
                   city
-                  province
                   zip
                   country
+                }
+                billingAddress {
+                  id
+                  firstName
+                  lastName
+                  address1
+                  address2
+                  city
+                  zip
+                  country
+                }
+                subtotal {
+                  amount
+                  currencyCode
+                }
+                totalRefunded {
+                  amount
+                  currencyCode
+                }
+                totalShipping {
+                  amount
+                  currencyCode
+                }
+                totalTax {
+                  amount
+                  currencyCode
                 }
               }
             }
             pageInfo {
               hasNextPage
+              hasPreviousPage
+              startCursor
               endCursor
             }
           }
@@ -108,29 +147,96 @@ export function useCustomerAccount() {
     `;
 
     try {
-      const data = await fetchCustomerData(query, { first });
-      return data.customer.orders.edges.map((edge: Edge<CustomerOrder>) => edge.node) as CustomerOrder[];
+      const data = await fetchCustomerData(query, { first, after });
+      return {
+        orders: data.customer.orders.edges.map((edge: Edge<CustomerOrder>) => edge.node) as CustomerOrder[],
+        pageInfo: data.customer.orders.pageInfo
+      };
     } catch (error) {
       throw error;
     }
   }, [fetchCustomerData]);
 
-  const getAddresses = useCallback(async () => {
+  const getOrder = useCallback(async (orderId: string) => {
     const query = `
-      query GetAddresses {
-        customer {
-          addresses(first: 10) {
+      query GetOrder($id: ID!) {
+        order(id: $id) {
+          id
+          name
+          processedAt
+          createdAt
+          updatedAt
+          totalPrice {
+            amount
+            currencyCode
+          }
+          fulfillmentStatus
+          financialStatus
+          currencyCode
+          email
+          cancelledAt
+          cancelReason
+          confirmationNumber
+          edited
+          requiresShipping
+          statusPageUrl
+          lineItems(first: 50) {
             edges {
               node {
                 id
-                firstName
-                lastName
-                address1
-                address2
-                city
-                province
-                zip
-                country
+                title
+                quantity
+                price {
+                  amount
+                  currencyCode
+                }
+              }
+            }
+          }
+          shippingAddress {
+            id
+            firstName
+            lastName
+            address1
+            address2
+            city
+            zip
+            country
+          }
+          billingAddress {
+            id
+            firstName
+            lastName
+            address1
+            address2
+            city
+            zip
+            country
+          }
+          subtotal {
+            amount
+            currencyCode
+          }
+          totalRefunded {
+            amount
+            currencyCode
+          }
+          totalShipping {
+            amount
+            currencyCode
+          }
+          totalTax {
+            amount
+            currencyCode
+          }
+          fulfillments {
+            edges {
+              node {
+                id
+                status
+                trackingCompany
+                trackingNumbers
+                updatedAt
               }
             }
           }
@@ -139,7 +245,43 @@ export function useCustomerAccount() {
     `;
 
     try {
-      const data = await fetchCustomerData(query);
+      const data = await fetchCustomerData(query, { id: orderId });
+      return data.order;
+    } catch (error) {
+      throw error;
+    }
+  }, [fetchCustomerData]);
+
+  const getAddresses = useCallback(async (first: number = 10) => {
+    const query = `
+      query GetAddresses($first: Int!) {
+        customer {
+          addresses(first: $first) {
+            edges {
+              node {
+                id
+                firstName
+                lastName
+                company
+                address1
+                address2
+                city
+                zip
+                country
+                province
+                phoneNumber
+                territoryCode
+                zoneCode
+                formattedArea
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    try {
+      const data = await fetchCustomerData(query, { first });
       return data.customer.addresses.edges.map((edge: Edge<CustomerAddress>) => edge.node) as CustomerAddress[];
     } catch (error) {
       throw error;
@@ -153,22 +295,27 @@ export function useCustomerAccount() {
           id
           firstName
           lastName
+          displayName
+          creationDate
           emailAddress {
             emailAddress
           }
           phoneNumber {
             phoneNumber
           }
+          imageUrl
+          tags
           defaultAddress {
             id
             firstName
             lastName
+            company
             address1
             address2
             city
-            province
             zip
             country
+            phoneNumber
           }
         }
       }
@@ -185,7 +332,6 @@ export function useCustomerAccount() {
   const updateProfile = useCallback(async (input: {
     firstName?: string;
     lastName?: string;
-    phoneNumber?: string;
   }) => {
     const mutation = `
       mutation UpdateCustomer($input: CustomerUpdateInput!) {
@@ -194,6 +340,7 @@ export function useCustomerAccount() {
             id
             firstName
             lastName
+            displayName
             emailAddress {
               emailAddress
             }
@@ -204,6 +351,7 @@ export function useCustomerAccount() {
           userErrors {
             field
             message
+            code
           }
         }
       }
@@ -233,7 +381,8 @@ export function useCustomerAccount() {
       }
 
       if (data.data.customerUpdate.userErrors.length > 0) {
-        throw new Error(data.data.customerUpdate.userErrors[0]?.message || 'Validation error');
+        const error = data.data.customerUpdate.userErrors[0];
+        throw new Error(`${error.message} (Code: ${error.code || 'UNKNOWN'})`);
       }
 
       return data.data.customerUpdate.customer;
@@ -243,14 +392,16 @@ export function useCustomerAccount() {
   }, []);
 
   const createAddress = useCallback(async (addressInput: {
-    firstName: string;
-    lastName: string;
-    address1: string;
+    firstName?: string;
+    lastName?: string;
+    company?: string;
+    address1?: string;
     address2?: string;
-    city: string;
-    province: string;
-    zip: string;
-    country: string;
+    city?: string;
+    zip?: string;
+    territoryCode?: string;
+    zoneCode?: string;
+    phoneNumber?: string;
   }) => {
     const mutation = `
       mutation CreateAddress($address: CustomerAddressInput!) {
@@ -259,22 +410,32 @@ export function useCustomerAccount() {
             id
             firstName
             lastName
+            company
             address1
             address2
             city
-            province
             zip
             country
+            province
+            phoneNumber
+            territoryCode
+            zoneCode
           }
           userErrors {
             field
             message
+            code
           }
         }
       }
     `;
 
     try {
+      // Filtrar campos undefined y defaultAddress
+      const cleanAddressInput = Object.fromEntries(
+        Object.entries(addressInput).filter(([_, value]) => value !== undefined && value !== '')
+      );
+
       const response = await fetch('/api/customer/graphql', {
         method: 'POST',
         headers: {
@@ -283,7 +444,7 @@ export function useCustomerAccount() {
         credentials: 'include',
         body: JSON.stringify({ 
           query: mutation,
-          variables: { address: addressInput }
+          variables: { address: cleanAddressInput }
         }),
       });
 
@@ -298,10 +459,106 @@ export function useCustomerAccount() {
       }
 
       if (data.data.customerAddressCreate.userErrors.length > 0) {
-        throw new Error(data.data.customerAddressCreate.userErrors[0]?.message || 'Validation error');
+        const error = data.data.customerAddressCreate.userErrors[0];
+        let errorMessage = error.message;
+        
+        // Mejorar mensajes de error específicos
+        if (error.code === 'INVALID_TERRITORY_CODE') {
+          errorMessage = `Código de país inválido. Use códigos ISO de 2 letras como: MX (México), US (Estados Unidos), CA (Canadá). Valor proporcionado: "${addressInput.territoryCode}"`;
+        }
+        
+        throw new Error(`${errorMessage} (Code: ${error.code || 'UNKNOWN'})`);
       }
 
       return data.data.customerAddressCreate.customerAddress;
+    } catch (error) {
+      throw error;
+    }
+  }, []);
+
+  const updateAddress = useCallback(async (
+    addressId: string,
+    addressInput: {
+      firstName?: string;
+      lastName?: string;
+      company?: string;
+      address1?: string;
+      address2?: string;
+      city?: string;
+      zip?: string;
+      territoryCode?: string;
+      zoneCode?: string;
+      phoneNumber?: string;
+    }
+  ) => {
+    const mutation = `
+      mutation UpdateAddress($addressId: ID!, $address: CustomerAddressInput) {
+        customerAddressUpdate(addressId: $addressId, address: $address) {
+          customerAddress {
+            id
+            firstName
+            lastName
+            company
+            address1
+            address2
+            city
+            zip
+            country
+            province
+            phoneNumber
+            territoryCode
+            zoneCode
+          }
+          userErrors {
+            field
+            message
+            code
+          }
+        }
+      }
+    `;
+
+    try {
+      // Filtrar campos undefined
+      const cleanAddressInput = Object.fromEntries(
+        Object.entries(addressInput).filter(([_, value]) => value !== undefined && value !== '')
+      );
+
+      const response = await fetch('/api/customer/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          query: mutation,
+          variables: { addressId, address: cleanAddressInput }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update address (Status: ${response.status})`);
+      }
+
+      const data = await response.json();
+      
+      if (data.errors) {
+        throw new Error(data.errors[0]?.message || 'GraphQL error');
+      }
+
+      if (data.data.customerAddressUpdate.userErrors.length > 0) {
+        const error = data.data.customerAddressUpdate.userErrors[0];
+        let errorMessage = error.message;
+        
+        // Mejorar mensajes de error específicos
+        if (error.code === 'INVALID_TERRITORY_CODE') {
+          errorMessage = `Código de país inválido. Use códigos ISO de 2 letras como: MX (México), US (Estados Unidos), CA (Canadá). Valor proporcionado: "${addressInput.territoryCode}"`;
+        }
+        
+        throw new Error(`${errorMessage} (Code: ${error.code || 'UNKNOWN'})`);
+      }
+
+      return data.data.customerAddressUpdate.customerAddress;
     } catch (error) {
       throw error;
     }
@@ -312,6 +569,7 @@ export function useCustomerAccount() {
       query GetBasicInfo {
         customer {
           id
+          displayName
           emailAddress {
             emailAddress
           }
@@ -327,13 +585,78 @@ export function useCustomerAccount() {
     }
   }, [fetchCustomerData]);
 
+  const updateShopifyProfile = useCallback(async (profileData: {
+    firstName?: string;
+    lastName?: string;
+  }) => {
+    const mutation = `
+      mutation UpdateCustomer($input: CustomerUpdateInput!) {
+        customerUpdate(input: $input) {
+          customer {
+            id
+            firstName
+            lastName
+            displayName
+            emailAddress {
+              emailAddress
+            }
+            phoneNumber {
+              phoneNumber
+            }
+          }
+          userErrors {
+            field
+            message
+            code
+          }
+        }
+      }
+    `;
+
+    try {
+      const response = await fetch('/api/customer/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          query: mutation,
+          variables: { input: profileData }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update Shopify profile (Status: ${response.status})`);
+      }
+
+      const data = await response.json();
+      
+      if (data.errors) {
+        throw new Error(data.errors[0]?.message || 'GraphQL error');
+      }
+
+      if (data.data.customerUpdate.userErrors.length > 0) {
+        const error = data.data.customerUpdate.userErrors[0];
+        throw new Error(`${error.message} (Code: ${error.code || 'UNKNOWN'})`);
+      }
+
+      return data.data.customerUpdate.customer;
+    } catch (error) {
+      throw error;
+    }
+  }, []);
+
   return {
     isLoading,
     getOrders,
+    getOrder,
     getAddresses,
     getProfile,
     updateProfile,
+    updateShopifyProfile,
     createAddress,
+    updateAddress,
     getBasicInfo,
     fetchCustomerData,
   };
