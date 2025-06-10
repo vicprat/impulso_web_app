@@ -1,3 +1,4 @@
+// src/modules/customer/api.ts - AGREGAR estas importaciones y exportaciones
 import {
   GET_CUSTOMER_PROFILE_QUERY,
   GET_CUSTOMER_ADDRESSES_QUERY,
@@ -10,6 +11,16 @@ import {
   DELETE_CUSTOMER_ADDRESS_MUTATION,
   SET_DEFAULT_ADDRESS_MUTATION,
 } from './queries';
+
+// AGREGAR estas nuevas importaciones
+import {
+  GET_CART_QUERY,
+  ADD_TO_CART_MUTATION,
+  UPDATE_CART_LINES_MUTATION,
+  REMOVE_FROM_CART_MUTATION,
+  CREATE_CART_MUTATION,
+  APPLY_DISCOUNT_CODE_MUTATION,
+} from './cart-queries';
 
 const makeShopifyRequest = async (query: string, variables?: Record<string, unknown>) => {
   const response = await fetch('/api/customer/graphql', {
@@ -50,14 +61,12 @@ export const customerApi = {
   getAddresses: (first: number = 10) => 
     makeShopifyRequest(GET_CUSTOMER_ADDRESSES_QUERY, { first }),
   createAddress: (address: any) => {
-    // Filtrar campos undefined
     const cleanAddressInput = Object.fromEntries(
       Object.entries(address).filter(([_, value]) => value !== undefined && value !== '')
     );
     return makeShopifyRequest(CREATE_CUSTOMER_ADDRESS_MUTATION, { address: cleanAddressInput });
   },
   updateAddress: (addressId: string, address: any) => {
-    // Filtrar campos undefined
     const cleanAddressInput = Object.fromEntries(
       Object.entries(address).filter(([_, value]) => value !== undefined && value !== '')
     );
@@ -75,4 +84,90 @@ export const customerApi = {
   },
   getOrder: (orderId: string) =>
     makeShopifyRequest(GET_SINGLE_ORDER_QUERY, { id: orderId }),
+
+  // AGREGAR: Cart functions
+  getCart: async () => {
+    try {
+      const data = await makeShopifyRequest(GET_CART_QUERY);
+      return data.customer?.cart || null;
+    } catch (error) {
+      console.error('Error getting cart:', error);
+      throw error;
+    }
+  },
+
+  createCart: async (input: any = {}) => {
+    try {
+      const data = await makeShopifyRequest(CREATE_CART_MUTATION, { input });
+      
+      if (data.cartCreate.userErrors?.length > 0) {
+        throw new Error(data.cartCreate.userErrors[0].message);
+      }
+      
+      return data.cartCreate;
+    } catch (error) {
+      console.error('Error creating cart:', error);
+      throw error;
+    }
+  },
+
+  addToCart: async (cartId: string, lines: any[]) => {
+    try {
+      const data = await makeShopifyRequest(ADD_TO_CART_MUTATION, { cartId, lines });
+      
+      if (data.cartLinesAdd.userErrors?.length > 0) {
+        throw new Error(data.cartLinesAdd.userErrors[0].message);
+      }
+      
+      return data.cartLinesAdd;
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      throw error;
+    }
+  },
+
+  updateCartLines: async (cartId: string, lines: any[]) => {
+    try {
+      const data = await makeShopifyRequest(UPDATE_CART_LINES_MUTATION, { cartId, lines });
+      
+      if (data.cartLinesUpdate.userErrors?.length > 0) {
+        throw new Error(data.cartLinesUpdate.userErrors[0].message);
+      }
+      
+      return data.cartLinesUpdate;
+    } catch (error) {
+      console.error('Error updating cart lines:', error);
+      throw error;
+    }
+  },
+
+  removeFromCart: async (cartId: string, lineIds: string[]) => {
+    try {
+      const data = await makeShopifyRequest(REMOVE_FROM_CART_MUTATION, { cartId, lineIds });
+      
+      if (data.cartLinesRemove.userErrors?.length > 0) {
+        throw new Error(data.cartLinesRemove.userErrors[0].message);
+      }
+      
+      return data.cartLinesRemove;
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      throw error;
+    }
+  },
+
+  applyDiscountCode: async (cartId: string, discountCodes: string[]) => {
+    try {
+      const data = await makeShopifyRequest(APPLY_DISCOUNT_CODE_MUTATION, { cartId, discountCodes });
+      
+      if (data.cartDiscountCodesUpdate.userErrors?.length > 0) {
+        throw new Error(data.cartDiscountCodesUpdate.userErrors[0].message);
+      }
+      
+      return data.cartDiscountCodesUpdate;
+    } catch (error) {
+      console.error('Error applying discount code:', error);
+      throw error;
+    }
+  },
 };
