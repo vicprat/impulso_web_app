@@ -1,321 +1,78 @@
-import { handleGraphQLErrors } from "@/lib/graphql";
-import {
-  Customer,
-  CustomerAddress,
-  CustomerAddressInput,
-  CustomerUpdateInput,
-  Order,
-  OrdersSearchParams,
-  CustomerProfileResponse,
-  CustomerAddressesResponse,
-  CustomerAddressResponse,
-  CustomerOrdersResponse,
-  CustomerUpdateResponse,
-  RawOrder,
-  UserError,
-} from "./types";
 import {
   GET_CUSTOMER_PROFILE_QUERY,
   GET_CUSTOMER_ADDRESSES_QUERY,
   GET_CUSTOMER_ORDERS_QUERY,
+  GET_SINGLE_ORDER_QUERY,
+  GET_BASIC_INFO_QUERY,
   UPDATE_CUSTOMER_MUTATION,
   CREATE_CUSTOMER_ADDRESS_MUTATION,
   UPDATE_CUSTOMER_ADDRESS_MUTATION,
   DELETE_CUSTOMER_ADDRESS_MUTATION,
   SET_DEFAULT_ADDRESS_MUTATION,
-} from "./queries";
-import { transformOrderData } from "./helpers";
-import { Edge } from "../shopify/types";
+} from './queries';
 
-/**
- * Simple GraphQL request function (similar to what you already do in endpoints)
- */
-const makeGraphQLRequest = async (
-  query: string,
-  variables: Record<string, unknown> = {},
-  accessToken: string
-) => {
-  const apiUrl = `https://shopify.com/${process.env.SHOPIFY_SHOP_ID}/account/customer/api/${process.env.SHOPIFY_API_VERSION}/graphql`;
-
-  const response = await fetch(apiUrl, {
+const makeShopifyRequest = async (query: string, variables?: Record<string, unknown>) => {
+  const response = await fetch('/api/customer/graphql', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': accessToken,
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify({
-      query,
-      variables,
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ query, variables: variables || {} }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Shopify API error: ${response.status} ${response.statusText} - ${errorText}`);
+    let errorMessage = 'Failed to fetch customer data';
+    try {
+      const errorData = JSON.parse(errorText);
+      errorMessage = errorData.error || errorData.details || errorMessage;
+    } catch {
+      throw new Error(`${errorMessage}: ${errorText}`);
+    }
+    throw new Error(`${errorMessage} (Status: ${response.status})`);
   }
 
-  const result = await response.json();
-  
-  if (result.errors) {
-    handleGraphQLErrors(result.errors);
+  const data = await response.json();
+  if (data.errors) {
+    throw new Error(data.errors[0]?.message || 'GraphQL error');
   }
 
-  return result;
+  return data.data;
 };
 
 export const customerApi = {
-  /**
-   * Get customer profile
-   */
-  getProfile: async (accessToken: string): Promise<CustomerProfileResponse> => {
-    try {
-      const { data } = await makeGraphQLRequest(GET_CUSTOMER_PROFILE_QUERY, {}, accessToken);
-      
-      const responseData = data as { customer?: Customer };
-      if (!responseData.customer) {
-        throw new Error('Customer data not found');
-      }
+  // Profile
+  getProfile: () => makeShopifyRequest(GET_CUSTOMER_PROFILE_QUERY),
+  getBasicInfo: () => makeShopifyRequest(GET_BASIC_INFO_QUERY),
+  updateProfile: (input: { firstName?: string; lastName?: string }) => 
+    makeShopifyRequest(UPDATE_CUSTOMER_MUTATION, { input }),
 
-      return {
-        data: responseData.customer,
-        statusCode: 200
-      };
-    } catch (error) {
-      console.error("Error fetching customer profile:", error);
-      throw error;
-    }
+  // Addresses
+  getAddresses: (first: number = 10) => 
+    makeShopifyRequest(GET_CUSTOMER_ADDRESSES_QUERY, { first }),
+  createAddress: (address: any) => {
+    // Filtrar campos undefined
+    const cleanAddressInput = Object.fromEntries(
+      Object.entries(address).filter(([_, value]) => value !== undefined && value !== '')
+    );
+    return makeShopifyRequest(CREATE_CUSTOMER_ADDRESS_MUTATION, { address: cleanAddressInput });
   },
-
-  /**
-   * Update customer profile
-   */
-  updateProfile: async (input: CustomerUpdateInput, accessToken: string): Promise<CustomerUpdateResponse> => {
-    try {
-      const { data } = await makeGraphQLRequest(UPDATE_CUSTOMER_MUTATION, { input }, accessToken);
-
-      const responseData = data as { 
-        customerUpdate: { 
-          customer: Customer; 
-          userErrors: UserError[]; 
-        }; 
-      };
-      
-      const result = responseData.customerUpdate;
-      
-      if (result.userErrors && result.userErrors.length > 0) {
-        throw new Error(`Validation errors: ${result.userErrors.map((e: UserError) => e.message).join(', ')}`);
-      }
-
-      return {
-        data: result.customer,
-        statusCode: 200
-      };
-    } catch (error) {
-      console.error("Error updating customer profile:", error);
-      throw error;
-    }
+  updateAddress: (addressId: string, address: any) => {
+    // Filtrar campos undefined
+    const cleanAddressInput = Object.fromEntries(
+      Object.entries(address).filter(([_, value]) => value !== undefined && value !== '')
+    );
+    return makeShopifyRequest(UPDATE_CUSTOMER_ADDRESS_MUTATION, { addressId, address: cleanAddressInput });
   },
+  deleteAddress: (addressId: string) =>
+    makeShopifyRequest(DELETE_CUSTOMER_ADDRESS_MUTATION, { addressId }),
+  setDefaultAddress: (addressId: string) =>
+    makeShopifyRequest(SET_DEFAULT_ADDRESS_MUTATION, { addressId }),
 
-  /**
-   * Get customer addresses
-   */
-  getAddresses: async (accessToken: string): Promise<CustomerAddressesResponse> => {
-    try {
-      const { data } = await makeGraphQLRequest(GET_CUSTOMER_ADDRESSES_QUERY, {}, accessToken);
-      
-      const responseData = data as { customer?: { addresses: CustomerAddress[] } };
-      if (!responseData.customer) {
-        throw new Error('Customer data not found');
-      }
-
-      return {
-        data: responseData.customer.addresses,
-        statusCode: 200
-      };
-    } catch (error) {
-      console.error("Error fetching customer addresses:", error);
-      throw error;
-    }
+  // Orders
+  getOrders: (params: { first?: number; after?: string } = {}) => {
+    const { first = 10, after } = params;
+    return makeShopifyRequest(GET_CUSTOMER_ORDERS_QUERY, { first, after });
   },
-
-  /**
-   * Create customer address
-   */
-  createAddress: async (address: CustomerAddressInput, accessToken: string): Promise<CustomerAddressResponse> => {
-    try {
-      const { data } = await makeGraphQLRequest(CREATE_CUSTOMER_ADDRESS_MUTATION, { address }, accessToken);
-
-      const responseData = data as { 
-        customerAddressCreate: { 
-          customerAddress: CustomerAddress; 
-          userErrors: UserError[]; 
-        }; 
-      };
-      
-      const result = responseData.customerAddressCreate;
-      
-      if (result.userErrors && result.userErrors.length > 0) {
-        throw new Error(`Validation errors: ${result.userErrors.map((e: UserError) => e.message).join(', ')}`);
-      }
-
-      return {
-        data: result.customerAddress,
-        statusCode: 201
-      };
-    } catch (error) {
-      console.error("Error creating customer address:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Update customer address
-   */
-  updateAddress: async (id: string, address: CustomerAddressInput, accessToken: string): Promise<CustomerAddressResponse> => {
-    try {
-      const { data } = await makeGraphQLRequest(UPDATE_CUSTOMER_ADDRESS_MUTATION, { id, address }, accessToken);
-
-      const responseData = data as { 
-        customerAddressUpdate: { 
-          customerAddress: CustomerAddress; 
-          userErrors: UserError[]; 
-        }; 
-      };
-      
-      const result = responseData.customerAddressUpdate;
-      
-      if (result.userErrors && result.userErrors.length > 0) {
-        throw new Error(`Validation errors: ${result.userErrors.map((e: UserError) => e.message).join(', ')}`);
-      }
-
-      return {
-        data: result.customerAddress,
-        statusCode: 200
-      };
-    } catch (error) {
-      console.error("Error updating customer address:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Delete customer address
-   */
-  deleteAddress: async (id: string, accessToken: string): Promise<{ data: { deletedId: string }; statusCode: number }> => {
-    try {
-      const { data } = await makeGraphQLRequest(DELETE_CUSTOMER_ADDRESS_MUTATION, { id }, accessToken);
-
-      const responseData = data as { 
-        customerAddressDelete: { 
-          deletedCustomerAddressId: string; 
-          userErrors: UserError[]; 
-        }; 
-      };
-      
-      const result = responseData.customerAddressDelete;
-      
-      if (result.userErrors && result.userErrors.length > 0) {
-        throw new Error(`Validation errors: ${result.userErrors.map((e: UserError) => e.message).join(', ')}`);
-      }
-
-      return {
-        data: { deletedId: result.deletedCustomerAddressId },
-        statusCode: 200
-      };
-    } catch (error) {
-      console.error("Error deleting customer address:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Set default customer address
-   */
-  setDefaultAddress: async (id: string, accessToken: string): Promise<CustomerProfileResponse> => {
-    try {
-      const { data } = await makeGraphQLRequest(SET_DEFAULT_ADDRESS_MUTATION, { id }, accessToken);
-
-      const responseData = data as { 
-        customerDefaultAddressUpdate: { 
-          customer: Customer; 
-          userErrors: UserError[]; 
-        }; 
-      };
-      
-      const result = responseData.customerDefaultAddressUpdate;
-      
-      if (result.userErrors && result.userErrors.length > 0) {
-        throw new Error(`Validation errors: ${result.userErrors.map((e: UserError) => e.message).join(', ')}`);
-      }
-
-      return {
-        data: result.customer,
-        statusCode: 200
-      };
-    } catch (error) {
-      console.error("Error setting default address:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Get customer orders
-   */
-  getOrders: async (params: OrdersSearchParams = {}, accessToken: string): Promise<CustomerOrdersResponse> => {
-    const { first = 10, after = null } = params;
-    
-    try {
-      const { data } = await makeGraphQLRequest(GET_CUSTOMER_ORDERS_QUERY, { first, after }, accessToken);
-      
-      const responseData = data as { 
-        customer?: { 
-          orders: { 
-            edges: Array<Edge<RawOrder>>; 
-            pageInfo: { hasNextPage: boolean; endCursor: string | null }; 
-          }; 
-        }; 
-      };
-      
-      if (!responseData.customer) {
-        throw new Error('Customer data not found');
-      }
-
-      const orders: Order[] = responseData.customer.orders.edges.map((edge: Edge<RawOrder>) => 
-        transformOrderData(edge.node)
-      );
-
-      return {
-        data: {
-          orders,
-          pageInfo: responseData.customer.orders.pageInfo,
-        },
-        statusCode: 200
-      };
-    } catch (error) {
-      console.error("Error fetching customer orders:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Execute custom GraphQL query
-   */
-  executeGraphQL: async (
-    query: string,
-    variables: Record<string, unknown> = {},
-    accessToken: string
-  ): Promise<{ data: unknown; statusCode: number }> => {
-    try {
-      const { data } = await makeGraphQLRequest(query, variables, accessToken);
-
-      return {
-        data,
-        statusCode: 200
-      };
-    } catch (error) {
-      console.error("Error executing GraphQL query:", error);
-      throw error;
-    }
-  },
+  getOrder: (orderId: string) =>
+    makeShopifyRequest(GET_SINGLE_ORDER_QUERY, { id: orderId }),
 };
