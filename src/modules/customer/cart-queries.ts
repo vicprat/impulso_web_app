@@ -1,335 +1,251 @@
+
+
+
+
+
+
 // src/modules/customer/cart-queries.ts
-export const GET_CART_QUERY = `
-  query GetCart {
-    customer {
-      id
-      cart {
+// These are the CORRECT Shopify Storefront API GraphQL queries
+
+// Fragment for cart cost information
+export const CART_COST_FRAGMENT = `
+  fragment CartCost on CartCost {
+    totalAmount {
+      amount
+      currencyCode
+    }
+    subtotalAmount {
+      amount
+      currencyCode
+    }
+    totalTaxAmount {
+      amount
+      currencyCode
+    }
+    totalDutyAmount {
+      amount
+      currencyCode
+    }
+  }
+`;
+
+// Fragment for cart line information
+export const CART_LINE_FRAGMENT = `
+  fragment CartLine on CartLine {
+    id
+    quantity
+    cost {
+      totalAmount {
+        amount
+        currencyCode
+      }
+    }
+    merchandise {
+      ... on ProductVariant {
         id
-        createdAt
-        updatedAt
-        totalQuantity
-        cost {
-          totalAmount {
-            amount
-            currencyCode
-          }
-          subtotalAmount {
-            amount
-            currencyCode
-          }
-          totalTaxAmount {
-            amount
-            currencyCode
-          }
-          totalDutyAmount {
-            amount
-            currencyCode
-          }
+        title
+        price {
+          amount
+          currencyCode
         }
-        lines(first: 250) {
-          edges {
-            node {
-              id
-              quantity
-              cost {
-                totalAmount {
-                  amount
-                  currencyCode
-                }
-              }
-              merchandise {
-                ... on ProductVariant {
-                  id
-                  title
-                  product {
-                    id
-                    title
-                    handle
-                    featuredImage {
-                      id
-                      url
-                      altText
-                      width
-                      height
-                    }
-                  }
-                  image {
-                    id
-                    url
-                    altText
-                    width
-                    height
-                  }
-                  price {
-                    amount
-                    currencyCode
-                  }
-                  compareAtPrice {
-                    amount
-                    currencyCode
-                  }
-                  selectedOptions {
-                    name
-                    value
-                  }
-                  availableForSale
-                }
-              }
-              attributes {
-                key
-                value
-              }
-            }
-          }
-        }
-        attributes {
-          key
-          value
-        }
-        discountCodes {
-          applicable
-          code
-        }
-        discountAllocations {
-          discountedAmount {
-            amount
-            currencyCode
-          }
-          ... on CartAutomaticDiscountAllocation {
-            title
-          }
-          ... on CartCodeDiscountAllocation {
-            code
-          }
+        product {
+          id
+          title
+          handle
         }
       }
     }
   }
 `;
 
-export const ADD_TO_CART_MUTATION = `
-  mutation CartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
-    cartLinesAdd(cartId: $cartId, lines: $lines) {
-      cart {
-        id
-        createdAt
-        updatedAt
-        totalQuantity
-        cost {
-          totalAmount {
-            amount
-            currencyCode
-          }
-          subtotalAmount {
-            amount
-            currencyCode
-          }
-          totalTaxAmount {
-            amount
-            currencyCode
-          }
-        }
-        lines(first: 250) {
-          edges {
-            node {
-              id
-              quantity
-              cost {
-                totalAmount {
-                  amount
-                  currencyCode
-                }
-              }
-              merchandise {
-                ... on ProductVariant {
-                  id
-                  title
-                  product {
-                    id
-                    title
-                    handle
-                    featuredImage {
-                      id
-                      url
-                      altText
-                    }
-                  }
-                  price {
-                    amount
-                    currencyCode
-                  }
-                  selectedOptions {
-                    name
-                    value
-                  }
-                }
-              }
-            }
-          }
+// Fragment for full cart information
+export const CART_FRAGMENT = `
+  fragment Cart on Cart {
+    id
+    createdAt
+    updatedAt
+    totalQuantity
+    cost {
+      ...CartCost
+    }
+    lines(first: 250) {
+      edges {
+        node {
+          ...CartLine
         }
       }
-      userErrors {
-        field
-        message
-        code
+    }
+    discountCodes {
+      code
+      applicable
+    }
+    estimatedCost {
+      totalAmount {
+        amount
+        currencyCode
+      }
+      subtotalAmount {
+        amount
+        currencyCode
+      }
+      totalTaxAmount {
+        amount
+        currencyCode
+      }
+      totalDutyAmount {
+        amount
+        currencyCode
       }
     }
   }
+  ${CART_COST_FRAGMENT}
+  ${CART_LINE_FRAGMENT}
 `;
 
-export const UPDATE_CART_LINES_MUTATION = `
-  mutation CartLinesUpdate($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
-    cartLinesUpdate(cartId: $cartId, lines: $lines) {
-      cart {
-        id
-        totalQuantity
-        cost {
-          totalAmount {
-            amount
-            currencyCode
-          }
-        }
-        lines(first: 250) {
-          edges {
-            node {
-              id
-              quantity
-              cost {
-                totalAmount {
-                  amount
-                  currencyCode
-                }
-              }
-              merchandise {
-                ... on ProductVariant {
-                  id
-                  title
-                  product {
-                    title
-                  }
-                  price {
-                    amount
-                    currencyCode
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      userErrors {
-        field
-        message
-        code
-      }
-    }
-  }
-`;
-
-export const REMOVE_FROM_CART_MUTATION = `
-  mutation CartLinesRemove($cartId: ID!, $lineIds: [ID!]!) {
-    cartLinesRemove(cartId: $cartId, lineIds: $lineIds) {
-      cart {
-        id
-        totalQuantity
-        cost {
-          totalAmount {
-            amount
-            currencyCode
-          }
-        }
-        lines(first: 250) {
-          edges {
-            node {
-              id
-              quantity
-              merchandise {
-                ... on ProductVariant {
-                  id
-                  title
-                  product {
-                    title
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      userErrors {
-        field
-        message
-        code
-      }
-    }
-  }
-`;
-
+// CREATE CART - Storefront API
 export const CREATE_CART_MUTATION = `
-  mutation CartCreate($input: CartInput!) {
+  mutation cartCreate($input: CartInput!) {
     cartCreate(input: $input) {
       cart {
-        id
-        createdAt
-        updatedAt
-        totalQuantity
-        cost {
-          totalAmount {
-            amount
-            currencyCode
-          }
-        }
-        lines(first: 250) {
-          edges {
-            node {
-              id
-              quantity
-              merchandise {
-                ... on ProductVariant {
-                  id
-                  title
-                }
-              }
-            }
-          }
-        }
+        ...Cart
       }
       userErrors {
         field
         message
         code
       }
+    }
+  }
+  ${CART_FRAGMENT}
+`;
+
+// GET CART - This should work if you have a cart ID
+export const GET_CART_QUERY = `
+  query getCart($cartId: ID!) {
+    cart(id: $cartId) {
+      ...Cart
+    }
+  }
+  ${CART_FRAGMENT}
+`;
+
+// ADD TO CART - Storefront API
+export const ADD_TO_CART_MUTATION = `
+  mutation cartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
+    cartLinesAdd(cartId: $cartId, lines: $lines) {
+      cart {
+        ...Cart
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+  ${CART_FRAGMENT}
+`;
+
+// UPDATE CART LINES - Storefront API
+export const UPDATE_CART_LINES_MUTATION = `
+  mutation cartLinesUpdate($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
+    cartLinesUpdate(cartId: $cartId, lines: $lines) {
+      cart {
+        ...Cart
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+  ${CART_FRAGMENT}
+`;
+
+// REMOVE FROM CART - Storefront API
+export const REMOVE_FROM_CART_MUTATION = `
+  mutation cartLinesRemove($cartId: ID!, $lineIds: [ID!]!) {
+    cartLinesRemove(cartId: $cartId, lineIds: $lineIds) {
+      cart {
+        ...Cart
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+  ${CART_FRAGMENT}
+`;
+
+// APPLY DISCOUNT CODE - Storefront API
+export const APPLY_DISCOUNT_CODE_MUTATION = `
+  mutation cartDiscountCodesUpdate($cartId: ID!, $discountCodes: [String!]!) {
+    cartDiscountCodesUpdate(cartId: $cartId, discountCodes: $discountCodes) {
+      cart {
+        ...Cart
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+  ${CART_FRAGMENT}
+`;
+
+// ALTERNATIVE: Customer API queries (if you're using Customer API instead)
+// Note: Customer API uses different field names and structure
+
+export const CUSTOMER_CART_QUERY = `
+  query getCustomer {
+    customer {
+      id
+      email
+      firstName
+      lastName
+      # Note: Some Shopify setups might have different cart field names
+      # Try these alternatives if 'cart' doesn't work:
+      # orders(first: 1) { edges { node { id } } }
+      # defaultAddress { id }
     }
   }
 `;
 
-export const APPLY_DISCOUNT_CODE_MUTATION = `
-  mutation CartDiscountCodesUpdate($cartId: ID!, $discountCodes: [String!]!) {
-    cartDiscountCodesUpdate(cartId: $cartId, discountCodes: $discountCodes) {
-      cart {
+// If you're using a custom implementation, you might need:
+export const CUSTOM_CART_QUERIES = {
+  // Check what fields are actually available in your schema
+  GET_CUSTOMER: `
+    query getCustomer {
+      customer {
         id
-        cost {
-          totalAmount {
-            amount
-            currencyCode
-          }
-        }
-        discountCodes {
-          applicable
-          code
-        }
-        discountAllocations {
-          discountedAmount {
-            amount
-            currencyCode
-          }
-        }
-      }
-      userErrors {
-        field
-        message
-        code
+        email
+        # Add available fields from your schema
       }
     }
-  }
-`;
+  `,
+  
+  // Your custom cart implementation might use different names
+  CREATE_CART: `
+    mutation createCart($input: CustomCartInput!) {
+      createCart(input: $input) {
+        cart {
+          id
+          items {
+            id
+            quantity
+            productId
+            variantId
+          }
+          total
+        }
+        errors {
+          message
+        }
+      }
+    }
+  `
+};

@@ -1,88 +1,127 @@
-/* eslint-disable @next/next/no-img-element */
+'use client';
+
 import Link from 'next/link';
-import { Product as ProductType} from '@/modules/shopify/types';
-import { unstable_ViewTransition as ViewTransition } from 'react';
+import { Product as ProductType } from '@/modules/shopify/types';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import React from 'react';
+import { AddToCartButton } from '@/components/Cart/AddToCartButton';
 
-type Props ={
+type ProductCardProps = {
   product: ProductType;
-}
+  showAddToCart?: boolean;
+};
 
-export const Product: React.FC<Props> = ({ product }) => {
+export const Product: React.FC<ProductCardProps> = ({ 
+  product, 
+  showAddToCart = true 
+}) => {
   const primaryImage = product.images[0];
-  const price = product.priceRange.minVariantPrice;
-  const comparePrice = product.variants?.[0]?.compareAtPrice;
-
-  const discount = comparePrice && comparePrice.amount !== price.amount
-    ? Math.round(((parseFloat(comparePrice.amount) - parseFloat(price.amount)) / parseFloat(comparePrice.amount)) * 100)
-    : null;
-
-  const transitionName = `product-image-${product.id}`;
+  const minPrice = product.priceRange.minVariantPrice;
+  const maxPrice = product.priceRange.maxVariantPrice;
+  const hasVariations = minPrice?.amount !== maxPrice?.amount || product.variants.length > 1;
+  
+  // Verificar si hay descuento
+  const variant = product.variants[0];
+  const hasDiscount = variant?.compareAtPrice && 
+    parseFloat(variant.compareAtPrice.amount) > parseFloat(variant.price.amount);
+  
+  const discountPercentage = hasDiscount 
+    ? Math.round(((parseFloat(variant.compareAtPrice.amount) - parseFloat(variant.price.amount)) / parseFloat(variant.compareAtPrice.amount)) * 100)
+    : 0;
 
   return (
-    <Link href={`/store/product/${product.handle}`} className="group block">
-      <Card className="border-0 shadow-none hover:shadow-lg transition-shadow duration-300">
-        <CardContent className="p-0">
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
-            {primaryImage ? (
-              <ViewTransition name={transitionName}>
-                 <img 
-                  src={primaryImage.url} 
-                  alt={primaryImage.altText || product.title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  style={{ 
-                    viewTransitionName: transitionName
-                  }}
-                />
-              </ViewTransition>
-            ) : (
-              <div className="absolute inset-0 w-full h-full bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-400 text-sm">Sin imagen</span>
-              </div>
-            )}
-            
-            <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
-              {!product.availableForSale && (
-                <Badge variant="destructive" className="text-xs font-medium shadow-sm">
-                  Agotado
-                </Badge>
-              )}
-              {discount && (
-                <Badge className="bg-green-500 hover:bg-green-600 text-xs font-medium shadow-sm">
-                  -{discount}%
-                </Badge>
-              )}
-            </div>
-          </div>
+    <div className="group relative bg-surface-container rounded-xl overflow-hidden border border-outline-variant hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+      {/* Badge de descuento */}
+      {hasDiscount && (
+        <Badge 
+          className="absolute top-3 left-3 z-10 bg-red-500 hover:bg-red-600 text-white"
+        >
+          -{discountPercentage}%
+        </Badge>
+      )}
 
-          <div className="mt-4 space-y-2 p-4">
+      {/* Badge de disponibilidad */}
+      {!product.availableForSale && (
+        <Badge 
+          variant="destructive" 
+          className="absolute top-3 right-3 z-10"
+        >
+          Agotado
+        </Badge>
+      )}
+
+      <Link 
+        href={`/store/product/${product.handle}`}
+        className="block"
+      >
+        {/* Imagen del producto */}
+        <div className="aspect-square overflow-hidden bg-surface-container-high">
+          {primaryImage ? (
+            <img
+              src={primaryImage.url}
+              alt={primaryImage.altText || product.title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-surface-container-highest">
+              <span className="text-on-surface-variant text-sm">Sin imagen</span>
+            </div>
+          )}
+        </div>
+
+        {/* Información del producto */}
+        <div className="p-4 space-y-3">
+          {/* Título y marca */}
+          <div className="space-y-1">
+            <h3 className="font-medium text-on-surface line-clamp-2 group-hover:text-primary transition-colors">
+              {product.title}
+            </h3>
             {product.vendor && (
-              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+              <p className="text-sm text-on-surface-variant">
                 {product.vendor}
               </p>
             )}
-            
-            <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2">
-              {product.title}
-            </h3>
-            
+          </div>
+
+          {/* Precio */}
+          <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <p className="text-lg font-semibold text-foreground">
-                ${price.amount}
-              </p>
-              {comparePrice && comparePrice.amount !== price.amount && (
-                <p className="text-sm text-muted-foreground line-through">
-                  ${comparePrice.amount}
-                </p>
+              {hasVariations ? (
+                <span className="text-lg font-semibold text-on-surface">
+                  Desde ${minPrice.amount}
+                </span>
+              ) : (
+                <span className="text-lg font-semibold text-on-surface">
+                  ${minPrice.amount}
+                </span>
+              )}
+              
+              {hasDiscount && variant.compareAtPrice && (
+                <span className="text-sm text-on-surface-variant line-through">
+                  ${variant.compareAtPrice.amount}
+                </span>
               )}
             </div>
-
             
+            <p className="text-xs text-on-surface-variant">
+              {minPrice.currencyCode}
+            </p>
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+        </div>
+      </Link>
+
+      {/* Botón de agregar al carrito */}
+      {showAddToCart && product.availableForSale && (
+        <div className="p-4 pt-0">
+          <AddToCartButton 
+            product={product}
+            selectedVariant={product.variants[0]}
+            size="sm"
+            className="w-full"
+          />
+        </div>
+      )}
+    </div>
   );
-}
+};
+

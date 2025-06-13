@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/useAuth';
 import { cartApi, checkoutApi } from '../cart-api';
-import { CartLineInput, CartLineUpdateInput } from '../cart-types';
+import { CartLineInput, CartLineUpdateInput, Cart } from '../cart-types';
 
 // Query Keys para Cart
 export const cartKeys = {
@@ -175,7 +175,7 @@ export function useCartActions() {
       
       // Si no hay carrito, crear uno nuevo
       if (!currentCart) {
-        const newCartResult = await createCart.mutateAsync({});
+        const newCartResult = await createCart.mutateAsync();
         currentCart = newCartResult.cart;
       }
       

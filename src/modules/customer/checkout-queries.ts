@@ -1,90 +1,19 @@
 export const CREATE_CHECKOUT_MUTATION = `
-  mutation CheckoutCreate($input: CheckoutCreateInput!) {
-    checkoutCreate(input: $input) {
-      checkout {
+  mutation cartBuyerIdentityUpdate($cartId: ID!, $buyerIdentity: CartBuyerIdentityInput!) {
+    cartBuyerIdentityUpdate(cartId: $cartId, buyerIdentity: $buyerIdentity) {
+      cart {
         id
-        webUrl
-        totalPrice {
-          amount
-          currencyCode
-        }
-        subtotalPrice {
-          amount
-          currencyCode
-        }
-        totalTax {
-          amount
-          currencyCode
-        }
-        paymentDue {
-          amount
-          currencyCode
-        }
-        currencyCode
-        requiresShipping
-        ready
-        lineItems(first: 250) {
-          edges {
-            node {
-              id
-              title
-              quantity
-              variant {
-                id
-                title
-                price {
-                  amount
-                  currencyCode
-                }
-                product {
-                  handle
-                  title
-                }
-              }
-            }
-          }
-        }
-        shippingAddress {
-          id
-          firstName
-          lastName
-          company
-          address1
-          address2
-          city
-          province
-          country
-          zip
+        checkoutUrl
+        buyerIdentity {
+          email
+          countryCode
           phone
         }
-        availableShippingRates {
-          ready
-          shippingRates {
-            handle
-            title
-            price {
-              amount
-              currencyCode
-            }
-          }
-        }
-        shippingLine {
-          handle
-          title
-          price {
-            amount
-            currencyCode
-          }
-        }
-      }
-      checkoutUserErrors {
-        field
-        message
-        code
       }
       userErrors {
         field
         message
+        code
       }
     }
   }

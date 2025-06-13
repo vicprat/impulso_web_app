@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { cartId, email, shippingAddress } = await request.json();
+    const { cartId, email } = await request.json();
 
     if (!cartId) {
       return NextResponse.json(
@@ -22,70 +22,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Primero obtenemos el carrito para extraer los line items
-    const getCartQuery = `
-      query GetCart {
-        customer {
-          cart {
-            id
-            lines(first: 250) {
-              edges {
-                node {
-                  id
-                  quantity
-                  merchandise {
-                    ... on ProductVariant {
-                      id
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    `;
-
-    // Hacer la consulta del carrito usando Customer Account API
-    const cartResponse = await fetch(`https://shopify.com/${process.env.SHOPIFY_SHOP_ID}/account/customer/api/${process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION}/graphql`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': session.tokens.accessToken,
-      },
-      body: JSON.stringify({ query: getCartQuery }),
-    });
-
-    if (!cartResponse.ok) {
-      throw new Error('Failed to fetch cart data');
-    }
-
-    const cartData = await cartResponse.json();
-    const cart = cartData.data?.customer?.cart;
-
-    if (!cart) {
-      return NextResponse.json(
-        { error: 'Cart not found' },
-        { status: 404 }
-      );
-    }
-
-    // Convertir las líneas del carrito a formato de checkout
-    const lineItems = cart.lines.edges.map((edge: any) => ({
-      variantId: edge.node.merchandise.id,
-      quantity: edge.node.quantity,
-    }));
-
-    // Crear el checkout usando Storefront API
-    const checkoutInput = {
-      lineItems,
-      email: email || session.user.email,
-      ...(shippingAddress && { shippingAddress }),
-    };
-
+    // Actualizar la identidad del comprador y obtener la URL del checkout
     const { data, errors } = await storeClient.request(CREATE_CHECKOUT_MUTATION, {
       variables: {
-        input: checkoutInput
+        cartId,
+        buyerIdentity: {
+          email: email || session.user.email,
+          countryCode: 'MX'
+        }
       }
     });
 
@@ -97,18 +41,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (data.checkoutCreate.checkoutUserErrors?.length > 0) {
+    if (data.cartBuyerIdentityUpdate.userErrors?.length > 0) {
       return NextResponse.json(
         { 
           error: 'Checkout validation errors', 
-          details: data.checkoutCreate.checkoutUserErrors 
+          details: data.cartBuyerIdentityUpdate.userErrors 
         },
         { status: 400 }
       );
     }
 
     return NextResponse.json({
-      checkout: data.checkoutCreate.checkout,
+      checkout: {
+        webUrl: data.cartBuyerIdentityUpdate.cart.checkoutUrl
+      },
       success: true
     });
 
