@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/modules/auth/server/server';
-import { customerApi } from '@/modules/customer/api';
+import { api } from '@/modules/customer/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,11 +15,11 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const first = parseInt(searchParams.get('first') || '10');
-    const after = searchParams.get('after');
+    const afterParam = searchParams.get('after');
+    const after = afterParam !== null ? afterParam : undefined;
 
-    const result = await customerApi.getOrders(
-      { first, after }, 
-      session.tokens.accessToken
+    const result = await api.getOrders(
+      { first, after }
     );
     
     return NextResponse.json(

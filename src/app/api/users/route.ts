@@ -34,8 +34,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    // Construir filtros
-    const where: any = {};
+    const where: PrismaClient['user']['findMany']['arguments']['where'] = {};
     
     if (search) {
       where.OR = [
@@ -59,10 +58,8 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Obtener total para paginación
     const total = await prisma.user.count({ where });
 
-    // Obtener usuarios con paginación
     const users = await prisma.user.findMany({
       where,
       include: {
@@ -87,7 +84,6 @@ export async function GET(request: NextRequest) {
       take: limit
     });
 
-    // Transformar datos para el frontend
     const transformedUsers = users.map(user => ({
       id: user.id,
       shopifyCustomerId: user.shopifyCustomerId,

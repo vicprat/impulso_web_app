@@ -1,10 +1,9 @@
-// src/components/Cart/CartIndicator.tsx
 'use client';
 
-import { useCartActions } from '@/modules/customer/hooks/cart';
 import { useAuth } from '@/modules/auth/context/useAuth';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart } from 'lucide-react';
+import { useCartActions } from '@/modules/cart/hook';
 
 interface CartIndicatorProps {
   showIcon?: boolean;
@@ -69,7 +68,6 @@ export function CartIndicator({
     );
   }
 
-  // Variant default
   return (
     <div className={`flex items-center gap-2 relative ${className}`}>
       {showIcon && <ShoppingCart className="h-4 w-4" />}
@@ -91,8 +89,6 @@ export function CartIndicator({
     </div>
   );
 }
-
-// Hook personalizado para obtener solo el estado del carrito
 export function useCartStatus() {
   const { isAuthenticated } = useAuth();
   const { cartSummary, isLoading } = useCartActions();

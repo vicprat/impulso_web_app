@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { customerApi } from '@/modules/customer/api';
+import { api } from '@/modules/customer/api';
 import { getServerSession } from '@/modules/auth/server/server';
 
 export async function PUT(request: NextRequest) {
@@ -21,7 +21,7 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    const result = await customerApi.setDefaultAddress(id, session.tokens.accessToken);
+    const result = await api.setDefaultAddress(id);
     return NextResponse.json(
       { customer: result.data },
       { status: result.statusCode }

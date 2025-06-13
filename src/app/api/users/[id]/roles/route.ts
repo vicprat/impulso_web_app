@@ -36,7 +36,6 @@ export async function PATCH(
       return NextResponse.json({ error: 'Roles debe ser un array' }, { status: 400 });
     }
 
-    // Verificar que todos los roles existen
     const existingRoles = await prisma.role.findMany({
       where: { name: { in: roles } }
     });
@@ -45,7 +44,6 @@ export async function PATCH(
       return NextResponse.json({ error: 'Algunos roles no existen' }, { status: 400 });
     }
 
-    // Verificar permisos para asignar roles específicos
     const hasAdminRole = session.user.roles.includes('admin');
     const hasSuperAdminRole = session.user.roles.includes('super_admin');
 
@@ -60,14 +58,11 @@ export async function PATCH(
       }
     }
 
-    // Actualizar roles en transacción
     await prisma.$transaction(async (tx) => {
-      // Eliminar roles existentes
       await tx.userRole.deleteMany({
         where: { userId: targetUserId }
       });
 
-      // Agregar nuevos roles
       const roleRecords = await tx.role.findMany({
         where: { name: { in: roles } }
       });

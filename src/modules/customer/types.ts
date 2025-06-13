@@ -1,9 +1,9 @@
-export interface CustomerUpdateInput {
+export type CustomerUpdateInput = {
   firstName?: string;
   lastName?: string;
 }
 
-export interface CustomerAddressInput {
+export type CustomerAddressInput = {
   firstName?: string;
   lastName?: string;
   company?: string;
@@ -16,88 +16,7 @@ export interface CustomerAddressInput {
   phoneNumber?: string;
 }
 
-export interface CustomerAddress {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  company?: string;
-  address1?: string;
-  address2?: string;
-  city?: string;
-  zip?: string;
-  country?: string;
-  province?: string;
-  phoneNumber?: string;
-  territoryCode?: string;
-  zoneCode?: string;
-  formattedArea?: string;
-}
-
-export interface CustomerOrder {
-  id: string;
-  name: string;
-  processedAt: string;
-  createdAt: string;
-  updatedAt: string;
-  totalPrice: {
-    amount: string;
-    currencyCode: string;
-  };
-  fulfillmentStatus: string;
-  financialStatus: string;
-  currencyCode: string;
-  email: string;
-  cancelledAt?: string;
-  cancelReason?: string;
-  confirmationNumber: string;
-  edited: boolean;
-  requiresShipping: boolean;
-  statusPageUrl: string;
-  lineItems: {
-    edges: Array<{
-      node: {
-        id: string;
-        title: string;
-        quantity: number;
-        price: {
-          amount: string;
-          currencyCode: string;
-        };
-      };
-    }>;
-  };
-  shippingAddress?: CustomerAddress;
-  billingAddress?: CustomerAddress;
-  subtotal: {
-    amount: string;
-    currencyCode: string;
-  };
-  totalRefunded: {
-    amount: string;
-    currencyCode: string;
-  };
-  totalShipping: {
-    amount: string;
-    currencyCode: string;
-  };
-  totalTax: {
-    amount: string;
-    currencyCode: string;
-  };
-  fulfillments?: {
-    edges: Array<{
-      node: {
-        id: string;
-        status: string;
-        trackingCompany?: string;
-        trackingNumbers: string[];
-        updatedAt: string;
-      };
-    }>;
-  };
-}
-
-export interface ShopifyCustomerProfile {
+export type ShopifyCustomerProfile = {
   id: string;
   firstName?: string;
   lastName?: string;
@@ -115,7 +34,7 @@ export interface ShopifyCustomerProfile {
 }
 
 
-export interface UserProfile {
+export type UserProfile = {
   id: string;
   shopifyCustomerId: string;
   email: string;
@@ -127,14 +46,11 @@ export interface UserProfile {
   roles: string[];
   permissions: string[];
   
-  // Datos extendidos de Postgres
-  postgresData?: {
+  postgresData?:  {
     lastLoginAt?: Date;
     preferences?: UserPreferences;
-    // Agregar más campos custom aquí
   };
   
-  // Datos de Shopify
   shopifyData?: {
     displayName?: string;
     imageUrl?: string;
@@ -145,21 +61,19 @@ export interface UserProfile {
     orderCount: number;
   };
   
-  // Estados de sincronización
-  syncStatus: {
+  syncStatus:  {
     shopifyLoading: boolean;
     postgresLoading: boolean;
     hasShopifyData: boolean;
     hasPostgresData: boolean;
-    shopifyError: any;
-    postgresError: any;
+    shopifyError: unknown;
+    postgresError: unknown;
   };
   
-  // Flag para cambios pendientes
   needsShopifySync?: boolean;
 }
 
-export interface UserPreferences {
+export type UserPreferences = {
   language?: string;
   timezone?: string;
   notifications?: {
@@ -168,10 +82,9 @@ export interface UserPreferences {
     push: boolean;
   };
   theme?: 'light' | 'dark' | 'system';
-  // Agregar más preferencias custom aquí
 }
 
-export interface UserFilters {
+export type UserFilters = {
   search?: string;
   role?: string;
   isActive?: boolean;
@@ -181,7 +94,7 @@ export interface UserFilters {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface PaginationInfo {
+export type PaginationInfo = {
   page: number;
   limit: number;
   total: number;
@@ -189,8 +102,7 @@ export interface PaginationInfo {
   hasPrev: boolean;
 }
 
-// /types/sync.ts - Types para sincronización
-export interface SyncOperation {
+export type SyncOperation = {
   id: string;
   timestamp: Date;
   status: 'success' | 'error' | 'pending';
@@ -199,9 +111,64 @@ export interface SyncOperation {
   error?: string;
 }
 
-export interface SyncDifference {
-  field: string;
-  local: any;
-  shopify: any;
-  type: 'update' | 'create' | 'delete';
+
+export type CustomerOrder = {
+  id: string;
+  name: string;
+  processedAt: string;
+  totalPrice: {
+    amount: string;
+    currencyCode: string;
+  };
+  fulfillmentStatus: string;
+  financialStatus: string;
+}
+
+export type CustomerAddress= {
+  id: string;
+  firstName: string;
+  lastName: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  province: string;
+  zip: string;
+  country: string;
+  phone?: string;
+}
+
+
+export type CustomerBasicInfo = {
+  id: string;
+  displayName?: string;
+  emailAddress: {
+    emailAddress: string;
+  };
+}
+
+// Tipo para PageInfo de GraphQL
+export type PageInfo = {
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  startCursor?: string | null;
+  endCursor?: string | null;
+}
+
+// Tipo para el resultado de órdenes
+export type CustomerOrdersResult = {
+  customer: {
+    orders: {
+      edges: Array<{ node: CustomerOrder }>;
+      pageInfo: PageInfo;
+    };
+  };
+}
+
+// Tipo para el resultado de direcciones  
+export type CustomerAddressesResult = {
+  customer: {
+    addresses: {
+      edges: Array<{ node: CustomerAddress }>;
+    };
+  };
 }

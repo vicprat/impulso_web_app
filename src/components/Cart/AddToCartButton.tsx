@@ -1,15 +1,14 @@
-// src/components/Cart/AddToCartButton.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { useCartActions } from '@/modules/customer/hooks/cart';
 import { useAuth } from '@/modules/auth/context/useAuth';
 import { ShoppingCart, Plus, Minus, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Product, Variant } from '@/modules/shopify/types';
-import { AuthenticationError } from '@/modules/customer/cart-api';
-
+import { AuthenticationError } from '@/modules/user/types';
+import { useCartActions } from '@/modules/cart/hook';
 interface AddToCartButtonProps {
   product: Product;
   selectedVariant?: Variant;

@@ -1,9 +1,8 @@
-// src/components/Cart/MiniCart.tsx
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useCartActions } from '@/modules/customer/hooks/cart';
+import { useCartActions } from '@/modules/cart/hook';
 import { useAuth } from '@/modules/auth/context/useAuth';
 import {
   Sheet,
@@ -18,13 +17,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ShoppingCart, Plus, Minus, X, ExternalLink } from 'lucide-react';
-import { formatCurrency } from '@/modules/customer/helpers';
+import { formatCurrency } from '@/helpers';
 import { toast } from 'sonner';
-interface MiniCartProps {
+
+type Props = {
   children?: React.ReactNode;
 }
 
-export function MiniCart({ children }: MiniCartProps) {
+export function MiniCart({ children }: Props) {
   const { isAuthenticated } = useAuth();
   const { cartSummary, updateQuantity, removeProduct, isUpdating, isRemoving } = useCartActions();
   const [open, setOpen] = useState(false);

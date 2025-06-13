@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { customerApi } from '@/modules/customer/api';
+import { api } from '@/modules/customer/api';
 import { getServerSession } from '@/modules/auth/server/server';
 
 export async function GET() {
@@ -12,7 +12,8 @@ export async function GET() {
         );
       }
 
-    const result = await customerApi.getAddresses(session.tokens.accessToken);
+    const first = 10;
+    const result = await api.getAddresses(first);
     return NextResponse.json(
       { addresses: result.data },
       { status: result.statusCode }
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     const addressInput = await request.json();
-    const result = await customerApi.createAddress(addressInput, session.tokens.accessToken);
+    const result = await api.createAddress(addressInput);
     return NextResponse.json(
       { address: result.data },
       { status: result.statusCode }
@@ -84,7 +85,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = await customerApi.updateAddress(id, address, session.tokens.accessToken);
+    const result = await api.updateAddress(id, address);
     return NextResponse.json(
       { address: result.data },
       { status: result.statusCode }
@@ -129,7 +130,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const result = await customerApi.deleteAddress(id, session.tokens.accessToken);
+    const result = await api.deleteAddress(id);
     return NextResponse.json(
       { deletedId: result.data.deletedId },
       { status: result.statusCode }

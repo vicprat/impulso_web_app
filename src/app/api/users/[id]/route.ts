@@ -30,7 +30,6 @@ export async function GET(
 
     const userId = params.id;
     
-    // Verificar permisos: puede ver su propio perfil o tener permisos de gestión
     if (session.user.id !== userId && !session.user.permissions.includes('manage_users')) {
       return NextResponse.json({ error: 'Sin permisos' }, { status: 403 });
     }

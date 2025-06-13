@@ -10,7 +10,7 @@ import { AuthConfig, CustomerInfo, TokenResponse } from '@/types';
 
 const prisma = new PrismaClient();
 
-export interface AuthSession {
+export type AuthSession = {
   user: {
     id: string;
     shopifyCustomerId: string;

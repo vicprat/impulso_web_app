@@ -1,153 +1,181 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isPublicRoute, getRouteMeta } from '@/config/routes';
 
-// Rutas que requieren autenticación
-const protectedRoutes = [
-  '/dashboard',
-  '/profile',
-  '/orders',
-  '/account',
-  '/admin',
-];
-
-// Rutas que requieren permisos específicos
-const permissionRoutes: Record<string, string[]> = {
-  '/admin': ['access_admin'],
-  '/orders/manage': ['manage_orders'],
-};
-
-// Rutas públicas que no requieren autenticación
-const publicRoutes = [
-  '/',
-  '/auth/login',
-  '/products',
-  '/collections',
-  '/about',
-  '/contact',
-];
+// Cache para evitar múltiples verificaciones
+const tokenVerificationCache = new Map<string, { valid: boolean; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; 
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Permitir rutas API sin verificación de middleware
+  // Permitir rutas API sin verificación
   if (pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
 
-  // Permitir archivos estáticos
+  // Permitir archivos estáticos y assets
   if (pathname.startsWith('/_next/') || pathname.includes('.')) {
     return NextResponse.next();
   }
 
-  // Verificar si la ruta es pública
-  const isPublicRoute = publicRoutes.some(route => 
-    pathname === route || pathname.startsWith(route + '/')
-  );
-
-  // Obtener tokens de las cookies
-  const accessToken = request.cookies.get('access_token')?.value;
-  const refreshToken = request.cookies.get('refresh_token')?.value;
-
-  // Si es una ruta pública y no hay token, permitir acceso
-  if (isPublicRoute && !accessToken) {
+  // Obtener metadata de la ruta actual
+  const routeMeta = getRouteMeta(pathname);
+  
+  // Si es una ruta pública, permitir acceso
+  if (isPublicRoute(pathname)) {
+    // Si hay un usuario autenticado intentando acceder a login, redirigir a dashboard
+    const accessToken = request.cookies.get('access_token')?.value;
+    if (accessToken && pathname === '/auth/login') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
     return NextResponse.next();
   }
 
-  // Verificar si la ruta requiere autenticación
-  const isProtectedRoute = protectedRoutes.some(route => 
-    pathname === route || pathname.startsWith(route + '/')
-  );
+  // A partir de aquí, la ruta requiere autenticación
+  const accessToken = request.cookies.get('access_token')?.value;
+  const refreshToken = request.cookies.get('refresh_token')?.value;
 
-  if (isProtectedRoute && !accessToken) {
-    // Redirigir a login si no hay token
+  // Si no hay token, redirigir a login
+  if (!accessToken) {
     const loginUrl = new URL('/auth/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Si tenemos token, verificar su validez
-  if (accessToken) {
-    try {
-      // Para Shopify Customer Account API, los tokens son opacos
-      // En lugar de verificar el JWT localmente, podemos verificar con la API
-      const isValid = await verifyTokenWithShopify(accessToken);
+  try {
+    // Verificar validez del token (con cache para evitar múltiples llamadas)
+    let isValid = await verifyTokenWithCache(accessToken);
+    
+    if (!isValid && refreshToken) {
+      // Intentar refrescar el token
+      const newTokens = await refreshTokens(refreshToken);
       
-      if (!isValid) {
-        // Intentar refrescar el token
-        if (refreshToken) {
-          const newTokens = await refreshTokens(refreshToken);
-          
-          if (newTokens) {
-            // Crear respuesta con nuevos tokens
-            const response = NextResponse.next();
-            
-            const cookieOptions = {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: 'lax' as const,
-              maxAge: 30 * 24 * 60 * 60,
-              path: '/',
-            };
-
-            response.cookies.set('access_token', newTokens.accessToken, cookieOptions);
-            response.cookies.set('refresh_token', newTokens.refreshToken, cookieOptions);
-            
-            return response;
-          }
-        }
-
-        // Si no se pudo refrescar, redirigir a login
-        if (isProtectedRoute) {
-          const loginUrl = new URL('/auth/login', request.url);
-          loginUrl.searchParams.set('redirect', pathname);
-          
-          const response = NextResponse.redirect(loginUrl);
-          
-          // Limpiar cookies inválidas
-          response.cookies.delete('access_token');
-          response.cookies.delete('refresh_token');
-          response.cookies.delete('id_token');
-          
-          return response;
-        }
-      }
-
-      // Verificar permisos específicos si la ruta lo requiere
-      const requiredPermissions = permissionRoutes[pathname];
-      if (requiredPermissions) {
-        const hasPermissions = await checkUserPermissions(accessToken, requiredPermissions);
+      if (newTokens) {
+        // Crear respuesta con nuevos tokens
+        const response = NextResponse.next();
         
-        if (!hasPermissions) {
-          return NextResponse.redirect(new URL('/unauthorized', request.url));
-        }
+        const accessTokenOptions = {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax' as const,
+          maxAge: 60 * 60, // 1 hora
+          path: '/',
+        };
+
+        const refreshTokenOptions = {
+          ...accessTokenOptions,
+          maxAge: 30 * 24 * 60 * 60, // 30 días
+        };
+
+        response.cookies.set('access_token', newTokens.accessToken, accessTokenOptions);
+        response.cookies.set('refresh_token', newTokens.refreshToken, refreshTokenOptions);
+        
+        // Limpiar cache del token anterior
+        tokenVerificationCache.delete(accessToken);
+        
+        // Actualizar para verificaciones subsiguientes
+        isValid = true;
       }
-    } catch (error) {
-      console.error('Token verification failed:', error);
+    }
+
+    if (!isValid) {
+      // Token inválido y no se pudo refrescar
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
       
-      if (isProtectedRoute) {
-        const response = NextResponse.redirect(new URL('/login', request.url));
-        response.cookies.delete('access_token');
-        response.cookies.delete('refresh_token');
-        return response;
+      const response = NextResponse.redirect(loginUrl);
+      
+      // Limpiar cookies inválidas
+      response.cookies.delete('access_token');
+      response.cookies.delete('refresh_token');
+      response.cookies.delete('id_token');
+      
+      return response;
+    }
+
+    // Verificar roles y permisos si la ruta los requiere
+    if (routeMeta.requiredRoles || routeMeta.requiredPermissions) {
+      const hasAccess = await checkUserAccess(
+        accessToken,
+        routeMeta.requiredRoles || [],
+        routeMeta.requiredPermissions || []
+      );
+
+      if (!hasAccess) {
+        // Si no tiene acceso, redirigir a página de no autorizado
+        return NextResponse.redirect(new URL('/unauthorized', request.url));
       }
+    }
+
+    return NextResponse.next();
+  } catch (error) {
+    console.error('Middleware error:', error);
+    
+    // En caso de error, redirigir a login por seguridad
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    
+    const response = NextResponse.redirect(loginUrl);
+    response.cookies.delete('access_token');
+    response.cookies.delete('refresh_token');
+    response.cookies.delete('id_token');
+    
+    return response;
+  }
+}
+
+// Verificar token con Shopify (con cache)
+async function verifyTokenWithCache(accessToken: string): Promise<boolean> {
+  // Verificar cache
+  const cached = tokenVerificationCache.get(accessToken);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.valid;
+  }
+
+  // Verificar con Shopify
+  const isValid = await verifyTokenWithShopify(accessToken);
+  
+  // Guardar en cache
+  tokenVerificationCache.set(accessToken, {
+    valid: isValid,
+    timestamp: Date.now()
+  });
+
+  // Limpiar entradas antiguas del cache
+  for (const [token, data] of tokenVerificationCache.entries()) {
+    if (Date.now() - data.timestamp > CACHE_DURATION) {
+      tokenVerificationCache.delete(token);
     }
   }
 
-  return NextResponse.next();
+  return isValid;
 }
 
-// Verificar token con Shopify
+// Verificar token con Shopify Customer Account API
 async function verifyTokenWithShopify(accessToken: string): Promise<boolean> {
   try {
-    const response = await fetch(`https://shopify.com/${process.env.SHOPIFY_SHOP_ID}/account/customer/api/${process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION}/graphql`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        query: 'query { customer { id } }'
-      }),
-    });
+    const shopId = process.env.SHOPIFY_SHOP_ID;
+    const apiVersion = process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION || '2025-04';
+    
+    const response = await fetch(
+      `https://shopify.com/${shopId}/account/customer/api/${apiVersion}/graphql`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': accessToken,
+        },
+        body: JSON.stringify({
+          query: `
+            query VerifyToken {
+              customer {
+                id
+              }
+            }
+          `
+        }),
+      }
+    );
 
     return response.ok;
   } catch (error) {
@@ -156,15 +184,19 @@ async function verifyTokenWithShopify(accessToken: string): Promise<boolean> {
   }
 }
 
-// Refrescar tokens
+// Refrescar tokens con Shopify
 async function refreshTokens(refreshToken: string): Promise<{
   accessToken: string;
   refreshToken: string;
 } | null> {
   try {
+    const shopId = process.env.SHOPIFY_SHOP_ID;
+    const clientId = process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID;
+    const clientSecret = process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET;
+
     const body = new URLSearchParams({
       grant_type: 'refresh_token',
-      client_id: process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID!,
+      client_id: clientId!,
       refresh_token: refreshToken
     });
 
@@ -172,21 +204,23 @@ async function refreshTokens(refreshToken: string): Promise<{
       'content-type': 'application/x-www-form-urlencoded',
     };
 
-    // Agregar autorización si tenemos client_secret
-    if (process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET) {
-      const credentials = Buffer.from(
-        `${process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID}:${process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET}`
-      ).toString('base64');
+    // Agregar autorización Basic si tenemos client_secret
+    if (clientSecret) {
+      const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
       headers['Authorization'] = `Basic ${credentials}`;
     }
 
-    const response = await fetch(`https://shopify.com/authentication/${process.env.SHOPIFY_SHOP_ID}/oauth/token`, {
-      method: 'POST',
-      headers,
-      body,
-    });
+    const response = await fetch(
+      `https://shopify.com/authentication/${shopId}/oauth/token`,
+      {
+        method: 'POST',
+        headers,
+        body,
+      }
+    );
 
     if (!response.ok) {
+      console.error('Token refresh failed:', response.status);
       return null;
     }
 
@@ -202,14 +236,18 @@ async function refreshTokens(refreshToken: string): Promise<{
   }
 }
 
-// Verificar permisos del usuario
-async function checkUserPermissions(accessToken: string, requiredPermissions: string[]): Promise<boolean> {
+// Verificar acceso del usuario (roles y permisos)
+async function checkUserAccess(
+  accessToken: string, 
+  requiredRoles: string[], 
+  requiredPermissions: string[]
+): Promise<boolean> {
   try {
-    // Esto debería llamar a tu API interna para verificar permisos
-    // ya que la información de roles/permisos está en tu DB local
+    // Llamar a tu API interna para obtener información del usuario
+    // Ya que los roles/permisos están en tu DB local
     const response = await fetch(`${process.env.NEXTAUTH_URL}/api/auth/me`, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Cookie': `access_token=${accessToken}`,
       },
     });
 
@@ -219,10 +257,27 @@ async function checkUserPermissions(accessToken: string, requiredPermissions: st
 
     const { user } = await response.json();
     
-    // Verificar si el usuario tiene todos los permisos requeridos
-    return requiredPermissions.every(permission => 
-      user.permissions.includes(permission)
-    );
+    // Verificar roles (si hay roles requeridos)
+    if (requiredRoles.length > 0) {
+      const hasRequiredRole = requiredRoles.some(role => 
+        user.roles.includes(role)
+      );
+      if (!hasRequiredRole) {
+        return false;
+      }
+    }
+    
+    // Verificar permisos (todos los permisos requeridos deben estar presentes)
+    if (requiredPermissions.length > 0) {
+      const hasAllPermissions = requiredPermissions.every(permission => 
+        user.permissions.includes(permission)
+      );
+      if (!hasAllPermissions) {
+        return false;
+      }
+    }
+
+    return true;
   } catch (error) {
     console.error('Permission check error:', error);
     return false;
@@ -237,7 +292,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public folder files
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|public).*)',
   ],
 };

@@ -90,3 +90,10 @@ export interface UserFilters {
   sortBy?: 'createdAt' | 'lastLoginAt' | 'email' | 'firstName';
   sortOrder?: 'asc' | 'desc';
 }
+
+export class AuthenticationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthenticationError';
+  }
+}

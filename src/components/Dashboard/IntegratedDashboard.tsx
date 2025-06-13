@@ -1,47 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { Guard } from '@/modules/auth/client';
-import { useCustomerAccount } from '@/modules/auth/hooks/useCustomerAccount';
-import { EnhancedUserProfile } from '@/components/UserManagement/EnhancedUserProfile';
-import { UserManagementAdmin } from '@/components/UserManagement/UserManagementAdmin';
-import { CustomerOrder } from '@/modules/auth/types';
-import { useUserManagement } from '@/modules/user/context';
-import { RolePermissionsGuide } from '../UserManagement/RolePermissionsGuide';
+import { Guard } from '@/components/Guards';
+import { EnhancedUserProfile } from './components/EnhancedUserProfile';
+import { UserManagementAdmin } from './components/UserManagementAdmin';
+import { RolePermissionsGuide } from './components/RolePermissionsGuide';
+import { useCurrentUser } from '@/modules/user/hooks/management';
+import { useCustomerOrders, useCustomerOrder } from '@/modules/customer/hooks';
+import { useAuth } from '@/modules/auth/context/useAuth';
 
 function DashboardContent() {
-  const { currentUser, hasPermission, hasRole } = useUserManagement();
-  const { getOrders, getOrder, isLoading } = useCustomerAccount();
-  
+  const { hasPermission, hasRole } = useAuth();
+  const { currentUser, isLoading: userLoading } = useCurrentUser();
   const [activeSection, setActiveSection] = useState<'overview' | 'profile' | 'orders' | 'admin'>('overview');
-  const [orders, setOrders] = useState<CustomerOrder[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  
+  // Queries para órdenes
+  const { data: ordersData, isLoading: ordersLoading, refetch: refetchOrders } = useCustomerOrders({ first: 10 });
+  const { data: orderDetail } = useCustomerOrder(selectedOrderId || '', {
+    enabled: !!selectedOrderId
+  });
+  
+  const orders = ordersData?.data?.customer?.orders?.edges?.map(edge => edge.node) || [];
 
-  // Cargar órdenes
-  const loadOrders = async () => {
-    try {
-      setOrdersLoading(true);
-      const result = await getOrders(10);
-      setOrders(result.orders);
-    } catch (error) {
-      console.error('Error loading orders:', error);
-    } finally {
-      setOrdersLoading(false);
-    }
-  };
-
-  // Cargar detalle de orden
-  const loadOrderDetails = async (orderId: string) => {
-    try {
-      const order = await getOrder(orderId);
-      setSelectedOrder(order);
-    } catch (error) {
-      console.error('Error loading order details:', error);
-    }
-  };
-
-  if (isLoading || !currentUser) {
+  if (userLoading || !currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse space-y-4 text-center">
@@ -83,6 +65,15 @@ function DashboardContent() {
       description: 'Panel de administración'
     });
   }
+
+  const handleLoadOrders = () => {
+    setActiveSection('orders');
+    refetchOrders();
+  };
+
+  const handleViewOrderDetails = (orderId: string) => {
+    setSelectedOrderId(orderId);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -226,10 +217,7 @@ function DashboardContent() {
                     </button>
 
                     <button
-                      onClick={() => {
-                        setActiveSection('orders');
-                        loadOrders();
-                      }}
+                      onClick={handleLoadOrders}
                       className="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50"
                     >
                       <div className="flex items-center">
@@ -268,7 +256,7 @@ function DashboardContent() {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold">Mis Órdenes</h2>
                 <button
-                  onClick={loadOrders}
+                  onClick={() => refetchOrders()}
                   disabled={ordersLoading}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
@@ -276,19 +264,32 @@ function DashboardContent() {
                 </button>
               </div>
 
-              {selectedOrder ? (
+              {selectedOrderId && orderDetail ? (
                 <div>
                   <button
-                    onClick={() => setSelectedOrder(null)}
+                    onClick={() => setSelectedOrderId(null)}
                     className="mb-4 text-blue-600 hover:text-blue-800"
                   >
                     ← Volver a la lista
                   </button>
-                  {/* Aquí iría el componente de detalle de orden */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-semibold">Orden {selectedOrder.name}</h3>
-                    <p>Estado: {selectedOrder.fulfillmentStatus}</p>
-                    <p>Total: {selectedOrder.totalPrice.amount} {selectedOrder.totalPrice.currencyCode}</p>
+                    <h3 className="font-semibold">Orden {orderDetail.data.name}</h3>
+                    <p>Estado: {orderDetail.data.fulfillmentStatus}</p>
+                    <p>Total: {orderDetail.data.totalPrice.amount} {orderDetail.data.totalPrice.currencyCode}</p>
+                    <p>Fecha: {new Date(orderDetail.data.processedAt).toLocaleDateString()}</p>
+                    
+                    {orderDetail.data.lineItems?.edges?.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="font-medium mb-2">Productos:</h4>
+                        <div className="space-y-2">
+                          {orderDetail.data.lineItems.edges.map(({ node }: any) => (
+                            <div key={node.id} className="text-sm">
+                              {node.quantity}x {node.title} - {node.price.amount} {node.price.currencyCode}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -301,16 +302,19 @@ function DashboardContent() {
                     </div>
                   ) : orders.length > 0 ? (
                     <div className="space-y-3">
-                      {orders.map((order: CustomerOrder) => (
+                      {orders.map((order) => (
                         <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
                           <div className="flex justify-between items-start">
                             <div>
                               <h3 className="font-medium">{order.name}</h3>
                               <p className="text-sm text-gray-600">
-                                {order.fulfillmentStatus}
+                                {order.fulfillmentStatus} • {new Date(order.processedAt).toLocaleDateString()}
+                              </p>
+                              <p className="text-sm font-medium mt-1">
+                                {order.totalPrice.amount} {order.totalPrice.currencyCode}
                               </p>
                               <button
-                                onClick={() => loadOrderDetails(order.id)}
+                                onClick={() => handleViewOrderDetails(order.id)}
                                 className="mt-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
                               >
                                 Ver detalles
@@ -326,7 +330,7 @@ function DashboardContent() {
                       <h3 className="text-lg font-medium text-gray-900 mt-4">No hay órdenes</h3>
                       <p className="text-gray-600 mt-2">Aún no tienes órdenes en tu cuenta</p>
                       <button
-                        onClick={loadOrders}
+                        onClick={() => refetchOrders()}
                         className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                       >
                         Buscar órdenes

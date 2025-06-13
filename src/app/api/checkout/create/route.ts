@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/modules/auth/server/server';
 import { storeClient } from '@/lib/shopify';
-import { CREATE_CHECKOUT_MUTATION } from '@/modules/customer/checkout-queries';
+import { CREATE_CHECKOUT_MUTATION } from '@/modules/checkout/queries';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,8 +22,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Actualizar la identidad del comprador y obtener la URL del checkout
-    const { data, errors } = await storeClient.request(CREATE_CHECKOUT_MUTATION, {
+     const { data, errors } = await storeClient.request(CREATE_CHECKOUT_MUTATION, {
       variables: {
         cartId,
         buyerIdentity: {

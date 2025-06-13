@@ -31,7 +31,6 @@ export async function PATCH(
 
     const targetUserId = params.id;
 
-    // No permitir auto-desactivación
     if (session.user.id === targetUserId) {
       return NextResponse.json({ error: 'No puedes desactivarte a ti mismo' }, { status: 400 });
     }
@@ -44,7 +43,6 @@ export async function PATCH(
       }
     });
 
-    // Desactivar todas las sesiones del usuario
     await prisma.sessionToken.updateMany({
       where: { userId: targetUserId },
       data: { isActive: false }

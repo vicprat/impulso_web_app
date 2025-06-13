@@ -9,20 +9,17 @@ export default function Layout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-surface">ñ
       <SidebarProvider
         defaultOpen={false}
        >
         <Filter />
         
         <main className="w-full">
-          {/* Header sticky - se mantiene fijo en el viewport */}
           <Header.Store />
           
-          {/* Navigation normal - hace scroll con el contenido */}
           <Navigation.Store /> 
           
-          {/* Contenido principal */}
           <div className="container mx-auto px-6 py-8">
             {children}
           </div>

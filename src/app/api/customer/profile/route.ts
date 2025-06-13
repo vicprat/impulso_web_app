@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/modules/auth/server/server';
-import { customerApi } from '@/modules/customer/api';
+import { api } from '@/modules/customer/api';
 
 export async function GET() {
   try {
@@ -12,7 +12,7 @@ export async function GET() {
       );
     }
 
-    const result = await customerApi.getProfile(session.tokens.accessToken);
+    const result = await api.getProfile();
     return NextResponse.json(result.data, { status: result.statusCode });
   } catch (error) {
     return NextResponse.json(
@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const customerInput = await request.json();
-    const result = await customerApi.updateProfile(customerInput, session.tokens.accessToken);
+    const result = await api.updateProfile(customerInput);
     return NextResponse.json(result.data, { status: result.statusCode });
   } catch (error) {
     

@@ -1,18 +1,18 @@
-// src/app/(store)/cart/page.tsx
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useCartActions } from '@/modules/customer/hooks/cart';
-import { Guard } from '@/modules/auth/client';
+import { useCartActions } from '@/modules/cart/hook';
+import { Guard } from '@/components/Guards';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ShoppingCart, Plus, Minus, X, Loader2, ShoppingBag, ArrowLeft, ArrowRight } from 'lucide-react';
-import { formatCurrency } from '@/modules/customer/helpers';
+
 import { toast } from 'sonner';
+import { formatCurrency } from '@/helpers';
 
 export default function CartPage() {
   const { 
@@ -48,7 +48,7 @@ export default function CartPage() {
         return updated;
       });
       toast.success('Cantidad actualizada');
-    } catch (error) {
+    } catch  {
       toast.error('Error al actualizar cantidad');
     }
   };
@@ -57,7 +57,7 @@ export default function CartPage() {
     try {
       await removeProduct(lineId);
       toast.success(`${productTitle} eliminado del carrito`);
-    } catch (error) {
+    } catch  {
       toast.error('Error al eliminar producto');
     }
   };
@@ -72,7 +72,7 @@ export default function CartPage() {
       await applyDiscount(discountCode.trim());
       toast.success('Código de descuento aplicado');
       setDiscountCode('');
-    } catch (error) {
+    } catch  {
       toast.error('Código de descuento inválido');
     }
   };
