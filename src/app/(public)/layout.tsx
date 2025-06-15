@@ -1,10 +1,16 @@
-'use client';
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+import { Header } from '@/components/Header';
+
+export default function Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <main className="flex-1 w-full">
-        {children}
-      </main>
+    <div className="min-h-screen bg-surface">
+        <main className="w-full">
+          <Header.Public />
+            {children}
+        </main>
     </div>
   );
 }

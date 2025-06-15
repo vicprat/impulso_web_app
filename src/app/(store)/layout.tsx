@@ -9,7 +9,7 @@ export default function Layout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-surface">ñ
+    <div className="min-h-screen bg-surface">
       <SidebarProvider
         defaultOpen={false}
        >

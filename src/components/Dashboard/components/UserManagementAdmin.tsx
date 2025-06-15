@@ -1,4 +1,3 @@
-// components/UserManagement/UserManagementAdmin.tsx
 'use client';
 
 import { useState } from 'react';
@@ -29,7 +28,7 @@ export function UserManagementAdmin() {
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
   // Hooks de gestión
-  const { data: usersData, isLoading: usersLoading, refetch: refetchUsers } = useUsersManagement(filters);
+  const { data: usersData, isLoading: usersLoading} = useUsersManagement(filters);
   const updateRoles = useUpdateUserRoles();
   const deactivateUser = useDeactivateUser();
   const reactivateUser = useReactivateUser();
@@ -43,7 +42,6 @@ export function UserManagementAdmin() {
     hasPrev: false
   };
 
-  // Roles disponibles (basados en el seed de la DB)
   const availableRoles = [
     { id: 'customer', name: 'Cliente', description: 'Cliente básico del sistema' },
     { id: 'vip_customer', name: 'Cliente VIP', description: 'Cliente VIP con beneficios adicionales' },
@@ -82,7 +80,6 @@ export function UserManagementAdmin() {
       await updateRoles.mutateAsync({ userId: selectedUser.id, roles: selectedRoles });
       setShowRoleModal(false);
       setSelectedUser(null);
-      // Los datos se actualizarán automáticamente por React Query
     } catch (error) {
       console.error('Error updating roles:', error);
       alert('Error al actualizar roles');
@@ -90,7 +87,6 @@ export function UserManagementAdmin() {
   };
 
   const handleToggleUserStatus = async (user: UserProfile) => {
-    // Verificar permisos manualmente aquí
     const canManage = (() => {
       if (!currentUser) return false;
       if (!hasPermission('manage_users')) return false;
@@ -113,7 +109,6 @@ export function UserManagementAdmin() {
       } else {
         await reactivateUser.mutateAsync(user.id);
       }
-      // Los datos se actualizarán automáticamente por React Query
     } catch (error) {
       console.error('Error toggling user status:', error);
       alert('Error al cambiar el estado del usuario');
@@ -134,7 +129,6 @@ export function UserManagementAdmin() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="bg-white shadow-md rounded-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -148,7 +142,6 @@ export function UserManagementAdmin() {
           </div>
         </div>
 
-        {/* Filtros */}
         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
@@ -202,7 +195,6 @@ export function UserManagementAdmin() {
         </form>
       </div>
 
-      {/* Tabla de usuarios */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         {usersLoading ? (
           <div className="p-8 text-center">
@@ -255,7 +247,6 @@ export function UserManagementAdmin() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {users.map((user) => {
-                    // Calcular permisos para este usuario
                     const canManage = (() => {
                       if (!currentUser) return false;
                       if (user.id === currentUser.id) return true;
@@ -371,7 +362,6 @@ export function UserManagementAdmin() {
               </table>
             </div>
 
-            {/* Paginación */}
             {pagination.total > pagination.limit && (
               <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
                 <div className="flex-1 flex justify-between sm:hidden">
@@ -458,7 +448,6 @@ export function UserManagementAdmin() {
         )}
       </div>
 
-      {/* Modal de gestión de roles */}
       {showRoleModal && selectedUser && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">

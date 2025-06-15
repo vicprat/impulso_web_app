@@ -442,3 +442,11 @@ export const getRouteMeta = (pathname: string): {
     requiredPermissions: route.permissions
   };
 };
+
+
+export const AppRoutes: RouteConfig[] = [
+  ...CustomerRoutes,
+  ...VipRoutes,
+  ...SupportRoutes,
+  ...AdminRoutes,
+];
