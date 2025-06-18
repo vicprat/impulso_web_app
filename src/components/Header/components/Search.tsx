@@ -14,8 +14,10 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
+  CommandSeparator,
 } from '@/components/ui/command';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Search as SearchIcon } from 'lucide-react';
 
 type Props = {
   open: boolean;
@@ -28,7 +30,10 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
   const debouncedQuery = useDebounce(query, 300);
 
   const { data, isLoading, isError } = useProducts(
-    { query: `title:*${debouncedQuery}*`, first: 5 },
+    { 
+      query: `(title:*${debouncedQuery}*) OR (product_type:*${debouncedQuery}*) OR (tag:*${debouncedQuery}*)`, 
+      first: 5
+    },
     {
       enabled: !!debouncedQuery,
     }
@@ -40,6 +45,12 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
     router.push(`/store/product/${handle}`);
     setOpen(false);
   };
+
+  const handleSeeMore = () => {
+    if (!debouncedQuery) return;
+    router.push(`/store/search?q=${debouncedQuery}`);
+    setOpen(false);
+  }
   
   useEffect(() => {
     if (!open) {
@@ -50,7 +61,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput
-        placeholder="Busca tus productos favoritos..."
+        placeholder="Busca por obra, artista, estilo o técnica..."
         value={query}
         onValueChange={setQuery}
       />
@@ -61,20 +72,21 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
             <Skeleton className='h-8 w-full'/>
         </div>}
         
-        {!isLoading && !isError && products.length === 0 && (
-          <CommandEmpty>No se encontraron productos.</CommandEmpty>
+        {!isLoading && !isError && products.length === 0 && debouncedQuery && (
+          <CommandEmpty>No se encontraron obras.</CommandEmpty>
         )}
         
         {isError && <CommandEmpty>Ocurrió un error al buscar.</CommandEmpty>}
 
-        {products.length > 0 && (
-          <CommandGroup heading="Productos">
+        {/* Grupo de productos */}
+        {products.length > 0 && !isLoading && (
+          <CommandGroup heading="Obras">
             {products.map((product) => (
               <CommandItem
                 key={product.id}
                 value={product.title} 
                 onSelect={() => handleSelect(product.handle)}
-                className="flex items-center gap-4 cursor-pointer"
+                className="flex items-center gap-4 cursor-pointer my-2"
               >
                 <div className="relative w-10 h-10 rounded-md overflow-hidden">
                   <Image
@@ -94,6 +106,21 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
               </CommandItem>
             ))}
           </CommandGroup>
+        )}
+        {products.length > 0 && !isLoading && debouncedQuery && (
+          <>
+            <CommandSeparator />
+            <CommandGroup>
+                <CommandItem
+                    value={`ver-todos-los-resultados-para-${debouncedQuery}`}
+                    onSelect={handleSeeMore}
+                    className="flex items-center gap-2 cursor-pointer text-primary"
+                >
+                    <SearchIcon className="w-4 h-4" />
+                    <span>Ver todos los resultados para &quot;{debouncedQuery}&quot;</span>
+                </CommandItem>
+            </CommandGroup>
+          </>
         )}
       </CommandList>
     </CommandDialog>

@@ -66,6 +66,105 @@ export const SHOP_INFO_QUERY = `
   }
 `;
 
+export const SEARCH_PRODUCTS_QUERY = `
+  query SearchProducts(
+    $query: String!
+    $first: Int!
+    $after: String
+    $sortKey: SearchSortKeys
+    $reverse: Boolean
+    $productFilters: [ProductFilter!]
+    $unavailableProducts: SearchUnavailableProductsType
+  ) {
+    search(
+      query: $query
+      first: $first
+      after: $after
+      sortKey: $sortKey
+      reverse: $reverse
+      productFilters: $productFilters
+      types: [PRODUCT]
+      unavailableProducts: $unavailableProducts
+    ) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      productFilters {
+        id
+        label
+        type
+        values {
+          id
+          label
+          count
+          input
+        }
+      }
+      edges {
+        node {
+          ... on Product {
+            id
+            title
+            handle
+            description
+            descriptionHtml
+            availableForSale
+            productType
+            vendor
+            createdAt
+            tags
+            priceRange {
+              minVariantPrice {
+                amount
+                currencyCode
+              }
+              maxVariantPrice {
+                amount
+                currencyCode
+              }
+            }
+            images(first: 5) {
+              edges {
+                node {
+                  id
+                  url
+                  altText
+                  width
+                  height
+                }
+              }
+            }
+            variants(first: 10) {
+              edges {
+                node {
+                  id
+                  title
+                  availableForSale
+                  price {
+                    amount
+                    currencyCode
+                  }
+                  compareAtPrice {
+                    amount
+                    currencyCode
+                  }
+                  sku
+                  selectedOptions {
+                    name
+                    value
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const PRODUCTS_QUERY = `
   query Products($first: Int!, $after: String, $query: String, $sortKey: ProductSortKeys, $reverse: Boolean) {
     products(first: $first, after: $after, query: $query, sortKey: $sortKey, reverse: $reverse) {

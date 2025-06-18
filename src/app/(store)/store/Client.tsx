@@ -15,9 +15,8 @@ import {
 } from '@/components/ui/select';
 import {  Package2, } from 'lucide-react';
 import { Error } from './Error';
-import { Loader } from '@/components/Loader';
 
-const defaultLimit = 12;
+const defaultLimit = 24;
 const limitOptions = [12, 24, 36, 48];
 
 export const Client = () => {
@@ -166,7 +165,7 @@ export const Client = () => {
 
   if (isLoading) {
     return (
-        <Loader.Cards count={limitInUrl} />
+        <Card.Loader  />
     );
   }
 
@@ -214,11 +213,11 @@ export const Client = () => {
 
         {productsData?.products && productsData.products.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+            <Card.Container>
               {productsData.products.map(product => (
                 <Card.Product key={product.id} product={product} />
               ))}
-            </div>
+            </Card.Container>
             
             <div className="flex justify-center">
               <Pagination 

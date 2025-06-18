@@ -1,30 +1,90 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Navigation } from '@/components/Navigation';
 import { Filter } from '@/components/Filter';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { Header } from '@/components/Header';
+import {
+  AnimatedSpheres,
+  GradientBackground,
+} from '@/components/Animations';
+import { Footer } from '@/components/Footer';
+
 
 export default function Layout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const searchParams = useSearchParams();
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    
+    const collections = searchParams.get('collections');
+    const productTypes = searchParams.get('product_types');
+    const vendors = searchParams.get('vendors');
+    const tags = searchParams.get('tags');
+    const priceMin = searchParams.get('price_min');
+    const priceMax = searchParams.get('price_max');
+    const availability = searchParams.get('availability');
+    
+    if (collections && collections.split(',').filter(Boolean).length > 0) count++;
+    if (productTypes && productTypes.split(',').filter(Boolean).length > 0) count++;
+    if (vendors && vendors.split(',').filter(Boolean).length > 0) count++;
+    if (tags && tags.split(',').filter(Boolean).length > 0) count++;
+    if (priceMin || priceMax) count++;
+    if (availability && availability !== 'all') count++;
+    
+    return count;
+  }, [searchParams]);
+
+  const handleOpenFilters = () => {
+    setIsFilterDialogOpen(true);
+  };
+
+  const handleCloseFilters = () => {
+    setIsFilterDialogOpen(false);
+  };
+
   return (
-    <div className="min-h-screen bg-surface">
-      <SidebarProvider
-        defaultOpen={false}
-       >
-        <Filter />
-        
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background using GradientBackground component */}
+      <GradientBackground 
+        className="fixed inset-0 z-0"
+      />
+      
+      {/* Animated spheres */}
+      <AnimatedSpheres 
+        className="fixed inset-0 z-0"
+      />
+
+      {/* Contenido principal */}
+      <div className="relative z-10">
         <main className="w-full">
-          <Header.Store />
+          <Header.Public />
           
-          <Navigation.Store /> 
-          
+          <div className='container mx-auto px-6 py-8'>
+            <Navigation.Store 
+              onOpenFilters={handleOpenFilters}
+              activeFiltersCount={activeFiltersCount}
+            /> 
+          </div>
+
           <div className="container mx-auto px-6 py-8">
             {children}
           </div>
         </main>
-      </SidebarProvider>
+
+        <Footer/>
+
+        <Filter 
+          isOpen={isFilterDialogOpen}
+          onClose={handleCloseFilters}
+        />
+      </div>
     </div>
   );
 }

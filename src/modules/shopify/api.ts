@@ -44,7 +44,6 @@ export const api = {
   
   getProducts: async (params: ProductSearchParams = {}): Promise<ProductsResponse> => {
     const { first = 12, after = null, query = "", sortKey = "BEST_SELLING", reverse = false } = params;
-    
     try {
       const { data, errors } = await storeClient.request(PRODUCTS_QUERY, {
         variables: {
@@ -196,5 +195,89 @@ export const api = {
       console.error('Error fetching homepage data:', error);
       throw error;
     }
+  },
+
+getFilterOptions: async (): Promise<{
+  productTypes: string[];
+  vendors: string[];
+  tags: string[];
+}> => {
+  console.log('🔍 API getFilterOptions - Iniciando la obtención de todos los filtros...');
+
+  const query = `
+    query AllProductsForFilters($first: Int!, $after: String) {
+      products(first: $first, after: $after) {
+        edges {
+          node {
+            productType
+            vendor
+            tags
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  `;
+
+  try {
+    let allProducts: { productType: string, vendor: string, tags: string[] }[] = [];
+    let hasNextPage = true;
+    let cursor: string | null = null;
+
+    while (hasNextPage) {
+      const { data, errors } = await storeClient.request(query, {
+        variables: {
+          first: 250, 
+          after: cursor
+        }
+      });
+
+      if (errors) {
+        handleGraphQLErrors(errors);
+      }
+      
+      const productsPage = data.products.edges.map((edge: Edge<RawProduct>) => edge.node);
+      allProducts = [...allProducts, ...productsPage];
+
+      hasNextPage = data.products.pageInfo.hasNextPage;
+      cursor = data.products.pageInfo.endCursor;
+      
+      if(hasNextPage) {
+        console.log(`📑 Obtenida una página de productos, buscando la siguiente...`);
+      }
+    }
+    
+    console.log(`✅ Se encontraron un total de ${allProducts.length} productos para analizar.`);
+
+    const productTypes = new Set<string>();
+    const vendors = new Set<string>();
+    const tags = new Set<string>();
+
+    allProducts.forEach((product) => {
+      if (product.productType) productTypes.add(product.productType);
+      if (product.vendor) vendors.add(product.vendor);
+      if (product.tags && product.tags.length > 0) {
+        product.tags.forEach(tag => tags.add(tag));
+      }
+    });
+    
+    const filterOptions = {
+      productTypes: [...productTypes].sort(),
+      vendors: [...vendors].sort(),
+      tags: [...tags].sort()
+    };
+    
+    console.log('✅ API getFilterOptions - Opciones de filtro finales encontradas:', filterOptions);
+
+    return filterOptions;
+
+  } catch (error) {
+    console.error("Error fetching filter options:", error);
+    throw error;
   }
+},
+
 };

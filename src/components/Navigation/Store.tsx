@@ -1,7 +1,13 @@
 import { Suspense } from "react";
 import { Content } from "./components";
 
-export const Store = () => {
+type Props =  {
+  onOpenFilters?: () => void;
+  activeFiltersCount?: number;
+}
+
+
+export const Store:  React.FC<Props> = ({onOpenFilters, activeFiltersCount}) => {
   return (
     <Suspense fallback={
       <nav className="bg-white border-b border-gray-200 mb-6">
@@ -11,7 +17,7 @@ export const Store = () => {
         </div>
       </nav>
     }>
-      <Content />
+      <Content onOpenFilters={onOpenFilters} activeFiltersCount={activeFiltersCount} />
     </Suspense>
   );
 }

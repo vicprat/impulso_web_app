@@ -11,7 +11,7 @@ export default function Page() {
   const params = useParams();
   const collectionHandle = params.collection as string;
   const [currentPage, setCurrentPage] = useState(1);
-  const productsPerPage = 12;
+  const productsPerPage = 24;
 
   const { data: collection, isLoading, error } = useCollectionByHandle(
     collectionHandle, 
@@ -80,11 +80,11 @@ export default function Page() {
 
       {currentProducts.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+          <Card.Container>
             {currentProducts.map(product => (
               <Card.Product key={product.id} product={product} />
             ))}
-          </div>
+          </Card.Container>
           
           {totalPages > 1 && (
             <div className="flex justify-center">

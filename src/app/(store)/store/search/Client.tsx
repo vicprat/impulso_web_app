@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useProducts } from '@/modules/shopify/hooks';
 import { Pagination } from '@/components/Pagination';
@@ -10,10 +10,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Search, X, Package, RefreshCw } from 'lucide-react';
-import { Loader } from '@/components/Loader';
+import { Search, X, Package, RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
 
-
+const sortOptions = [
+  { value: 'RELEVANCE', label: 'Relevancia', supportsOrder: false },
+  { value: 'BEST_SELLING', label: 'Más vendidos', supportsOrder: false },
+  { value: 'PRICE', label: 'Precio', supportsOrder: true },
+  { value: 'TITLE', label: 'Nombre', supportsOrder: true },
+  { value: 'CREATED', label: 'Fecha de creación', supportsOrder: true }
+] as const;
 
 export const Client = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -22,14 +27,8 @@ export const Client = () => {
   
   const searchParams = useSearchParams();
   const router = useRouter();
-  const productsPerPage = 12;
+  const productsPerPage = 24;
 
-  const searchParamsString = searchParams.toString();
-  useEffect(() => {
-    setCurrentPage(1);
-    setCursor(null);
-    setPageHistory([null]);
-  }, [searchParamsString]);
 
   const buildSearchParams = (): ProductSearchParams => {
     const params: ProductSearchParams = {
@@ -75,14 +74,20 @@ export const Client = () => {
       queryParts.push('available_for_sale:false');
     }
 
-    const productType = searchParams.get('product_type');
-    if (productType) {
-      queryParts.push(`product_type:${productType}`);
+    const productTypes = searchParams.get('product_types');
+    if (productTypes) {
+      const typeList = productTypes.split(',').filter(Boolean);
+      if (typeList.length > 0) {
+        queryParts.push(`(${typeList.map(type => `product_type:${type}`).join(' OR ')})`);
+      }
     }
 
-    const vendor = searchParams.get('vendor');
-    if (vendor) {
-      queryParts.push(`vendor:${vendor}`);
+    const vendors = searchParams.get('vendors');
+    if (vendors) {
+      const vendorList = vendors.split(',').filter(Boolean);
+      if (vendorList.length > 0) {
+        queryParts.push(`(${vendorList.map(vendor => `vendor:${vendor}`).join(' OR ')})`);
+      }
     }
 
     const tags = searchParams.get('tags');
@@ -141,6 +146,43 @@ export const Client = () => {
     ? currentPage + 1 
     : currentPage;
 
+  const handleSortChange = (value: string) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    
+    if (value === 'RELEVANCE') {
+      newParams.delete('sort');
+      newParams.delete('order'); 
+    } else {
+      newParams.set('sort', value);
+      const sortOption = sortOptions.find(opt => opt.value === value);
+      if (sortOption?.supportsOrder && !newParams.get('order')) {
+        newParams.set('order', 'asc');
+      }
+    }
+    
+    newParams.delete('page');
+    newParams.delete('after');
+    
+    router.push(`/store/search?${newParams.toString()}`);
+  };
+
+  const toggleSortOrder = () => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    const currentOrder = searchParams.get('order');
+    const currentSort = searchParams.get('sort');
+    
+    const sortOption = sortOptions.find(opt => opt.value === currentSort);
+    if (!sortOption?.supportsOrder) return;
+    
+    if (currentOrder === 'desc') {
+      newParams.set('order', 'asc');
+    } else {
+      newParams.set('order', 'desc');
+    }
+    
+    router.push(`/store/search?${newParams.toString()}`);
+  };
+
   const getActiveFilters = () => {
     const filters: Array<{ key: string; label: string; value: string }> = [];
     
@@ -153,6 +195,24 @@ export const Client = () => {
     if (collections) {
       const collectionNames = collections.split(',').filter(Boolean);
       filters.push({ key: 'collections', label: 'Colecciones', value: collectionNames.join(', ') });
+    }
+
+    const productTypes = searchParams.get('product_types');
+    if (productTypes) {
+      const typeNames = productTypes.split(',').filter(Boolean);
+      filters.push({ key: 'product_types', label: 'Tipos de Obra', value: typeNames.join(', ') });
+    }
+
+    const vendors = searchParams.get('vendors');
+    if (vendors) {
+      const vendorNames = vendors.split(',').filter(Boolean);
+      filters.push({ key: 'vendors', label: 'Artistas', value: vendorNames.join(', ') });
+    }
+
+    const tags = searchParams.get('tags');
+    if (tags) {
+      const tagNames = tags.split(',').filter(Boolean);
+      filters.push({ key: 'tags', label: 'Técnicas/Estilos', value: tagNames.join(', ') });
     }
     
     const priceMin = searchParams.get('price_min');
@@ -187,33 +247,48 @@ export const Client = () => {
     } else {
       newParams.delete(filterKey);
     }
-    router.push(`/store/search?${newParams.toString()}`);
+    
+    const hasRemainingFilters = Array.from(newParams.keys()).some(key => 
+      !['sort', 'order', 'page', 'after'].includes(key)
+    );
+    
+    if (hasRemainingFilters) {
+      router.push(`/store/search?${newParams.toString()}`);
+    } else {
+      const sortParams = new URLSearchParams();
+      const sort = newParams.get('sort');
+      const order = newParams.get('order');
+      if (sort) sortParams.set('sort', sort);
+      if (order) sortParams.set('order', order);
+      
+      const finalQuery = sortParams.toString();
+      router.push(finalQuery ? `/store/search?${finalQuery}` : '/store');
+    }
   };
 
   const clearAllFilters = () => {
-    router.push('/store');
-  };
-
-  const handleSortChange = (value: string) => {
-    const newParams = new URLSearchParams(searchParams.toString());
-    if (value === 'RELEVANCE') {
-      newParams.delete('sort');
+    const currentSort = searchParams.get('sort');
+    const currentOrder = searchParams.get('order');
+    
+    if (currentSort || currentOrder) {
+      const sortParams = new URLSearchParams();
+      if (currentSort) sortParams.set('sort', currentSort);
+      if (currentOrder) sortParams.set('order', currentOrder);
+      router.push(`/store/search?${sortParams.toString()}`);
     } else {
-      newParams.set('sort', value);
+      router.push('/store');
     }
-    router.push(`/store/search?${newParams.toString()}`);
   };
 
   const activeFilters = getActiveFilters();
+  const currentSort = searchParams.get('sort') || 'RELEVANCE';
+  const currentOrder = searchParams.get('order') || 'asc';
+  const currentSortOption = sortOptions.find(opt => opt.value === currentSort);
 
   if (isLoading) {
-    return (
-          <Loader.Cards count={productsPerPage} />
-     
-    );
+    return <Card.Loader />;
   }
 
-  // Error state
   if (error) {
     return (
       <div className="bg-surface min-h-screen">
@@ -249,6 +324,7 @@ export const Client = () => {
             Resultados de búsqueda
           </h1>
           
+          {/* Filtros activos */}
           {activeFilters.length > 0 && (
             <div className="bg-surface-container border border-outline rounded-lg p-4 mb-6">
               <div className="flex items-center justify-between mb-3">
@@ -284,40 +360,73 @@ export const Client = () => {
             </div>
           )}
           
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          
+          {/* Controles de sorting y resultados */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            {/* Contador de resultados */}
+            <div className="text-sm text-on-surface-variant">
+              {productsData?.products ? (
+                <>
+                  Mostrando {((currentPage - 1) * productsPerPage) + 1}-{Math.min(currentPage * productsPerPage, ((currentPage - 1) * productsPerPage) + productsData.products.length)} productos
+                  {productsData.pageInfo.hasNextPage && (
+                    <span className="ml-1">de muchos resultados</span>
+                  )}
+                </>
+              ) : (
+                'Cargando resultados...'
+              )}
+            </div>
             
+            {/* Controles de sorting */}
             <div className="flex items-center gap-3">
               <label className="text-sm font-medium text-on-surface-variant whitespace-nowrap">
                 Ordenar por:
               </label>
-              <Select 
-                value={searchParams.get('sort') || 'RELEVANCE'} 
-                onValueChange={handleSortChange}
-              >
-                <SelectTrigger className="w-[140px]  border-outline">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="border-outline-variant">
-                  <SelectItem value="RELEVANCE">Relevancia</SelectItem>
-                  <SelectItem value="BEST_SELLING">Más vendidos</SelectItem>
-                  <SelectItem value="PRICE">Precio</SelectItem>
-                  <SelectItem value="TITLE">Nombre</SelectItem>
-                  <SelectItem value="CREATED">Más recientes</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <Select 
+                  value={currentSort} 
+                  onValueChange={handleSortChange}
+                >
+                  <SelectTrigger className="w-[140px] border-outline">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="border-outline-variant">
+                    {sortOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Botón de orden */}
+                {currentSortOption?.supportsOrder && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleSortOrder}
+                    className="h-9 px-3 border-outline hover:bg-surface-container"
+                    title={`Ordenar ${currentOrder === 'asc' ? 'descendente' : 'ascendente'}`}
+                  >
+                    {currentOrder === 'asc' ? (
+                      <ArrowUp className="h-4 w-4" />
+                    ) : (
+                      <ArrowDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Results */}
+        {/* Resultados */}
         {productsData?.products && productsData.products.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+            <Card.Container>
               {productsData.products.map(product => (
                 <Card.Product key={product.id} product={product} />
               ))}
-            </div>
+            </Card.Container>
             
             <div className="flex justify-center">
               <Pagination 
@@ -349,7 +458,7 @@ export const Client = () => {
                   </ul>
                 </div>
                 <Button
-                  onClick={clearAllFilters}
+                  onClick={() => router.push('/store')}
                   className="bg-primary text-on-primary hover:bg-primary/90"
                 >
                   <Package className="w-4 h-4 mr-2" />
@@ -362,4 +471,4 @@ export const Client = () => {
       </div>
     </div>
   );
-}
+};

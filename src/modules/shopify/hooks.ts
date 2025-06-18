@@ -20,6 +20,7 @@ export const SHOPIFY_KEYS = {
   product: (handle: string) => [...SHOPIFY_KEYS.products(), handle] as const,
   collections: () => [...SHOPIFY_KEYS.all, 'collections'] as const,
   collection: (handle: string) => [...SHOPIFY_KEYS.collections(), handle] as const,
+  filterOptions: () => [...SHOPIFY_KEYS.all, 'filterOptions'] as const,
 };
 
 export const useShopInfo = (
@@ -82,4 +83,14 @@ export const useCollectionByHandle = (
     enabled: !!handle,
     ...options,
   });
+};
+
+export const useFilterOptions = (
+    options?: Omit<UseQueryOptions<any, Error, any>, 'queryKey' | 'queryFn'>
+) => {
+    return useQuery({
+        queryKey: SHOPIFY_KEYS.filterOptions(),
+        queryFn: () => api.getFilterOptions(),
+        ...options,
+    });
 };

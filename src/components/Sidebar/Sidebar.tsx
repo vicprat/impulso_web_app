@@ -11,7 +11,7 @@ import { MenuItem } from './MenuItem';
 import { useAuth } from '@/modules/auth/context/useAuth';
 import { getDashboardNavRoutes, RouteConfig } from '@/config/routes';
 import { MenuGroup } from './MenuGroup';
-import { Logo } from '../Header/components/Logo';
+import { Logo } from '@/components/Logo';
 
 type Props = {
   routes: RouteConfig[];
