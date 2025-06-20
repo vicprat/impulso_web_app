@@ -33,7 +33,13 @@ async function main() {
     { name: 'view_products', description: 'Ver productos', resource: 'products', action: 'read' },
     { name: 'manage_products', description: 'Gestionar productos', resource: 'products', action: 'crud' },
     { name: 'manage_inventory', description: 'Gestionar inventario', resource: 'inventory', action: 'crud' },
-    
+
+    // Permisos de artistas (si planeas permitir gestión)
+    { name: 'manage_own_products', description: 'Crear, editar y borrar sus propios productos', resource: 'products', action: 'crud_own' },
+    { name: 'manage_own_blog_posts', description: 'Crear y editar sus propios artículos de blog', resource: 'blog_posts', action: 'crud_own' },
+    { name: 'manage_all_blog_posts', description: 'Gestionar todos los artículos de blog', resource: 'blog_posts', action: 'crud_all' },
+
+
     // Permisos especiales
     { name: 'export_data', description: 'Exportar datos del sistema', resource: 'system', action: 'export' },
     { name: 'view_logs', description: 'Ver logs del sistema', resource: 'logs', action: 'read' },
@@ -82,6 +88,17 @@ async function main() {
       ],
     },
     {
+      name: 'artist',
+      description: 'Colaborador que puede gestionar sus propias obras',
+      permissions: [
+        'view_profile',
+        'update_profile',
+        'view_products',
+        'manage_own_products',
+        'manage_own_blog_posts'
+      ],
+    },
+    {
       name: 'support',
       description: 'Personal de soporte al cliente',
       permissions: [
@@ -110,6 +127,8 @@ async function main() {
         'view_analytics',
         'view_logs',
         'export_data',
+        'manage_own_blog_posts',
+        'manage_own_products',
       ],
     },
     {

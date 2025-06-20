@@ -1,14 +1,13 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/modules/auth/context/useAuth';
 import { ShoppingCart, Plus, Minus, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Product, Variant } from '@/modules/shopify/types';
-import { AuthenticationError } from '@/modules/user/types';
 import { useCartActions } from '@/modules/cart/hook';
+
 interface AddToCartButtonProps {
   product: Product;
   selectedVariant?: Variant;
@@ -26,17 +25,10 @@ export function AddToCartButton({
   className = '',
   showQuantitySelector = false
 }: AddToCartButtonProps) {
-  const { isAuthenticated, login, refresh, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, login, isLoading: authLoading } = useAuth();
   const { addProduct, isAdding, cartSummary } = useCartActions();
   const [quantity, setQuantity] = useState(initialQuantity);
-  const [authRetryCount, setAuthRetryCount] = useState(0);
 
-  // Reset retry count when authentication status changes
-  useEffect(() => {
-    setAuthRetryCount(0);
-  }, [isAuthenticated]);
-
-  // Determinar la variante a usar
   const variantToAdd = selectedVariant || product.variants[0];
   
   if (!variantToAdd) {
@@ -48,75 +40,25 @@ export function AddToCartButton({
     );
   }
 
-  // Verificar si el producto ya está en el carrito
   const existingLine = cartSummary?.lines.find(
     line => line.merchandise.id === variantToAdd.id
   );
 
   const handleAddToCart = async () => {
-    // Check authentication first
     if (!isAuthenticated && !authLoading) {
       toast.error('Debes iniciar sesión para agregar productos al carrito');
       login();
       return;
     }
-
-    // Don't proceed if still loading auth
-    if (authLoading) {
-      return;
-    }
-
     if (!variantToAdd.availableForSale) {
       toast.error('Este producto no está disponible para la venta');
       return;
     }
 
-    try {
-      await addProduct(variantToAdd.id, quantity);
-      
-      toast.success(
-        `${product.title} agregado al carrito`,
-        {
-          description: `Cantidad: ${quantity}`,
-          action: {
-            label: 'Ver carrito',
-            onClick: () => window.location.href = '/cart'
-          }
-        }
-      );
-      
-      // Reset retry count on success
-      setAuthRetryCount(0);
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      
-      if (error instanceof AuthenticationError) {
-        // Handle authentication errors with retry logic
-        if (authRetryCount < 1) {
-          setAuthRetryCount(prev => prev + 1);
-          toast.error('Verificando sesión...');
-          
-          try {
-            await refresh();
-            // If refresh succeeds, retry the add to cart operation
-            setTimeout(() => handleAddToCart(), 500);
-            return;
-          } catch (refreshError) {
-            console.error('Refresh failed:', refreshError);
-          }
-        }
-        
-        // If retry limit reached or refresh failed
-        toast.error('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
-        login();
-      } else {
-        // Handle other errors
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        toast.error(`Error al agregar al carrito: ${errorMessage}`);
-      }
-    }
+    addProduct(variantToAdd.id, quantity);
+    
   };
-
+  
   const incrementQuantity = () => {
     setQuantity(prev => prev + 1);
   };
@@ -125,7 +67,6 @@ export function AddToCartButton({
     setQuantity(prev => Math.max(1, prev - 1));
   };
 
-  // Show loading state during auth loading
   if (authLoading) {
     return (
       <Button disabled size={size} className={className}>
@@ -135,7 +76,6 @@ export function AddToCartButton({
     );
   }
 
-  // Show login prompt if not authenticated
   if (!isAuthenticated) {
     return (
       <Button 
@@ -188,7 +128,7 @@ export function AddToCartButton({
         {isAdding ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {authRetryCount > 0 ? 'Reintentando...' : 'Agregando...'}
+            Agregando...
           </>
         ) : existingLine ? (
           <>

@@ -22,6 +22,10 @@ model User {
   sessionTokens SessionToken[]
   activityLogs  ActivityLog[]
 
+  articles ArticleMetadata[]
+  artist   Artist?           @relation(fields: [artistId], references: [id])
+  artistId String?           @unique
+
   @@map("users")
 }
 
@@ -125,4 +129,34 @@ model AppConfig {
   type  String @default("string") // "string", "number", "boolean", "json"
 
   @@map("app_config")
+}
+
+model Artist {
+  id           String   @id @default(cuid())
+  name         String   @unique // Este será el 'vendor' en Shopify
+  user         User?
+  bio          String?  @db.Text
+  portfolioUrl String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ArticleMetadata {
+  id               String @id @default(cuid())
+  // ID del artículo de Shopify (ej: gid://shopify/OnlineStoreArticle/12345)
+  shopifyArticleId String @unique
+
+  // Relación con el autor en tu sistema
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  // METADATOS ENRIQUECIDOS
+  customCategory    String? // Una categoría personalizada que no existe en Shopify
+  seoScore          Int? // Puntuación de un análisis SEO que hagas en tu app
+  estimatedReadTime Int? // En minutos
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
 }

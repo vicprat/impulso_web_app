@@ -9,6 +9,137 @@ import {
 } from '@/modules/user/hooks/management';
 import { useAuth } from '@/modules/auth/context/useAuth';
 import { UserFilters, UserProfile } from '@/modules/user/types';
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+
+
+const PromoteToArtistDialog = ({ user }: { user: any }) => {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [vendorName, setVendorName] = useState('');
+
+  // 1. Hook de React Query para obtener la lista de vendors
+  const { data: vendors, isLoading } = useQuery<string[]>({
+    queryKey: ['vendors'],
+    queryFn: () => fetch('/api/vendors').then(res => res.json()),
+    enabled: open, // Solo se ejecuta cuando el diálogo está abierto
+  });
+
+  // 2. Hook de React Query para la mutación (promocionar al artista)
+  const mutation = useMutation({
+    mutationFn: (newVendorName: string) => {
+      return fetch('/api/artists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, vendorName: newVendorName }),
+      }).then(res => {
+        if (!res.ok) throw new Error('Falló la promoción del artista');
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      toast.success(  `El usuario ${user.name} ha sido promocionado a artista.` );
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setOpen(false); 
+    },
+    onError: () => {
+      toast.error("No se pudo promocionar al artista.");
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!vendorName) return;
+    mutation.mutate(vendorName);
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline">Promocionar a Artista</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <form onSubmit={handleSubmit}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Asignar Vendor a {user.name}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecciona un vendor existente o escribe un nombre para crear uno nuevo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="py-4">
+            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={popoverOpen}
+                  className="w-full justify-between"
+                >
+                  {vendorName
+                    ? vendors?.find((v) => v.toLowerCase() === vendorName.toLowerCase()) || `Crear nuevo: "${vendorName}"`
+                    : "Selecciona o escribe un vendor..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command shouldFilter={false} /* Filtramos manualmente */>
+                  <CommandInput 
+                    placeholder="Buscar o crear vendor..."
+                    onValueChange={setVendorName}
+                  />
+                  <CommandList>
+                     <CommandEmpty>
+                        {isLoading ? 'Cargando...' : 'No se encontraron vendors.'}
+                      </CommandEmpty>
+                    <CommandGroup>
+                      {vendors
+                        ?.filter(v => v.toLowerCase().includes(vendorName.toLowerCase()))
+                        .map((v) => (
+                        <CommandItem
+                          key={v}
+                          value={v}
+                          onSelect={(currentValue) => {
+                            setVendorName(currentValue === vendorName ? "" : currentValue);
+                            setPopoverOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              vendorName.toLowerCase() === v.toLowerCase() ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {v}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button type="submit" disabled={mutation.isPending || !vendorName}>
+              {mutation.isPending ? 'Promocionando...' : 'Asignar y Promocionar'}
+            </Button>
+          </AlertDialogFooter>
+        </form>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
 
 export function UserManagementAdmin() {
   const { hasPermission, hasRole, user: currentUser } = useAuth();
@@ -141,6 +272,22 @@ export function UserManagementAdmin() {
             </span>
           </div>
         </div>
+
+
+       {users.map((user) => (
+  <div key={user.id} className="flex items-center justify-between p-4 border-b">
+    <div>
+      <p className="font-semibold">{user.name}</p>
+      <p className="text-sm text-muted-foreground">{user.email}</p>
+      {user.artist ? (
+        <span className="text-sm font-bold text-green-500">Artista: {user.artist.name}</span>
+      ) : (
+        <span className="text-sm text-gray-500">No es artista</span>
+      )}
+    </div>
+    {!user.artist && <PromoteToArtistDialog user={user} />}
+  </div>
+))}
 
         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>

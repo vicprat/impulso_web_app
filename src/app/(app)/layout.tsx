@@ -11,7 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <Guard.Route> 
       <SidebarProvider>
-        <div className="flex h-screen w-full overflow-hidden bg-background">
+        <div className="flex h-screen w-full overflow-auto bg-background">
           
           <AppSidebar routes={AppRoutes} />
           
