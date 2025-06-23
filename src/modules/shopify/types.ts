@@ -45,8 +45,8 @@ export type Product = {
   images: Image[];
   variants: Variant[];
   tags?: string[];
-};
-
+  status?: 'ACTIVE' | 'DRAFT' | 'ARCHIVED'; 
+}
 export type Collection = {
   id: string;
   title: string;

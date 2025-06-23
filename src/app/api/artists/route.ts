@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePermission } from '@/modules/auth/server/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient(); // Asegúrate de tener una instancia de Prisma
 
-/**
- * @description Crea un perfil de Artista y lo vincula a un usuario existente.
- * Esta acción requiere permisos de administrador.
- */
+
+
 export async function POST(request: NextRequest) {
   try {
     const session = await requirePermission('manage_users');
@@ -39,33 +36,27 @@ export async function POST(request: NextRequest) {
         throw new Error("El rol 'artist' no se encuentra en la base de datos.");
       }
 
-      // VINCULACIÓN FINAL CON connectOrCreate
       await tx.user.update({
         where: { id: userId },
         data: {
-          // 1. Vincula el ID del nuevo artista al usuario
           artistId: newArtist.id,
-          // 2. Conecta o crea la relación de rol
           roles: {
             connectOrCreate: {
               where: {
-                // Usa el campo único compuesto de la tabla user_roles
                 userId_roleId: {
                   userId: userId,
                   roleId: artistRole.id,
                 },
               },
               create: {
-                // Los datos para crear la nueva fila en user_roles
                 roleId: artistRole.id,
-                assignedBy: session.user.id, // Guarda quién hizo la asignación
+                assignedBy: session.user.id,
               },
             },
           },
         },
       });
       
-      // Devuelve el usuario actualizado para confirmar
       return tx.user.findUnique({
           where: { id: userId },
           include: { artist: true, roles: { include: { role: true } } }
@@ -74,6 +65,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(updatedUser);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("Error al crear el perfil de artista:", error);
     if (error.message.includes("El rol 'artist' no se encuentra")) {

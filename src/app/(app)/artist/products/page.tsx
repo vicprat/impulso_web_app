@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import * as React from 'react';
@@ -16,10 +17,6 @@ import {
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
 import {
@@ -39,90 +36,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Guard } from '@/components/Guards';
 import { Card, CardContent } from '@/components/ui/card';
+import { Form } from '@/components/Forms';
+import { Product } from '@/modules/shopify/types';
 
 
-// Placeholder para el tipo de producto
-type Product = {
-    id: string;
-    title: string;
-    status: string;
-    vendor: string;
-    featuredImage?: { url: string };
-    priceRangeV2: { minVariantPrice: { amount: string } };
-};
-
-// --- Componente del Formulario del Producto (para Crear y Editar) ---
-function ProductForm({ product, onFinished }: { product?: Product, onFinished: () => void }) {
-    // Aquí iría la lógica de tu formulario (React Hook Form, Zod, etc.)
-    // Por simplicidad, usamos un formulario no controlado.
-
-    const queryClient = useQueryClient();
-    const mutation = useMutation({
-        mutationFn: async (formData: any) => {
-            const isEditing = !!product;
-            const url = isEditing ? `/api/artists/products/${product.id.split('/').pop()}` : '/api/artists/products';
-            const method = isEditing ? 'PUT' : 'POST';
-
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
-            });
-            if (!response.ok) throw new Error("Error al guardar el producto");
-            return response.json();
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['artist-products'] });
-            onFinished();
-        },
-        onError: (error) => {
-            // Aquí deberías mostrar un toast de error
-            console.error(error);
-        }
-    });
-
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const data = {
-            title: formData.get('title'),
-            // Agrega aquí los demás campos de tu formulario
-        };
-        mutation.mutate(data);
-    };
-
-    return (
-        <form onSubmit={handleSubmit}>
-            <DialogHeader>
-                <DialogTitle>{product ? 'Editar Obra' : 'Crear Nueva Obra'}</DialogTitle>
-                <DialogDescription>
-                    Completa los detalles de la obra. Los cambios se reflejarán en Shopify.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="title" className="text-right">Título</Label>
-                    <Input id="title" name="title" defaultValue={product?.title} className="col-span-3" required />
-                </div>
-                {/* Agrega más campos: description, price, images, etc. */}
-            </div>
-            <DialogFooter>
-                <Button type="button" variant="outline" onClick={onFinished}>Cancelar</Button>
-                <Button type="submit" disabled={mutation.isPending}>
-                    {mutation.isPending ? 'Guardando...' : 'Guardar'}
-                </Button>
-            </DialogFooter>
-        </form>
-    )
-}
-
-
-// --- Componente Principal de la Página ---
 export default function ArtistProductsPage() {
     const queryClient = useQueryClient();
     const [isFormOpen, setIsFormOpen] = React.useState(false);
@@ -152,6 +72,7 @@ export default function ArtistProductsPage() {
         setIsFormOpen(true);
     }
 
+
     return (
         <Guard.Permission permission="manage_own_products">
             <div className="container mx-auto py-8">
@@ -165,7 +86,7 @@ export default function ArtistProductsPage() {
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[425px]">
-                            <ProductForm product={editingProduct} onFinished={() => setIsFormOpen(false)} />
+                            <Form.Product product={editingProduct} onFinished={() => setIsFormOpen(false)} />
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -192,7 +113,7 @@ export default function ArtistProductsPage() {
                                         <TableRow key={product.id}>
                                             <TableCell>
                                                 <img 
-                                                    src={product.featuredImage?.url || '/placeholder.svg'} 
+                                                    src={product.images?.[0]?.url || '/placeholder.svg'} 
                                                     alt={product.title}
                                                     className="w-16 h-16 object-cover rounded-md"
                                                 />
@@ -203,7 +124,7 @@ export default function ArtistProductsPage() {
                                                     {product.status}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell>${product.priceRangeV2.minVariantPrice.amount}</TableCell>
+                                            <TableCell>${product.priceRange?.minVariantPrice.amount}</TableCell>
                                             <TableCell className="text-right">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
