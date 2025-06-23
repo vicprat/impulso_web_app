@@ -9,29 +9,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
-    } catch  {
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
+    const controller = new AbortController();
+
+    const checkAuth = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include',
+          signal: controller.signal, 
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          setUser(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     checkAuth();
-  }, [checkAuth]);
+
+    return () => {
+      controller.abort();
+    };
+  }, []); 
 
   const login = useCallback(() => {
     window.location.href = '/api/auth/login';
@@ -43,17 +54,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         credentials: 'include',
       });
-
       const data = await response.json();
-      
       setUser(null);
-
       if (data.shopifyLogoutUrl) {
         window.location.href = data.shopifyLogoutUrl;
       } else {
         window.location.href = '/';
       }
-    } catch  {
+    } catch {
       setUser(null);
       window.location.href = '/';
     }
@@ -65,25 +73,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         credentials: 'include',
       });
-
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
       } else {
         setUser(null);
       }
-    } catch  {
+    } catch {
       setUser(null);
     }
   }, []);
-
+  
   const hasPermission = useCallback((permission: string) => {
-    return user?.permissions.includes(permission) ?? false;
+    if (!user?.permissions) return false;
+    const permissionsSet = new Set(user.permissions);
+    return permissionsSet.has(permission);
   }, [user]);
 
   const hasRole = useCallback((role: string) => {
-    return user?.roles.includes(role) ?? false;
+    if (!user?.roles) return false;
+    const rolesSet = new Set(user.roles);
+    return rolesSet.has(role);
   }, [user]);
+
 
   const value: AuthContextType = {
     user,

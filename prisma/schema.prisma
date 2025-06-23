@@ -26,6 +26,8 @@ model User {
   artist   Artist?           @relation(fields: [artistId], references: [id])
   artistId String?           @unique
 
+  cartId String? @unique
+
   @@map("users")
 }
 

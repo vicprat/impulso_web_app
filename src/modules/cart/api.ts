@@ -1,127 +1,77 @@
-import { makeStorefrontRequest } from '@/lib/shopify';
+
 import {
   Cart,
-  CartInput,
   CartLineInput,
   CartLineUpdateInput,
-  CartResponse,
 } from './types';
-import {
-  CREATE_CART_MUTATION,
-  GET_CART_QUERY,
-  ADD_TO_CART_MUTATION,
-  UPDATE_CART_LINES_MUTATION,
-  REMOVE_FROM_CART_MUTATION,
-  APPLY_DISCOUNT_CODE_MUTATION
-} from './queries';
-import { handleGraphQLErrors } from '@/lib/graphql';
 
-const getCartStorageMethod = () => {
-  if (typeof window !== 'undefined') {
-    return {
-      getCartId: () => localStorage.getItem('shopify_cart_id'),
-      setCartId: (id: string) => localStorage.setItem('shopify_cart_id', id),
-      clearCartId: () => localStorage.removeItem('shopify_cart_id')
-    };
-  }
-  
-  return {
-    getCartId: () => null,
-    setCartId: () => {},
-    clearCartId: () => {}
-  };
-};
 
 export const api = {
-  getCart: async (): Promise<Cart | null> => {
+ getCart: async (): Promise<Cart | null> => {
     try {
-      const storage = getCartStorageMethod();
-      const cartId = storage.getCartId();
-      
-      if (!cartId) {
-        return null;
+      const response = await fetch('/api/cart', { credentials: 'include' });
+      if (!response.ok) {
+        if (response.status === 401) return null; // No autenticado
+        throw new Error('Failed to fetch cart');
       }
-      
-      const data = await makeStorefrontRequest(GET_CART_QUERY, { cartId });
-      return data.cart;
+      return await response.json();
     } catch (error) {
       console.error('Error getting cart:', error);
-      if (error instanceof Error && error.message.includes('Could not find cart')) {
-        const storage = getCartStorageMethod();
-        storage.clearCartId();
-        return null;
-      }
-      throw error;
+      return null;
     }
   },
 
-  createCart: async (input: CartInput = {}): Promise<CartResponse> => {
-    try {
-      const data = await makeStorefrontRequest(CREATE_CART_MUTATION, { input });
-      
-      handleGraphQLErrors(data.cartCreate.userErrors);
-      
-      if (data.cartCreate.cart?.id) {
-        const storage = getCartStorageMethod();
-        storage.setCartId(data.cartCreate.cart.id);
-      }
-      
-      return data.cartCreate;
-    } catch (error) {
-      console.error('Error creating cart:', error);
-      throw error;
+
+ addToCart: async (lines: CartLineInput[]): Promise<Cart> => {
+    const response = await fetch('/api/cart/lines', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(lines),
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to add to cart');
     }
+    return response.json();
   },
 
-  addToCart: async (cartId: string, lines: CartLineInput[]): Promise<CartResponse> => {
-    try {
-      const data = await makeStorefrontRequest(ADD_TO_CART_MUTATION, { cartId, lines });
-      
-      handleGraphQLErrors(data.cartLinesAdd.userErrors); 
-      
-      return data.cartLinesAdd;
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      throw error;
+updateCartLines: async (lines: CartLineUpdateInput[]): Promise<Cart> => {
+    const response = await fetch('/api/cart/lines', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(lines),
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to update cart lines');
     }
+    return response.json();
   },
 
-  updateCartLines: async (cartId: string, lines: CartLineUpdateInput[]): Promise<CartResponse> => {
-    try {
-      const data = await makeStorefrontRequest(UPDATE_CART_LINES_MUTATION, { cartId, lines });
-      
-      handleGraphQLErrors(data.cartLinesUpdate.userErrors);
-      
-      return data.cartLinesUpdate;
-    } catch (error) {
-      console.error('Error updating cart lines:', error);
-      throw error;
-    }
-  },
 
-  removeFromCart: async (cartId: string, lineIds: string[]): Promise<CartResponse> => {
-    try {
-      const data = await makeStorefrontRequest(REMOVE_FROM_CART_MUTATION, { cartId, lineIds });
-      
-      handleGraphQLErrors(data.cartLinesRemove.userErrors);
-      
-      return data.cartLinesRemove;
-    } catch (error) {
-      console.error('Error removing from cart:', error);
-      throw error;
+ removeFromCart: async (lineIds: string[]): Promise<Cart> => {
+    const response = await fetch('/api/cart/lines', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ lineIds }),
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to remove from cart');
     }
+    return response.json();
   },
+  
+ applyDiscountCode: async (cartId: string, discountCodes: string[]): Promise<Cart> => {
+    const { makeStorefrontRequest } = await import('@/lib/shopify');
+    const { APPLY_DISCOUNT_CODE_MUTATION } = await import('./queries');
+    const { handleGraphQLErrors } = await import('@/lib/graphql');
 
-  applyDiscountCode: async (cartId: string, discountCodes: string[]): Promise<CartResponse> => {
-    try {
-      const data = await makeStorefrontRequest(APPLY_DISCOUNT_CODE_MUTATION, { cartId, discountCodes });
-      
-      handleGraphQLErrors(data.cartDiscountCodesUpdate.userErrors);
-      
-      return data.cartDiscountCodesUpdate;
-    } catch (error) {
-      console.error('Error applying discount code:', error);
-      throw error;
-    }
+    const data = await makeStorefrontRequest(APPLY_DISCOUNT_CODE_MUTATION, { cartId, discountCodes });
+    handleGraphQLErrors(data.cartDiscountCodesUpdate.userErrors);
+    return data.cartDiscountCodesUpdate.cart;
   },
 };

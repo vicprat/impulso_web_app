@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/context/useAuth';
 import { api } from './api';
 import { CartLineInput, CartLineUpdateInput } from './types';
+import { toast } from 'sonner';
 
 export const cartKeys = {
   all: ['cart'] as const,
@@ -15,38 +16,23 @@ export function useCart() {
   return useQuery({
     queryKey: cartKeys.cart(),
     queryFn: api.getCart,
-    enabled: isAuthenticated,
+    enabled: isAuthenticated, 
     staleTime: 1 * 60 * 1000, 
     gcTime: 5 * 60 * 1000, 
   });
 }
 
-export function useCreateCart() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: api.createCart,
-    onSuccess: (data) => {
-      queryClient.setQueryData(cartKeys.cart(), data.cart);
-    },
-    onError: (error) => {
-      console.error('Error creating cart:', error);
-    },
-  });
-}
-
 export function useAddToCart() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ cartId, lines }: { cartId: string; lines: CartLineInput[] }) =>
-      api.addToCart(cartId, lines),
-    onSuccess: (data) => {
-      queryClient.setQueryData(cartKeys.cart(), data.cart);
-      queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+    mutationFn: (lines: CartLineInput[]) => api.addToCart(lines),
+    
+    onSuccess: (updatedCart) => {
+      queryClient.setQueryData(cartKeys.cart(), updatedCart);
     },
     onError: (error) => {
-      console.error('Error adding to cart:', error);
+      toast.error(`Error adding to cart: ${error.message}`);
     },
   });
 }
@@ -55,15 +41,14 @@ export function useUpdateCartLines() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ cartId, lines }: { cartId: string; lines: CartLineUpdateInput[] }) =>
-      api.updateCartLines(cartId, lines),
+    mutationFn: (lines: CartLineUpdateInput[]) => api.updateCartLines(lines), // Ya no necesita cartId
     onSuccess: (data) => {
-      queryClient.setQueryData(cartKeys.cart(), data.cart);
+      queryClient.setQueryData(cartKeys.cart(), data);
       queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
     },
     onError: (error) => {
-      console.error('Error updating cart lines:', error);
-    },
+      toast.error(`Error updating cart lines: ${error.message}`);
+    }
   });
 }
 
@@ -71,15 +56,14 @@ export function useRemoveFromCart() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ cartId, lineIds }: { cartId: string; lineIds: string[] }) =>
-      api.removeFromCart(cartId, lineIds),
+    mutationFn: (lineIds: string[]) => api.removeFromCart(lineIds), // Ya no necesita cartId
     onSuccess: (data) => {
-      queryClient.setQueryData(cartKeys.cart(), data.cart);
+      queryClient.setQueryData(cartKeys.cart(), data);
       queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
     },
     onError: (error) => {
-      console.error('Error removing from cart:', error);
-    },
+      toast.error(`Error removing from cart: ${error.message}`);
+    }
   });
 }
 
@@ -87,79 +71,68 @@ export function useApplyDiscountCode() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ cartId, discountCodes }: { cartId: string; discountCodes: string[] }) =>
-      api.applyDiscountCode(cartId, discountCodes),
+    mutationFn: (params: { cartId: string; discountCodes: string[] }) => 
+      api.applyDiscountCode(params.cartId, params.discountCodes),
     onSuccess: (data) => {
-      queryClient.setQueryData(cartKeys.cart(), data.cart);
+      queryClient.setQueryData(cartKeys.cart(), data);
       queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
     },
     onError: (error) => {
-      console.error('Error applying discount code:', error);
-    },
+      toast.error(`Error applying discount code: ${error.message}`);
+    }
   });
 }
 
 export function useCartActions() {
   const { data: cart, isLoading, error } = useCart();
-  const createCart = useCreateCart();
   const addToCart = useAddToCart();
   const updateCartLines = useUpdateCartLines();
   const removeFromCart = useRemoveFromCart();
   const applyDiscountCode = useApplyDiscountCode();
 
-  // Función para agregar un producto al carrito
   const addProduct = async (variantId: string, quantity: number = 1) => {
+    if (!cart) return;
+    
+    const lines: CartLineInput[] = [{
+      merchandiseId: variantId,
+      quantity,
+    }];
+
     try {
-      let currentCart = cart;
-      
-      // Si no hay carrito, crear uno nuevo
-      if (!currentCart) {
-        const newCartResult = await createCart.mutateAsync({});
-        currentCart = newCartResult.cart;
-      }
-      
-      // Agregar el producto al carrito
-      await addToCart.mutateAsync({
-        cartId: currentCart.id,
-        lines: [{ merchandiseId: variantId, quantity }]
-      });
+      await addToCart.mutateAsync(lines);
     } catch (error) {
-      console.error('Error adding product to cart:', error);
+      console.error('Error adding product:', error);
       throw error;
     }
-  };
+  }
 
-  // Función para actualizar cantidad de un producto
   const updateQuantity = async (lineId: string, quantity: number) => {
     if (!cart) return;
     
+    const lines: CartLineUpdateInput[] = [{
+      id: lineId,
+      quantity,
+    }];
+
     try {
-      await updateCartLines.mutateAsync({
-        cartId: cart.id,
-        lines: [{ id: lineId, quantity }]
-      });
+      await updateCartLines.mutateAsync(lines);
     } catch (error) {
       console.error('Error updating quantity:', error);
       throw error;
     }
-  };
+  }
 
-  // Función para remover un producto
+
   const removeProduct = async (lineId: string) => {
     if (!cart) return;
-    
     try {
-      await removeFromCart.mutateAsync({
-        cartId: cart.id,
-        lineIds: [lineId]
-      });
+      await removeFromCart.mutateAsync([lineId]);
     } catch (error) {
       console.error('Error removing product:', error);
       throw error;
     }
   };
 
-  // Función para aplicar código de descuento
   const applyDiscount = async (code: string) => {
     if (!cart) return;
     
@@ -174,7 +147,6 @@ export function useCartActions() {
     }
   };
 
-  // Calcular totales
   const cartSummary = cart ? {
     itemCount: cart.totalQuantity,
     subtotal: cart.cost.subtotalAmount,
@@ -193,7 +165,7 @@ export function useCartActions() {
     updateQuantity,
     removeProduct,
     applyDiscount,
-    isAdding: addToCart.isPending || createCart.isPending,
+    isAdding: addToCart.isPending,
     isUpdating: updateCartLines.isPending,
     isRemoving: removeFromCart.isPending,
     isApplyingDiscount: applyDiscountCode.isPending,
