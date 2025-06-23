@@ -10,7 +10,8 @@ import {
   ProductResponse,
   ProductsResponse,
   CollectionResponse,
-  CollectionsResponse
+  CollectionsResponse,
+  EnrichedFilterOptions
 } from './types';
 
 export const SHOPIFY_KEYS = {
@@ -85,12 +86,18 @@ export const useCollectionByHandle = (
   });
 };
 
-export const useFilterOptions = (
-    options?: Omit<UseQueryOptions<any, Error, any>, 'queryKey' | 'queryFn'>
-) => {
-    return useQuery({
-        queryKey: SHOPIFY_KEYS.filterOptions(),
-        queryFn: () => api.getFilterOptions(),
-        ...options,
-    });
+const getEnrichedFilters = async (): Promise<EnrichedFilterOptions> => {
+  const response = await fetch('/api/filters');
+  if (!response.ok) {
+    throw new Error('La respuesta de la red no fue exitosa');
+  }
+  return response.json();
+};
+
+export const useFilterOptions = () => {
+  return useQuery<EnrichedFilterOptions>({
+    queryKey: ['enriched-filters'], 
+    queryFn: getEnrichedFilters,
+    staleTime: 1000 * 60 * 10, 
+  });
 };

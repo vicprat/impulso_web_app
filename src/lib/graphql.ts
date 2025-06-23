@@ -1,16 +1,13 @@
-import { AuthenticationError } from '@/modules/user/types'; 
-export const handleGraphQLErrors = (errors: unknown): never => {
-  if (Array.isArray(errors) && errors.length > 0) {
-    const firstError = errors[0];
+import { GraphQLError } from 'graphql';
 
-    if (typeof firstError === 'object' && firstError !== null && 'message' in firstError) {
-      const message = String(firstError.message);
+export const handleGraphQLErrors = (errors: Readonly<GraphQLError[]> | undefined) => {
+  if (errors && errors.length > 0) {
+    const errorMessages = errors.map((error) => {
+      console.error('GraphQL Error Details:', JSON.stringify(error, null, 2));
+      return `Message: ${error.message}, Path: ${error.path?.join(' > ')}`;
+    }).join('\n');
 
-      if (message.toLowerCase().includes('unauthenticated')) {
-        throw new AuthenticationError(message); 
-      }
-      throw new Error(message);
-    }
+    throw new Error(`GraphQL request failed:\n${errorMessages}`);
   }
-  throw new Error('Unknown GraphQL error occurred');  
+  throw new Error('Unknown GraphQL error occurred. The response did not contain an errors array.');
 };

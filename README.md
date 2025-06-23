@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Impulso Web App - E-commerce y Plataforma de Arte
+1. Resumen del Proyecto
+impulso_web_app es una aplicación web avanzada construida con Next.js que funciona como un e-commerce headless para la venta de obras de arte. Se conecta a una tienda de Shopify como backend y ofrece una experiencia de usuario rápida y moderna, junto con paneles de control privados para la gestión de productos por parte de artistas y administradores.
 
-## Getting Started
+El objetivo principal de esta aplicación es ofrecer una interfaz de venta altamente personalizada y, al mismo tiempo, delegar la gestión del inventario a diferentes roles de usuario, todo ello sin necesidad de acceder directamente al panel de administración de Shopify.
 
-First, run the development server:
+2. Arquitectura y Flujo de Trabajo
+El flujo de la aplicación se centra en consumir y gestionar los datos de los productos alojados en Shopify.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Fuente de Datos (Shopify): Shopify actúa como el "cerebro" del backend. Se asume que el inventario de productos en Shopify ya ha sido cargado y enriquecido con "tags inteligentes" a través de un proceso externo (el artwork_inventory_manager). Estos tags son fundamentales para el sistema de filtrado avanzado de la tienda.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Consumo de la API (Storefront): La tienda pública consume los datos de los productos directamente desde Shopify a través de su API de Storefront, lo que garantiza tiempos de carga rápidos y una sincronización perfecta del inventario.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Gestión Delegada (Admin API): La aplicación cuenta con un sistema de roles y permisos que utiliza la API de Admin de Shopify para permitir que usuarios específicos (Artistas, Managers) modifiquen los productos. Esto crea un flujo de gestión seguro y controlado.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Gestión de Usuarios (Prisma): La autenticación, los perfiles de usuario, los roles y los permisos se gestionan internamente a través de una base de datos propia manejada con Prisma.
 
-## Learn More
+3. Funcionalidades Clave
+Stack Tecnológico: Next.js, TypeScript, Shopify (Storefront & Admin APIs), Prisma (para usuarios y roles), Tailwind CSS, shadcn/ui.
 
-To learn more about Next.js, take a look at the following resources:
+Tienda Headless: Un e-commerce optimizado para el rendimiento, con navegación fluida y una experiencia de compra moderna.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Sistema de Filtrado Enriquecido (Implementado): Permite a los usuarios descubrir obras de arte a través de filtros detallados como Artista, Tipo de Obra, Rango de Precios, Técnica, Formato y Año. Esta funcionalidad se basa en los "tags inteligentes" preexistentes en los productos de Shopify.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Sistema de Roles y Permisos:
 
-## Deploy on Vercel
+Público: Navega por la tienda, filtra y compra obras de arte.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Artista: Accede a un panel de control personal donde puede visualizar y editar la información de sus propias obras.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Manager/Admin: Tiene acceso a paneles con permisos elevados para la edición de todos los productos y la futura gestión de usuarios.
+
+4. Estado Actual y Roadmap de Desarrollo
+La infraestructura principal de la aplicación está implementada. El enfoque actual está en desarrollar las funcionalidades de los paneles de control para artistas y administradores, así como expandir las capacidades de la plataforma.
+
+✅ Implementado
+Infraestructura de autenticación y sistema de roles con Prisma.
+
+Conexión a la API Storefront de Shopify para mostrar productos en la tienda.
+
+Sistema de filtrado avanzado y funcional, que interpreta y utiliza los tags inteligentes de Shopify para ofrecer una experiencia de búsqueda enriquecida.
+
+Diseño base de la tienda y páginas de producto.
+
+🚧 Pendientes por Desarrollar
+A continuación, se presenta la lista de tareas prioritarias para completar el ecosistema.
+
+1. Módulos de Artista y Administración (En progreso)
+
+[ ] CRUD de Obras para Artistas: Implementar el formulario de creación y edición para que los artistas puedan gestionar sus productos en /artist/products.
+
+[ ] Conectar el formulario a los endpoints POST y PUT de /api/artists/products.
+
+[ ] Implementar la funcionalidad de subida y asociación de imágenes con la API de Admin de Shopify.
+
+[ ] Gestión Total de Productos para Admins: Crear la interfaz en /admin/products para que los roles Manager y Admin puedan editar cualquier producto de la tienda.
+
+[ ] Gestión de Usuarios: Desarrollar la interfaz para que los Admin puedan asignar/revocar roles y activar/desactivar cuentas de usuario.
+
+[ ] Dashboard Enriquecido: Mejorar los dashboards de los diferentes roles utilizando la Admin API para mostrar datos relevantes (ventas, vistas, etc.).
+
+2. Módulo de Exclusividad y Eventos
+
+[ ] Private Rooms: Implementar una función para que Admin/Manager puedan asignar una colección de obras a usuarios con el rol vip_customer. Estas obras solo serán visibles para el cliente asignado en una sección privada.
+
+[ ] Eventos como Productos: Crear un tipo de producto específico para "Eventos", permitiendo su venta y gestión a través de Shopify.
+
+[ ] Módulo de Tickets para Eventos: Desarrollar una sección donde los usuarios que compren acceso a un evento puedan ver y descargar su "boleto" digital.
+
+[ ] Módulo de Gestión Financiera de Eventos: Un panel de administración para ver la rentabilidad, asistencia y otros KPIs de los eventos realizados.
+
+3. Herramientas de Contenido y Administración
+
+[ ] Blog: Crear un sistema de gestión de artículos y noticias para la galería.
+
+[ ] Perfiles Públicos: Desarrollar páginas de perfil públicas para Artistas, mostrando su biografía y obras. Considerar perfiles para Admin, Manager y Support si aplica.
+
+[ ] Módulo de Invoices Personalizados: Crear una herramienta para que Admin/Manager puedan generar y descargar facturas personalizadas para ventas especiales.
+
+4. Mejoras Generales y Refinamiento
+
+[ ] Filtro por "Serie": Añadir la "Serie" de una obra como un tag inteligente y un filtro visible en la tienda.
+
+[ ] Pruebas (Testing): Implementar un framework de pruebas (como Jest y React Testing Library) para asegurar la estabilidad del código.
+
+[ ] Optimización de Rendimiento: Analizar y optimizar la carga de imágenes y los tiempos de respuesta de la API.
+
+[ ] UI/UX: Refinar el diseño de los dashboards y la experiencia del usuario en el proceso de filtrado y compra.
+
+[ ] CI/CD: Configurar un pipeline de integración y despliegue continuo para automatizar las actualizaciones.

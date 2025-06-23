@@ -44,6 +44,7 @@ export type Product = {
   };
   images: Image[];
   variants: Variant[];
+  tags?: string[];
 };
 
 export type Collection = {
@@ -112,14 +113,14 @@ export type ShopInfo = {
 export type Edge<T> = {
   node: T;
 };
-
 export type ProductSearchParams = {
   first?: number;
   after?: string | null;
-  query?: string;
-  sortKey?: 'TITLE' | 'PRICE' | 'BEST_SELLING' | 'CREATED' | 'ID' | 'RELEVANCE';
+  sortKey?: string;
   reverse?: boolean;
+  filters?: ProductSearchFilters;
 };
+
 
 export type CollectionSearchParams = {
   first?: number;
@@ -129,6 +130,21 @@ export type CollectionSearchParams = {
 
 export type ShopInfoResponse = ApiResponse<ShopInfo>;
 export type ProductResponse = ApiResponse<Product>;
+
+export type ShopifyFilterValue = {
+  id: string;
+  label: string;
+  count: number;
+  input: string; 
+};
+
+export type ShopifyFilter = {
+  id: string;
+  label: string;
+  type: string;
+  values: ShopifyFilterValue[];
+};
+
 export type ProductsResponse = ApiResponse<{
   products: Product[];
   pageInfo: {
@@ -136,6 +152,7 @@ export type ProductsResponse = ApiResponse<{
     endCursor: string | null;
   };
 }>;
+
 export type CollectionResponse = ApiResponse<Collection>;
 export type CollectionsResponse = ApiResponse<{
   collections: Collection[];
@@ -144,3 +161,41 @@ export type CollectionsResponse = ApiResponse<{
     endCursor: string | null;
   };
 }>;
+
+export type FilterValue = {
+  input: string;
+  label: string;
+  count: number;
+};
+
+export type EnrichedFilterOptions = {
+  artists: FilterValue[];
+  productTypes: FilterValue[];
+  price: { min: number; max: number };
+  techniques: FilterValue[];
+  formats: FilterValue[];
+  locations: FilterValue[];
+  years: FilterValue[];
+  series: FilterValue[]; 
+  otherTags: FilterValue[];
+};
+
+
+export type PriceFilter = {
+  price: {
+    min?: number;
+    max?: number;
+  };
+};
+export interface ProductSearchFilters {
+  query?: string;
+  tags?: string[];
+  vendor?: string[];
+  productType?: string[];
+  collections?: string[];
+  available?: boolean;   
+  price?: {
+    min?: number;
+    max?: number;
+  };
+}

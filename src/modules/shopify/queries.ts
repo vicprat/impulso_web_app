@@ -166,8 +166,20 @@ export const SEARCH_PRODUCTS_QUERY = `
 `;
 
 export const PRODUCTS_QUERY = `
-  query Products($first: Int!, $after: String, $query: String, $sortKey: ProductSortKeys, $reverse: Boolean) {
-    products(first: $first, after: $after, query: $query, sortKey: $sortKey, reverse: $reverse) {
+  query Products(
+    $first: Int
+    $after: String
+    $query: String
+    $sortKey: ProductSortKeys
+    $reverse: Boolean
+  ) {
+    products(
+      first: $first
+      after: $after
+      query: $query
+      sortKey: $sortKey
+      reverse: $reverse
+    ) {
       pageInfo {
         hasNextPage
         endCursor
@@ -177,6 +189,7 @@ export const PRODUCTS_QUERY = `
           id
           title
           handle
+          tags
           description
           descriptionHtml
           availableForSale
