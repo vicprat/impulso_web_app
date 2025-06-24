@@ -1,7 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
+ 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import React, { useState, useEffect } from 'react';
 
 import {
     Form,
@@ -10,6 +11,7 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
+    FormDescription,
 } from "@/components/ui/form";
 import {
     Select,
@@ -21,118 +23,101 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Product as ProductType } from '@/modules/shopify/types';
-import { Label } from '../ui/label';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { ArtistProduct, CreateProductPayload } from '@/modules/user/artists/types';
+import { X } from 'lucide-react';
 import { ImageUploader } from './ImageUploader';
+import Image from 'next/image';
 
 type Props = {
-    product?: ProductType;
-    onFinished: () => void;
+    product?: ArtistProduct; 
+    onSave: (data: CreateProductPayload) => void;
+    onCancel: () => void;
+    isLoading?: boolean;
+    mode?: 'create' | 'edit';
 }
 
-const productSchema = z.object({
+const productFormSchema = z.object({
   title: z.string().min(3, { message: "El título debe tener al menos 3 caracteres." }),
+  handle: z.string().min(3, { message: "El handle debe tener al menos 3 caracteres." }),
   descriptionHtml: z.string().optional(),
+  productType: z.string().optional(),
   status: z.enum(['ACTIVE', 'DRAFT']),
-  price: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+  tags: z.string(), 
+  variantPrice: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
     message: "Debe ser un número válido."
   }),
 });
 
-type ProductFormData = z.infer<typeof productSchema>;
+type ProductFormData = z.infer<typeof productFormSchema>;
 
-export const Product: React.FC<Props> = ({ product, onFinished }) => {
-    const queryClient = useQueryClient();
-    const [newImages, setNewImages] = React.useState<{ mediaContentType: 'IMAGE', originalSource: string }[]>([]);
+export const Product: React.FC<Props> = ({ 
+    product,
+    onSave, 
+    onCancel, 
+    isLoading = false,
+    mode 
+}) => {
+    const [newImages, setNewImages] = useState<{ mediaContentType: 'IMAGE', originalSource: string }[]>([]);
+    const [tagsArray, setTagsArray] = useState<string[]>([]);
+
+    const formMode = mode || (product ? 'edit' : 'create');
+    const isEditing = formMode === 'edit';
+    
+    const primaryVariant = product?.variants?.edges[0]?.node;
 
     const form = useForm<ProductFormData>({
-        resolver: zodResolver(productSchema),
+        resolver: zodResolver(productFormSchema),
         defaultValues: {
             title: product?.title || '',
-            descriptionHtml: '', 
+            handle: product?.handle || '',
+            descriptionHtml: product?.descriptionHtml || '', 
+            productType: product?.productType || '',
             status: product?.status === 'ACTIVE' ? 'ACTIVE' : 'DRAFT',
-            price: product?.priceRange?.minVariantPrice?.amount || '0.00',
+            tags: (product?.tags || []).join(', '),
+            variantPrice: primaryVariant?.price || '0.00',
         }
     });
 
-    const mutation = useMutation({
-        mutationFn: async (formData: ProductFormData) => {
-            const isEditing = !!product;
-            const url = isEditing ? `/api/artists/products/${product.id.split('/').pop()}` : '/api/artists/products';
-            const method = isEditing ? 'PUT' : 'POST';
-
-            const priceValue = parseFloat(formData.price);
-            if (isNaN(priceValue) || priceValue < 0) {
-                throw new Error(`Precio inválido: ${formData.price}`);
-            }
-
-            if (newImages.length > 0) {
-                newImages.forEach((img, index) => {
-                    if (!img.originalSource || !img.originalSource.startsWith('http')) {
-                        throw new Error(`Imagen ${index + 1} tiene URL inválida: ${img.originalSource}`);
-                    }
-                    if (!img.mediaContentType) {
-                        throw new Error(`Imagen ${index + 1} no tiene mediaContentType`);
-                    }
-                });
-            }
-
-            if (!formData.title || formData.title.trim().length < 3) {
-                throw new Error(`Título inválido: ${formData.title}`);
-            }
-
-            const apiData = {
-                title: formData.title,
-                descriptionHtml: formData.descriptionHtml,
-                status: formData.status,
-                price: formData.price,
-                images: newImages,
-            };
-
-            let jsonString: string;
-            try {
-                const payloadToSend = isEditing ? { id: product.id, ...apiData } : apiData;
-                jsonString = JSON.stringify(payloadToSend);
-                JSON.parse(jsonString);
-            } catch (jsonError) {
-                throw new Error('Error generando JSON válido: ' + (jsonError instanceof Error ? jsonError.message : 'Error desconocido'));
-            }
-
-            const response = await fetch(url, {
-                method,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: jsonString,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Error del servidor:', errorData);
-                throw new Error(errorData.errors?.[0]?.message || errorData.error || "Error al guardar el producto");
-            }
-            
-            const responseData = await response.json();
-            return responseData;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['artist-products'] });
-            toast.success(`Obra ${product ? 'actualizada' : 'creada'} con éxito.`);
-            onFinished();
-        },
-        onError: (error: Error) => {
-            console.error('Error en mutación:', error);
-            toast.error(`Error: ${error.message}`);
+    useEffect(() => {
+        if (product?.tags) {
+            setTagsArray(product.tags);
         }
-    });
+    }, [product]);
 
     const onSubmit = (data: ProductFormData) => {
-        mutation.mutate(data);
+        const baseData = {
+            title: data.title,
+            handle: data.handle,
+            descriptionHtml: data.descriptionHtml,
+            productType: data.productType,
+            status: data.status,
+            tags: data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0),
+        };
+
+        if (isEditing) {
+            const formattedData = {
+                ...baseData,
+                price: data.variantPrice,
+                ...(primaryVariant?.id && {
+                    variantData: {
+                        id: primaryVariant.id,
+                        price: data.variantPrice,
+                    }
+                }),
+                ...(newImages.length > 0 && { images: newImages }),
+            };
+            onSave(formattedData);
+        } else {
+            const formattedData = {
+                ...baseData,
+                price: data.variantPrice, 
+                ...(newImages.length > 0 && { images: newImages }),
+            };
+            onSave(formattedData);
+        }
     };
 
     const handleUploadComplete = (resourceUrl: string) => {
@@ -140,110 +125,332 @@ export const Product: React.FC<Props> = ({ product, onFinished }) => {
             mediaContentType: 'IMAGE' as const,
             originalSource: resourceUrl
         };
-
         setNewImages(prev => [...prev, newImage]);
     };
 
+    const removeTag = (tagToRemove: string) => {
+        const currentTags = form.getValues('tags');
+        const updatedTags = currentTags
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(tag => tag !== tagToRemove && tag.length > 0)
+            .join(', ');
+        form.setValue('tags', updatedTags);
+        setTagsArray(updatedTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0));
+    };
+
+    const generateHandle = (title: string) => {
+        return title
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '') 
+            .replace(/\s+/g, '-') 
+            .replace(/-+/g, '-') 
+            .trim();
+    };
+
+    const handleTitleChange = (value: string) => {
+        form.setValue('title', value);
+        if (!isEditing && value) {
+            const generatedHandle = generateHandle(value);
+            form.setValue('handle', generatedHandle);
+        }
+    };
+
     return (
-        <>
-            <DialogHeader>
-                <DialogTitle>{product ? 'Editar Obra' : 'Crear Nueva Obra'}</DialogTitle>
-                <DialogDescription>
-                    Completa los detalles de la obra. Los cambios se reflejarán en Shopify.
-                </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                    <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Título</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Título de la obra" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                
+                <Card>
+                    <CardHeader>
+                        <CardTitle>
+                            {isEditing ? 'Editar Información Básica' : 'Información Básica'}
+                        </CardTitle>
+                        <CardDescription>
+                            {isEditing 
+                                ? 'Modifica los detalles principales del producto'
+                                : 'Completa los detalles principales de tu nueva obra'
+                            }
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="title"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Título *</FormLabel>
+                                        <FormControl>
+                                            <Input 
+                                                placeholder="Título de la obra" 
+                                                {...field}
+                                                onChange={(e) => handleTitleChange(e.target.value)}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                    <FormField
-                        control={form.control}
-                        name="descriptionHtml"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Descripción</FormLabel>
-                                <FormControl>
-                                    <Textarea placeholder="Describe tu obra, técnica, inspiración..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                            <FormField
+                                control={form.control}
+                                name="handle"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Handle (URL) *</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="url-de-la-obra" {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            {isEditing 
+                                                ? 'Se usa en la URL del producto. Solo letras, números y guiones.'
+                                                : 'Se genera automáticamente, pero puedes editarlo. Solo letras, números y guiones.'
+                                            }
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                    <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="productType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Tipo de Producto</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="ej: Pintura, Escultura, etc." {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="status"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Estado *</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecciona un estado" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="ACTIVE">Activo (Visible en tienda)</SelectItem>
+                                                <SelectItem value="DRAFT">Borrador (Oculto)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
                         <FormField
                             control={form.control}
-                            name="price"
+                            name="descriptionHtml"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Precio (MXN)</FormLabel>
+                                    <FormLabel>Descripción</FormLabel>
                                     <FormControl>
-                                        <Input type="number" placeholder="0.00" {...field} />
+                                        <Textarea 
+                                            placeholder="Describe tu obra, técnica, inspiración..." 
+                                            className="min-h-[100px]"
+                                            {...field} 
+                                        />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Puedes usar HTML básico para formato.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Tags</CardTitle>
+                        <CardDescription>
+                            Etiquetas para categorizar tu obra
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="tags"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Tags (separados por comas)</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            placeholder="Arte Contemporáneo, Disponible, Óleo" 
+                                            {...field}
+                                            onChange={(e) => {
+                                                field.onChange(e);
+                                                const newTagsArray = e.target.value
+                                                    .split(',')
+                                                    .map(tag => tag.trim())
+                                                    .filter(tag => tag.length > 0);
+                                                setTagsArray(newTagsArray);
+                                            }}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="status"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Estado</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Selecciona un estado" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="ACTIVE">Activo (Visible en tienda)</SelectItem>
-                                            <SelectItem value="DRAFT">Borrador (Oculto)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                    
-                    <div>
-                        <Label>Imágenes</Label>
-                        <ImageUploader onUploadComplete={handleUploadComplete} />
-                        {product?.images && product.images.length > 0 && (
-                            <div className="mt-4">
-                                <p className="text-sm font-medium mb-2">Imágenes Actuales</p>
-                                <div className="grid grid-cols-3 gap-4">
-                                    {product.images.map(img => (
-                                        <div key={img.id} className="relative aspect-square">
-                                            <img src={img.url} alt={img.altText || ''} className="h-full w-full rounded-md object-cover"/>
-                                        </div>
-                                    ))}
-                                </div>
+                        
+                        {tagsArray.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                {tagsArray.map((tag, index) => (
+                                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                                        {tag}
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                                            onClick={() => removeTag(tag)}
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </Badge>
+                                ))}
                             </div>
                         )}
-                    </div>
+                    </CardContent>
+                </Card>
 
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={onFinished}>Cancelar</Button>
-                        <Button type="submit" disabled={mutation.isPending}>
-                            {mutation.isPending ? 'Guardando...' : 'Guardar Obra'}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </Form>
-        </>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Precio</CardTitle>
+                        <CardDescription>
+                            {isEditing 
+                                ? 'Configuración de precio para la variante principal'
+                                : 'Establece el precio de tu obra'
+                            }
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="variantPrice"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Precio (MXN) *</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {isEditing && primaryVariant && (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-sm font-medium text-muted-foreground">SKU Actual</label>
+                                        <p className="text-sm border rounded-md px-3 py-2 bg-muted">
+                                            {primaryVariant.sku || "Sin SKU"}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium text-muted-foreground">Título de Variante Actual</label>
+                                        <p className="text-sm border rounded-md px-3 py-2 bg-muted">
+                                            {primaryVariant.title || "Sin título"}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {isEditing && (
+                            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                                <p className="text-sm text-yellow-800">
+                                    <strong>Nota:</strong> Por el momento, solo puedes editar el precio. 
+                                    Para cambiar el SKU o título de la variante, contacta al administrador.
+                                </p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Imágenes</CardTitle>
+                        <CardDescription>
+                            {isEditing 
+                                ? 'Gestiona las imágenes del producto'
+                                : 'Agrega imágenes de tu obra'
+                            }
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {isEditing && product?.images?.edges && product.images.edges.length > 0 && (
+                            <>
+                                <div>
+                                    <h4 className="text-sm font-medium mb-3">Imágenes Actuales</h4>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {product.images.edges.map((img, index) => (
+                                            <div key={img.node.id} className="space-y-2">
+                                                <div className="relative aspect-square">
+                                                    <Image 
+                                                        src={img.node.url} 
+                                                        alt={img.node.altText || product.title}
+                                                        fill
+                                                        className="object-cover rounded-md"
+                                                    />
+                                                    {index === 0 && (
+                                                        <Badge className="absolute top-1 left-1" variant="default">
+                                                            Principal
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground text-center">
+                                                    {img.node.altText || "Sin texto alternativo"}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <Separator />
+                            </>
+                        )}
+
+                        <div>
+                            <h4 className="text-sm font-medium mb-3">
+                                {isEditing ? 'Agregar Nuevas Imágenes' : 'Imágenes de la Obra'}
+                            </h4>
+                            <ImageUploader onUploadComplete={handleUploadComplete} />
+                            {!isEditing && newImages.length === 0 && (
+                                <p className="text-sm text-muted-foreground mt-2">
+                                    Es recomendable agregar al menos una imagen de tu obra.
+                                </p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <div className="flex justify-end space-x-4 pt-6">
+                    <Button type="button" variant="outline" onClick={onCancel}>
+                        Cancelar
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
+                        {isLoading 
+                            ? 'Guardando...' 
+                            : isEditing 
+                                ? 'Guardar Cambios' 
+                                : 'Crear Obra'
+                        }
+                    </Button>
+                </div>
+            </form>
+        </Form>
     );
-}
+};
