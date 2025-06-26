@@ -1,0 +1,285 @@
+"use client";
+
+import { useState, useCallback, useEffect } from "react";
+import { 
+  useGetProductsPaginated,
+  useUpdateProduct 
+} from '@/services/product/hook';
+import { columns } from "./columns"; 
+import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import { PlusCircle, Search, Filter, Download, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useReactTable, getCoreRowModel, getSortedRowModel } from "@tanstack/react-table";
+import { UpdateProductPayload } from '@/services/product/types';
+import { toast } from "sonner";
+import { useDebounce } from "@/hooks/use-debounce";
+import { TablePagination } from "@/components/Pagination/Table";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+
+
+type InventoryTableMeta = {
+  editingRowId: string | null;
+  setEditingRowId: (id: string | null) => void;
+  updateProduct: (payload: { 
+    id: string; 
+    title?: string;
+    price?: string;
+    inventoryQuantity?: number;
+    status?: 'ACTIVE' | 'DRAFT';
+  }) => void;
+  isUpdating: boolean;
+};
+
+export default function ManageInventoryPage() {
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  
+  const [cursors, setCursors] = useState<Record<number, string | undefined>>({ 1: undefined });
+  
+  const debouncedSearch = useDebounce(searchTerm, 500);
+  
+  const { 
+    data: paginatedData, 
+    isLoading, 
+    error,
+    isFetching,
+    refetch
+  } = useGetProductsPaginated({
+    limit: pageSize,
+    search: debouncedSearch,
+    cursor: cursors[currentPage]
+  });
+  
+  const updateMutation = useUpdateProduct();
+
+  const products = paginatedData?.products || [];
+  const pageInfo = paginatedData?.pageInfo;
+  
+  const filteredProducts = statusFilter === "all" 
+    ? products 
+    : products.filter(product => product.status === statusFilter);
+  
+  const stats = {
+    total: products.length,
+    active: products.filter(p => p.status === 'ACTIVE').length,
+    draft: products.filter(p => p.status === 'DRAFT').length,
+    outOfStock: products.filter(p => !p.isAvailable).length,
+  };
+  
+  useEffect(() => {
+    if (pageInfo?.hasNextPage && pageInfo.endCursor) {
+      setCursors(prev => ({...prev, [currentPage + 1]: pageInfo.endCursor! }));
+    }
+  }, [pageInfo, currentPage]);
+  
+  useEffect(() => {
+    setCurrentPage(1);
+    setCursors({ 1: undefined });
+  }, [debouncedSearch, pageSize]);
+
+  const handleUpdateProduct = useCallback((payload: Partial<UpdateProductPayload> & { id: string }) => {
+    toast.info("Guardando cambios...");
+    updateMutation.mutate(
+      payload,
+      {
+        onSuccess: () => {
+          toast.success("Producto actualizado con éxito.");
+          setEditingRowId(null);
+        },
+        onError: (err) => {
+          toast.error(`Error al actualizar: ${err.message}`);
+        }
+      }
+    );
+  }, [updateMutation]);
+
+  const handleRefresh = useCallback(() => {
+    refetch();
+    toast.info("Actualizando datos...");
+  }, [refetch]);
+
+const table = useReactTable({
+    data: filteredProducts,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    manualPagination: true,
+    state: {
+      pagination: {
+        pageIndex: currentPage - 1,
+        pageSize: pageSize,
+      },
+    },
+    meta: {
+      editingRowId,
+      setEditingRowId,
+      updateProduct: handleUpdateProduct,
+      isUpdating: updateMutation.isPending,
+    } as InventoryTableMeta, 
+  });
+
+  if (isLoading && !products.length) {
+    return (
+      <div className="space-y-4 p-4 md:p-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="space-y-4 p-4 md:p-6">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-red-600">Error al cargar productos</h3>
+            <p className="text-muted-foreground mt-2">{error.message}</p>
+            <Button onClick={handleRefresh} className="mt-4">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Reintentar
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 p-4 md:p-6">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        <div>
+          <h1 className="text-2xl font-bold">Gestión de Inventario</h1>
+          <p className="text-muted-foreground">
+            Administra tu catálogo de obras de arte
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={handleRefresh} disabled={isFetching}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            Actualizar
+          </Button>
+          <Link href="/manage-inventory/create">
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Crear Nueva Obra
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="rounded-lg border p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-muted-foreground">Total</p>
+            <Badge variant="outline">{stats.total}</Badge>
+          </div>
+        </div>
+        <div className="rounded-lg border p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-muted-foreground">Activos</p>
+            <Badge variant="default">{stats.active}</Badge>
+          </div>
+        </div>
+        <div className="rounded-lg border p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-muted-foreground">Borradores</p>
+            <Badge variant="secondary">{stats.draft}</Badge>
+          </div>
+        </div>
+        <div className="rounded-lg border p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-muted-foreground">Sin Stock</p>
+            <Badge variant="destructive">{stats.outOfStock}</Badge>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-3 sm:space-y-0">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Buscar por título, tipo, artista..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Filtrar por estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los estados</SelectItem>
+            <SelectItem value="ACTIVE">Activos</SelectItem>
+            <SelectItem value="DRAFT">Borradores</SelectItem>
+            <SelectItem value="ARCHIVED">Archivados</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button variant="outline" size="sm">
+          <Download className="mr-2 h-4 w-4" />
+          Exportar
+        </Button>
+      </div>
+      
+      {isFetching && (
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          <span>Actualizando datos...</span>
+        </div>
+      )}
+
+      <div className="rounded-md border">
+        <DataTable 
+          table={table} 
+          emptyMessage={
+            debouncedSearch 
+              ? `No se encontraron productos que coincidan con "${debouncedSearch}"`
+              : statusFilter !== "all"
+              ? `No hay productos con estado "${statusFilter}"`
+              : "No se encontraron productos."
+          }
+        />
+      </div>
+
+      <TablePagination 
+        table={table}
+        isServerSide={true}
+        hasNextPage={pageInfo?.hasNextPage}
+        hasPreviousPage={currentPage > 1}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setCurrentPage(1);
+        }}
+      />
+
+      {filteredProducts.length > 0 && (
+        <div className="text-sm text-muted-foreground text-center">
+          Mostrando {filteredProducts.length} de {stats.total} productos
+          {statusFilter !== "all" && ` (filtrado por: ${statusFilter})`}
+        </div>
+      )}
+    </div>
+  );
+}

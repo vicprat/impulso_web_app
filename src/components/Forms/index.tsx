@@ -1,4 +1,4 @@
-import {Product} from './Product'
+import {ProductForm as Product} from './Product'
 import {ImageUploader} from './ImageUploader'
 
 export const Form = {

@@ -1,7 +1,16 @@
 import { cookies } from 'next/headers';
-import { AuthService } from '../service';
+import { AuthService, AuthSession } from '../service';
 
-export async function getServerSession() {
+export type AuthConfig = {
+  shopId: string;
+  clientId: string;
+  clientSecret: string | undefined;
+  redirectUri: string;
+};
+
+export type ServerSession = AuthSession | null;
+
+export async function getServerSession(): Promise<ServerSession> {
   const cookieStore = cookies();
   const accessToken = (await cookieStore).get('access_token')?.value;
 
@@ -10,7 +19,7 @@ export async function getServerSession() {
   }
 
   try {
-    const authConfig = {
+    const authConfig: AuthConfig = {
       shopId: process.env.SHOPIFY_SHOP_ID!,
       clientId: process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID!,
       clientSecret: process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET,
@@ -25,7 +34,7 @@ export async function getServerSession() {
   }
 }
 
-export async function requireAuth() {
+export async function requireAuth(): Promise<AuthSession> {
   const session = await getServerSession();
   
   if (!session) {
@@ -35,10 +44,10 @@ export async function requireAuth() {
   return session;
 }
 
-export async function requirePermission(permission: string) {
+export async function requirePermission(permission: string): Promise<AuthSession> {
   const session = await requireAuth();
   
-  const authConfig = {
+  const authConfig: AuthConfig = {
     shopId: process.env.SHOPIFY_SHOP_ID!,
     clientId: process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID!,
     clientSecret: process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET,
