@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
-import { AuthContextType, User } from '../types';
+import { AuthContextType, User, AuthMeResponse } from '../types';
+import { Cart } from '@/modules/cart/types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [cart, setCart] = useState<Cart | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -21,14 +23,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
         if (response.ok) {
-          const data = await response.json();
+          const data: AuthMeResponse = await response.json();
           setUser(data.user);
+          setCart(data.cart); // Establecer el cart desde la respuesta
         } else {
           setUser(null);
+          setCart(null);
         }
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
           setUser(null);
+          setCart(null);
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -56,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       const data = await response.json();
       setUser(null);
+      setCart(null); // Limpiar cart al hacer logout
       if (data.shopifyLogoutUrl) {
         window.location.href = data.shopifyLogoutUrl;
       } else {
@@ -63,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch {
       setUser(null);
+      setCart(null);
       window.location.href = '/';
     }
   }, []);
@@ -74,14 +81,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await response.json();
+        const data: AuthMeResponse = await response.json();
         setUser(data.user);
+        setCart(data.cart); // Actualizar cart en refresh
       } else {
         setUser(null);
+        setCart(null);
       }
     } catch {
       setUser(null);
+      setCart(null);
     }
+  }, []);
+
+  // Nueva función para actualizar solo el cart
+  const updateCart = useCallback((updatedCart: Cart) => {
+    setCart(updatedCart);
   }, []);
   
   const hasPermission = useCallback((permission: string) => {
@@ -96,14 +111,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return rolesSet.has(role);
   }, [user]);
 
-
   const value: AuthContextType = {
     user,
+    cart,
     isLoading,
     isAuthenticated: !!user,
     login,
     logout,
     refresh,
+    updateCart,
     hasPermission,
     hasRole,
   };

@@ -13,6 +13,7 @@ import {
   FolderOpen,
   Menu,
   X,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import React, { useState, useEffect } from "react";
@@ -61,6 +62,14 @@ export const Content: React.FC<Props> = ({
       exact: false,
       description: "Productos organizados por categorías",
       icon: FolderOpen,
+    },
+    {
+      href: "/store/private-rooms",
+      label: "Private Rooms",
+      shortLabel: "Private",
+      exact: true,
+      description: "Exclusive art for VIPs",
+      icon: Lock,
     },
   ];
 

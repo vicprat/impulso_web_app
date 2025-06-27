@@ -35,14 +35,29 @@ export const useShopInfo = (
   });
 };
 
+import { shopifyService } from './service';
+
 export const useProducts = (
   params: ProductSearchParams = {},
   options?: Omit<UseQueryOptions<ProductsResponse, Error, ProductsResponse['data']>, 'queryKey' | 'queryFn'>
 ) => {
   return useQuery({
     queryKey: [...SHOPIFY_KEYS.products(), params],
-    queryFn: () => api.getProducts(params),
+    queryFn: () => shopifyService.getPublicProducts(params),
     select: (response) => response.data,
+    ...options,
+  });
+};
+
+export const useProductsByIds = (
+  productIds: string[] = [],
+  options?: Omit<UseQueryOptions<ProductsResponse, Error, ProductsResponse['data']>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery({
+    queryKey: [...SHOPIFY_KEYS.products(), 'byIds', productIds],
+    queryFn: () => api.getProductsByIds(productIds),
+    select: (response) => response.data,
+    enabled: productIds.length > 0,
     ...options,
   });
 };

@@ -167,7 +167,7 @@ export function useUpdateUserRoles() {
   
   return useMutation({
     mutationFn: async ({ userId, roles }: { userId: string; roles: string[] }) => {
-      if (!hasPermission('manage_user_roles')) {
+      if (!hasPermission('manage_roles')) {
         throw new Error('No tienes permisos para gestionar roles');
       }
       

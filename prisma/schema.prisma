@@ -28,6 +28,8 @@ model User {
 
   cartId String? @unique
 
+  privateRooms PrivateRoom[]
+
   @@map("users")
 }
 
@@ -161,4 +163,28 @@ model ArticleMetadata {
   updatedAt DateTime @updatedAt
 
   @@index([authorId])
+}
+
+model PrivateRoom {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products    PrivateRoomProduct[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, name])
+  @@map("private_rooms")
+}
+
+model PrivateRoomProduct {
+  id            String   @id @default(cuid())
+  privateRoomId String
+  privateRoom   PrivateRoom @relation(fields: [privateRoomId], references: [id], onDelete: Cascade)
+  productId     String // Shopify product GID
+
+  @@unique([privateRoomId, productId])
+  @@map("private_room_products")
 }

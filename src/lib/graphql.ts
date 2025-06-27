@@ -9,5 +9,5 @@ export const handleGraphQLErrors = (errors: Readonly<GraphQLError[]> | undefined
 
     throw new Error(`GraphQL request failed:\n${errorMessages}`);
   }
-  throw new Error('Unknown GraphQL error occurred. The response did not contain an errors array.');
-};
+  
+  };

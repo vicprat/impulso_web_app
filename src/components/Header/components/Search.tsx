@@ -29,9 +29,11 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
 
-  const { data, isLoading, isError } = useProducts(
+ const { data, isLoading, isError } = useProducts(
     { 
-      query: `(title:*${debouncedQuery}*) OR (product_type:*${debouncedQuery}*) OR (tag:*${debouncedQuery}*)`, 
+      filters: {
+        query: `(title:*${debouncedQuery}*) OR (product_type:*${debouncedQuery}*) OR (tag:*${debouncedQuery}*)`
+      },
       first: 5
     },
     {

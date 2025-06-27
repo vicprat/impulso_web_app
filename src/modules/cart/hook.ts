@@ -1,86 +1,117 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useAuth } from '@/modules/auth/context/useAuth';
 import { api } from './api';
 import { CartLineInput, CartLineUpdateInput } from './types';
 import { toast } from 'sonner';
 
-export const cartKeys = {
-  all: ['cart'] as const,
-  cart: () => [...cartKeys.all, 'current'] as const,
-  checkout: (checkoutId: string) => [...cartKeys.all, 'checkout', checkoutId] as const,
-};
-
 export function useCart() {
-  const { isAuthenticated } = useAuth();
+  const { cart, isLoading, isAuthenticated } = useAuth();
   
-  return useQuery({
-    queryKey: cartKeys.cart(),
-    queryFn: api.getCart,
-    enabled: isAuthenticated, 
-    staleTime: 1 * 60 * 1000, 
-    gcTime: 5 * 60 * 1000, 
-  });
+  return {
+    data: cart,
+    isLoading,
+    error: null,
+    isEnabled: isAuthenticated,
+  };
 }
 
 export function useAddToCart() {
-  const queryClient = useQueryClient();
+  const { updateCart } = useAuth();
+  const [isPending, setIsPending] = useState(false);
 
-  return useMutation({
-    mutationFn: (lines: CartLineInput[]) => api.addToCart(lines),
-    
-    onSuccess: (updatedCart) => {
-      queryClient.setQueryData(cartKeys.cart(), updatedCart);
-    },
-    onError: (error) => {
-      toast.error(`Error adding to cart: ${error.message}`);
-    },
-  });
+  const mutateAsync = async (lines: CartLineInput[]) => {
+    setIsPending(true);
+    try {
+      const updatedCart = await api.addToCart(lines);
+      updateCart(updatedCart);
+      toast.success('Producto agregado al carrito');
+      return updatedCart;
+    } catch (error) {
+      toast.error(`Error adding to cart: ${(error as Error).message}`);
+      throw error;
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  return {
+    mutateAsync,
+    isPending,
+  };
 }
 
 export function useUpdateCartLines() {
-  const queryClient = useQueryClient();
+  const { updateCart } = useAuth();
+  const [isPending, setIsPending] = useState(false);
   
-  return useMutation({
-    mutationFn: (lines: CartLineUpdateInput[]) => api.updateCartLines(lines), // Ya no necesita cartId
-    onSuccess: (data) => {
-      queryClient.setQueryData(cartKeys.cart(), data);
-      queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
-    },
-    onError: (error) => {
-      toast.error(`Error updating cart lines: ${error.message}`);
+  const mutateAsync = async (lines: CartLineUpdateInput[]) => {
+    setIsPending(true);
+    try {
+      const updatedCart = await api.updateCartLines(lines);
+      updateCart(updatedCart);
+      return updatedCart;
+    } catch (error) {
+      toast.error(`Error updating cart lines: ${(error as Error).message}`);
+      throw error;
+    } finally {
+      setIsPending(false);
     }
-  });
+  };
+
+  return {
+    mutateAsync,
+    isPending,
+  };
 }
 
 export function useRemoveFromCart() {
-  const queryClient = useQueryClient();
+  const { updateCart } = useAuth();
+  const [isPending, setIsPending] = useState(false);
   
-  return useMutation({
-    mutationFn: (lineIds: string[]) => api.removeFromCart(lineIds), // Ya no necesita cartId
-    onSuccess: (data) => {
-      queryClient.setQueryData(cartKeys.cart(), data);
-      queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
-    },
-    onError: (error) => {
-      toast.error(`Error removing from cart: ${error.message}`);
+  const mutateAsync = async (lineIds: string[]) => {
+    setIsPending(true);
+    try {
+      const updatedCart = await api.removeFromCart(lineIds);
+      updateCart(updatedCart);
+      toast.success('Producto eliminado del carrito');
+      return updatedCart;
+    } catch (error) {
+      toast.error(`Error removing from cart: ${(error as Error).message}`);
+      throw error;
+    } finally {
+      setIsPending(false);
     }
-  });
+  };
+
+  return {
+    mutateAsync,
+    isPending,
+  };
 }
 
 export function useApplyDiscountCode() {
-  const queryClient = useQueryClient();
+  const { updateCart } = useAuth();
+  const [isPending, setIsPending] = useState(false);
   
-  return useMutation({
-    mutationFn: (params: { cartId: string; discountCodes: string[] }) => 
-      api.applyDiscountCode(params.cartId, params.discountCodes),
-    onSuccess: (data) => {
-      queryClient.setQueryData(cartKeys.cart(), data);
-      queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
-    },
-    onError: (error) => {
-      toast.error(`Error applying discount code: ${error.message}`);
+  const mutateAsync = async (params: { cartId: string; discountCodes: string[] }) => {
+    setIsPending(true);
+    try {
+      const updatedCart = await api.applyDiscountCode(params.cartId, params.discountCodes);
+      updateCart(updatedCart);
+      toast.success('Código de descuento aplicado');
+      return updatedCart;
+    } catch (error) {
+      toast.error(`Error applying discount code: ${(error as Error).message}`);
+      throw error;
+    } finally {
+      setIsPending(false);
     }
-  });
+  };
+
+  return {
+    mutateAsync,
+    isPending,
+  };
 }
 
 export function useCartActions() {
@@ -91,7 +122,10 @@ export function useCartActions() {
   const applyDiscountCode = useApplyDiscountCode();
 
   const addProduct = async (variantId: string, quantity: number = 1) => {
-    if (!cart) return;
+    if (!cart) {
+      toast.error('Cart not available');
+      return;
+    }
     
     const lines: CartLineInput[] = [{
       merchandiseId: variantId,
@@ -107,7 +141,10 @@ export function useCartActions() {
   }
 
   const updateQuantity = async (lineId: string, quantity: number) => {
-    if (!cart) return;
+    if (!cart) {
+      toast.error('Cart not available');
+      return;
+    }
     
     const lines: CartLineUpdateInput[] = [{
       id: lineId,
@@ -122,9 +159,12 @@ export function useCartActions() {
     }
   }
 
-
   const removeProduct = async (lineId: string) => {
-    if (!cart) return;
+    if (!cart) {
+      toast.error('Cart not available');
+      return;
+    }
+    
     try {
       await removeFromCart.mutateAsync([lineId]);
     } catch (error) {
@@ -134,7 +174,10 @@ export function useCartActions() {
   };
 
   const applyDiscount = async (code: string) => {
-    if (!cart) return;
+    if (!cart) {
+      toast.error('Cart not available');
+      return;
+    }
     
     try {
       await applyDiscountCode.mutateAsync({
@@ -169,5 +212,19 @@ export function useCartActions() {
     isUpdating: updateCartLines.isPending,
     isRemoving: removeFromCart.isPending,
     isApplyingDiscount: applyDiscountCode.isPending,
+  };
+}
+
+// Hook simplificado para obtener el estado del cart
+export function useCartStatus() {
+  const { isAuthenticated, cart, isLoading } = useAuth();
+
+  return {
+    isAuthenticated,
+    isLoading,
+    itemCount: cart?.totalQuantity || 0,
+    isEmpty: cart?.totalQuantity === 0 || !cart,
+    total: cart?.cost.totalAmount,
+    hasItems: (cart?.totalQuantity || 0) > 0
   };
 }

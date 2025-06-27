@@ -43,6 +43,8 @@ async function main() {
     // Permisos especiales
     { name: 'export_data', description: 'Exportar datos del sistema', resource: 'system', action: 'export' },
     { name: 'view_logs', description: 'Ver logs del sistema', resource: 'logs', action: 'read' },
+    { name: 'manage_private_rooms', description: 'Gestionar private rooms', resource: 'private_rooms', action: 'crud' },
+    { name: 'view_private_rooms', description: 'Ver private rooms', resource: 'private_rooms', action: 'read' },
   ];
 
   console.log('📝 Creando permisos...');
@@ -84,7 +86,8 @@ async function main() {
         'manage_addresses',
         'manage_cart',
         'view_products',
-        'view_analytics', // Los VIP pueden ver sus propias analíticas
+        'view_analytics', 
+        'view_private_rooms'
       ],
     },
     {
@@ -129,6 +132,8 @@ async function main() {
         'export_data',
         'manage_own_blog_posts',
         'manage_own_products',
+        'manage_private_rooms',
+        'view_private_rooms',
       ],
     },
     {

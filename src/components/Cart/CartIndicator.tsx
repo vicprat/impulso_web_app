@@ -1,9 +1,8 @@
 'use client';
 
-import { useAuth } from '@/modules/auth/context/useAuth';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart } from 'lucide-react';
-import { useCartActions } from '@/modules/cart/hook';
+import { useAuth } from '@/modules/auth/context/useAuth';
 
 interface CartIndicatorProps {
   showIcon?: boolean;
@@ -20,15 +19,15 @@ export function CartIndicator({
   variant = 'default',
   className = ''
 }: CartIndicatorProps) {
-  const { isAuthenticated } = useAuth();
-  const { cartSummary, isLoading } = useCartActions();
+  const { isAuthenticated, cart, isLoading } = useAuth();
 
   if (!isAuthenticated) {
     return null;
   }
 
-  const itemCount = cartSummary?.itemCount || 0;
-  const isEmpty = cartSummary?.isEmpty ?? true;
+  const itemCount = cart?.totalQuantity || 0;
+  const isEmpty = itemCount === 0;
+  const total = cart?.cost.totalAmount;
 
   if (isLoading) {
     return (
@@ -59,9 +58,9 @@ export function CartIndicator({
           )}
         </div>
         
-        {showTotal && cartSummary?.total && !isEmpty && (
+        {showTotal && total && !isEmpty && (
           <Badge variant="secondary" className="text-xs">
-            {cartSummary.total.amount} {cartSummary.total.currencyCode}
+            {total.amount} {total.currencyCode}
           </Badge>
         )}
       </div>
@@ -81,24 +80,11 @@ export function CartIndicator({
         </Badge>
       )}
 
-      {showTotal && cartSummary?.total && !isEmpty && (
+      {showTotal && total && !isEmpty && (
         <span className="text-xs font-medium ml-6">
-          ${cartSummary.total.amount}
+          ${total.amount}
         </span>
       )}
     </div>
   );
-}
-export function useCartStatus() {
-  const { isAuthenticated } = useAuth();
-  const { cartSummary, isLoading } = useCartActions();
-
-  return {
-    isAuthenticated,
-    isLoading,
-    itemCount: cartSummary?.itemCount || 0,
-    isEmpty: cartSummary?.isEmpty ?? true,
-    total: cartSummary?.total,
-    hasItems: (cartSummary?.itemCount || 0) > 0
-  };
 }

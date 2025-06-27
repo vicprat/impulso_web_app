@@ -19,7 +19,8 @@ import {
   COLLECTION_BY_HANDLE_QUERY, 
   PRODUCTS_QUERY, 
   PRODUCT_BY_HANDLE_QUERY, 
-  HOMEPAGE_QUERY
+  HOMEPAGE_QUERY,
+  PRODUCTS_BY_IDS_QUERY
 } from "./queries";
 import { transformCollectionData, transformProductData } from "./helpers";
 import { handleGraphQLErrors } from "@/lib/graphql";
@@ -119,6 +120,41 @@ export const api = {
       };
     } catch (error) {
       console.error(`Error fetching product with handle "${handle}":`, error);
+      throw error;
+    }
+  },
+
+
+getProductsByIds: async (productIds: string[]): Promise<ProductsResponse> => {
+    try {
+      const { data, errors } = await storeClient.request(PRODUCTS_BY_IDS_QUERY, {
+        variables: {
+          ids: productIds 
+        },
+      });
+
+      if (errors) {
+        handleGraphQLErrors(Array.isArray(errors) ? errors : []);
+      }
+  
+      const products = data.nodes
+        .filter((node: RawProduct) => node && node.id) 
+        .map((rawProduct: RawProduct) => {
+          return transformProductData(rawProduct);
+        });
+      
+      return {
+        data: {
+          products,
+          pageInfo: {
+            hasNextPage: false,
+            endCursor: null
+          }
+        },
+        statusCode: 200,
+      };
+    } catch (error) {
+      console.error('Error fetching products by IDs:', error);
       throw error;
     }
   },

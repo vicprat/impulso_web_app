@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from '@/modules/auth/server/server';
 import { makeStorefrontRequest } from '@/lib/shopify';
-import {  CartLineInput } from '@/modules/cart/types';
+import { CartLineInput, CartLineUpdateInput } from '@/modules/cart/types';
 import { handleGraphQLErrors } from '@/lib/graphql';
 import { getOrCreateCartForUser } from '@/modules/cart/server';
+import { 
+  ADD_TO_CART_MUTATION, 
+  UPDATE_CART_LINES_MUTATION, 
+  REMOVE_FROM_CART_MUTATION 
+} from '@/modules/cart/queries';
 
 export async function POST(request: Request) {
     try {
@@ -18,30 +23,86 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Cart lines are required' }, { status: 400 });
         }
 
+        for (const line of lines) {
+            if (!line.merchandiseId || typeof line.quantity !== 'number' || line.quantity <= 0) {
+                return NextResponse.json({ 
+                    error: 'Invalid cart line data', 
+                    details: 'Each line must have merchandiseId and positive quantity' 
+                }, { status: 400 });
+            }
+        }
+
         const cart = await getOrCreateCartForUser(session.user.id, session.user.email);
 
-        const { cartLinesAdd } = await makeStorefrontRequest(
-            `mutation cartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
-              cartLinesAdd(cartId: $cartId, lines: $lines) {
-                cart { ...Cart }
-                userErrors { field message code }
-              }
-            }
-            fragment Cart on Cart {
-              id
-              totalQuantity
-              cost { totalAmount { amount currencyCode } }
-              lines(first: 100) { edges { node { id quantity merchandise { ... on ProductVariant { id title product { title handle } image { url altText } } } cost { totalAmount { amount currencyCode } } } } }
-            }`,
-            { cartId: cart.id, lines }
-        );
-        
-        handleGraphQLErrors(cartLinesAdd.userErrors);
+        console.log('Adding to cart:', { cartId: cart.id, lines });
 
-        return NextResponse.json(cartLinesAdd.cart);
+        const data = await makeStorefrontRequest(ADD_TO_CART_MUTATION, { 
+            cartId: cart.id, 
+            lines 
+        });
+        
+        if (!data.cartLinesAdd) {
+            throw new Error('cartLinesAdd mutation failed - no response data');
+        }
+
+        handleGraphQLErrors(data.cartLinesAdd.userErrors);
+
+        return NextResponse.json(data.cartLinesAdd.cart);
 
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to add items to cart', details: (error as Error).message }, { status: 500 });
+        console.error('Cart add error:', error);
+        return NextResponse.json({ 
+            error: 'Failed to add items to cart', 
+            details: (error as Error).message 
+        }, { status: 500 });
+    }
+}
+
+export async function PUT(request: Request) {
+    try {
+        const session = await getServerSession();
+        if (!session) {
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+        }
+
+        const lines = (await request.json()) as CartLineUpdateInput[];
+
+        if (!lines || !Array.isArray(lines) || lines.length === 0) {
+            return NextResponse.json({ error: 'Cart lines are required' }, { status: 400 });
+        }
+
+        for (const line of lines) {
+            if (!line.id || typeof line.quantity !== 'number' || line.quantity < 0) {
+                return NextResponse.json({ 
+                    error: 'Invalid cart line data', 
+                    details: 'Each line must have id and non-negative quantity' 
+                }, { status: 400 });
+            }
+        }
+
+        const cart = await getOrCreateCartForUser(session.user.id, session.user.email);
+
+        console.log('Updating cart lines:', { cartId: cart.id, lines });
+
+        const data = await makeStorefrontRequest(UPDATE_CART_LINES_MUTATION, { 
+            cartId: cart.id, 
+            lines 
+        });
+
+        if (!data.cartLinesUpdate) {
+            throw new Error('cartLinesUpdate mutation failed - no response data');
+        }
+
+        handleGraphQLErrors(data.cartLinesUpdate.userErrors);
+
+        return NextResponse.json(data.cartLinesUpdate.cart);
+
+    } catch (error) {
+        console.error('Cart update error:', error);
+        return NextResponse.json({ 
+            error: 'Failed to update cart lines', 
+            details: (error as Error).message 
+        }, { status: 500 });
     }
 }
 
@@ -59,27 +120,26 @@ export async function DELETE(request: Request) {
 
         const cart = await getOrCreateCartForUser(session.user.id, session.user.email);
 
-        const { cartLinesRemove } = await makeStorefrontRequest(
-            `mutation cartLinesRemove($cartId: ID!, $lineIds: [ID!]!) {
-              cartLinesRemove(cartId: $cartId, lineIds: $lineIds) {
-                cart { ...Cart }
-                userErrors { field message code }
-              }
-            }
-            fragment Cart on Cart {
-              id
-              totalQuantity
-              cost { totalAmount { amount currencyCode } }
-              lines(first: 100) { edges { node { id quantity merchandise { ... on ProductVariant { id title product { title handle } image { url altText } } } cost { totalAmount { amount currencyCode } } } } }
-            }`,
-            { cartId: cart.id, lineIds }
-        );
+        console.log('Removing from cart:', { cartId: cart.id, lineIds });
 
-        handleGraphQLErrors(cartLinesRemove.userErrors);
+        const data = await makeStorefrontRequest(REMOVE_FROM_CART_MUTATION, { 
+            cartId: cart.id, 
+            lineIds 
+        });
 
-        return NextResponse.json(cartLinesRemove.cart);
+        if (!data.cartLinesRemove) {
+            throw new Error('cartLinesRemove mutation failed - no response data');
+        }
+
+        handleGraphQLErrors(data.cartLinesRemove.userErrors);
+
+        return NextResponse.json(data.cartLinesRemove.cart);
 
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to remove items from cart', details: (error as Error).message }, { status: 500 });
+        console.error('Cart remove error:', error);
+        return NextResponse.json({ 
+            error: 'Failed to remove items from cart', 
+            details: (error as Error).message 
+        }, { status: 500 });
     }
 }

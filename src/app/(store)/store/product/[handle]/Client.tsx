@@ -2,14 +2,12 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Product, Variant } from '@/modules/shopify/types';
 import { unstable_ViewTransition as ViewTransition } from 'react';
 import { Badge } from '@/components/ui/badge';
-import {  ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { AddToCartButton } from '@/components/Cart/AddToCartButton';
-
-import { useProducts } from '@/modules/shopify/hooks';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { Button } from '@/components/ui/button';
@@ -18,6 +16,7 @@ import { Card } from '@/components/Card.tsx';
 
 type Props = {
   product: Product;
+  relatedProducts: Product[]; 
 }
 
 type State = {
@@ -34,60 +33,9 @@ const INITIAL_STATE: State = {
   lightboxImage: 0,
 }
 
-// const policies = [
-//   { 
-//     name: 'Envío gratis', 
-//     icon: Truck, 
-//     description: 'En pedidos mayores a $1000' 
-//   },
-//   { 
-//     name: 'Garantía', 
-//     icon: Shield, 
-//     description: '30 días de garantía' 
-//   },
-//   { 
-//     name: 'Devoluciones', 
-//     icon: RotateCcw, 
-//     description: 'Fácil y sin costo' 
-//   },
-//   { 
-//     name: 'Pago seguro', 
-//     icon: CreditCard, 
-//     description: 'Transacciones protegidas' 
-//   },
-// ];
-
-const shuffleArray = (array) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]]; // Intercambio de elementos
-  }
-  return array;
-};
-
-export const Client: React.FC<Props> = ({ product }) => {
+export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
   const [state, setState] = useState(INITIAL_STATE);
   
-const vendorQuery = product.vendor ? `vendor:'${product.vendor}'` : '';
-const priceRangeQuery = product.priceRange ? `priceRange:'${product.priceRange}'` : '';
-const combinedQuery = [vendorQuery, priceRangeQuery].filter(Boolean).join(' OR ');
-
-const { data: relatedData } = useProducts({
-  first: 20, 
-  query: combinedQuery,
-});
-
-const relatedProducts = useMemo(() => {
-  if (!relatedData?.products) {
-    return [];
-  }
-  
-  const filtered = relatedData.products.filter(p => p.id !== product.id);
-  const shuffled = shuffleArray([...filtered]);
-
-  return shuffled.slice(0, 8);
-
-}, [relatedData, product.id]);
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { 
       loop: true,
@@ -403,28 +351,6 @@ const relatedProducts = useMemo(() => {
                 </div>
               </div>
             </div>
-
-            {/* Policies Section */}
-            {/* <div className="border-t border-border pt-8">
-              <h3 className="text-lg font-semibold text-foreground mb-6">Nuestras garantías</h3>
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-1 xl:grid-cols-2">
-                {policies.map((policy) => (
-                  <ShCard key={policy.name} className="border-border hover:shadow-md transition-shadow duration-200">
-                    <CardContent className="p-4 text-center">
-                      <div className="flex flex-col items-center space-y-3">
-                        <div className="p-2 rounded-full bg-muted">
-                          <policy.icon className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-semibold text-foreground">{policy.name}</h4>
-                          <p className="text-xs text-muted-foreground mt-1">{policy.description}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </ShCard>
-                ))}
-              </div>
-            </div> */}
           </div>
         </div>
 

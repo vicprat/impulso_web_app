@@ -45,23 +45,8 @@ Diseño base de la tienda y páginas de producto.
 🚧 Pendientes por Desarrollar
 A continuación, se presenta la lista de tareas prioritarias para completar el ecosistema.
 
-1. Módulos de Artista y Administración (En progreso)
 
-[ ] CRUD de Obras para Artistas: Implementar el formulario de creación y edición para que los artistas puedan gestionar sus productos en /artist/products.
-
-[ ] Conectar el formulario a los endpoints POST y PUT de /api/artists/products.
-
-[ ] Implementar la funcionalidad de subida y asociación de imágenes con la API de Admin de Shopify.
-
-[ ] Gestión Total de Productos para Admins: Crear la interfaz en /admin/products para que los roles Manager y Admin puedan editar cualquier producto de la tienda.
-
-[ ] Gestión de Usuarios: Desarrollar la interfaz para que los Admin puedan asignar/revocar roles y activar/desactivar cuentas de usuario.
-
-[ ] Dashboard Enriquecido: Mejorar los dashboards de los diferentes roles utilizando la Admin API para mostrar datos relevantes (ventas, vistas, etc.).
-
-2. Módulo de Exclusividad y Eventos
-
-[ ] Private Rooms: Implementar una función para que Admin/Manager puedan asignar una colección de obras a usuarios con el rol vip_customer. Estas obras solo serán visibles para el cliente asignado en una sección privada.
+1. Módulo de Exclusividad y Eventos
 
 [ ] Eventos como Productos: Crear un tipo de producto específico para "Eventos", permitiendo su venta y gestión a través de Shopify.
 
@@ -69,13 +54,18 @@ A continuación, se presenta la lista de tareas prioritarias para completar el e
 
 [ ] Módulo de Gestión Financiera de Eventos: Un panel de administración para ver la rentabilidad, asistencia y otros KPIs de los eventos realizados.
 
-3. Herramientas de Contenido y Administración
+2. Herramientas de Contenido y Administración
 
 [ ] Blog: Crear un sistema de gestión de artículos y noticias para la galería.
 
 [ ] Perfiles Públicos: Desarrollar páginas de perfil públicas para Artistas, mostrando su biografía y obras. Considerar perfiles para Admin, Manager y Support si aplica.
 
 [ ] Módulo de Invoices Personalizados: Crear una herramienta para que Admin/Manager puedan generar y descargar facturas personalizadas para ventas especiales.
+
+3. Módulos de Artista y Administración (En progreso)
+
+[ ] Dashboard Enriquecido: Mejorar los dashboards de los diferentes roles utilizando la Admin API para mostrar datos relevantes (ventas, vistas, etc.).
+
 
 4. Mejoras Generales y Refinamiento
 

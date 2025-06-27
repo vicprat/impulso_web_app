@@ -1,3 +1,5 @@
+import { Cart } from "@/modules/cart/types";
+
 export type User = {
   id: string;
   shopifyCustomerId: string;
@@ -10,13 +12,23 @@ export type User = {
 
 export type AuthContextType = {
   user: User | null;
+  cart: Cart | null; 
   isLoading: boolean;
   isAuthenticated: boolean;
   login: () => void;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+  updateCart: (cart: Cart) => void; 
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
+}
+
+
+export type AuthMeResponse = {
+  user: User;
+  expiresAt: string;
+  refreshed: boolean;
+  cart: Cart | null;
 }
 
 export type UseAuthGuardOptions = {

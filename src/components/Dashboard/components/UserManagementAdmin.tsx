@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useState } from 'react';
@@ -9,7 +10,6 @@ import {
 } from '@/modules/user/hooks/management';
 import { useAuth } from '@/modules/auth/context/useAuth';
 import { UserFilters, UserProfile } from '@/modules/user/types';
-import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -18,131 +18,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-
-
-const PromoteToArtistDialog = ({ user }: { user: any }) => {
-  const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [vendorName, setVendorName] = useState('');
-
-  // 1. Hook de React Query para obtener la lista de vendors
-  const { data: vendors, isLoading } = useQuery<string[]>({
-    queryKey: ['vendors'],
-    queryFn: () => fetch('/api/vendors').then(res => res.json()),
-    enabled: open, // Solo se ejecuta cuando el diálogo está abierto
-  });
-
-  // 2. Hook de React Query para la mutación (promocionar al artista)
-  const mutation = useMutation({
-    mutationFn: (newVendorName: string) => {
-      return fetch('/api/artists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, vendorName: newVendorName }),
-      }).then(res => {
-        if (!res.ok) throw new Error('Falló la promoción del artista');
-        return res.json();
-      });
-    },
-    onSuccess: () => {
-      toast.success(  `El usuario ${user.name} ha sido promocionado a artista.` );
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      setOpen(false); 
-    },
-    onError: () => {
-      toast.error("No se pudo promocionar al artista.");
-    }
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!vendorName) return;
-    mutation.mutate(vendorName);
-  };
-
-  return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline">Promocionar a Artista</Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <form onSubmit={handleSubmit}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Asignar Vendor a {user.name}</AlertDialogTitle>
-            <AlertDialogDescription>
-              Selecciona un vendor existente o escribe un nombre para crear uno nuevo.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <div className="py-4">
-            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={popoverOpen}
-                  className="w-full justify-between"
-                >
-                  {vendorName
-                    ? vendors?.find((v) => v.toLowerCase() === vendorName.toLowerCase()) || `Crear nuevo: "${vendorName}"`
-                    : "Selecciona o escribe un vendor..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                <Command shouldFilter={false} /* Filtramos manualmente */>
-                  <CommandInput 
-                    placeholder="Buscar o crear vendor..."
-                    onValueChange={setVendorName}
-                  />
-                  <CommandList>
-                     <CommandEmpty>
-                        {isLoading ? 'Cargando...' : 'No se encontraron vendors.'}
-                      </CommandEmpty>
-                    <CommandGroup>
-                      {vendors
-                        ?.filter(v => v.toLowerCase().includes(vendorName.toLowerCase()))
-                        .map((v) => (
-                        <CommandItem
-                          key={v}
-                          value={v}
-                          onSelect={(currentValue) => {
-                            setVendorName(currentValue === vendorName ? "" : currentValue);
-                            setPopoverOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              vendorName.toLowerCase() === v.toLowerCase() ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {v}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <Button type="submit" disabled={mutation.isPending || !vendorName}>
-              {mutation.isPending ? 'Promocionando...' : 'Asignar y Promocionar'}
-            </Button>
-          </AlertDialogFooter>
-        </form>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-};
-
-
 export function UserManagementAdmin() {
   const { hasPermission, hasRole, user: currentUser } = useAuth();
+  const queryClient = useQueryClient();
   
   const [filters, setFilters] = useState<UserFilters>({
     search: '',
@@ -156,7 +34,9 @@ export function UserManagementAdmin() {
 
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [showRoleModal, setShowRoleModal] = useState(false);
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [vendorName, setVendorName] = useState('');
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   // Hooks de gestión
   const { data: usersData, isLoading: usersLoading} = useUsersManagement(filters);
@@ -173,12 +53,39 @@ export function UserManagementAdmin() {
     hasPrev: false
   };
 
+  const { data: vendors, isLoading: vendorsLoading } = useQuery<string[]>({
+    queryKey: ['vendors'],
+    queryFn: () => fetch('/api/vendors').then(res => res.json()),
+    enabled: showRoleModal && selectedRole === 'artist',
+  });
+
+  const createArtistMutation = useMutation({
+    mutationFn: (data: { userId: string; vendorName: string }) => {
+      return fetch('/api/artists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }).then(res => {
+        if (!res.ok) throw new Error('Falló la creación del artista');
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      toast.success('Artista creado exitosamente');
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: () => {
+      toast.error('Error al crear el artista');
+    }
+  });
+
   const availableRoles = [
     { id: 'customer', name: 'Cliente', description: 'Cliente básico del sistema' },
     { id: 'vip_customer', name: 'Cliente VIP', description: 'Cliente VIP con beneficios adicionales' },
     { id: 'support', name: 'Soporte', description: 'Personal de soporte al cliente' },
     { id: 'manager', name: 'Gerente', description: 'Gerente con acceso amplio al sistema' },
-    { id: 'admin', name: 'Administrador', description: 'Administrador con acceso completo' }
+    { id: 'admin', name: 'Administrador', description: 'Administrador con acceso completo' },
+    { id: 'artist', name: 'Artista', description: 'Artista con acceso a herramientas de gestión de su perfil' }
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -189,7 +96,7 @@ export function UserManagementAdmin() {
   const handleSort = (field: string) => {
     setFilters({
       ...filters,
-      sortBy: field as any,
+      sortBy: field as UserFilters['sortBy'],
       sortOrder: filters.sortBy === field && filters.sortOrder === 'asc' ? 'desc' : 'asc'
     });
   };
@@ -200,20 +107,46 @@ export function UserManagementAdmin() {
 
   const handleManageRoles = (user: UserProfile) => {
     setSelectedUser(user);
-    setSelectedRoles([...user.roles]);
+    setSelectedRole(user.roles[0] || 'customer');
+    setVendorName('');
     setShowRoleModal(true);
   };
 
+  const handleRoleChange = (roleId: string) => {
+    setSelectedRole(roleId);
+    if (roleId !== 'artist') {
+      setVendorName('');
+    }
+  };
+
   const handleSaveRoles = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !selectedRole) return;
     
     try {
-      await updateRoles.mutateAsync({ userId: selectedUser.id, roles: selectedRoles });
+      const isBecomingArtist = selectedRole === 'artist' && !selectedUser.roles.includes('artist');
+      
+      if (isBecomingArtist && !vendorName) {
+        toast.error('Debes seleccionar un vendor para promocionar a artista');
+        return;
+      }
+
+      await updateRoles.mutateAsync({ userId: selectedUser.id, roles: [selectedRole] });
+      
+      if (isBecomingArtist) {
+        await createArtistMutation.mutateAsync({
+          userId: selectedUser.id,
+          vendorName: vendorName
+        });
+      }
+
+      toast.success('Rol actualizado exitosamente');
       setShowRoleModal(false);
       setSelectedUser(null);
+      setSelectedRole('');
+      setVendorName('');
     } catch (error) {
-      console.error('Error updating roles:', error);
-      alert('Error al actualizar roles');
+      console.error('Error updating role:', error);
+      toast.error('Error al actualizar rol');
     }
   };
 
@@ -230,21 +163,25 @@ export function UserManagementAdmin() {
     })();
     
     if (!canManage) {
-      alert('No tienes permisos para gestionar este usuario');
+      toast.error('No tienes permisos para gestionar este usuario');
       return;
     }
 
     try {
       if (user.isActive) {
         await deactivateUser.mutateAsync(user.id);
+        toast.success('Usuario desactivado');
       } else {
         await reactivateUser.mutateAsync(user.id);
+        toast.success('Usuario reactivado');
       }
     } catch (error) {
       console.error('Error toggling user status:', error);
-      alert('Error al cambiar el estado del usuario');
+      toast.error('Error al cambiar el estado del usuario');
     }
   };
+
+  const isBecomingArtist = selectedUser && selectedRole === 'artist' && !selectedUser.roles.includes('artist');
 
   if (!hasPermission('manage_users')) {
     return (
@@ -264,7 +201,7 @@ export function UserManagementAdmin() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
-            <p className="text-gray-600">Administrar usuarios, roles y permisos</p>
+            <p className="text-gray-600">Administrar usuarios y roles</p>
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-500">
@@ -272,22 +209,6 @@ export function UserManagementAdmin() {
             </span>
           </div>
         </div>
-
-
-       {users.map((user) => (
-  <div key={user.id} className="flex items-center justify-between p-4 border-b">
-    <div>
-      <p className="font-semibold">{user.name}</p>
-      <p className="text-sm text-muted-foreground">{user.email}</p>
-      {user.artist ? (
-        <span className="text-sm font-bold text-green-500">Artista: {user.artist.name}</span>
-      ) : (
-        <span className="text-sm text-gray-500">No es artista</span>
-      )}
-    </div>
-    {!user.artist && <PromoteToArtistDialog user={user} />}
-  </div>
-))}
 
         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
@@ -373,7 +294,7 @@ export function UserManagementAdmin() {
                       )}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Roles
+                      Rol
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Estado
@@ -443,21 +364,9 @@ export function UserManagementAdmin() {
                         </td>
                         
                         <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            {user.roles.slice(0, 2).map(role => (
-                              <span 
-                                key={role} 
-                                className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                              >
-                                {role}
-                              </span>
-                            ))}
-                            {user.roles.length > 2 && (
-                              <span className="text-xs text-gray-500">
-                                +{user.roles.length - 2}
-                              </span>
-                            )}
-                          </div>
+                          <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {user.roles[0] || 'Sin rol'}
+                          </span>
                         </td>
                         
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -485,7 +394,7 @@ export function UserManagementAdmin() {
                                   onClick={() => handleManageRoles(user)}
                                   className="text-blue-600 hover:text-blue-900 text-sm"
                                 >
-                                  Roles
+                                  Rol
                                 </button>
                                 <button
                                   onClick={() => handleToggleUserStatus(user)}
@@ -595,28 +504,25 @@ export function UserManagementAdmin() {
         )}
       </div>
 
+      {/* Modal Unificado de Roles */}
       {showRoleModal && selectedUser && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Gestionar Roles - {selectedUser.firstName} {selectedUser.lastName}
+                Cambiar Rol - {selectedUser.firstName} {selectedUser.lastName}
               </h3>
               
               <div className="space-y-3">
                 {availableRoles.map(role => (
-                  <label key={role.id} className="flex items-start space-x-3">
+                  <label key={role.id} className="flex items-start space-x-3 cursor-pointer">
                     <input
-                      type="checkbox"
-                      checked={selectedRoles.includes(role.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedRoles([...selectedRoles, role.id]);
-                        } else {
-                          setSelectedRoles(selectedRoles.filter(r => r !== role.id));
-                        }
-                      }}
-                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      type="radio"
+                      name="userRole"
+                      value={role.id}
+                      checked={selectedRole === role.id}
+                      onChange={(e) => handleRoleChange(e.target.value)}
+                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                     />
                     <div>
                       <div className="text-sm font-medium text-gray-900">{role.name}</div>
@@ -625,20 +531,87 @@ export function UserManagementAdmin() {
                   </label>
                 ))}
               </div>
+
+              {/* Selector de Vendor si se está convirtiendo en artista */}
+              {isBecomingArtist && (
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                  <h4 className="text-sm font-medium text-blue-900 mb-2">
+                    Asignar Vendor para Artista
+                  </h4>
+                  <p className="text-xs text-blue-700 mb-3">
+                    Selecciona un vendor existente o escribe un nombre para crear uno nuevo.
+                  </p>
+                  
+                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={popoverOpen}
+                        className="w-full justify-between"
+                      >
+                        {vendorName
+                          ? vendors?.find((v) => v.toLowerCase() === vendorName.toLowerCase()) || `Crear nuevo: "${vendorName}"`
+                          : "Selecciona o escribe un vendor..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <Command shouldFilter={false}>
+                        <CommandInput 
+                          placeholder="Buscar o crear vendor..."
+                          onValueChange={setVendorName}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            {vendorsLoading ? 'Cargando...' : 'No se encontraron vendors.'}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {vendors
+                              ?.filter(v => v.toLowerCase().includes(vendorName.toLowerCase()))
+                              .map((v) => (
+                              <CommandItem
+                                key={v}
+                                value={v}
+                                onSelect={(currentValue) => {
+                                  setVendorName(currentValue === vendorName ? "" : currentValue);
+                                  setPopoverOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    vendorName.toLowerCase() === v.toLowerCase() ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {v}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
               
               <div className="flex justify-end space-x-3 mt-6">
                 <button
-                  onClick={() => setShowRoleModal(false)}
+                  onClick={() => {
+                    setShowRoleModal(false);
+                    setSelectedRole('');
+                    setVendorName('');
+                  }}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleSaveRoles}
-                  disabled={updateRoles.isPending}
+                  disabled={updateRoles.isPending || createArtistMutation.isPending}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {updateRoles.isPending ? 'Guardando...' : 'Guardar'}
+                  {updateRoles.isPending || createArtistMutation.isPending ? 'Guardando...' : 'Guardar'}
                 </button>
               </div>
             </div>

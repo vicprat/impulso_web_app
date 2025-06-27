@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useState, useEffect, useMemo } from 'react';
 
 interface ParticleConfig {
   count?: number;
@@ -38,14 +39,19 @@ const defaultConfig: ParticleConfig = {
   randomMovement: true
 };
 
-const generateRandomMovement = () => {
-  const angle = Math.random() * Math.PI * 2;
-  const distance = 20 + Math.random() * 40; 
+const seededRandom = (seed: number) => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+const generateRandomMovement = (seed: number) => {
+  const angle = seededRandom(seed * 2) * Math.PI * 2;
+  const distance = 20 + seededRandom(seed * 3) * 40; 
   
   return {
     x: [0, Math.cos(angle) * distance, 0],
     y: [0, Math.sin(angle) * distance, 0],
-    opacity: [0.2, 0.6 + Math.random() * 0.4, 0.2]
+    opacity: [0.2, 0.6 + seededRandom(seed * 4) * 0.4, 0.2]
   };
 };
 
@@ -53,6 +59,8 @@ export const FloatingParticles: React.FC<FloatingParticlesProps> = ({
   config = defaultConfig,
   className = ''
 }) => {
+  const [isMounted, setIsMounted] = useState(false);
+
   const {
     count = 20,
     size = 'w-1 h-1',
@@ -65,16 +73,30 @@ export const FloatingParticles: React.FC<FloatingParticlesProps> = ({
     randomMovement = true
   } = config;
 
-  const particles = Array.from({ length: count }, (_, i) => ({
-    id: i,
-    movement: randomMovement ? generateRandomMovement() : movement,
-    duration: minDuration + Math.random() * (maxDuration - minDuration),
-    delay: minDelay + Math.random() * (maxDelay - minDelay),
-    position: {
-      left: Math.random() * 100,
-      top: Math.random() * 100
-    }
-  }));
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const particles = useMemo(() => {
+    if (!isMounted) return [];
+    
+    return Array.from({ length: count }, (_, i) => ({
+      id: i,
+      movement: randomMovement ? generateRandomMovement(i) : movement,
+      duration: minDuration + seededRandom(i * 5) * (maxDuration - minDuration),
+      delay: minDelay + seededRandom(i * 6) * (maxDelay - minDelay),
+      position: {
+        left: seededRandom(i * 7) * 100,
+        top: seededRandom(i * 8) * 100
+      }
+    }));
+  }, [isMounted, count, minDuration, maxDuration, minDelay, maxDelay, movement, randomMovement]);
+
+  if (!isMounted) {
+    return (
+      <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`} />
+    );
+  }
 
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>
