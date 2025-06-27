@@ -1,18 +1,17 @@
-'use client';
+'use client'
 
-import { useAuth } from "@/modules/auth/context/useAuth";
-
+import { useAuth } from '@/modules/auth/context/useAuth'
 
 export function Login() {
-  const { login, isLoading } = useAuth();
+  const { isLoading, login } = useAuth()
 
   return (
     <button
       onClick={login}
       disabled={isLoading}
-      className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+      className='rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-blue-400'
     >
       {isLoading ? 'Cargando...' : 'Iniciar Sesión con Shopify'}
     </button>
-  );
+  )
 }

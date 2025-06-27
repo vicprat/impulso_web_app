@@ -1,32 +1,39 @@
-import { Product, Collection, RawProduct, RawCollection, Edge } from "./types";
+import {
+  type Product,
+  type Collection,
+  type RawProduct,
+  type RawCollection,
+  type Edge,
+} from './types'
 
 export const transformProductData = (rawProduct: RawProduct): Product => {
   return {
-    id: rawProduct.id,
-    title: rawProduct.title,
-    handle: rawProduct.handle,
+    availableForSale: rawProduct.availableForSale,
+    createdAt: rawProduct.createdAt,
     description: rawProduct.description,
     descriptionHtml: rawProduct.descriptionHtml,
-    availableForSale: rawProduct.availableForSale,
-    productType: rawProduct.productType,
-    vendor: rawProduct.vendor,
-    createdAt: rawProduct.createdAt,
+    handle: rawProduct.handle,
+    id: rawProduct.id,
+    images: rawProduct.images?.edges?.map((edge) => edge.node) ?? [],
     priceRange: rawProduct.priceRange,
-    images: rawProduct.images?.edges?.map(edge => edge.node) ?? [],
-    variants: rawProduct.variants?.edges?.map(edge => edge.node) ?? []
-  };
-};
+    productType: rawProduct.productType,
+    title: rawProduct.title,
+    variants: rawProduct.variants?.edges?.map((edge) => edge.node) ?? [],
+    vendor: rawProduct.vendor,
+  }
+}
 
 export const transformCollectionData = (rawCollection: RawCollection): Collection => {
   return {
-    id: rawCollection.id,
-    title: rawCollection.title,
-    handle: rawCollection.handle,
     description: rawCollection.description,
     descriptionHtml: rawCollection.descriptionHtml,
+    handle: rawCollection.handle,
+    id: rawCollection.id,
     image: rawCollection.image,
-    products: rawCollection.products?.edges?.map((edge: Edge<RawProduct>) => 
-      transformProductData(edge.node)
-    ) ?? []
-  };
-};
+    products:
+      rawCollection.products?.edges?.map((edge: Edge<RawProduct>) =>
+        transformProductData(edge.node)
+      ) ?? [],
+    title: rawCollection.title,
+  }
+}

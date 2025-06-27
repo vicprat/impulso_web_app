@@ -1,58 +1,61 @@
-'use client';
+'use client'
 
-import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/modules/auth/context/useAuth';
-import { getRouteMeta, isPublicRoute } from '@/config/routes';
+import { useRouter, usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 
-type Props = {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+import { getRouteMeta, isPublicRoute } from '@/config/routes'
+import { useAuth } from '@/modules/auth/context/useAuth'
+
+interface Props {
+  children: React.ReactNode
+  fallback?: React.ReactNode
 }
 
-export const Route: React.FC<Props>= ({ children, fallback }) => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { user, isLoading, hasPermission, hasRole } = useAuth();
+export const Route: React.FC<Props> = ({ children, fallback }) => {
+  const router = useRouter()
+  const pathname = usePathname()
+  const { hasPermission, hasRole, isLoading, user } = useAuth()
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading) return
 
-    const routeMeta = getRouteMeta(pathname);
-    
-    if (isPublicRoute(pathname)) return;
+    const routeMeta = getRouteMeta(pathname)
+
+    if (isPublicRoute(pathname)) return
 
     if (!user) {
-      router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
-      return;
+      router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`)
+      return
     }
 
     if (routeMeta.requiredRoles) {
-      const hasRequiredRole = routeMeta.requiredRoles.some(role => hasRole(role));
+      const hasRequiredRole = routeMeta.requiredRoles.some((role) => hasRole(role))
       if (!hasRequiredRole) {
-        router.push('/unauthorized');
-        return;
+        router.push('/unauthorized')
+        return
       }
     }
 
     if (routeMeta.requiredPermissions) {
-      const hasRequiredPermissions = routeMeta.requiredPermissions.every(
-        permission => hasPermission(permission)
-      );
+      const hasRequiredPermissions = routeMeta.requiredPermissions.every((permission) =>
+        hasPermission(permission)
+      )
       if (!hasRequiredPermissions) {
-        router.push('/unauthorized');
-        return;
+        router.push('/unauthorized')
+        return
       }
     }
-  }, [pathname, user, isLoading, hasPermission, hasRole, router]);
+  }, [pathname, user, isLoading, hasPermission, hasRole, router])
 
   if (isLoading) {
-    return fallback || (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return (
+      fallback || (
+        <div className='flex min-h-screen items-center justify-center'>
+          <div className='size-12 animate-spin rounded-full border-b-2 border-primary'></div>
+        </div>
+      )
+    )
   }
 
-  return <>{children}</>;
-};
+  return <>{children}</>
+}

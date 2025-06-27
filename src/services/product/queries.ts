@@ -45,7 +45,7 @@ export const PRODUCT_FRAGMENT = `
       }
     }
   }
-`;
+`
 
 export const GET_PRODUCTS_QUERY = `
   query getProducts(
@@ -71,7 +71,7 @@ export const GET_PRODUCTS_QUERY = `
     }
   }
   ${PRODUCT_FRAGMENT}
-`;
+`
 
 export const GET_SINGLE_PRODUCT_QUERY = `
   query getProduct($id: ID!) {
@@ -80,8 +80,7 @@ export const GET_SINGLE_PRODUCT_QUERY = `
     }
   }
   ${PRODUCT_FRAGMENT}
-`;
-
+`
 
 export const CREATE_PRODUCT_MUTATION = `
   mutation productCreate($input: ProductInput!) {
@@ -138,8 +137,7 @@ export const CREATE_PRODUCT_MUTATION = `
       }
     }
   }
-`;
-
+`
 
 export const UPDATE_PRODUCT_MUTATION = `
   mutation productUpdate($input: ProductInput!) {
@@ -154,7 +152,7 @@ export const UPDATE_PRODUCT_MUTATION = `
     }
   }
   ${PRODUCT_FRAGMENT}
-`;
+`
 
 export const DELETE_PRODUCT_MUTATION = `
   mutation productDelete($input: ProductDeleteInput!) {
@@ -166,7 +164,7 @@ export const DELETE_PRODUCT_MUTATION = `
       }
     }
   }
-`;
+`
 
 export const PUBLISH_PRODUCT_MUTATION = `
   mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
@@ -177,7 +175,7 @@ export const PUBLISH_PRODUCT_MUTATION = `
       }
     }
   }
-`;
+`
 
 export const GET_PUBLICATIONS_QUERY = `
   query getPublications {
@@ -190,7 +188,7 @@ export const GET_PUBLICATIONS_QUERY = `
       }
     }
   }
-`;
+`
 
 export const INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION = `
   mutation inventorySetOnHandQuantities($input: InventorySetOnHandQuantitiesInput!) {
@@ -204,7 +202,7 @@ export const INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION = `
       }
     }
   }
-`;
+`
 
 export const INVENTORY_ADJUST_QUANTITIES_MUTATION = `
   mutation inventoryAdjustQuantities($input: InventoryAdjustQuantitiesInput!) {
@@ -218,7 +216,7 @@ export const INVENTORY_ADJUST_QUANTITIES_MUTATION = `
       }
     }
   }
-`;
+`
 
 export const GET_INVENTORY_ITEM_QUERY = `
   query getInventoryItem($variantId: ID!) {
@@ -229,7 +227,7 @@ export const GET_INVENTORY_ITEM_QUERY = `
       }
     }
   }
-`;
+`
 
 export const PRODUCT_VARIANTS_BULK_UPDATE_MUTATION = `
   mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
@@ -243,7 +241,7 @@ export const PRODUCT_VARIANTS_BULK_UPDATE_MUTATION = `
       }
     }
   }
-`;
+`
 
 export const PRODUCT_CREATE_MEDIA_MUTATION = `
         mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
@@ -267,4 +265,4 @@ export const PRODUCT_CREATE_MEDIA_MUTATION = `
                 }
             }
         }
-    `;
+    `

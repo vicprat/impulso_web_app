@@ -1,6 +1,6 @@
+import { NextResponse } from 'next/server'
 
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
@@ -8,13 +8,13 @@ export async function GET() {
       select: {
         productId: true,
       },
-    });
+    })
 
-    const productIds = privateRoomProducts.map(p => p.productId);
+    const productIds = privateRoomProducts.map((p) => p.productId)
 
-    return NextResponse.json(productIds);
+    return NextResponse.json(productIds)
   } catch (error) {
-    console.error('Error fetching private room product IDs:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('Error fetching private room product IDs:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

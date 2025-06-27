@@ -1,237 +1,242 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client'
+
+import { type AuthConfig, type CustomerInfo, type TokenResponse } from '@/types'
 
 import {
   exchangeCodeForTokens,
   refreshAccessToken,
   getCustomerInfo,
   calculateExpiresAt,
-} from '../utils';
-import { AuthConfig, CustomerInfo, TokenResponse } from '@/types';
+} from '../utils'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
-export type AuthSession = {
+export interface AuthSession {
   user: {
-    id: string;
-    shopifyCustomerId: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-    roles: string[];
-    permissions: string[];
-  };
+    id: string
+    shopifyCustomerId: string
+    email: string
+    firstName?: string
+    lastName?: string
+    roles: string[]
+    permissions: string[]
+  }
   tokens: {
-    accessToken: string;
-    refreshToken: string;
-    idToken?: string;
-    expiresAt: Date;
-  };
+    accessToken: string
+    refreshToken: string
+    idToken?: string
+    expiresAt: Date
+  }
 }
 
 export class AuthService {
-  private config: AuthConfig;
+  private config: AuthConfig
 
   constructor(config: AuthConfig) {
-    this.config = config;
+    this.config = config
   }
 
   async authenticateWithCode(code: string, codeVerifier: string): Promise<AuthSession> {
     try {
-      const tokenResponse = await exchangeCodeForTokens(this.config, code, codeVerifier);
-      const customerInfo = await getCustomerInfo(this.config, tokenResponse.access_token);
-      const user = await this.upsertUser(customerInfo);
-      const expiresAt = calculateExpiresAt(tokenResponse.expires_in);
-      
+      const tokenResponse = await exchangeCodeForTokens(this.config, code, codeVerifier)
+      const customerInfo = await getCustomerInfo(this.config, tokenResponse.access_token)
+      const user = await this.upsertUser(customerInfo)
+      const expiresAt = calculateExpiresAt(tokenResponse.expires_in)
+
       try {
-        await this.saveSessionToken(user.id, tokenResponse, expiresAt);
+        await this.saveSessionToken(user.id, tokenResponse, expiresAt)
       } catch (saveError) {
-        console.error('Failed to save session token:', saveError);
-        throw saveError;
+        console.error('Failed to save session token:', saveError)
+        throw saveError
       }
 
       try {
         const verifySession = await prisma.sessionToken.findUnique({
+          include: { user: true },
           where: { accessToken: tokenResponse.access_token },
-          include: { user: true }
-        });
+        })
         if (!verifySession) {
-          console.error('Session not found in database after saving');
+          console.error('Session not found in database after saving')
         }
       } catch (verifyError) {
-        console.error('Error verifying saved session:', verifyError);
+        console.error('Error verifying saved session:', verifyError)
       }
 
-      const userWithPermissions = await this.getUserWithPermissions(user.id);
-      const effectivePermissions = await this.getEffectivePermissions(user.id);
-      
+      const userWithPermissions = await this.getUserWithPermissions(user.id)
+      const effectivePermissions = await this.getEffectivePermissions(user.id)
+
       await this.logActivity(user.id, 'login', null, {
         loginMethod: 'oauth_code',
-        shopifyCustomerId: customerInfo.id
-      });
+        shopifyCustomerId: customerInfo.id,
+      })
 
       return {
-        user: {
-          id: user.id,
-          shopifyCustomerId: user.shopifyCustomerId,
-          email: user.email,
-          firstName: user.firstName ?? undefined,
-          lastName: user.lastName ?? undefined,
-          roles: userWithPermissions.roles.map(ur => ur.role.name),
-          permissions: effectivePermissions,
-        },
         tokens: {
           accessToken: tokenResponse.access_token,
-          refreshToken: tokenResponse.refresh_token,
-          idToken: tokenResponse.id_token,
           expiresAt,
+          idToken: tokenResponse.id_token,
+          refreshToken: tokenResponse.refresh_token,
         },
-      };
+        user: {
+          email: user.email,
+          firstName: user.firstName ?? undefined,
+          id: user.id,
+          lastName: user.lastName ?? undefined,
+          permissions: effectivePermissions,
+          roles: userWithPermissions.roles.map((ur) => ur.role.name),
+          shopifyCustomerId: user.shopifyCustomerId,
+        },
+      }
     } catch (error) {
-      console.error('Authentication failed:', error);
-      throw new Error('Authentication failed');
+      console.error('Authentication failed:', error)
+      throw new Error('Authentication failed')
     }
   }
 
   async refreshSession(refreshToken: string): Promise<AuthSession | null> {
     try {
       const existingSession = await prisma.sessionToken.findFirst({
-        where: { 
-          refreshToken: refreshToken.trim(),
-          isActive: true,
-          expiresAt: {
-            gt: new Date()
-          }
-        },
         include: { user: true },
-      });
+        where: {
+          expiresAt: {
+            gt: new Date(),
+          },
+          isActive: true,
+          refreshToken: refreshToken.trim(),
+        },
+      })
 
       if (!existingSession) {
-        return null;
+        return null
       }
 
-      const tokenResponse = await refreshAccessToken(this.config, refreshToken.trim());
-      const expiresAt = calculateExpiresAt(tokenResponse.expires_in);
-      
-      await this.saveSessionToken(existingSession.userId, {
-        access_token: tokenResponse.access_token,
-        refresh_token: tokenResponse.refresh_token,
-        expires_in: tokenResponse.expires_in
-      } as TokenResponse, expiresAt);
+      const tokenResponse = await refreshAccessToken(this.config, refreshToken.trim())
+      const expiresAt = calculateExpiresAt(tokenResponse.expires_in)
 
-      const userWithPermissions = await this.getUserWithPermissions(existingSession.userId);
-      const effectivePermissions = await this.getEffectivePermissions(existingSession.userId);
+      await this.saveSessionToken(
+        existingSession.userId,
+        {
+          access_token: tokenResponse.access_token,
+          expires_in: tokenResponse.expires_in,
+          refresh_token: tokenResponse.refresh_token,
+        } as TokenResponse,
+        expiresAt
+      )
+
+      const userWithPermissions = await this.getUserWithPermissions(existingSession.userId)
+      const effectivePermissions = await this.getEffectivePermissions(existingSession.userId)
 
       return {
-        user: {
-          id: existingSession.user.id,
-          shopifyCustomerId: existingSession.user.shopifyCustomerId,
-          email: existingSession.user.email,
-          firstName: existingSession.user.firstName ?? undefined,
-          lastName: existingSession.user.lastName ?? undefined,
-          roles: userWithPermissions.roles.map(ur => ur.role.name),
-          permissions: effectivePermissions,
-        },
         tokens: {
           accessToken: tokenResponse.access_token,
-          refreshToken: tokenResponse.refresh_token,
           expiresAt,
+          refreshToken: tokenResponse.refresh_token,
         },
-      };
+        user: {
+          email: existingSession.user.email,
+          firstName: existingSession.user.firstName ?? undefined,
+          id: existingSession.user.id,
+          lastName: existingSession.user.lastName ?? undefined,
+          permissions: effectivePermissions,
+          roles: userWithPermissions.roles.map((ur) => ur.role.name),
+          shopifyCustomerId: existingSession.user.shopifyCustomerId,
+        },
+      }
     } catch (error) {
-      console.error('Session refresh failed:', error);
-      return null;
+      console.error('Session refresh failed:', error)
+      return null
     }
   }
 
   async getSessionByAccessToken(accessToken: string): Promise<AuthSession | null> {
     try {
       if (!accessToken) {
-        return null;
+        return null
       }
 
-      const trimmedToken = accessToken.trim();
+      const trimmedToken = accessToken.trim()
       if (!trimmedToken) {
-        return null;
+        return null
       }
 
       let session = await prisma.sessionToken.findFirst({
+        include: { user: true },
         where: {
           accessToken: trimmedToken,
-          isActive: true,
           expiresAt: {
-            gt: new Date()
-          }
+            gt: new Date(),
+          },
+          isActive: true,
         },
-        include: { user: true },
-      });
+      })
 
       if (!session && accessToken !== trimmedToken) {
         session = await prisma.sessionToken.findFirst({
-          where: {
-            accessToken: accessToken,
-            isActive: true,
-            expiresAt: {
-              gt: new Date()
-            }
-          },
           include: { user: true },
-        });
+          where: {
+            accessToken,
+            expiresAt: {
+              gt: new Date(),
+            },
+            isActive: true,
+          },
+        })
       }
 
       if (!session) {
-        return null;
+        return null
       }
-      
-      const userWithPermissions = await this.getUserWithPermissions(session.userId);
-      const effectivePermissions = await this.getEffectivePermissions(session.userId);
+
+      const userWithPermissions = await this.getUserWithPermissions(session.userId)
+      const effectivePermissions = await this.getEffectivePermissions(session.userId)
 
       return {
-        user: {
-          id: session.user.id,
-          shopifyCustomerId: session.user.shopifyCustomerId,
-          email: session.user.email,
-          firstName: session.user.firstName ?? undefined,
-          lastName: session.user.lastName ?? undefined,
-          roles: userWithPermissions.roles.map(ur => ur.role.name),
-          permissions: effectivePermissions,
-        },
         tokens: {
           accessToken: session.accessToken,
-          refreshToken: session.refreshToken,
-          idToken: session.idToken ?? undefined,
           expiresAt: session.expiresAt,
+          idToken: session.idToken ?? undefined,
+          refreshToken: session.refreshToken,
         },
-      };
+        user: {
+          email: session.user.email,
+          firstName: session.user.firstName ?? undefined,
+          id: session.user.id,
+          lastName: session.user.lastName ?? undefined,
+          permissions: effectivePermissions,
+          roles: userWithPermissions.roles.map((ur) => ur.role.name),
+          shopifyCustomerId: session.user.shopifyCustomerId,
+        },
+      }
     } catch (error) {
-      console.error('Get session failed:', error);
-      return null;
+      console.error('Get session failed:', error)
+      return null
     }
   }
 
   async logout(accessToken: string): Promise<boolean> {
     try {
       const session = await prisma.sessionToken.findFirst({
-        where: { 
-          accessToken: accessToken.trim(),
-          isActive: true 
-        },
         include: { user: true },
-      });
+        where: {
+          accessToken: accessToken.trim(),
+          isActive: true,
+        },
+      })
 
       if (!session) {
-        return false;
+        return false
       }
 
       await prisma.sessionToken.delete({
         where: { id: session.id },
-      });
+      })
 
-      await this.logActivity(session.userId, 'logout');
+      await this.logActivity(session.userId, 'logout')
 
-      return true;
+      return true
     } catch (error) {
-      console.error('Logout failed:', error);
-      return false;
+      console.error('Logout failed:', error)
+      return false
     }
   }
 
@@ -239,225 +244,221 @@ export class AuthService {
     try {
       await prisma.sessionToken.deleteMany({
         where: {
-          OR: [
-            { expiresAt: { lt: new Date() } },
-            { isActive: false },
-          ]
-        }
-      });
+          OR: [{ expiresAt: { lt: new Date() } }, { isActive: false }],
+        },
+      })
     } catch (error) {
-      console.error('Error cleaning tokens:', error);
+      console.error('Error cleaning tokens:', error)
     }
   }
 
   async assignRole(userId: string, roleName: string, assignedBy?: string): Promise<void> {
-    const role = await prisma.role.findUnique({ where: { name: roleName } });
-    if (!role) throw new Error(`Role ${roleName} not found`);
+    const role = await prisma.role.findUnique({ where: { name: roleName } })
+    if (!role) throw new Error(`Role ${roleName} not found`)
 
     await prisma.userRole.upsert({
-      where: {
-        userId_roleId: {
-          userId,
-          roleId: role.id,
-        },
+      create: {
+        assignedBy,
+        roleId: role.id,
+        userId,
       },
       update: {},
-      create: {
-        userId,
-        roleId: role.id,
-        assignedBy,
+      where: {
+        userId_roleId: {
+          roleId: role.id,
+          userId,
+        },
       },
-    });
+    })
   }
 
   async removeRole(userId: string, roleName: string): Promise<void> {
-    const role = await prisma.role.findUnique({ where: { name: roleName } });
-    if (!role) throw new Error(`Role ${roleName} not found`);
+    const role = await prisma.role.findUnique({ where: { name: roleName } })
+    if (!role) throw new Error(`Role ${roleName} not found`)
 
     await prisma.userRole.deleteMany({
       where: {
-        userId,
         roleId: role.id,
+        userId,
       },
-    });
+    })
   }
 
   async hasPermission(userId: string, permissionName: string): Promise<boolean> {
-    const userWithPermissions = await this.getUserWithPermissions(userId);
-    
+    const userWithPermissions = await this.getUserWithPermissions(userId)
+
     for (const userRole of userWithPermissions.roles) {
       const rolePermission = await prisma.rolePermission.findFirst({
         where: {
-          roleId: userRole.roleId,
           permission: { name: permissionName },
+          roleId: userRole.roleId,
         },
-      });
+      })
       if (rolePermission) {
-        return true;
+        return true
       }
     }
 
-    return false;
+    return false
   }
 
   private async upsertUser(customerInfo: CustomerInfo) {
     const existingUser = await prisma.user.findUnique({
+      include: { roles: true },
       where: { shopifyCustomerId: customerInfo.id },
-      include: { roles: true }
-    });
+    })
 
     if (existingUser) {
       return prisma.user.update({
-        where: { id: existingUser.id },
         data: {
           email: customerInfo.email,
           firstName: customerInfo.firstName,
-          lastName: customerInfo.lastName,
           lastLoginAt: new Date(),
+          lastName: customerInfo.lastName,
         },
-      });
+        where: { id: existingUser.id },
+      })
     }
-    
+
     const defaultRoleConfig = await prisma.appConfig.findUnique({
-      where: { key: 'default_user_role' }
-    });
-    
-    const defaultRoleName = defaultRoleConfig?.value || 'customer';
-    
+      where: { key: 'default_user_role' },
+    })
+
+    const defaultRoleName = defaultRoleConfig?.value || 'customer'
+
     const defaultRole = await prisma.role.findUnique({
-      where: { name: defaultRoleName }
-    });
+      where: { name: defaultRoleName },
+    })
 
     if (!defaultRole) {
-      throw new Error(`Default role '${defaultRoleName}' not found`);
+      throw new Error(`Default role '${defaultRoleName}' not found`)
     }
 
     const newUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
-          shopifyCustomerId: customerInfo.id,
           email: customerInfo.email,
           firstName: customerInfo.firstName,
-          lastName: customerInfo.lastName,
           lastLoginAt: new Date(),
+          lastName: customerInfo.lastName,
+          shopifyCustomerId: customerInfo.id,
         },
-      });
+      })
 
       await tx.userRole.create({
         data: {
-          userId: user.id,
-          roleId: defaultRole.id,
           assignedBy: 'system',
+          roleId: defaultRole.id,
+          userId: user.id,
         },
-      });
+      })
 
-      return user;
-    });
+      return user
+    })
 
-    return newUser;
+    return newUser
   }
 
   private async saveSessionToken(userId: string, tokens: TokenResponse, expiresAt: Date) {
     try {
       await prisma.sessionToken.deleteMany({
         where: { userId },
-      });
+      })
 
       await prisma.sessionToken.deleteMany({
         where: {
           expiresAt: {
-            lt: new Date()
-          }
-        }
-      });
+            lt: new Date(),
+          },
+        },
+      })
 
       const tokenData = {
-        userId,
         accessToken: tokens.access_token.trim(),
-        refreshToken: tokens.refresh_token.trim(),
-        idToken: tokens.id_token?.trim(),
         expiresAt,
+        idToken: tokens.id_token?.trim(),
         isActive: true,
-      };
+        refreshToken: tokens.refresh_token.trim(),
+        userId,
+      }
 
       const newToken = await prisma.sessionToken.create({
         data: tokenData,
-      });
+      })
 
       const immediateCheck = await prisma.sessionToken.findUnique({
+        include: { user: true },
         where: { id: newToken.id },
-        include: { user: true }
-      });
-      
+      })
+
       if (!immediateCheck) {
-        console.error('Immediate verification failed - token not found by ID');
+        console.error('Immediate verification failed - token not found by ID')
       }
 
-      return newToken;
-      
+      return newToken
     } catch (error) {
-      console.error('saveSessionToken failed:', error);
-      
+      console.error('saveSessionToken failed:', error)
+
       try {
         await prisma.sessionToken.findMany({
+          select: { accessToken: true, expiresAt: true, id: true, isActive: true },
           where: { userId },
-          select: { id: true, accessToken: true, isActive: true, expiresAt: true }
-        });
+        })
       } catch (dbError) {
-        console.error('Failed to query database state:', dbError);
+        console.error('Failed to query database state:', dbError)
       }
-      
-      throw error;
+
+      throw error
     }
   }
 
   private async getUserWithPermissions(userId: string) {
     return prisma.user.findUniqueOrThrow({
-      where: { id: userId },
       include: {
         roles: {
-          include: { 
+          include: {
             role: {
               include: {
                 permissions: {
                   include: {
-                    permission: true
-                  }
-                }
-              }
-            }
+                    permission: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
-    });
+      where: { id: userId },
+    })
   }
 
   private async getEffectivePermissions(userId: string): Promise<string[]> {
     const userWithRoles = await prisma.user.findUniqueOrThrow({
-      where: { id: userId },
       include: {
         roles: {
-          include: { 
+          include: {
             role: {
               include: {
                 permissions: {
-                  include: { permission: true }
-                }
-              }
-            }
-          }
-        }
+                  include: { permission: true },
+                },
+              },
+            },
+          },
+        },
       },
-    });
+      where: { id: userId },
+    })
 
-    const permissions = new Set<string>();
-    userWithRoles.roles.forEach(userRole => {
-      userRole.role.permissions.forEach(rolePermission => {
-        permissions.add(rolePermission.permission.name);
-      });
-    });
+    const permissions = new Set<string>()
+    userWithRoles.roles.forEach((userRole) => {
+      userRole.role.permissions.forEach((rolePermission) => {
+        permissions.add(rolePermission.permission.name)
+      })
+    })
 
-    return Array.from(permissions);
+    return Array.from(permissions)
   }
 
   private async logActivity(
@@ -470,14 +471,17 @@ export class AuthService {
   ) {
     return prisma.activityLog.create({
       data: {
-        userId,
         action,
-        resource,
+
+        ipAddress,
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         metadata: metadata as any,
-        ipAddress,
+
+        resource,
         userAgent,
+        userId,
       },
-    });
+    })
   }
 }

@@ -1,48 +1,42 @@
+'use client'
 
-'use client';
+import { Login } from '@/components/Auth/Login'
+import { useAuthGuard } from '@/modules/auth/hooks/useAuthGuard'
 
-import { Login } from '@/components/Auth/Login';
-import { useAuthGuard } from '@/modules/auth/hooks/useAuthGuard';
-
-type Props = {
-  children: React.ReactNode;
-  requiredPermission?: string;
-  requiredRole?: string;
-  fallback?: React.ReactNode;
+interface Props {
+  children: React.ReactNode
+  requiredPermission?: string
+  requiredRole?: string
+  fallback?: React.ReactNode
 }
 
-export const Auth: React.FC<Props> = ({ 
-  children, 
-  requiredPermission, 
-  requiredRole, 
-  fallback 
-}) => {
-  const { isLoading, hasAccess } = useAuthGuard({
+export const Auth: React.FC<Props> = ({ children, fallback, requiredPermission, requiredRole }) => {
+  const { hasAccess, isLoading } = useAuthGuard({
     requiredPermission,
     requiredRole,
-  });
+  })
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className='flex h-64 items-center justify-center'>
+        <div className='size-12 animate-spin rounded-full border-b-2 border-blue-600'></div>
       </div>
-    );
+    )
   }
 
   if (!hasAccess) {
-    return fallback || (
-      <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">
-          Acceso Requerido
-        </h2>
-        <p className="text-gray-600 mb-6">
-          Necesitas iniciar sesión para acceder a esta sección.
-        </p>
-        <Login />
-      </div>
-    );
+    return (
+      fallback || (
+        <div className='py-12 text-center'>
+          <h2 className='mb-4 text-xl font-semibold text-gray-700'>Acceso Requerido</h2>
+          <p className='mb-6 text-gray-600'>
+            Necesitas iniciar sesión para acceder a esta sección.
+          </p>
+          <Login />
+        </div>
+      )
+    )
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }

@@ -43,7 +43,7 @@
     --md3-primary-container: 221 96% 91%;
     --md3-on-primary: 0 0% 100%;
     --md3-on-primary-container: 221 69% 22%;
-    
+
     --md3-surface: 0 0% 100%;
     --md3-surface-dim: 0 0% 96%;
     --md3-surface-bright: 0 0% 100%;
@@ -52,13 +52,13 @@
     --md3-surface-container: 221 47% 97%;
     --md3-surface-container-high: 221 22% 95%;
     --md3-surface-container-highest: 221 14% 93%;
-    
+
     --md3-on-surface: 221 39% 11%;
     --md3-on-surface-variant: 221 12% 47%;
-    
+
     --md3-outline: 221 12% 47%;
     --md3-outline-variant: 221 11% 82%;
-    
+
     --md3-error: 0 84% 60%;
     --md3-error-container: 0 100% 95%;
     --md3-on-error: 0 0% 100%;
@@ -71,7 +71,7 @@
     --md3-elevation-4: 0 6px 10px 4px rgba(0, 0, 0, 0.15), 0 2px 3px 0 rgba(0, 0, 0, 0.3);
     --md3-elevation-5: 0 8px 12px 6px rgba(0, 0, 0, 0.15), 0 4px 4px 0 rgba(0, 0, 0, 0.3);
   }
-  
+
   .dark {
     /* shadcn/ui dark colors */
     --background: 221 39% 11%;
@@ -112,7 +112,7 @@
     --md3-primary-container: 221 80% 35%;
     --md3-on-primary: 221 69% 22%;
     --md3-on-primary-container: 221 96% 91%;
-    
+
     --md3-surface: 221 39% 11%;
     --md3-surface-dim: 221 39% 11%;
     --md3-surface-bright: 221 14% 20%;
@@ -121,13 +121,13 @@
     --md3-surface-container: 221 14% 15%;
     --md3-surface-container-high: 221 14% 20%;
     --md3-surface-container-highest: 221 12% 24%;
-    
+
     --md3-on-surface: 0 0% 95%;
     --md3-on-surface-variant: 221 12% 65%;
-    
+
     --md3-outline: 221 12% 65%;
     --md3-outline-variant: 221 14% 20%;
-    
+
     --md3-error: 0 84% 80%;
     --md3-error-container: 0 84% 20%;
     --md3-on-error: 0 84% 20%;
@@ -150,60 +150,60 @@
     @apply bg-background text-foreground;
   }
 }
- ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 0.3s;
-    animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
 
-  [style*="view-transition-name"][style*="product-image"]::view-transition-old(*),
-  [style*="view-transition-name"][style*="product-image"]::view-transition-new(*) {
-    animation-duration: 0.5s;
-    animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
+[style*='view-transition-name'][style*='product-image']::view-transition-old(*),
+[style*='view-transition-name'][style*='product-image']::view-transition-new(*) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
 
-  [style*="view-transition-name"][style*="product-image"]::view-transition-old(*) {
-    animation-name: product-image-out;
-  }
+[style*='view-transition-name'][style*='product-image']::view-transition-old(*) {
+  animation-name: product-image-out;
+}
 
-  [style*="view-transition-name"][style*="product-image"]::view-transition-new(*) {
-    animation-name: product-image-in;
-  }
+[style*='view-transition-name'][style*='product-image']::view-transition-new(*) {
+  animation-name: product-image-in;
+}
 
-  @keyframes product-image-out {
-    0% {
-      opacity: 1;
-      transform: scale(1);
-      border-radius: 0.5rem;
-    }
-    100% {
-      opacity: 0;
-      transform: scale(0.95);
-      border-radius: 0.75rem;
-    }
+@keyframes product-image-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    border-radius: 0.5rem;
   }
+  100% {
+    opacity: 0;
+    transform: scale(0.95);
+    border-radius: 0.75rem;
+  }
+}
 
-  @keyframes product-image-in {
-    0% {
-      opacity: 0;
-      transform: scale(1.05);
-      border-radius: 0.75rem;
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-      border-radius: 0.5rem;
-    }
+@keyframes product-image-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.05);
+    border-radius: 0.75rem;
   }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    border-radius: 0.5rem;
+  }
+}
 
-  ::view-transition-group(*) {
-    animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
+::view-transition-group(*) {
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
 
-  ::view-transition-old(*):only-child {
-    animation: none;
-  }
+::view-transition-old(*):only-child {
+  animation: none;
+}
 
-  ::view-transition-new(*):only-child {
-    animation: none;
-  }
+::view-transition-new(*):only-child {
+  animation: none;
+}

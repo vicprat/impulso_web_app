@@ -1,33 +1,63 @@
-'use client';
+'use client'
 
-import {  Home, User, Settings, Package, LayoutDashboard, MapPin, ShoppingCart, BarChart, Star, Headphones, MessageSquare, Users, Activity, Shield, Archive, TrendingUp } from 'lucide-react';
-import { FC } from 'react';
+import {
+  Home,
+  User,
+  Settings,
+  Package,
+  LayoutDashboard,
+  MapPin,
+  ShoppingCart,
+  BarChart,
+  Star,
+  Headphones,
+  MessageSquare,
+  Users,
+  Activity,
+  Shield,
+  Archive,
+  TrendingUp,
+} from 'lucide-react'
+import { type FC } from 'react'
 export interface IconProps {
-  className?: string;
-  size?: number;
+  className?: string
+  size?: number
 }
 
 const iconMap: Record<string, FC<IconProps>> = {
-  'home': Home,
-  'layout-dashboard': LayoutDashboard, // Ejemplo de tu routes.ts
-  'user': User,
-  'package': Package,
-  'map-pin': MapPin, // Asegúrate de añadir todos los que necesites
-  'shopping-cart': ShoppingCart,
+  activity: Activity,
+  archive: Archive,
   'bar-chart': BarChart,
-  'star': Star,
-  'headphones': Headphones,
+
+  headphones: Headphones,
+
+  home: Home,
+
+  'layout-dashboard': LayoutDashboard,
+
+  'map-pin': MapPin,
+
   'message-square': MessageSquare,
-  'users': Users,
-  'activity': Activity,
-  'settings': Settings,
-  'shield': Shield,
-  'archive': Archive,
+
+  package: Package,
+
+  settings: Settings,
+
+  shield: Shield,
+
+  // Asegúrate de añadir todos los que necesites
+  'shopping-cart': ShoppingCart,
+
+  star: Star,
+
   'trending-up': TrendingUp,
+  // Ejemplo de tu routes.ts
+  user: User,
+  users: Users,
   // ... añade todos los iconos que definiste en tu `routes.ts`
-};
+}
 
 export const getIconComponent = (iconName?: string): FC<IconProps> => {
-  if (!iconName) return () => null; 
-  return iconMap[iconName] || Package;
-};
+  if (!iconName) return () => null
+  return iconMap[iconName] || Package
+}

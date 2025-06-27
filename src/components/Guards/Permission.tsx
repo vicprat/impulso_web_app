@@ -1,30 +1,23 @@
+'use client'
 
-'use client';
+import { useAuth } from '../../modules/auth/context/useAuth'
 
-import { useAuth } from "../../modules/auth/context/useAuth";
-
-
-
-type Props = {
-  permission: string;
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+interface Props {
+  permission: string
+  children: React.ReactNode
+  fallback?: React.ReactNode
 }
 
-export const Permission: React.FC<Props> = ({ 
-  permission, 
-  children, 
-  fallback 
-}) => {
-  const { hasPermission, isLoading } = useAuth();
+export const Permission: React.FC<Props> = ({ children, fallback, permission }) => {
+  const { hasPermission, isLoading } = useAuth()
 
   if (isLoading) {
-    return <div className="animate-pulse bg-gray-200 h-8 rounded"></div>;
+    return <div className='h-8 animate-pulse rounded bg-gray-200'></div>
   }
 
   if (!hasPermission(permission)) {
-    return fallback || null;
+    return fallback || null
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }

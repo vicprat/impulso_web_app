@@ -28,7 +28,7 @@ export const GET_CUSTOMER_PROFILE_QUERY = `
       }
     }
   }
-`;
+`
 
 export const GET_CUSTOMER_ADDRESSES_QUERY = `
   query GetAddresses($first: Int!) {
@@ -55,7 +55,7 @@ export const GET_CUSTOMER_ADDRESSES_QUERY = `
       }
     }
   }
-`;
+`
 
 export const GET_CUSTOMER_ORDERS_QUERY = `
   query GetOrders($first: Int!, $after: String) {
@@ -143,7 +143,7 @@ export const GET_CUSTOMER_ORDERS_QUERY = `
       }
     }
   }
-`;
+`
 
 export const GET_SINGLE_ORDER_QUERY = `
   query GetOrder($id: ID!) {
@@ -229,7 +229,7 @@ export const GET_SINGLE_ORDER_QUERY = `
       }
     }
   }
-`;
+`
 
 export const GET_BASIC_INFO_QUERY = `
   query GetBasicInfo {
@@ -241,7 +241,7 @@ export const GET_BASIC_INFO_QUERY = `
       }
     }
   }
-`;
+`
 
 export const UPDATE_CUSTOMER_MUTATION = `
   mutation UpdateCustomer($input: CustomerUpdateInput!) {
@@ -265,7 +265,7 @@ export const UPDATE_CUSTOMER_MUTATION = `
       }
     }
   }
-`;
+`
 
 export const CREATE_CUSTOMER_ADDRESS_MUTATION = `
   mutation CreateAddress($address: CustomerAddressInput!) {
@@ -292,7 +292,7 @@ export const CREATE_CUSTOMER_ADDRESS_MUTATION = `
       }
     }
   }
-`;
+`
 
 export const UPDATE_CUSTOMER_ADDRESS_MUTATION = `
   mutation UpdateAddress($addressId: ID!, $address: CustomerAddressInput) {
@@ -319,7 +319,7 @@ export const UPDATE_CUSTOMER_ADDRESS_MUTATION = `
       }
     }
   }
-`;
+`
 
 export const DELETE_CUSTOMER_ADDRESS_MUTATION = `
   mutation DeleteAddress($addressId: ID!) {
@@ -332,7 +332,7 @@ export const DELETE_CUSTOMER_ADDRESS_MUTATION = `
       }
     }
   }
-`;
+`
 
 export const SET_DEFAULT_ADDRESS_MUTATION = `
   mutation SetDefaultAddress($addressId: ID!) {
@@ -350,4 +350,4 @@ export const SET_DEFAULT_ADDRESS_MUTATION = `
       }
     }
   }
-`;
+`

@@ -1,30 +1,23 @@
+'use client'
 
-'use client';
+import { useAuth } from '../../modules/auth/context/useAuth'
 
-import { useAuth } from "../../modules/auth/context/useAuth";
-
-
-
-type Props = {
-  role: string;
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+interface Props {
+  role: string
+  children: React.ReactNode
+  fallback?: React.ReactNode
 }
 
-export const Role: React.FC<Props> = ({ 
-  role, 
-  children, 
-  fallback 
-}) => {
-  const { hasRole, isLoading } = useAuth();
+export const Role: React.FC<Props> = ({ children, fallback, role }) => {
+  const { hasRole, isLoading } = useAuth()
 
   if (isLoading) {
-    return <div className="animate-pulse bg-gray-200 h-8 rounded"></div>;
+    return <div className='h-8 animate-pulse rounded bg-gray-200'></div>
   }
 
   if (!hasRole(role)) {
-    return fallback || null;
+    return fallback || null
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }

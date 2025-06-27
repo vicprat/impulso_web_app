@@ -17,4 +17,4 @@ export const CREATE_CHECKOUT_MUTATION = `
       }
     }
   }
-`;
+`

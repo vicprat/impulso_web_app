@@ -1,9 +1,6 @@
-"use client";
+'use client'
 
-import {
-  flexRender,
-  type Table as TanstackTable,
-} from "@tanstack/react-table";
+import { flexRender, type Table as TanstackTable } from '@tanstack/react-table'
 
 import {
   Table,
@@ -12,20 +9,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table'
 
 interface DataTableProps<TData extends { id: string | number }> {
-  table: TanstackTable<TData>;
-  emptyMessage?: string;
-  editingRowClassName?: string;
-  className?: string;
+  table: TanstackTable<TData>
+  emptyMessage?: string
+  editingRowClassName?: string
+  className?: string
 }
 
-export function DataTable<TData extends { id: string | number }>({ 
+export function DataTable<TData extends { id: string | number }>({
+  className,
+  editingRowClassName = 'bg-yellow-50/50',
+  emptyMessage = 'No se encontraron resultados.',
   table,
-  emptyMessage = "No se encontraron resultados.",
-  editingRowClassName = "bg-yellow-50/50",
-  className
 }: DataTableProps<TData>) {
   return (
     <Table className={className}>
@@ -37,12 +34,9 @@ export function DataTable<TData extends { id: string | number }>({
                 <TableHead key={header.id}>
                   {header.isPlaceholder
                     ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                    : flexRender(header.column.columnDef.header, header.getContext())}
                 </TableHead>
-              );
+              )
             })}
           </TableRow>
         ))}
@@ -52,11 +46,9 @@ export function DataTable<TData extends { id: string | number }>({
           table.getRowModel().rows.map((row) => (
             <TableRow
               key={row.id}
-              data-state={row.getIsSelected() && "selected"}
+              data-state={row.getIsSelected() && 'selected'}
               className={
-                table.options.meta?.editingRowId === (row.original).id 
-                  ? editingRowClassName 
-                  : ''
+                table.options.meta?.editingRowId === row.original.id ? editingRowClassName : ''
               }
             >
               {row.getVisibleCells().map((cell) => (
@@ -68,15 +60,12 @@ export function DataTable<TData extends { id: string | number }>({
           ))
         ) : (
           <TableRow>
-            <TableCell
-              colSpan={table.getAllColumns().length} 
-              className="h-24 text-center"
-            >
+            <TableCell colSpan={table.getAllColumns().length} className='h-24 text-center'>
               {emptyMessage}
             </TableCell>
           </TableRow>
         )}
       </TableBody>
     </Table>
-  );
+  )
 }

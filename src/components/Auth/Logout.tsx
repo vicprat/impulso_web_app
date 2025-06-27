@@ -1,19 +1,17 @@
+'use client'
 
-'use client';
-
-import { useAuth } from "@/modules/auth/context/useAuth";
-
+import { useAuth } from '@/modules/auth/context/useAuth'
 
 export function Logout() {
-  const { logout, isLoading } = useAuth();
+  const { isLoading, logout } = useAuth()
 
   return (
     <button
       onClick={logout}
       disabled={isLoading}
-      className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+      className='rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700 disabled:bg-red-400'
     >
       {isLoading ? 'Cerrando...' : 'Cerrar Sesión'}
     </button>
-  );
+  )
 }

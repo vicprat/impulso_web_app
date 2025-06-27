@@ -16,32 +16,32 @@ import {
   Shield,
   Archive,
   TrendingUp,
-  List
+  List,
   // ... importa todos los iconos que necesites de 'lucide-react'
-} from 'lucide-react';
+} from 'lucide-react'
 
 // Este es el objeto que importaremos en otros componentes
 export const Icons = {
+  activity: Activity,
+  archive: Archive,
+  'bar-chart': BarChart,
+  headphones: Headphones,
   home: Home,
   'layout-dashboard': LayoutDashboard,
-  user: User,
-  package: Package,
+  list: List,
   'map-pin': MapPin,
-  'shopping-cart': ShoppingCart,
-  'bar-chart': BarChart,
-  star: Star,
-  headphones: Headphones,
   'message-square': MessageSquare,
-  users: Users,
-  activity: Activity,
+  package: Package,
   settings: Settings,
   shield: Shield,
-  archive: Archive,
+  'shopping-cart': ShoppingCart,
+  star: Star,
   'trending-up': TrendingUp,
-  list: List,
-};
+  user: User,
+  users: Users,
+}
 
 // (Opcional pero recomendado)
 // Creamos un tipo dinámico a partir de las llaves del objeto Icons.
 // Si añades un nuevo ícono a `Icons`, se añade automáticamente a este tipo.
-export type IconName = keyof typeof Icons;
+export type IconName = keyof typeof Icons

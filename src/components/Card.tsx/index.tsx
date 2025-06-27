@@ -1,9 +1,9 @@
-import {Product} from './Product'
-import {Container} from './Container'
-import {Loader} from './Loader'
+import { Container } from './Container'
+import { Loader } from './Loader'
+import { Product } from './Product'
 
 export const Card = {
-  Product,
   Container,
-  Loader
+  Loader,
+  Product,
 }

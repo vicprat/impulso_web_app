@@ -1,261 +1,282 @@
 /* eslint-disable @next/next/no-img-element */
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { 
-  useUsersManagement, 
-  useUpdateUserRoles, 
-  useDeactivateUser, 
-  useReactivateUser
-} from '@/modules/user/hooks/management';
-import { useAuth } from '@/modules/auth/context/useAuth';
-import { UserFilters, UserProfile } from '@/modules/user/types';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { cn } from '@/lib/utils';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Check, ChevronsUpDown } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/context/useAuth'
+import {
+  useUsersManagement,
+  useUpdateUserRoles,
+  useDeactivateUser,
+  useReactivateUser,
+} from '@/modules/user/hooks/management'
+import { type UserFilters, type UserProfile } from '@/modules/user/types'
 
 export function UserManagementAdmin() {
-  const { hasPermission, hasRole, user: currentUser } = useAuth();
-  const queryClient = useQueryClient();
-  
-  const [filters, setFilters] = useState<UserFilters>({
-    search: '',
-    role: '',
-    isActive: undefined,
-    page: 1,
-    limit: 10,
-    sortBy: 'createdAt',
-    sortOrder: 'desc'
-  });
+  const { hasPermission, hasRole, user: currentUser } = useAuth()
+  const queryClient = useQueryClient()
 
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<string>('');
-  const [vendorName, setVendorName] = useState('');
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [filters, setFilters] = useState<UserFilters>({
+    isActive: undefined,
+    limit: 10,
+    page: 1,
+    role: '',
+    search: '',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  })
+
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+  const [showRoleModal, setShowRoleModal] = useState(false)
+  const [selectedRole, setSelectedRole] = useState<string>('')
+  const [vendorName, setVendorName] = useState('')
+  const [popoverOpen, setPopoverOpen] = useState(false)
 
   // Hooks de gestión
-  const { data: usersData, isLoading: usersLoading} = useUsersManagement(filters);
-  const updateRoles = useUpdateUserRoles();
-  const deactivateUser = useDeactivateUser();
-  const reactivateUser = useReactivateUser();
-  
-  const users = usersData?.users || [];
+  const { data: usersData, isLoading: usersLoading } = useUsersManagement(filters)
+  const updateRoles = useUpdateUserRoles()
+  const deactivateUser = useDeactivateUser()
+  const reactivateUser = useReactivateUser()
+
+  const users = usersData?.users || []
   const pagination = usersData?.pagination || {
-    page: 1,
-    limit: 10,
-    total: 0,
     hasNext: false,
-    hasPrev: false
-  };
+    hasPrev: false,
+    limit: 10,
+    page: 1,
+    total: 0,
+  }
 
   const { data: vendors, isLoading: vendorsLoading } = useQuery<string[]>({
-    queryKey: ['vendors'],
-    queryFn: () => fetch('/api/vendors').then(res => res.json()),
     enabled: showRoleModal && selectedRole === 'artist',
-  });
+    queryFn: () => fetch('/api/vendors').then((res) => res.json()),
+    queryKey: ['vendors'],
+  })
 
   const createArtistMutation = useMutation({
     mutationFn: (data: { userId: string; vendorName: string }) => {
       return fetch('/api/artists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      }).then(res => {
-        if (!res.ok) throw new Error('Falló la creación del artista');
-        return res.json();
-      });
-    },
-    onSuccess: () => {
-      toast.success('Artista creado exitosamente');
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      }).then((res) => {
+        if (!res.ok) throw new Error('Falló la creación del artista')
+        return res.json()
+      })
     },
     onError: () => {
-      toast.error('Error al crear el artista');
-    }
-  });
+      toast.error('Error al crear el artista')
+    },
+    onSuccess: () => {
+      toast.success('Artista creado exitosamente')
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+  })
 
   const availableRoles = [
-    { id: 'customer', name: 'Cliente', description: 'Cliente básico del sistema' },
-    { id: 'vip_customer', name: 'Cliente VIP', description: 'Cliente VIP con beneficios adicionales' },
-    { id: 'support', name: 'Soporte', description: 'Personal de soporte al cliente' },
-    { id: 'manager', name: 'Gerente', description: 'Gerente con acceso amplio al sistema' },
-    { id: 'admin', name: 'Administrador', description: 'Administrador con acceso completo' },
-    { id: 'artist', name: 'Artista', description: 'Artista con acceso a herramientas de gestión de su perfil' }
-  ];
+    { description: 'Cliente básico del sistema', id: 'customer', name: 'Cliente' },
+    {
+      description: 'Cliente VIP con beneficios adicionales',
+      id: 'vip_customer',
+      name: 'Cliente VIP',
+    },
+    { description: 'Personal de soporte al cliente', id: 'support', name: 'Soporte' },
+    { description: 'Gerente con acceso amplio al sistema', id: 'manager', name: 'Gerente' },
+    { description: 'Administrador con acceso completo', id: 'admin', name: 'Administrador' },
+    {
+      description: 'Artista con acceso a herramientas de gestión de su perfil',
+      id: 'artist',
+      name: 'Artista',
+    },
+  ]
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFilters({ ...filters, page: 1 });
-  };
+    e.preventDefault()
+    setFilters({ ...filters, page: 1 })
+  }
 
   const handleSort = (field: string) => {
     setFilters({
       ...filters,
       sortBy: field as UserFilters['sortBy'],
-      sortOrder: filters.sortBy === field && filters.sortOrder === 'asc' ? 'desc' : 'asc'
-    });
-  };
+      sortOrder: filters.sortBy === field && filters.sortOrder === 'asc' ? 'desc' : 'asc',
+    })
+  }
 
   const handlePageChange = (newPage: number) => {
-    setFilters({ ...filters, page: newPage });
-  };
+    setFilters({ ...filters, page: newPage })
+  }
 
   const handleManageRoles = (user: UserProfile) => {
-    setSelectedUser(user);
-    setSelectedRole(user.roles[0] || 'customer');
-    setVendorName('');
-    setShowRoleModal(true);
-  };
+    setSelectedUser(user)
+    setSelectedRole(user.roles[0] || 'customer')
+    setVendorName('')
+    setShowRoleModal(true)
+  }
 
   const handleRoleChange = (roleId: string) => {
-    setSelectedRole(roleId);
+    setSelectedRole(roleId)
     if (roleId !== 'artist') {
-      setVendorName('');
+      setVendorName('')
     }
-  };
+  }
 
   const handleSaveRoles = async () => {
-    if (!selectedUser || !selectedRole) return;
-    
+    if (!selectedUser || !selectedRole) return
+
     try {
-      const isBecomingArtist = selectedRole === 'artist' && !selectedUser.roles.includes('artist');
-      
+      const isBecomingArtist = selectedRole === 'artist' && !selectedUser.roles.includes('artist')
+
       if (isBecomingArtist && !vendorName) {
-        toast.error('Debes seleccionar un vendor para promocionar a artista');
-        return;
+        toast.error('Debes seleccionar un vendor para promocionar a artista')
+        return
       }
 
-      await updateRoles.mutateAsync({ userId: selectedUser.id, roles: [selectedRole] });
-      
+      await updateRoles.mutateAsync({ roles: [selectedRole], userId: selectedUser.id })
+
       if (isBecomingArtist) {
         await createArtistMutation.mutateAsync({
           userId: selectedUser.id,
-          vendorName: vendorName
-        });
+          vendorName,
+        })
       }
 
-      toast.success('Rol actualizado exitosamente');
-      setShowRoleModal(false);
-      setSelectedUser(null);
-      setSelectedRole('');
-      setVendorName('');
+      toast.success('Rol actualizado exitosamente')
+      setShowRoleModal(false)
+      setSelectedUser(null)
+      setSelectedRole('')
+      setVendorName('')
     } catch (error) {
-      console.error('Error updating role:', error);
-      toast.error('Error al actualizar rol');
+      console.error('Error updating role:', error)
+      toast.error('Error al actualizar rol')
     }
-  };
+  }
 
   const handleToggleUserStatus = async (user: UserProfile) => {
     const canManage = (() => {
-      if (!currentUser) return false;
-      if (!hasPermission('manage_users')) return false;
-      if (user.id === currentUser.id) return true;
-      if (hasRole('admin')) return true;
+      if (!currentUser) return false
+      if (!hasPermission('manage_users')) return false
+      if (user.id === currentUser.id) return true
+      if (hasRole('admin')) return true
       if (hasRole('manager')) {
-        return !user.roles.includes('manager') && !user.roles.includes('admin');
+        return !user.roles.includes('manager') && !user.roles.includes('admin')
       }
-      return false;
-    })();
-    
+      return false
+    })()
+
     if (!canManage) {
-      toast.error('No tienes permisos para gestionar este usuario');
-      return;
+      toast.error('No tienes permisos para gestionar este usuario')
+      return
     }
 
     try {
       if (user.isActive) {
-        await deactivateUser.mutateAsync(user.id);
-        toast.success('Usuario desactivado');
+        await deactivateUser.mutateAsync(user.id)
+        toast.success('Usuario desactivado')
       } else {
-        await reactivateUser.mutateAsync(user.id);
-        toast.success('Usuario reactivado');
+        await reactivateUser.mutateAsync(user.id)
+        toast.success('Usuario reactivado')
       }
     } catch (error) {
-      console.error('Error toggling user status:', error);
-      toast.error('Error al cambiar el estado del usuario');
+      console.error('Error toggling user status:', error)
+      toast.error('Error al cambiar el estado del usuario')
     }
-  };
+  }
 
-  const isBecomingArtist = selectedUser && selectedRole === 'artist' && !selectedUser.roles.includes('artist');
+  const isBecomingArtist =
+    selectedUser && selectedRole === 'artist' && !selectedUser.roles.includes('artist')
 
   if (!hasPermission('manage_users')) {
     return (
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <div className="text-center py-8">
-          <span className="text-6xl">🔒</span>
-          <h2 className="text-xl font-semibold text-gray-800 mt-4">Acceso Restringido</h2>
-          <p className="text-gray-600 mt-2">No tienes permisos para acceder a la gestión de usuarios</p>
+      <div className='rounded-lg bg-white p-6 shadow-md'>
+        <div className='py-8 text-center'>
+          <span className='text-6xl'>🔒</span>
+          <h2 className='mt-4 text-xl font-semibold text-gray-800'>Acceso Restringido</h2>
+          <p className='mt-2 text-gray-600'>
+            No tienes permisos para acceder a la gestión de usuarios
+          </p>
         </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <div className="flex justify-between items-center mb-6">
+    <div className='space-y-6'>
+      <div className='rounded-lg bg-white p-6 shadow-md'>
+        <div className='mb-6 flex items-center justify-between'>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
-            <p className="text-gray-600">Administrar usuarios y roles</p>
+            <h1 className='text-2xl font-bold text-gray-900'>Gestión de Usuarios</h1>
+            <p className='text-gray-600'>Administrar usuarios y roles</p>
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-500">
-              Total: {pagination.total} usuarios
-            </span>
+          <div className='flex items-center space-x-4'>
+            <span className='text-sm text-gray-500'>Total: {pagination.total} usuarios</span>
           </div>
         </div>
 
-        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form onSubmit={handleSearch} className='grid grid-cols-1 gap-4 md:grid-cols-4'>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+            <label className='mb-1 block text-sm font-medium text-gray-700'>Buscar</label>
             <input
-              type="text"
-              placeholder="Nombre, email..."
+              type='text'
+              placeholder='Nombre, email...'
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className='w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500'
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+            <label className='mb-1 block text-sm font-medium text-gray-700'>Rol</label>
             <select
               value={filters.role}
               onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className='w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500'
             >
-              <option value="">Todos los roles</option>
-              {availableRoles.map(role => (
-                <option key={role.id} value={role.id}>{role.name}</option>
+              <option value=''>Todos los roles</option>
+              {availableRoles.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.name}
+                </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+            <label className='mb-1 block text-sm font-medium text-gray-700'>Estado</label>
             <select
               value={filters.isActive === undefined ? '' : filters.isActive.toString()}
-              onChange={(e) => setFilters({ 
-                ...filters, 
-                isActive: e.target.value === '' ? undefined : e.target.value === 'true' 
-              })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              onChange={(e) =>
+                setFilters({
+                  ...filters,
+                  isActive: e.target.value === '' ? undefined : e.target.value === 'true',
+                })
+              }
+              className='w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500'
             >
-              <option value="">Todos</option>
-              <option value="true">Activos</option>
-              <option value="false">Inactivos</option>
+              <option value=''>Todos</option>
+              <option value='true'>Activos</option>
+              <option value='false'>Inactivos</option>
             </select>
           </div>
 
-          <div className="flex items-end">
+          <div className='flex items-end'>
             <button
-              type="submit"
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              type='submit'
+              className='w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
             >
               Buscar
             </button>
@@ -263,136 +284,138 @@ export function UserManagementAdmin() {
         </form>
       </div>
 
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className='overflow-hidden rounded-lg bg-white shadow-md'>
         {usersLoading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando usuarios...</p>
+          <div className='p-8 text-center'>
+            <div className='mx-auto mb-4 size-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent'></div>
+            <p className='text-gray-600'>Cargando usuarios...</p>
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className='overflow-x-auto'>
+              <table className='min-w-full divide-y divide-gray-200'>
+                <thead className='bg-gray-50'>
                   <tr>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    <th
+                      className='cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hover:bg-gray-100'
                       onClick={() => handleSort('firstName')}
                     >
                       Usuario
                       {filters.sortBy === 'firstName' && (
-                        <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                        <span className='ml-1'>{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
                       )}
                     </th>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    <th
+                      className='cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hover:bg-gray-100'
                       onClick={() => handleSort('email')}
                     >
                       Email
                       {filters.sortBy === 'email' && (
-                        <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                        <span className='ml-1'>{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
                       )}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className='px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500'>
                       Rol
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className='px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500'>
                       Estado
                     </th>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    <th
+                      className='cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hover:bg-gray-100'
                       onClick={() => handleSort('lastLoginAt')}
                     >
                       Último acceso
                       {filters.sortBy === 'lastLoginAt' && (
-                        <span className="ml-1">{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                        <span className='ml-1'>{filters.sortOrder === 'asc' ? '↑' : '↓'}</span>
                       )}
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className='px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500'>
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className='divide-y divide-gray-200 bg-white'>
                   {users.map((user) => {
                     const canManage = (() => {
-                      if (!currentUser) return false;
-                      if (user.id === currentUser.id) return true;
-                      if (!hasPermission('manage_users')) return false;
-                      if (hasRole('admin')) return true;
+                      if (!currentUser) return false
+                      if (user.id === currentUser.id) return true
+                      if (!hasPermission('manage_users')) return false
+                      if (hasRole('admin')) return true
                       if (hasRole('manager')) {
-                        return !user.roles.includes('manager') && !user.roles.includes('admin');
+                        return !user.roles.includes('manager') && !user.roles.includes('admin')
                       }
-                      return false;
-                    })();
-                    
+                      return false
+                    })()
+
                     return (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10">
+                      <tr key={user.id} className='hover:bg-gray-50'>
+                        <td className='whitespace-nowrap px-6 py-4'>
+                          <div className='flex items-center'>
+                            <div className='size-10 shrink-0'>
                               {user.shopifyData?.imageUrl ? (
-                                <img 
-                                  className="h-10 w-10 rounded-full object-cover" 
-                                  src={user.shopifyData.imageUrl} 
-                                  alt="" 
+                                <img
+                                  className='size-10 rounded-full object-cover'
+                                  src={user.shopifyData.imageUrl}
+                                  alt=''
                                 />
                               ) : (
-                                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                  <span className="text-gray-600 font-medium">
-                                    {user.firstName?.[0]}{user.lastName?.[0]}
+                                <div className='flex size-10 items-center justify-center rounded-full bg-gray-300'>
+                                  <span className='font-medium text-gray-600'>
+                                    {user.firstName?.[0]}
+                                    {user.lastName?.[0]}
                                   </span>
                                 </div>
                               )}
                             </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
+                            <div className='ml-4'>
+                              <div className='text-sm font-medium text-gray-900'>
                                 {user.firstName} {user.lastName}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className='text-sm text-gray-500'>
                                 ID: {user.id.slice(0, 8)}...
                               </div>
                             </div>
                           </div>
                         </td>
-                        
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{user.email}</div>
-                          <div className="text-sm text-gray-500">
+
+                        <td className='whitespace-nowrap px-6 py-4'>
+                          <div className='text-sm text-gray-900'>{user.email}</div>
+                          <div className='text-sm text-gray-500'>
                             Shopify: {user.shopifyCustomerId.slice(-8)}
                           </div>
                         </td>
-                        
-                        <td className="px-6 py-4">
-                          <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+
+                        <td className='px-6 py-4'>
+                          <span className='inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800'>
                             {user.roles[0] || 'Sin rol'}
                           </span>
                         </td>
-                        
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                            user.isActive 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+
+                        <td className='whitespace-nowrap px-6 py-4'>
+                          <span
+                            className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                              user.isActive
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
                             {user.isActive ? 'Activo' : 'Inactivo'}
                           </span>
                         </td>
-                        
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.lastLoginAt 
+
+                        <td className='whitespace-nowrap px-6 py-4 text-sm text-gray-500'>
+                          {user.lastLoginAt
                             ? new Date(user.lastLoginAt).toLocaleDateString()
-                            : 'Nunca'
-                          }
+                            : 'Nunca'}
                         </td>
-                        
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end space-x-2">
+
+                        <td className='whitespace-nowrap px-6 py-4 text-right text-sm font-medium'>
+                          <div className='flex justify-end space-x-2'>
                             {canManage && (
                               <>
                                 <button
                                   onClick={() => handleManageRoles(user)}
-                                  className="text-blue-600 hover:text-blue-900 text-sm"
+                                  className='text-sm text-blue-600 hover:text-blue-900'
                                 >
                                   Rol
                                 </button>
@@ -400,8 +423,8 @@ export function UserManagementAdmin() {
                                   onClick={() => handleToggleUserStatus(user)}
                                   disabled={deactivateUser.isPending || reactivateUser.isPending}
                                   className={`text-sm ${
-                                    user.isActive 
-                                      ? 'text-red-600 hover:text-red-900' 
+                                    user.isActive
+                                      ? 'text-red-600 hover:text-red-900'
                                       : 'text-green-600 hover:text-green-900'
                                   } disabled:opacity-50`}
                                 >
@@ -412,86 +435,90 @@ export function UserManagementAdmin() {
                           </div>
                         </td>
                       </tr>
-                    );
+                    )
                   })}
                 </tbody>
               </table>
             </div>
 
             {pagination.total > pagination.limit && (
-              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                <div className="flex-1 flex justify-between sm:hidden">
+              <div className='flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6'>
+                <div className='flex flex-1 justify-between sm:hidden'>
                   <button
                     onClick={() => handlePageChange(pagination.page - 1)}
                     disabled={!pagination.hasPrev}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    className='relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
                   >
                     Anterior
                   </button>
                   <button
                     onClick={() => handlePageChange(pagination.page + 1)}
                     disabled={!pagination.hasNext}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    className='relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
                   >
                     Siguiente
                   </button>
                 </div>
-                
-                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+
+                <div className='hidden sm:flex sm:flex-1 sm:items-center sm:justify-between'>
                   <div>
-                    <p className="text-sm text-gray-700">
+                    <p className='text-sm text-gray-700'>
                       Mostrando{' '}
-                      <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span>
-                      {' '}a{' '}
-                      <span className="font-medium">
+                      <span className='font-medium'>
+                        {(pagination.page - 1) * pagination.limit + 1}
+                      </span>{' '}
+                      a{' '}
+                      <span className='font-medium'>
                         {Math.min(pagination.page * pagination.limit, pagination.total)}
-                      </span>
-                      {' '}de{' '}
-                      <span className="font-medium">{pagination.total}</span>
-                      {' '}usuarios
+                      </span>{' '}
+                      de <span className='font-medium'>{pagination.total}</span> usuarios
                     </p>
                   </div>
-                  
+
                   <div>
-                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    <nav className='relative z-0 inline-flex -space-x-px rounded-md shadow-sm'>
                       <button
                         onClick={() => handlePageChange(pagination.page - 1)}
                         disabled={!pagination.hasPrev}
-                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                        className='relative inline-flex items-center rounded-l-md border border-gray-300 bg-white p-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50'
                       >
                         ←
                       </button>
-                      
-                      {Array.from({ length: Math.ceil(pagination.total / pagination.limit) }, (_, i) => i + 1)
-                        .filter(page => 
-                          page === 1 || 
-                          page === Math.ceil(pagination.total / pagination.limit) ||
-                          Math.abs(page - pagination.page) <= 2
+
+                      {Array.from(
+                        { length: Math.ceil(pagination.total / pagination.limit) },
+                        (_, i) => i + 1
+                      )
+                        .filter(
+                          (page) =>
+                            page === 1 ||
+                            page === Math.ceil(pagination.total / pagination.limit) ||
+                            Math.abs(page - pagination.page) <= 2
                         )
                         .map((page, index, array) => (
                           <span key={page}>
                             {index > 0 && array[index - 1] !== page - 1 && (
-                              <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                              <span className='relative inline-flex items-center border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700'>
                                 ...
                               </span>
                             )}
                             <button
                               onClick={() => handlePageChange(page)}
-                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              className={`relative inline-flex items-center border px-4 py-2 text-sm font-medium ${
                                 page === pagination.page
-                                  ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                  : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                  ? 'z-10 border-blue-500 bg-blue-50 text-blue-600'
+                                  : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
                               }`}
                             >
                               {page}
                             </button>
                           </span>
                         ))}
-                      
+
                       <button
                         onClick={() => handlePageChange(pagination.page + 1)}
                         disabled={!pagination.hasNext}
-                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                        className='relative inline-flex items-center rounded-r-md border border-gray-300 bg-white p-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50'
                       >
                         →
                       </button>
@@ -506,27 +533,27 @@ export function UserManagementAdmin() {
 
       {/* Modal Unificado de Roles */}
       {showRoleModal && selectedUser && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+        <div className='fixed inset-0 z-50 size-full overflow-y-auto bg-gray-600 bg-opacity-50'>
+          <div className='relative top-20 mx-auto w-96 rounded-md border bg-white p-5 shadow-lg'>
+            <div className='mt-3'>
+              <h3 className='mb-4 text-lg font-medium text-gray-900'>
                 Cambiar Rol - {selectedUser.firstName} {selectedUser.lastName}
               </h3>
-              
-              <div className="space-y-3">
-                {availableRoles.map(role => (
-                  <label key={role.id} className="flex items-start space-x-3 cursor-pointer">
+
+              <div className='space-y-3'>
+                {availableRoles.map((role) => (
+                  <label key={role.id} className='flex cursor-pointer items-start space-x-3'>
                     <input
-                      type="radio"
-                      name="userRole"
+                      type='radio'
+                      name='userRole'
                       value={role.id}
                       checked={selectedRole === role.id}
                       onChange={(e) => handleRoleChange(e.target.value)}
-                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      className='mt-1 size-4 border-gray-300 text-blue-600 focus:ring-blue-500'
                     />
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{role.name}</div>
-                      <div className="text-sm text-gray-500">{role.description}</div>
+                      <div className='text-sm font-medium text-gray-900'>{role.name}</div>
+                      <div className='text-sm text-gray-500'>{role.description}</div>
                     </div>
                   </label>
                 ))}
@@ -534,32 +561,33 @@ export function UserManagementAdmin() {
 
               {/* Selector de Vendor si se está convirtiendo en artista */}
               {isBecomingArtist && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-blue-900 mb-2">
+                <div className='mt-6 rounded-lg bg-blue-50 p-4'>
+                  <h4 className='mb-2 text-sm font-medium text-blue-900'>
                     Asignar Vendor para Artista
                   </h4>
-                  <p className="text-xs text-blue-700 mb-3">
+                  <p className='mb-3 text-xs text-blue-700'>
                     Selecciona un vendor existente o escribe un nombre para crear uno nuevo.
                   </p>
-                  
+
                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
                       <Button
-                        variant="outline"
-                        role="combobox"
+                        variant='outline'
+                        role='combobox'
                         aria-expanded={popoverOpen}
-                        className="w-full justify-between"
+                        className='w-full justify-between'
                       >
                         {vendorName
-                          ? vendors?.find((v) => v.toLowerCase() === vendorName.toLowerCase()) || `Crear nuevo: "${vendorName}"`
-                          : "Selecciona o escribe un vendor..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          ? vendors?.find((v) => v.toLowerCase() === vendorName.toLowerCase()) ||
+                            `Crear nuevo: "${vendorName}"`
+                          : 'Selecciona o escribe un vendor...'}
+                        <ChevronsUpDown className='ml-2 size-4 shrink-0 opacity-50' />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
                       <Command shouldFilter={false}>
-                        <CommandInput 
-                          placeholder="Buscar o crear vendor..."
+                        <CommandInput
+                          placeholder='Buscar o crear vendor...'
                           onValueChange={setVendorName}
                         />
                         <CommandList>
@@ -568,25 +596,27 @@ export function UserManagementAdmin() {
                           </CommandEmpty>
                           <CommandGroup>
                             {vendors
-                              ?.filter(v => v.toLowerCase().includes(vendorName.toLowerCase()))
+                              ?.filter((v) => v.toLowerCase().includes(vendorName.toLowerCase()))
                               .map((v) => (
-                              <CommandItem
-                                key={v}
-                                value={v}
-                                onSelect={(currentValue) => {
-                                  setVendorName(currentValue === vendorName ? "" : currentValue);
-                                  setPopoverOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    vendorName.toLowerCase() === v.toLowerCase() ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {v}
-                              </CommandItem>
-                            ))}
+                                <CommandItem
+                                  key={v}
+                                  value={v}
+                                  onSelect={(currentValue) => {
+                                    setVendorName(currentValue === vendorName ? '' : currentValue)
+                                    setPopoverOpen(false)
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      'mr-2 size-4',
+                                      vendorName.toLowerCase() === v.toLowerCase()
+                                        ? 'opacity-100'
+                                        : 'opacity-0'
+                                    )}
+                                  />
+                                  {v}
+                                </CommandItem>
+                              ))}
                           </CommandGroup>
                         </CommandList>
                       </Command>
@@ -594,24 +624,26 @@ export function UserManagementAdmin() {
                   </Popover>
                 </div>
               )}
-              
-              <div className="flex justify-end space-x-3 mt-6">
+
+              <div className='mt-6 flex justify-end space-x-3'>
                 <button
                   onClick={() => {
-                    setShowRoleModal(false);
-                    setSelectedRole('');
-                    setVendorName('');
+                    setShowRoleModal(false)
+                    setSelectedRole('')
+                    setVendorName('')
                   }}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                  className='rounded-lg bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400'
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleSaveRoles}
                   disabled={updateRoles.isPending || createArtistMutation.isPending}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50'
                 >
-                  {updateRoles.isPending || createArtistMutation.isPending ? 'Guardando...' : 'Guardar'}
+                  {updateRoles.isPending || createArtistMutation.isPending
+                    ? 'Guardando...'
+                    : 'Guardar'}
                 </button>
               </div>
             </div>
@@ -619,5 +651,5 @@ export function UserManagementAdmin() {
         </div>
       )}
     </div>
-  );
+  )
 }

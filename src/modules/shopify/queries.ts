@@ -47,7 +47,7 @@ export const HOMEPAGE_QUERY = `
       }
     }
   }
-`;
+`
 
 export const SHOP_INFO_QUERY = `
   query ShopInfo {
@@ -64,7 +64,7 @@ export const SHOP_INFO_QUERY = `
       }
     }
   }
-`;
+`
 
 export const SEARCH_PRODUCTS_QUERY = `
   query SearchProducts(
@@ -163,7 +163,7 @@ export const SEARCH_PRODUCTS_QUERY = `
       }
     }
   }
-`;
+`
 
 export const PRODUCTS_QUERY = `
   query Products(
@@ -243,7 +243,7 @@ export const PRODUCTS_QUERY = `
       }
     }
   }
-`;
+`
 
 export const PRODUCTS_BY_IDS_QUERY = `
   query ProductsByIds($ids: [ID!]!) {
@@ -305,7 +305,7 @@ export const PRODUCTS_BY_IDS_QUERY = `
       }
     }
   }
-`;
+`
 
 export const PRODUCT_BY_HANDLE_QUERY = `
   query ProductByHandle($handle: String!) {
@@ -364,7 +364,7 @@ export const PRODUCT_BY_HANDLE_QUERY = `
       }
     }
   }
-`;
+`
 
 export const COLLECTIONS_QUERY = `
   query Collections($first: Int!, $after: String, $query: String) {
@@ -391,7 +391,7 @@ export const COLLECTIONS_QUERY = `
       }
     }
   }
-`;
+`
 
 export const COLLECTION_BY_HANDLE_QUERY = `
   query CollectionByHandle($handle: String!, $productsFirst: Int!) {
@@ -434,4 +434,4 @@ export const COLLECTION_BY_HANDLE_QUERY = `
       }
     }
   }
-`;
+`

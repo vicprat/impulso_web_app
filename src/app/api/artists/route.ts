@@ -1,27 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { requirePermission } from '@/modules/auth/server/server';
-import { prisma } from '@/lib/prisma';
+import { type NextRequest, NextResponse } from 'next/server'
 
-
-
+import { prisma } from '@/lib/prisma'
+import { requirePermission } from '@/modules/auth/server/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requirePermission('manage_users');
+    const session = await requirePermission('manage_users')
 
-    const body = await request.json();
-    const { userId, vendorName } = body;
+    const body = await request.json()
+    const { userId, vendorName } = body
 
     if (!userId || !vendorName) {
-      return NextResponse.json({ error: 'Faltan userId y vendorName' }, { status: 400 });
+      return NextResponse.json({ error: 'Faltan userId y vendorName' }, { status: 400 })
     }
 
     const existingArtist = await prisma.artist.findUnique({
       where: { name: vendorName },
-    });
+    })
 
     if (existingArtist) {
-      return NextResponse.json({ error: 'El nombre del vendor ya existe.' }, { status: 409 });
+      return NextResponse.json({ error: 'El nombre del vendor ya existe.' }, { status: 409 })
     }
 
     const updatedUser = await prisma.$transaction(async (tx) => {
@@ -29,48 +27,48 @@ export async function POST(request: NextRequest) {
         data: {
           name: vendorName,
         },
-      });
+      })
 
-      const artistRole = await tx.role.findUnique({ where: { name: 'artist' } });
+      const artistRole = await tx.role.findUnique({ where: { name: 'artist' } })
       if (!artistRole) {
-        throw new Error("El rol 'artist' no se encuentra en la base de datos.");
+        throw new Error("El rol 'artist' no se encuentra en la base de datos.")
       }
 
       await tx.user.update({
-        where: { id: userId },
         data: {
           artistId: newArtist.id,
           roles: {
             connectOrCreate: {
+              create: {
+                assignedBy: session.user.id,
+                roleId: artistRole.id,
+              },
               where: {
                 userId_roleId: {
-                  userId: userId,
                   roleId: artistRole.id,
+                  userId,
                 },
-              },
-              create: {
-                roleId: artistRole.id,
-                assignedBy: session.user.id,
               },
             },
           },
         },
-      });
-      
+        where: { id: userId },
+      })
+
       return tx.user.findUnique({
-          where: { id: userId },
-          include: { artist: true, roles: { include: { role: true } } }
-      });
-    });
+        include: { artist: true, roles: { include: { role: true } } },
+        where: { id: userId },
+      })
+    })
 
-    return NextResponse.json(updatedUser);
+    return NextResponse.json(updatedUser)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    console.error("Error al crear el perfil de artista:", error);
+    console.error('Error al crear el perfil de artista:', error)
     if (error.message.includes("El rol 'artist' no se encuentra")) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

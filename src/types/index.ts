@@ -1,35 +1,35 @@
-export type ApiError = {
+export interface ApiError {
   response?: {
     data?: {
-      message?: string;
-    };
-  };
-  message?: string;
+      message?: string
+    }
+  }
+  message?: string
 }
 
-export type ApiResponse<T> = {
-  data: T;
-  message?: string;
-  statusCode: number;
-};
-
-export type AuthConfig = {
-  shopId: string;
-  clientId: string;
-  clientSecret?: string;
-  redirectUri: string;
+export interface ApiResponse<T> {
+  data: T
+  message?: string
+  statusCode: number
 }
 
-export type TokenResponse  = {
-  access_token: string;
-  refresh_token: string;
-  id_token: string;
-  expires_in: number;
+export interface AuthConfig {
+  shopId: string
+  clientId: string
+  clientSecret?: string
+  redirectUri: string
 }
 
-export type CustomerInfo = {
-  id: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
+export interface TokenResponse {
+  access_token: string
+  refresh_token: string
+  id_token: string
+  expires_in: number
+}
+
+export interface CustomerInfo {
+  id: string
+  email: string
+  firstName?: string
+  lastName?: string
 }

@@ -1,25 +1,22 @@
-'use client';
+'use client'
 
-import { usePathname } from 'next/navigation';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
+import { usePathname } from 'next/navigation'
 
-export default function Layout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const pathname = usePathname();
-  const isHomePage = pathname === '/';
+import { Footer } from '@/components/Footer'
+import { Header } from '@/components/Header'
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const isHomePage = pathname === '/'
 
   return (
-    <div className="min-h-screen bg-surface">
-      <main className="w-full">
+    <div className='bg-surface min-h-screen'>
+      <main className='w-full'>
         <Header.Public isHomePage={isHomePage} />
-        
+
         {children}
       </main>
       <Footer />
     </div>
-  );
+  )
 }

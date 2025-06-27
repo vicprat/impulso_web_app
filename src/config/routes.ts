@@ -1,263 +1,263 @@
-export type RouteConfig = {
-  path: string;
-  label: string;
-  icon?: string;
-  description?: string;
-  permissions?: string[];
-  roles?: string[];
-  children?: RouteConfig[];
-  isPublic?: boolean;
-  hideInNav?: boolean;
-  badge?: string | number;
-  isExternal?: boolean;
-  breadcrumb?: string;
+export interface RouteConfig {
+  path: string
+  label: string
+  icon?: string
+  description?: string
+  permissions?: string[]
+  roles?: string[]
+  children?: RouteConfig[]
+  isPublic?: boolean
+  hideInNav?: boolean
+  badge?: string | number
+  isExternal?: boolean
+  breadcrumb?: string
 }
 
 // Rutas públicas del storefront
 export const PublicStoreRoutes: RouteConfig[] = [
   {
-    path: '/',
-    label: 'Inicio',
+    description: 'Página principal de la tienda',
     icon: 'home',
     isPublic: true,
-    description: 'Página principal de la tienda'
+    label: 'Inicio',
+    path: '/',
   },
   {
-    path: '/store',
-    label: 'Tienda',
+    description: 'Explorar todos los productos',
     icon: 'shopping-bag',
     isPublic: true,
-    description: 'Explorar todos los productos'
+    label: 'Tienda',
+    path: '/store',
   },
   {
-    path: '/store/collections',
-    label: 'Colecciones',
+    description: 'Ver todas las colecciones',
     icon: 'grid',
     isPublic: true,
-    description: 'Ver todas las colecciones'
+    label: 'Colecciones',
+    path: '/store/collections',
   },
   {
-    path: '/store/search',
-    label: 'Buscar',
+    hideInNav: true,
     icon: 'search',
     isPublic: true,
-    hideInNav: true
-  }
-];
+    label: 'Buscar',
+    path: '/store/search',
+  },
+]
 
 // Rutas de autenticación
 export const AuthRoutes: RouteConfig[] = [
   {
-    path: '/auth/login',
-    label: 'Iniciar Sesión',
+    hideInNav: true,
     icon: 'log-in',
     isPublic: true,
-    hideInNav: true
+    label: 'Iniciar Sesión',
+    path: '/auth/login',
   },
   {
-    path: '/auth/logout',
-    label: 'Cerrar Sesión',
-    icon: 'log-out',
-    hideInNav: true
-  },
-  {
-    path: '/auth/callback',
-    label: 'Callback',
     hideInNav: true,
-    isPublic: true
-  }
-];
+    icon: 'log-out',
+    label: 'Cerrar Sesión',
+    path: '/auth/logout',
+  },
+  {
+    hideInNav: true,
+    isPublic: true,
+    label: 'Callback',
+    path: '/auth/callback',
+  },
+]
 
 // Rutas del cliente autenticado
 export const CustomerRoutes: RouteConfig[] = [
   {
-    path: '/dashboard',
-    label: 'Panel Principal',
+    description: 'Tu panel de control personal',
     icon: 'layout-dashboard',
+    label: 'Panel Principal',
+    path: '/dashboard',
     permissions: ['view_profile'],
-    description: 'Tu panel de control personal'
   },
   {
-    path: '/profile',
-    label: 'Mi Perfil',
+    description: 'Gestiona tu información personal',
     icon: 'user',
+    label: 'Mi Perfil',
+    path: '/profile',
     permissions: ['view_profile', 'update_profile'],
-    description: 'Gestiona tu información personal'
   },
   {
-    path: '/orders',
-    label: 'Mis Pedidos',
-    icon: 'package',
-    permissions: ['view_orders'],
-    description: 'Historial de pedidos',
     children: [
       {
-        path: '/orders',
-        label: 'Todos los Pedidos',
         icon: 'list',
-        permissions: ['view_orders']
+        label: 'Todos los Pedidos',
+        path: '/orders',
+        permissions: ['view_orders'],
       },
       {
-        path: '/orders/:id',
-        label: 'Detalle del Pedido',
+        breadcrumb: 'Detalle',
         hideInNav: true,
+        label: 'Detalle del Pedido',
+        path: '/orders/:id',
         permissions: ['view_orders'],
-        breadcrumb: 'Detalle'
-      }
-    ]
+      },
+    ],
+    description: 'Historial de pedidos',
+    icon: 'package',
+    label: 'Mis Pedidos',
+    path: '/orders',
+    permissions: ['view_orders'],
   },
   {
-    path: '/addresses',
-    label: 'Direcciones',
+    description: 'Gestiona tus direcciones de envío',
     icon: 'map-pin',
+    label: 'Direcciones',
+    path: '/addresses',
     permissions: ['view_addresses', 'manage_addresses'],
-    description: 'Gestiona tus direcciones de envío'
   },
   {
-    path: '/store/cart',
-    label: 'Carrito',
+    badge: 'cartItemCount',
     icon: 'shopping-cart',
-    permissions: ['manage_cart'],
-    badge: 'cartItemCount' // Indicador dinámico
-  }
-];
+    label: 'Carrito',
+    path: '/store/cart',
+    permissions: ['manage_cart'], // Indicador dinámico
+  },
+]
 
 // Rutas VIP (clientes con beneficios adicionales)
 export const VipRoutes: RouteConfig[] = [
   {
-    path: '/analytics',
-    label: 'Mis Estadísticas',
+    description: 'Análisis de tus compras',
     icon: 'bar-chart',
-    roles: ['vip_customer'],
+    label: 'Mis Estadísticas',
+    path: '/analytics',
     permissions: ['view_analytics'],
-    description: 'Análisis de tus compras'
+    roles: ['vip_customer'],
   },
   {
-    path: '/vip-offers',
-    label: 'Ofertas VIP',
+    description: 'Ofertas exclusivas para clientes VIP',
     icon: 'star',
+    label: 'Ofertas VIP',
+    path: '/vip-offers',
     roles: ['vip_customer'],
-    description: 'Ofertas exclusivas para clientes VIP'
-  }
-];
+  },
+]
 
 // Rutas de soporte
 export const SupportRoutes: RouteConfig[] = [
   {
-    path: '/support',
-    label: 'Panel de Soporte',
-    icon: 'headphones',
-    roles: ['support', 'manager', 'admin'],
-    permissions: ['view_all_orders'],
     children: [
       {
-        path: '/support/tickets',
-        label: 'Tickets',
         icon: 'message-square',
-        permissions: ['view_all_orders']
+        label: 'Tickets',
+        path: '/support/tickets',
+        permissions: ['view_all_orders'],
       },
       {
-        path: '/support/customers',
-        label: 'Clientes',
         icon: 'users',
-        permissions: ['view_all_orders']
+        label: 'Clientes',
+        path: '/support/customers',
+        permissions: ['view_all_orders'],
       },
       {
-        path: '/support/logs',
-        label: 'Logs de Actividad',
         icon: 'activity',
-        permissions: ['view_logs']
-      }
-    ]
-  }
-];
+        label: 'Logs de Actividad',
+        path: '/support/logs',
+        permissions: ['view_logs'],
+      },
+    ],
+    icon: 'headphones',
+    label: 'Panel de Soporte',
+    path: '/support',
+    permissions: ['view_all_orders'],
+    roles: ['support', 'manager', 'admin'],
+  },
+]
 
 // Rutas administrativas
 export const AdminRoutes: RouteConfig[] = [
   {
-    path: '/admin',
-    label: 'Administración',
-    icon: 'settings',
-    roles: ['manager', 'admin'],
-    permissions: ['access_admin'],
     children: [
       {
-        path: '/admin/users',
-        label: 'Usuarios',
+        description: 'Gestión de usuarios del sistema',
         icon: 'users',
+        label: 'Usuarios',
+        path: '/admin/users',
         permissions: ['manage_users'],
-        description: 'Gestión de usuarios del sistema'
       },
       {
-        path: '/admin/roles',
-        label: 'Roles y Permisos',
         icon: 'shield',
+        label: 'Roles y Permisos',
+        path: '/admin/roles',
         permissions: ['manage_roles'],
-        roles: ['admin']
+        roles: ['admin'],
       },
       {
-        path: '/admin/products',
-        label: 'Productos',
+        description: 'Gestión del catálogo',
         icon: 'package',
+        label: 'Productos',
+        path: '/admin/products',
         permissions: ['manage_products'],
-        description: 'Gestión del catálogo'
       },
       {
-        path: '/admin/inventory',
-        label: 'Inventario',
         icon: 'archive',
-        permissions: ['manage_inventory']
+        label: 'Inventario',
+        path: '/admin/inventory',
+        permissions: ['manage_inventory'],
       },
       {
-        path: '/admin/analytics',
-        label: 'Analíticas',
         icon: 'trending-up',
+        label: 'Analíticas',
+        path: '/admin/analytics',
         permissions: ['view_analytics'],
-        roles: ['manager', 'admin']
-      }
-    ]
-  }
-];
+        roles: ['manager', 'admin'],
+      },
+    ],
+    icon: 'settings',
+    label: 'Administración',
+    path: '/admin',
+    permissions: ['access_admin'],
+    roles: ['manager', 'admin'],
+  },
+]
 
 // Rutas dinámicas del store (no aparecen en navegación)
 export const DynamicStoreRoutes: RouteConfig[] = [
   {
-    path: '/store/product/:handle',
-    label: 'Producto',
-    isPublic: true,
+    breadcrumb: 'Producto',
     hideInNav: true,
-    breadcrumb: 'Producto'
+    isPublic: true,
+    label: 'Producto',
+    path: '/store/product/:handle',
   },
   {
-    path: '/store/collections/:handle',
-    label: 'Colección',
-    isPublic: true,
+    breadcrumb: 'Colección',
     hideInNav: true,
-    breadcrumb: 'Colección'
-  }
-];
+    isPublic: true,
+    label: 'Colección',
+    path: '/store/collections/:handle',
+  },
+]
 
 // Rutas de error y utilidad
 export const UtilityRoutes: RouteConfig[] = [
   {
-    path: '/404',
+    hideInNav: true,
+    isPublic: true,
     label: 'Página no encontrada',
-    hideInNav: true,
-    isPublic: true
+    path: '/404',
   },
   {
-    path: '/500',
+    hideInNav: true,
+    isPublic: true,
     label: 'Error del servidor',
-    hideInNav: true,
-    isPublic: true
+    path: '/500',
   },
   {
-    path: '/unauthorized',
-    label: 'No autorizado',
     hideInNav: true,
-    isPublic: true
-  }
-];
+    isPublic: true,
+    label: 'No autorizado',
+    path: '/unauthorized',
+  },
+]
 
 // Función para obtener todas las rutas públicas
 export const getAllPublicRoutes = (): string[] => {
@@ -265,158 +265,164 @@ export const getAllPublicRoutes = (): string[] => {
     ...PublicStoreRoutes,
     ...AuthRoutes,
     ...DynamicStoreRoutes,
-    ...UtilityRoutes
+    ...UtilityRoutes,
   ]
-    .filter(route => route.isPublic)
-    .map(route => route.path);
-  
-  return publicRoutes;
-};
+    .filter((route) => route.isPublic)
+    .map((route) => route.path)
+
+  return publicRoutes
+}
 
 // Función para verificar si una ruta es pública
 export const isPublicRoute = (path: string): boolean => {
   // Rutas estáticas públicas
-  const staticPublic = getAllPublicRoutes().some(route => {
+  const staticPublic = getAllPublicRoutes().some((route) => {
     if (route.includes(':')) {
       // Manejar rutas dinámicas
-      const pattern = route.replace(/:[^/]+/g, '[^/]+');
-      const regex = new RegExp(`^${pattern}$`);
-      return regex.test(path);
+      const pattern = route.replace(/:[^/]+/g, '[^/]+')
+      const regex = new RegExp(`^${pattern}$`)
+      return regex.test(path)
     }
-    return route === path || (route !== '/' && path.startsWith(route + '/'));
-  });
-  
-  return staticPublic;
-};
+    return route === path || (route !== '/' && path.startsWith(`${route}/`))
+  })
+
+  return staticPublic
+}
 
 // Función para obtener rutas por rol
 export const getRoutesByRole = (userRoles: string[], userPermissions: string[]): RouteConfig[] => {
-  const allRoutes = [
-    ...CustomerRoutes,
-    ...VipRoutes,
-    ...SupportRoutes,
-    ...AdminRoutes
-  ];
-  
-  return filterRoutesByAccess(allRoutes, userRoles, userPermissions);
-};
+  const allRoutes = [...CustomerRoutes, ...VipRoutes, ...SupportRoutes, ...AdminRoutes]
+
+  return filterRoutesByAccess(allRoutes, userRoles, userPermissions)
+}
 
 // Función para filtrar rutas basadas en roles y permisos
 export const filterRoutesByAccess = (
-  routes: RouteConfig[], 
-  userRoles: string[], 
+  routes: RouteConfig[],
+  userRoles: string[],
   userPermissions: string[]
 ): RouteConfig[] => {
-  return routes.filter(route => {
-    // Si no hay restricciones, mostrar
-    if (!route.roles && !route.permissions) return true;
-    
-    // Verificar roles
-    const hasRequiredRole = !route.roles || route.roles.some(role => userRoles.includes(role));
-    
-    // Verificar permisos
-    const hasRequiredPermission = !route.permissions || 
-      route.permissions.every(permission => userPermissions.includes(permission));
-    
-    return hasRequiredRole && hasRequiredPermission;
-  }).map(route => {
-    // Filtrar children recursivamente
-    if (route.children) {
-      return {
-        ...route,
-        children: filterRoutesByAccess(route.children, userRoles, userPermissions)
-      };
-    }
-    return route;
-  });
-};
+  return routes
+    .filter((route) => {
+      // Si no hay restricciones, mostrar
+      if (!route.roles && !route.permissions) return true
+
+      // Verificar roles
+      const hasRequiredRole = !route.roles || route.roles.some((role) => userRoles.includes(role))
+
+      // Verificar permisos
+      const hasRequiredPermission =
+        !route.permissions ||
+        route.permissions.every((permission) => userPermissions.includes(permission))
+
+      return hasRequiredRole && hasRequiredPermission
+    })
+    .map((route) => {
+      // Filtrar children recursivamente
+      if (route.children) {
+        return {
+          ...route,
+          children: filterRoutesByAccess(route.children, userRoles, userPermissions),
+        }
+      }
+      return route
+    })
+}
 
 // Función para obtener rutas de navegación del store
 export const getStoreNavRoutes = (): RouteConfig[] => {
-  return PublicStoreRoutes.filter(route => !route.hideInNav);
-};
+  return PublicStoreRoutes.filter((route) => !route.hideInNav)
+}
 
 // Función para obtener rutas del dashboard del usuario
-export const getDashboardNavRoutes = (userRoles: string[], userPermissions: string[]): RouteConfig[] => {
-  const routes = getRoutesByRole(userRoles, userPermissions);
-  return routes.filter(route => !route.hideInNav);
-};
+export const getDashboardNavRoutes = (
+  userRoles: string[],
+  userPermissions: string[]
+): RouteConfig[] => {
+  const routes = getRoutesByRole(userRoles, userPermissions)
+  return routes.filter((route) => !route.hideInNav)
+}
 
 // Función para construir breadcrumbs
-export const buildBreadcrumbs = (pathname: string, routes: RouteConfig[]): Array<{label: string; path: string}> => {
-  const segments = pathname.split('/').filter(Boolean);
-  const breadcrumbs: Array<{label: string; path: string}> = [];
-  
-  let currentPath = '';
+export const buildBreadcrumbs = (
+  pathname: string,
+  routes: RouteConfig[]
+): { label: string; path: string }[] => {
+  const segments = pathname.split('/').filter(Boolean)
+  const breadcrumbs: { label: string; path: string }[] = []
+
+  let currentPath = ''
   segments.forEach((segment, index) => {
-    currentPath += `/${segment}`;
-    
+    currentPath += `/${segment}`
+
     // Buscar la ruta correspondiente
-    const route = findRouteByPath(currentPath, routes);
+    const route = findRouteByPath(currentPath, routes)
     if (route) {
       breadcrumbs.push({
         label: route.breadcrumb || route.label,
-        path: currentPath
-      });
+        path: currentPath,
+      })
     } else if (segment.match(/^[a-zA-Z0-9-]+$/)) {
       // Es un parámetro dinámico
-      const parentPath = segments.slice(0, index).join('/');
-      const dynamicRoute = findDynamicRoute(`${parentPath}/:param`, routes);
+      const parentPath = segments.slice(0, index).join('/')
+      const dynamicRoute = findDynamicRoute(`${parentPath}/:param`, routes)
       if (dynamicRoute) {
         breadcrumbs.push({
           label: dynamicRoute.breadcrumb || segment,
-          path: currentPath
-        });
+          path: currentPath,
+        })
       }
     }
-  });
-  
-  return breadcrumbs;
-};
+  })
+
+  return breadcrumbs
+}
 
 // Función auxiliar para encontrar ruta por path
 const findRouteByPath = (path: string, routes: RouteConfig[]): RouteConfig | null => {
   for (const route of routes) {
-    if (route.path === path) return route;
+    if (route.path === path) return route
     if (route.children) {
-      const found = findRouteByPath(path, route.children);
-      if (found) return found;
+      const found = findRouteByPath(path, route.children)
+      if (found) return found
     }
   }
-  return null;
-};
+  return null
+}
 
 // Función auxiliar para encontrar rutas dinámicas
 const findDynamicRoute = (pattern: string, routes: RouteConfig[]): RouteConfig | null => {
   for (const route of routes) {
     if (route.path.includes(':') && matchDynamicRoute(pattern, route.path)) {
-      return route;
+      return route
     }
     if (route.children) {
-      const found = findDynamicRoute(pattern, route.children);
-      if (found) return found;
+      const found = findDynamicRoute(pattern, route.children)
+      if (found) return found
     }
   }
-  return null;
-};
+  return null
+}
 
 // Función para hacer match de rutas dinámicas
 const matchDynamicRoute = (path: string, pattern: string): boolean => {
-  const pathSegments = path.split('/').filter(Boolean);
-  const patternSegments = pattern.split('/').filter(Boolean);
-  
-  if (pathSegments.length !== patternSegments.length) return false;
-  
+  const pathSegments = path.split('/').filter(Boolean)
+  const patternSegments = pattern.split('/').filter(Boolean)
+
+  if (pathSegments.length !== patternSegments.length) return false
+
   return patternSegments.every((segment, index) => {
-    return segment.startsWith(':') || segment === pathSegments[index];
-  });
-};
+    return segment.startsWith(':') || segment === pathSegments[index]
+  })
+}
 
 // Función para obtener meta información de la ruta actual
-export const getRouteMeta = (pathname: string): {
-  isPublic: boolean;
-  requiredRoles?: string[];
-  requiredPermissions?: string[];
+export const getRouteMeta = (
+  pathname: string
+): {
+  isPublic: boolean
+  requiredRoles?: string[]
+  requiredPermissions?: string[]
 } => {
   const allRoutes = [
     ...PublicStoreRoutes,
@@ -426,27 +432,25 @@ export const getRouteMeta = (pathname: string): {
     ...SupportRoutes,
     ...AdminRoutes,
     ...DynamicStoreRoutes,
-    ...UtilityRoutes
-  ];
-  
-  const route = findRouteByPath(pathname, allRoutes) || 
-                findDynamicRoute(pathname, allRoutes);
-  
+    ...UtilityRoutes,
+  ]
+
+  const route = findRouteByPath(pathname, allRoutes) || findDynamicRoute(pathname, allRoutes)
+
   if (!route) {
-    return { isPublic: false };
+    return { isPublic: false }
   }
-  
+
   return {
     isPublic: route.isPublic || false,
+    requiredPermissions: route.permissions,
     requiredRoles: route.roles,
-    requiredPermissions: route.permissions
-  };
-};
-
+  }
+}
 
 export const AppRoutes: RouteConfig[] = [
   ...CustomerRoutes,
   ...VipRoutes,
   ...SupportRoutes,
   ...AdminRoutes,
-];
+]

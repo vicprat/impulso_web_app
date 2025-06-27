@@ -1,78 +1,82 @@
-import { CreatePrivateRoomDto, PrivateRoom } from '../types';
+import { type CreatePrivateRoomDto, type PrivateRoom } from '../types'
 
-const BASE_URL = '/api/private-rooms';
+const BASE_URL = '/api/private-rooms'
 
 export const privateRoomsApi = {
-  getAllPrivateRooms: async (): Promise<PrivateRoom[]> => {
-    const response = await fetch(BASE_URL);
+  createPrivateRoom: async (data: CreatePrivateRoomDto): Promise<PrivateRoom> => {
+    const response = await fetch(BASE_URL, {
+      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    })
     if (!response.ok) {
-      throw new Error('Failed to fetch private rooms');
+      throw new Error('Failed to create private room')
     }
-    return response.json();
+    return response.json()
+  },
+
+  deletePrivateRoom: async (id: string) => {
+    const response = await fetch(`/api/private-rooms/${id}`, {
+      method: 'DELETE',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || 'Failed to delete private room')
+    }
+
+    return response.json()
+  },
+
+  getAllPrivateRooms: async (): Promise<PrivateRoom[]> => {
+    const response = await fetch(BASE_URL)
+    if (!response.ok) {
+      throw new Error('Failed to fetch private rooms')
+    }
+    return response.json()
   },
 
   getPrivateRoomById: async (id: string): Promise<PrivateRoom> => {
-    const response = await fetch(`${BASE_URL}/${id}`);
+    const response = await fetch(`${BASE_URL}/${id}`)
     if (!response.ok) {
-      throw new Error('Failed to fetch private room');
+      throw new Error('Failed to fetch private room')
     }
-    return response.json();
+    return response.json()
   },
 
   getPrivateRoomByUserId: async (userId: string): Promise<PrivateRoom> => {
-    const response = await fetch(`${BASE_URL}/user/${userId}`);
+    const response = await fetch(`${BASE_URL}/user/${userId}`)
     if (!response.ok) {
-      throw new Error('Failed to fetch user\'s private room');
+      throw new Error("Failed to fetch user's private room")
     }
-    return response.json();
+    return response.json()
   },
 
-  createPrivateRoom: async (data: CreatePrivateRoomDto): Promise<PrivateRoom> => {
-    const response = await fetch(BASE_URL, {
-      method: 'POST',
+  updatePrivateRoom: async (
+    id: string,
+    data: {
+      name: string
+      description?: string | null
+      userId: string
+      productIds: string[]
+    }
+  ) => {
+    const response = await fetch(`/api/private-rooms/${id}`, {
+      body: JSON.stringify(data),
+      // ✅ Cambiar de PATCH a PUT
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to create private room');
-    }
-    return response.json();
-  },
+      method: 'PUT',
+    })
 
- updatePrivateRoom: async (id: string, data: {
-    name: string;
-    description?: string | null;
-    userId: string;
-    productIds: string[];
-  }) => {
-    const response = await fetch(`/api/private-rooms/${id}`, {
-      method: 'PUT', // ✅ Cambiar de PATCH a PUT
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to update private room');
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || 'Failed to update private room')
     }
-    
-    return response.json();
-  },
 
- deletePrivateRoom: async (id: string) => {
-    const response = await fetch(`/api/private-rooms/${id}`, {
-      method: 'DELETE',
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to delete private room');
-    }
-    
-    return response.json();
+    return response.json()
   },
-};
+}

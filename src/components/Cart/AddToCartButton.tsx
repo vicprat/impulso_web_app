@@ -1,119 +1,112 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/modules/auth/context/useAuth';
-import { ShoppingCart, Plus, Minus, Loader2, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { Product, Variant } from '@/modules/shopify/types';
-import { useCartActions } from '@/modules/cart/hook';
+import { ShoppingCart, Plus, Minus, Loader2, AlertCircle } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import { useAuth } from '@/modules/auth/context/useAuth'
+import { useCartActions } from '@/modules/cart/hook'
+import { type Product, type Variant } from '@/modules/shopify/types'
 
 interface AddToCartButtonProps {
-  product: Product;
-  selectedVariant?: Variant;
-  quantity?: number;
-  size?: 'sm' | 'default' | 'lg';
-  className?: string;
-  showQuantitySelector?: boolean;
+  product: Product
+  selectedVariant?: Variant
+  quantity?: number
+  size?: 'sm' | 'default' | 'lg'
+  className?: string
+  showQuantitySelector?: boolean
 }
 
 export function AddToCartButton({
-  product,
-  selectedVariant,
-  quantity: initialQuantity = 1,
-  size = 'default',
   className = '',
-  showQuantitySelector = false
+  product,
+  quantity: initialQuantity = 1,
+  selectedVariant,
+  showQuantitySelector = false,
+  size = 'default',
 }: AddToCartButtonProps) {
-  const { isAuthenticated, login, isLoading: authLoading } = useAuth();
-  const { addProduct, isAdding, cartSummary } = useCartActions();
-  const [quantity, setQuantity] = useState(initialQuantity);
+  const { isAuthenticated, isLoading: authLoading, login } = useAuth()
+  const { addProduct, cartSummary, isAdding } = useCartActions()
+  const [quantity, setQuantity] = useState(initialQuantity)
 
-  const variantToAdd = selectedVariant || product.variants[0];
-  
+  const variantToAdd = selectedVariant || product.variants[0]
+
   if (!variantToAdd) {
     return (
       <Button disabled size={size} className={className}>
-        <AlertCircle className="mr-2 h-4 w-4" />
+        <AlertCircle className='mr-2 size-4' />
         No disponible
       </Button>
-    );
+    )
   }
 
-  const existingLine = cartSummary?.lines.find(
-    line => line.merchandise.id === variantToAdd.id
-  );
+  const existingLine = cartSummary?.lines.find((line) => line.merchandise.id === variantToAdd.id)
 
   const handleAddToCart = async () => {
     if (!isAuthenticated && !authLoading) {
-      toast.error('Debes iniciar sesión para agregar productos al carrito');
-      login();
-      return;
+      toast.error('Debes iniciar sesión para agregar productos al carrito')
+      login()
+      return
     }
     if (!variantToAdd.availableForSale) {
-      toast.error('Este producto no está disponible para la venta');
-      return;
+      toast.error('Este producto no está disponible para la venta')
+      return
     }
 
-    addProduct(variantToAdd.id, quantity);
-    
-  };
-  
+    addProduct(variantToAdd.id, quantity)
+  }
+
   const incrementQuantity = () => {
-    setQuantity(prev => prev + 1);
-  };
+    setQuantity((prev) => prev + 1)
+  }
 
   const decrementQuantity = () => {
-    setQuantity(prev => Math.max(1, prev - 1));
-  };
+    setQuantity((prev) => Math.max(1, prev - 1))
+  }
 
   if (authLoading) {
     return (
       <Button disabled size={size} className={className}>
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        <Loader2 className='mr-2 size-4 animate-spin' />
         Verificando...
       </Button>
-    );
+    )
   }
 
   if (!isAuthenticated) {
     return (
-      <Button 
-        onClick={login} 
-        size={size} 
-        className={className}
-        variant="outline"
-      >
-        <ShoppingCart className="mr-2 h-4 w-4" />
+      <Button onClick={login} size={size} className={className} variant='outline'>
+        <ShoppingCart className='mr-2 size-4' />
         Iniciar sesión para comprar
       </Button>
-    );
+    )
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className='flex flex-col gap-3'>
       {showQuantitySelector && (
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium">Cantidad:</span>
-          <div className="flex items-center border rounded-md">
+        <div className='flex items-center gap-3'>
+          <span className='text-sm font-medium'>Cantidad:</span>
+          <div className='flex items-center rounded-md border'>
             <Button
-              variant="ghost"
-              size="sm"
+              variant='ghost'
+              size='sm'
               onClick={decrementQuantity}
               disabled={quantity <= 1 || isAdding}
-              className="h-8 w-8 p-0"
+              className='size-8 p-0'
             >
-              <Minus className="h-4 w-4" />
+              <Minus className='size-4' />
             </Button>
-            <span className="px-3 py-1 min-w-[3rem] text-center">{quantity}</span>
+            <span className='min-w-12 px-3 py-1 text-center'>{quantity}</span>
             <Button
-              variant="ghost"
-              size="sm"
+              variant='ghost'
+              size='sm'
               onClick={incrementQuantity}
               disabled={isAdding}
-              className="h-8 w-8 p-0"
+              className='size-8 p-0'
             >
-              <Plus className="h-4 w-4" />
+              <Plus className='size-4' />
             </Button>
           </div>
         </div>
@@ -127,27 +120,27 @@ export function AddToCartButton({
       >
         {isAdding ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className='mr-2 size-4 animate-spin' />
             Agregando...
           </>
         ) : existingLine ? (
           <>
-            <ShoppingCart className="mr-2 h-4 w-4" />
+            <ShoppingCart className='mr-2 size-4' />
             Agregar más
           </>
         ) : (
           <>
-            <ShoppingCart className="mr-2 h-4 w-4" />
+            <ShoppingCart className='mr-2 size-4' />
             Agregar al carrito
           </>
         )}
       </Button>
 
       {existingLine && (
-        <p className="text-sm text-muted-foreground text-center">
+        <p className='text-center text-sm text-muted-foreground'>
           Ya tienes {existingLine.quantity} en tu carrito
         </p>
-      )}  
+      )}
     </div>
-  );
+  )
 }

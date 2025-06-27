@@ -1,67 +1,60 @@
-
-import { createStorefrontApiClient } from '@shopify/storefront-api-client';
+import { createStorefrontApiClient } from '@shopify/storefront-api-client'
 
 export const storeClient = createStorefrontApiClient({
-  storeDomain: process.env.NEXT_PUBLIC_SHOPIFY_STORE ?? '',
   apiVersion: process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION ?? '2024-10',
   publicAccessToken: process.env.NEXT_PUBLIC_API_SHOPIFY_STOREFRONT ?? '',
-});
+  storeDomain: process.env.NEXT_PUBLIC_SHOPIFY_STORE ?? '',
+})
 
 export const makeStorefrontRequest = async (query: string, variables?: Record<string, unknown>) => {
   try {
     const response = await storeClient.request(query, {
-      variables: variables || {}
-    });
-    
+      variables: variables || {},
+    })
+
     if (response.errors) {
-      console.error('Storefront API errors:', response.errors);
+      console.error('Storefront API errors:', response.errors)
       throw new Error(
         typeof response.errors === 'string'
           ? response.errors
           : JSON.stringify(response.errors) || 'GraphQL error'
-      );
+      )
     }
-    
-    return response.data;
+
+    return response.data
   } catch (error) {
-    console.error('Storefront API request failed:', error);
-    throw error;
+    console.error('Storefront API request failed:', error)
+    throw error
   }
-};
+}
 
-export { storeClient as default };
-
+export { storeClient as default }
 
 export const makeCustomerRequest = async (query: string, variables?: Record<string, unknown>) => {
   try {
     const response = await fetch('/api/customer/graphql', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', 
       body: JSON.stringify({ query, variables: variables || {} }),
-    });
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    })
 
-    const body = await response.json();
+    const body = await response.json()
 
     if (body.errors) {
-      console.error('Customer API GraphQL errors:', body.errors);
-      throw new Error(
-        typeof body.errors === 'string'
-          ? body.errors
-          : JSON.stringify(body.errors)
-      );
+      console.error('Customer API GraphQL errors:', body.errors)
+      throw new Error(typeof body.errors === 'string' ? body.errors : JSON.stringify(body.errors))
     }
 
     if (!response.ok) {
-        const errorMessage = body.error || `Request failed with status ${response.status}`;
-        console.error('Customer API request failed:', errorMessage, body.details || '');
-        throw new Error(errorMessage);
+      const errorMessage = body.error || `Request failed with status ${response.status}`
+      console.error('Customer API request failed:', errorMessage, body.details || '')
+      throw new Error(errorMessage)
     }
-    
-    return body.data;
 
+    return body.data
   } catch (error) {
-    console.error('Customer API request failed:', error);
-    throw error;
+    console.error('Customer API request failed:', error)
+    throw error
   }
-};
+}

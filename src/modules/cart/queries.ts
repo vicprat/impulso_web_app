@@ -56,7 +56,7 @@ const CART_FRAGMENT = `
       applicable
     }
   }
-`;
+`
 
 export const CREATE_CART_MUTATION = `
   mutation cartCreate($input: CartInput!) {
@@ -72,7 +72,7 @@ export const CREATE_CART_MUTATION = `
     }
   }
   ${CART_FRAGMENT}
-`;
+`
 
 export const GET_CART_QUERY = `
   query getCart($cartId: ID!) {
@@ -81,7 +81,7 @@ export const GET_CART_QUERY = `
     }
   }
   ${CART_FRAGMENT}
-`;
+`
 
 export const ADD_TO_CART_MUTATION = `
   mutation cartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
@@ -97,7 +97,7 @@ export const ADD_TO_CART_MUTATION = `
     }
   }
   ${CART_FRAGMENT}
-`;
+`
 
 export const UPDATE_CART_LINES_MUTATION = `
   mutation cartLinesUpdate($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
@@ -113,7 +113,7 @@ export const UPDATE_CART_LINES_MUTATION = `
     }
   }
   ${CART_FRAGMENT}
-`;
+`
 
 export const REMOVE_FROM_CART_MUTATION = `
   mutation cartLinesRemove($cartId: ID!, $lineIds: [ID!]!) {
@@ -129,7 +129,7 @@ export const REMOVE_FROM_CART_MUTATION = `
     }
   }
   ${CART_FRAGMENT}
-`;
+`
 
 export const APPLY_DISCOUNT_CODE_MUTATION = `
   mutation cartDiscountCodesUpdate($cartId: ID!, $discountCodes: [String!]!) {
@@ -145,4 +145,4 @@ export const APPLY_DISCOUNT_CODE_MUTATION = `
     }
   }
   ${CART_FRAGMENT}
-`;
+`
