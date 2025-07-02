@@ -29,6 +29,7 @@ model User {
   cartId String? @unique
 
   privateRooms PrivateRoom[]
+  tickets      Ticket[]
 
   @@map("users")
 }
@@ -187,4 +188,66 @@ model PrivateRoomProduct {
 
   @@unique([privateRoomId, productId])
   @@map("private_room_products")
+}
+
+model Ticket {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String // Shopify Product GID for the event
+  qrCode    String   @unique
+  status    String   @default("VALID") // e.g., VALID, USED, CANCELLED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tickets")
+}
+
+enum FinancialEntryType {
+  INCOME
+  EXPENSE
+}
+
+enum FinancialEntryStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+model Event {
+  id               String @id @default(cuid())
+  shopifyProductId String @unique
+  name             String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  financialEntries FinancialEntry[]
+
+  @@map("events")
+}
+
+model FinancialEntry {
+  id            String               @id @default(cuid())
+  type          FinancialEntryType
+  amount        Decimal              @db.Decimal(10, 2)
+  currency      String               @default("MXN")
+  description   String
+  date          DateTime             @default(now())
+  eventId       String?
+  event         Event?               @relation(fields: [eventId], references: [id])
+  source        String?
+  sourceId      String?
+  category      String?
+  paymentMethod String?
+  relatedParty  String?
+  status        FinancialEntryStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([eventId])
+  @@index([type])
+  @@index([date])
+  @@index([status])
+  @@map("financial_entries")
 }

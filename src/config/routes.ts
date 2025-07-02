@@ -200,7 +200,7 @@ export const AdminRoutes: RouteConfig[] = [
       {
         icon: 'archive',
         label: 'Inventario',
-        path: '/admin/inventory',
+        path: '/manage-inventory',
         permissions: ['manage_inventory'],
       },
       {
@@ -215,6 +215,41 @@ export const AdminRoutes: RouteConfig[] = [
     label: 'Administración',
     path: '/admin',
     permissions: ['access_admin'],
+    roles: ['manager', 'admin'],
+  },
+  {
+    icon: 'layout-dashboard',
+    label: 'Dashboard',
+    path: '/dashboard',
+    permissions: ['view_dashboard'],
+    roles: ['manager', 'admin'],
+  },
+  {
+    icon: 'calendar',
+    label: 'Gestionar Eventos',
+    path: '/admin/events',
+    permissions: ['manage_events'],
+    roles: ['manager', 'admin'],
+  },
+  {
+    icon: 'ticket',
+    label: 'Gestionar Tickets',
+    path: '/manage-tickets',
+    permissions: ['manage_tickets'],
+    roles: ['manager', 'admin'],
+  },
+  {
+    icon: 'lock',
+    label: 'Sala Privada',
+    path: '/private-room',
+    permissions: ['access_private_room'],
+    roles: ['manager', 'admin'],
+  },
+  {
+    icon: 'scan',
+    label: 'Escaner',
+    path: '/scanner',
+    permissions: ['use_scanner'],
     roles: ['manager', 'admin'],
   },
 ]

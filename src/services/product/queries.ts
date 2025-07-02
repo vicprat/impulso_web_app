@@ -35,7 +35,7 @@ export const PRODUCT_FRAGMENT = `
         }
       }
     }
-    metafields(first: 20, namespace: "art_details") {
+    metafields(first: 20) {
       edges {
         node {
           namespace
@@ -121,7 +121,7 @@ export const CREATE_PRODUCT_MUTATION = `
             }
           }
         }
-        metafields(namespace: "art_details", first: 20) {
+        metafields(first: 20) {
           edges {
             node {
               namespace

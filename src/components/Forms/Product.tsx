@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Save, X } from 'lucide-react'
 import Image from 'next/image'
-import React, { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -13,11 +13,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,12 +29,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { Textarea } from '@/components/ui/textarea'
+import { type Product } from '@/models/Product'
 import { type CreateProductPayload, type UpdateProductPayload } from '@/services/product/types'
 
+import { Tiptap } from '../TipTap'
 import { ImageUploader } from './ImageUploader'
-
-import { type Product } from '@/models/Product'
 
 const productFormSchema = z.object({
   depth: z.string().optional(),
@@ -112,27 +111,27 @@ export function ProductForm({
     const tempDiv = document.createElement('div')
     tempDiv.innerHTML = html
     const paragraphs = tempDiv.getElementsByTagName('p')
-    return paragraphs.length > 0 ? paragraphs[0].textContent || '' : ''
+    return paragraphs.length > 0 ? (paragraphs[0].textContent ?? '') : ''
   }
 
   const form = useForm<ProductFormData>({
     defaultValues: {
-      depth: product?.artworkDetails?.depth || '',
+      depth: product?.artworkDetails.depth ?? '',
       description: extractDescription(product?.descriptionHtml),
-      handle: product?.handle || '',
-      height: product?.artworkDetails?.height || '',
-      inventoryQuantity: (variant?.inventoryQuantity || 1).toString(),
-      location: product?.artworkDetails?.location || '',
-      medium: product?.artworkDetails?.medium || '',
-      price: variant?.price?.amount || '0.00',
-      productType: product?.productType || '',
-      serie: product?.artworkDetails?.serie || '',
-      status: product?.status || 'DRAFT',
-      tags: product?.tags?.join(', ') || '',
-      title: product?.title || '',
-      vendor: product?.vendor || '',
-      width: product?.artworkDetails?.width || '',
-      year: product?.artworkDetails?.year || '',
+      handle: product?.handle ?? '',
+      height: product?.artworkDetails.height ?? '',
+      inventoryQuantity: (variant?.inventoryQuantity ?? 1).toString(),
+      location: product?.artworkDetails.location ?? '',
+      medium: product?.artworkDetails.medium ?? '',
+      price: variant?.price.amount ?? '0.00',
+      productType: product?.productType ?? '',
+      serie: product?.artworkDetails.serie ?? '',
+      status: product?.status ?? 'DRAFT',
+      tags: product?.tags.join(', ') ?? '',
+      title: product?.title ?? '',
+      vendor: product?.vendor ?? '',
+      width: product?.artworkDetails.width ?? '',
+      year: product?.artworkDetails.year ?? '',
     },
     resolver: zodResolver(productFormSchema),
   })
@@ -144,18 +143,18 @@ export function ProductForm({
   }, [product])
 
   const onSubmit = async (data: ProductFormData) => {
-    if (isEditing && product) {
+    if (isEditing) {
       const updatePayload: UpdateProductPayload = {
         description: data.description,
         details: {
-          artist: data.vendor || null,
-          depth: data.depth || null,
-          height: data.height || null,
-          location: data.location || null,
-          medium: data.medium || null,
-          serie: data.serie || null,
-          width: data.width || null,
-          year: data.year || null,
+          artist: data.vendor ?? null,
+          depth: data.depth ?? null,
+          height: data.height ?? null,
+          location: data.location ?? null,
+          medium: data.medium ?? null,
+          serie: data.serie ?? null,
+          width: data.width ?? null,
+          year: data.year ?? null,
         },
         id: product.id,
         inventoryQuantity: data.inventoryQuantity ? parseInt(data.inventoryQuantity) : undefined,
@@ -172,21 +171,21 @@ export function ProductForm({
       onSave(updatePayload)
     } else {
       const createPayload: CreateProductPayload = {
-        description: data.description || '',
+        description: data.description ?? '',
         details: {
-          artist: data.vendor || null,
-          depth: data.depth || null,
-          height: data.height || null,
-          location: data.location || null,
-          medium: data.medium || null,
-          serie: data.serie || null,
-          width: data.width || null,
-          year: data.year || null,
+          artist: data.vendor ?? null,
+          depth: data.depth ?? null,
+          height: data.height ?? null,
+          location: data.location ?? null,
+          medium: data.medium ?? null,
+          serie: data.serie ?? null,
+          width: data.width ?? null,
+          year: data.year ?? null,
         },
         images: newImages.length > 0 ? newImages : undefined,
         inventoryQuantity: parseInt(data.inventoryQuantity),
         price: data.price,
-        productType: data.productType || '',
+        productType: data.productType ?? '',
         status: data.status as 'ACTIVE' | 'DRAFT',
         tags: data.tags
           .split(',')
@@ -357,13 +356,11 @@ export function ProductForm({
                   <FormItem>
                     <FormLabel>Descripción</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder='Describe tu obra, técnica, inspiración...'
-                        className='min-h-[100px]'
-                        {...field}
+                      <Tiptap.Editor
+                        content={field.value ?? ''}
+                        onChange={(content) => field.onChange(content)}
                       />
                     </FormControl>
-                    <FormDescription>Describe los detalles de tu obra de arte.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -575,7 +572,7 @@ export function ProductForm({
                         SKU Actual
                       </Label>
                       <p className='rounded-md border bg-muted px-3 py-2 text-sm'>
-                        {variant.sku || 'Sin SKU'}
+                        {variant.sku ?? 'Sin SKU'}
                       </p>
                     </div>
                     <div>
@@ -600,7 +597,7 @@ export function ProductForm({
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
-              {isEditing && product?.images && product.images.length > 0 && (
+              {isEditing && product.images.length > 0 && (
                 <>
                   <div>
                     <Label className='mb-3 block text-sm font-medium'>Imágenes Actuales</Label>
@@ -610,7 +607,7 @@ export function ProductForm({
                           <div className='relative aspect-square'>
                             <Image
                               src={img.url}
-                              alt={img.altText || product.title}
+                              alt={img.altText ?? product.title}
                               fill
                               className='rounded-md object-cover'
                             />
@@ -621,7 +618,7 @@ export function ProductForm({
                             )}
                           </div>
                           <p className='text-center text-xs text-muted-foreground'>
-                            {img.altText || 'Sin texto alternativo'}
+                            {img.altText ?? 'Sin texto alternativo'}
                           </p>
                         </div>
                       ))}

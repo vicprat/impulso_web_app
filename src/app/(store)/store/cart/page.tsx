@@ -1,14 +1,14 @@
 'use client'
 
 import {
-  ShoppingCart,
-  Plus,
-  Minus,
-  X,
-  Loader2,
-  ShoppingBag,
   ArrowLeft,
   ArrowRight,
+  Loader2,
+  Minus,
+  Plus,
+  ShoppingBag,
+  ShoppingCart,
+  X,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -20,10 +20,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { formatCurrency } from '@/helpers'
 import { useCartActions } from '@/modules/cart/hook'
+import { formatCurrency } from '@/src/helpers'
+import { useAuth } from '@/src/modules/auth/context/useAuth'
 
 export default function CartPage() {
+  const { cart } = useAuth()
   const {
     applyDiscount,
     cartSummary,
@@ -391,9 +393,14 @@ export default function CartPage() {
                           return
                         }
 
+                        if (!cart || !cart.id) {
+                          toast.error('No se pudo obtener el carrito')
+                          return
+                        }
+
                         const response = await fetch('/api/checkout/create', {
                           body: JSON.stringify({
-                            cartId: localStorage.getItem('shopify_cart_id'),
+                            cartId: cart.id,
                           }),
                           headers: {
                             'Content-Type': 'application/json',

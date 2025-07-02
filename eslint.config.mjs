@@ -1,22 +1,22 @@
 import js from '@eslint/js'
-import tseslint from 'typescript-eslint'
 import globals from 'globals'
 import path from 'path'
+import tseslint from 'typescript-eslint'
 import { fileURLToPath } from 'url'
 
 // Importación de plugins (solo los esenciales sin conflictos)
 import nextPlugin from '@next/eslint-plugin-next'
+import tanstackQuery from '@tanstack/eslint-plugin-query'
+import checkFile from 'eslint-plugin-check-file'
+import importPlugin from 'eslint-plugin-import'
+import jsxA11y from 'eslint-plugin-jsx-a11y'
+import noSecrets from 'eslint-plugin-no-secrets'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
-import jsxA11y from 'eslint-plugin-jsx-a11y'
-import checkFile from 'eslint-plugin-check-file'
-import noSecrets from 'eslint-plugin-no-secrets'
 import sortDestructureKeys from 'eslint-plugin-sort-destructure-keys'
 import sortKeysFix from 'eslint-plugin-sort-keys-fix'
-import unusedImports from 'eslint-plugin-unused-imports'
-import importPlugin from 'eslint-plugin-import'
 import tailwindcss from 'eslint-plugin-tailwindcss'
-import tanstackQuery from '@tanstack/eslint-plugin-query'
+import unusedImports from 'eslint-plugin-unused-imports'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -108,15 +108,6 @@ const config = tseslint.config(
       // Tailwind CSS rules
       'tailwindcss/classnames-order': 'warn',
       'tailwindcss/no-contradicting-classname': 'error',
-
-      // File naming (sin conflictos)
-      'check-file/filename-naming-convention': [
-        'warn',
-        {
-          'src/components/**/*.tsx': 'PascalCase',
-          '**/*.{ts,tsx}': 'kebab-case',
-        },
-      ],
 
       // Import/Export optimizations (sin conflictos con prettier)
       'unused-imports/no-unused-imports': 'warn',

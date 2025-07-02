@@ -1,17 +1,17 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
 
 import { handleGraphQLErrors } from '@/lib/graphql'
 import { useAuth } from '@/modules/auth/context/useAuth'
 
 import { api } from './api'
 import {
-  type ShopifyCustomerProfile,
-  type CustomerOrder,
-  type CustomerUpdateInput,
+  type CustomerAddressesResult,
   type CustomerAddressInput,
   type CustomerBasicInfo,
+  type CustomerOrder,
   type CustomerOrdersResult,
-  type CustomerAddressesResult,
+  type CustomerUpdateInput,
+  type ShopifyCustomerProfile,
 } from './types'
 
 export const customerKeys = {

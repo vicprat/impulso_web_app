@@ -18,14 +18,6 @@ export const Client = () => {
     }
   }, [isAuthenticated, isLoading, router, redirect])
 
-  if (isLoading) {
-    return (
-      <div className='flex min-h-screen items-center justify-center'>
-        <div className='size-12 animate-spin rounded-full border-b-2 border-blue-600'></div>
-      </div>
-    )
-  }
-
   if (isAuthenticated) {
     return null
   }

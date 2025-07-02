@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import { Guard } from '@/components/Guards'
 import { useAuth } from '@/modules/auth/context/useAuth'
-import { useCustomerOrders, useCustomerOrder } from '@/modules/customer/hooks'
+import { useCustomerOrder, useCustomerOrders } from '@/modules/customer/hooks'
 import { useCurrentUser } from '@/modules/user/hooks/management'
 
 import { EnhancedUserProfile } from './components/EnhancedUserProfile'

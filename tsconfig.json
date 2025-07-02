@@ -36,7 +36,8 @@
       "@/services/*": ["src/services/*"],
       "@/prisma/*": ["prisma/*"],
       "@/scripts/*": ["scripts/*"],
-      "@/public/*": ["public/*"]
+      "@/public/*": ["public/*"],
+      "@/models/*": ["src/models/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

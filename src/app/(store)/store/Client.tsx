@@ -1,8 +1,8 @@
 'use client'
 
 import { Package2 } from 'lucide-react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { useState, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 
 import { Card } from '@/components/Card.tsx'
 import { Pagination } from '@/components/Pagination'
@@ -175,20 +175,20 @@ export const Client = () => {
   }
 
   return (
-    <div className='bg-surface min-h-screen'>
+    <div>
       <div className='container mx-auto px-4 py-6'>
         <div className='mb-8 flex flex-col items-center justify-between gap-4 sm:flex-row'>
-          <h1 className='text-on-surface text-3xl font-bold tracking-tight'>Todos los productos</h1>
+          <h1 className='text-3xl font-bold tracking-tight text-on-surface'>Todos los productos</h1>
           <div className='flex items-center gap-4'>
             <div className='flex items-center gap-3'>
               <label
                 htmlFor='limit-select'
-                className='text-on-surface-variant whitespace-nowrap text-sm font-medium'
+                className='whitespace-nowrap text-sm font-medium text-on-surface-variant'
               >
                 Mostrar:
               </label>
               <Select value={limitInUrl.toString()} onValueChange={handleLimitChange}>
-                <SelectTrigger className='bg-surface-container border-outline w-[140px] focus:border-primary'>
+                <SelectTrigger className='w-[140px] border-outline bg-surface-container focus:border-primary'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className=' border-outline-variant'>
@@ -226,16 +226,16 @@ export const Client = () => {
         ) : (
           <div className='py-16 text-center'>
             <div className='mx-auto max-w-md'>
-              <div className='bg-surface-container-highest mx-auto mb-6 flex size-16 items-center justify-center rounded-full'>
-                <Package2 className='text-on-surface-variant size-8' />
+              <div className='mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-surface-container-highest'>
+                <Package2 className='size-8 text-on-surface-variant' />
               </div>
-              <h3 className='text-on-surface mb-2 text-xl font-semibold'>
+              <h3 className='mb-2 text-xl font-semibold text-on-surface'>
                 No se encontraron productos
               </h3>
-              <p className='text-on-surface-variant mb-4'>
+              <p className='mb-4 text-on-surface-variant'>
                 No hay productos disponibles con los filtros aplicados.
               </p>
-              <p className='text-on-surface-variant text-sm'>
+              <p className='text-sm text-on-surface-variant'>
                 Intenta ajustar tus filtros o el límite de productos por página.
               </p>
             </div>

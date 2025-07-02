@@ -54,13 +54,13 @@ A continuación, se presenta la lista de tareas prioritarias para completar el e
 
 [ ] Módulo de Gestión Financiera de Eventos: Un panel de administración para ver la rentabilidad, asistencia y otros KPIs de los eventos realizados.
 
+[ ] Módulo de Invoices Personalizados: Crear una herramienta para que Admin/Manager puedan generar y descargar facturas personalizadas para ventas especiales.
+
 2. Herramientas de Contenido y Administración
 
 [ ] Blog: Crear un sistema de gestión de artículos y noticias para la galería.
 
 [ ] Perfiles Públicos: Desarrollar páginas de perfil públicas para Artistas, mostrando su biografía y obras. Considerar perfiles para Admin, Manager y Support si aplica.
-
-[ ] Módulo de Invoices Personalizados: Crear una herramienta para que Admin/Manager puedan generar y descargar facturas personalizadas para ventas especiales.
 
 3. Módulos de Artista y Administración (En progreso)
 

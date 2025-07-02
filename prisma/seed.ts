@@ -88,6 +88,12 @@ async function main() {
       resource: 'analytics',
       action: 'read',
     },
+    {
+      name: 'manage_events',
+      description: 'Gestionar eventos del sistema',
+      resource: 'events',
+      action: 'crud',
+    },
 
     // Permisos de productos (si planeas permitir gestión)
     { name: 'view_products', description: 'Ver productos', resource: 'products', action: 'read' },
@@ -233,6 +239,7 @@ async function main() {
         'manage_own_products',
         'manage_private_rooms',
         'view_private_rooms',
+        'manage_events',
       ],
     },
     {

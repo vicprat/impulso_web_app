@@ -19,13 +19,46 @@ const buttonVariants = cva(
         sm: 'h-8 rounded-md px-3 text-xs',
       },
       variant: {
-        default: 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
-        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
+        'container-destructive':
+          'hover:bg-error-container/80 bg-error-container text-on-error-container shadow-sm',
+
+        'container-success':
+          'hover:bg-success-container/80 bg-success-container text-on-success-container shadow-sm',
+
+        'container-warning':
+          'hover:bg-warning-container/80 bg-warning-container text-on-warning-container shadow-sm',
+
+        default: 'hover:bg-primary/90 bg-primary text-primary-foreground shadow',
+
+        destructive: 'hover:bg-destructive/90 bg-destructive text-destructive-foreground shadow-sm',
+
         ghost: 'hover:bg-accent hover:text-accent-foreground',
+
+        'ghost-destructive': 'hover:bg-destructive/10 text-destructive hover:text-destructive',
+
+        'ghost-success': 'hover:bg-success/10 text-success hover:text-success',
+
+        'ghost-warning': 'hover:bg-warning/10 text-warning hover:text-warning',
+
         link: 'text-primary underline-offset-4 hover:underline',
+
         outline:
           'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
+
+        'outline-destructive':
+          'border border-destructive bg-background text-destructive shadow-sm hover:bg-destructive hover:text-destructive-foreground',
+
+        'outline-success':
+          'border border-success bg-background text-success shadow-sm hover:bg-success hover:text-on-success',
+
+        'outline-warning':
+          'border border-warning bg-background text-warning shadow-sm hover:bg-warning hover:text-on-warning',
+
+        secondary: 'hover:bg-secondary/80 bg-secondary text-secondary-foreground shadow-sm',
+
+        success: 'hover:bg-success/90 bg-success text-on-success shadow-sm',
+
+        warning: 'hover:bg-warning/90 bg-warning text-on-warning shadow-sm',
       },
     },
   }

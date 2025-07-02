@@ -85,14 +85,14 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
 
             <p className=' mb-8 text-lg leading-relaxed'>{companyDescription}</p>
 
-            <div className='rounded-2xl border border-white/10 bg-black/20 p-6 backdrop-blur-xl'>
+            <div className='rounded-2xl border border-white/10 bg-black/40 p-6 backdrop-blur-xl'>
               <h3 className='mb-3 text-lg font-bold text-white'>¿Necesitas ayuda?</h3>
               <p className='mb-4 text-sm leading-relaxed text-white/70'>
                 Si tienes alguna duda o problema para acceder a tu cuenta, contáctanos y te
                 ayudaremos.
               </p>
               <Link href={`mailto:${contactEmail}`}>
-                <Button className=' rounded-lg  font-bold '>Contactar Soporte</Button>
+                <Button className='w-full font-semibold text-white '>Contactar Soporte</Button>
               </Link>
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                 ¿Necesitas ayuda?{' '}
                 <Link
                   href={`mailto:${contactEmail}`}
-                  className='font-medium text-orange-400 transition-colors hover:text-orange-300'
+                  className='hover:text-primary/80 font-medium text-primary transition-colors'
                 >
                   Contáctanos
                 </Link>

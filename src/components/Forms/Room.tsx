@@ -1,8 +1,8 @@
 'use client'
 
-import { X, Plus, Search, Trash2, Edit3, Eye } from 'lucide-react'
+import { Edit3, Eye, Plus, Search, Trash2, X } from 'lucide-react'
 import Image from 'next/image'
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -36,7 +36,7 @@ export interface PrivateRoomData {
   }[]
 }
 
-export interface PrivateRoomFormProps {
+export interface Props {
   mode: PrivateRoomMode
   initialData?: PrivateRoomData
   onSubmit: (data: PrivateRoomData) => Promise<void>
@@ -46,7 +46,7 @@ export interface PrivateRoomFormProps {
   showUserSelection?: boolean
 }
 
-export const Room = ({
+export const Room: React.FC<Props> = ({
   initialData,
   isLoading = false,
   mode,
@@ -54,14 +54,12 @@ export const Room = ({
   onSubmit,
   showUserSelection = true,
   submitButtonText,
-}: PrivateRoomFormProps) => {
-  // Estados del formulario
-  const [selectedUser, setSelectedUser] = useState<string | null>(initialData?.userId || null)
+}) => {
+  const [selectedUser, setSelectedUser] = useState<string | null>(initialData?.userId ?? null)
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([])
-  const [roomName, setRoomName] = useState<string>(initialData?.name || '')
-  const [roomDescription, setRoomDescription] = useState<string>(initialData?.description || '')
+  const [roomName, setRoomName] = useState<string>(initialData?.name ?? '')
+  const [roomDescription, setRoomDescription] = useState<string>(initialData?.description ?? '')
 
-  // Estados para la búsqueda de productos
   const [productSearchQuery, setProductSearchQuery] = useState('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const debouncedProductSearchQuery = useDebounce(productSearchQuery, 300)
@@ -69,15 +67,13 @@ export const Room = ({
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Determinar si el formulario es de solo lectura
   const isReadOnly = mode === 'view' || mode === 'delete'
   const isDeleteMode = mode === 'delete'
 
-  // Hooks para datos
   const { data: usersData, isLoading: isLoadingUsers } = useUsersManagement({
     role: 'vip_customer',
   })
-  const users = usersData?.users || []
+  const users = usersData?.users ?? []
 
   const {
     data: productsData,
@@ -95,17 +91,14 @@ export const Room = ({
       enabled: !!debouncedProductSearchQuery && !isReadOnly,
     }
   )
-  const products = productsData?.products || []
+  const products = productsData?.products ?? []
 
-  // ✅ CORRECCIÓN: Cargar productos iniciales cuando se proporciona initialData
   useEffect(() => {
     if (initialData?.products && initialData.products.length > 0) {
-      // Los productos ya vienen completos desde el componente padre
       setSelectedProducts(initialData.products)
     }
   }, [initialData])
 
-  // Event handlers para dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -127,7 +120,6 @@ export const Room = ({
     }
   }, [debouncedProductSearchQuery, products.length, isLoadingProducts, isReadOnly])
 
-  // Handlers
   const handleAddProduct = (product: Product) => {
     if (!selectedProducts.some((p) => p.id === product.id)) {
       setSelectedProducts([...selectedProducts, product])
@@ -164,9 +156,8 @@ export const Room = ({
       description: roomDescription || null,
       id: initialData?.id,
       name: roomName,
-      // ✅ CORRECCIÓN: Asegurar que se envíen los IDs correctos de Shopify
       products: selectedProducts.map((p) => ({
-        productId: p.id, // El ID del producto de Shopify (GID)
+        productId: p.id,
       })),
 
       userId: selectedUser,
@@ -175,14 +166,13 @@ export const Room = ({
     await onSubmit(formData)
   }
 
-  // Configuración de texto según el modo
   const getConfig = () => {
     switch (mode) {
       case 'create':
         return {
           alertVariant: null,
           icon: <Plus className='size-5' />,
-          submitText: submitButtonText || 'Create Private Room',
+          submitText: submitButtonText ?? 'Create Private Room',
           subtitle: 'Set up a personalized shopping experience for your VIP customers',
           title: 'Create New Private Room',
         }
@@ -190,7 +180,7 @@ export const Room = ({
         return {
           alertVariant: null,
           icon: <Edit3 className='size-5' />,
-          submitText: submitButtonText || 'Update Private Room',
+          submitText: submitButtonText ?? 'Update Private Room',
           subtitle: 'Update the private room details and products',
           title: 'Edit Private Room',
         }
@@ -206,7 +196,7 @@ export const Room = ({
         return {
           alertVariant: 'destructive' as const,
           icon: <Trash2 className='size-5' />,
-          submitText: submitButtonText || 'Delete Private Room',
+          submitText: submitButtonText ?? 'Delete Private Room',
           subtitle: 'This action cannot be undone',
           title: 'Delete Private Room',
         }
@@ -226,7 +216,6 @@ export const Room = ({
   return (
     <div className='container mx-auto max-w-4xl p-6'>
       <div className='space-y-6'>
-        {/* Alert para modo delete */}
         {isDeleteMode && (
           <Alert variant='destructive'>
             <Trash2 className='size-4' />
@@ -237,7 +226,6 @@ export const Room = ({
         )}
 
         <form onSubmit={handleSubmit} className='space-y-6'>
-          {/* Room Name */}
           <div className='space-y-2'>
             <Label htmlFor='roomName'>Room Name</Label>
             <Input
@@ -250,7 +238,6 @@ export const Room = ({
             />
           </div>
 
-          {/* Room Description */}
           <div className='space-y-2'>
             <Label htmlFor='roomDescription'>Description (Optional)</Label>
             <Input
@@ -262,17 +249,16 @@ export const Room = ({
             />
           </div>
 
-          {/* User Selection */}
           {showUserSelection && (
             <div className='space-y-2'>
               <Label htmlFor='userSelect'>VIP User</Label>
               {isReadOnly ? (
                 <Input
-                  value={users.find((u) => u.id === selectedUser)?.email || 'Loading...'}
+                  value={users.find((u) => u.id === selectedUser)?.email ?? 'Loading...'}
                   disabled
                 />
               ) : (
-                <Select value={selectedUser || undefined} onValueChange={setSelectedUser} required>
+                <Select value={selectedUser ?? undefined} onValueChange={setSelectedUser} required>
                   <SelectTrigger>
                     <SelectValue
                       placeholder={
@@ -298,7 +284,6 @@ export const Room = ({
             </div>
           )}
 
-          {/* Product Search */}
           {!isDeleteMode && (
             <div className='space-y-4'>
               <div className='space-y-2'>
@@ -318,7 +303,6 @@ export const Room = ({
                       />
                     </div>
 
-                    {/* Search Dropdown */}
                     {isDropdownOpen && (
                       <div className='absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border bg-background shadow-lg'>
                         {isLoadingProducts && (
@@ -346,7 +330,7 @@ export const Room = ({
 
                         {products.length > 0 && !isLoadingProducts && (
                           <div className='py-2'>
-                            <div className='border-b bg-muted/50 px-3 py-2 text-xs font-semibold text-muted-foreground'>
+                            <div className='bg-muted/50 border-b px-3 py-2 text-xs font-semibold text-muted-foreground'>
                               Products ({products.length} found)
                             </div>
                             {products.map((product) => (
@@ -354,11 +338,11 @@ export const Room = ({
                                 key={product.id}
                                 type='button'
                                 onClick={() => handleAddProduct(product)}
-                                className='flex w-full items-center gap-4 border-b border-border/50 p-3 text-left transition-colors last:border-b-0 hover:bg-muted/50'
+                                className='border-border/50 hover:bg-muted/50 flex w-full items-center gap-4 border-b p-3 text-left transition-colors last:border-b-0'
                               >
                                 <div className='relative size-12 shrink-0 overflow-hidden rounded-md bg-muted'>
                                   <Image
-                                    src={product.images[0]?.url || '/placeholder.svg'}
+                                    src={product.images[0]?.url ?? '/placeholder.svg'}
                                     alt={product.title}
                                     fill
                                     sizes='48px'
@@ -392,7 +376,6 @@ export const Room = ({
                 )}
               </div>
 
-              {/* Selected Products */}
               <div className='space-y-3'>
                 <div className='flex items-center justify-between'>
                   <Label className='text-sm font-medium'>
@@ -425,7 +408,7 @@ export const Room = ({
                       {selectedProducts.map((product) => (
                         <div
                           key={product.id}
-                          className='flex items-center justify-between rounded-lg border bg-muted/30 p-3'
+                          className='bg-muted/30 flex items-center justify-between rounded-lg border p-3'
                         >
                           <div className='flex min-w-0 flex-1 items-center gap-3'>
                             <div className='relative size-10 shrink-0 overflow-hidden rounded-md bg-muted'>
@@ -451,7 +434,7 @@ export const Room = ({
                               variant='ghost'
                               size='sm'
                               onClick={() => handleRemoveProduct(product.id)}
-                              className='ml-2 text-destructive hover:bg-destructive/10 hover:text-destructive'
+                              className='hover:bg-destructive/10 ml-2 text-destructive hover:text-destructive'
                             >
                               <X className='size-4' />
                             </Button>
@@ -465,7 +448,6 @@ export const Room = ({
             </div>
           )}
 
-          {/* Submit Button */}
           {config.submitText && (
             <div className='pt-4'>
               <Button

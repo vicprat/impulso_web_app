@@ -11,12 +11,59 @@ const badgeVariants = cva(
     },
     variants: {
       variant: {
-        default: 'border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80',
+        default: 'hover:bg-primary/80 border-transparent bg-primary text-primary-foreground shadow',
         destructive:
-          'border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80',
-        outline: 'text-foreground',
+          'hover:bg-destructive/80 border-transparent bg-destructive text-destructive-foreground shadow',
+        active: 'border-transparent bg-success-container text-on-success-container shadow-sm',
+        error: 'hover:bg-error/80 border-transparent bg-error text-on-error shadow',
+
+        archived: 'border-transparent bg-error-container text-on-error-container shadow-sm',
+
+        'error-container':
+          'hover:bg-error-container/80 border-transparent bg-error-container text-on-error-container',
+
+        available: 'border-transparent bg-success text-on-success shadow-sm',
+
+        outline: 'border-outline text-foreground',
+
+        draft: 'border-transparent bg-warning-container text-on-warning-container shadow-sm',
+
+        'outline-error': 'hover:bg-error/10 border-error bg-transparent text-error',
+
+        'outline-primary': 'hover:bg-primary/10 border-primary bg-transparent text-primary',
+
+        'outline-success': 'hover:bg-success/10 border-success bg-transparent text-success',
+
+        'outline-warning': 'hover:bg-warning/10 border-warning bg-transparent text-warning',
+
+        'primary-container':
+          'hover:bg-primary-container/80 border-transparent bg-primary-container text-on-primary-container',
+
         secondary:
-          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
+          'hover:bg-secondary/80 border-transparent bg-secondary text-secondary-foreground',
+
+        'secondary-container':
+          'hover:bg-secondary-container/80 border-transparent bg-secondary-container text-on-secondary-container',
+
+        success: 'hover:bg-success/80 border-transparent bg-success text-on-success shadow',
+
+        'success-container':
+          'hover:bg-success-container/80 border-transparent bg-success-container text-on-success-container',
+
+        'surface-high':
+          'border-transparent bg-surface-container-high text-on-surface hover:bg-surface-container-highest',
+
+        'surface-variant':
+          'border-transparent bg-surface-container text-on-surface hover:bg-surface-container-high',
+
+        'tertiary-container':
+          'bg-tertiary-container text-on-tertiary-container hover:bg-tertiary-container/80 border-transparent',
+
+        unavailable: 'border-transparent bg-error text-on-error shadow-sm',
+
+        warning: 'hover:bg-warning/80 border-transparent bg-warning text-on-warning shadow',
+        'warning-container':
+          'hover:bg-warning-container/80 border-transparent bg-warning-container text-on-warning-container',
       },
     },
   }
