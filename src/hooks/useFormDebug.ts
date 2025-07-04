@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { type UseFormReturn, type FieldValues } from 'react-hook-form'
+import { type FieldValues, type UseFormReturn } from 'react-hook-form'
 
 export const useFormDebug = <T extends FieldValues>(
   form: UseFormReturn<T>,

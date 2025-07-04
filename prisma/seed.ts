@@ -9,163 +9,163 @@ async function main() {
   const permissions = [
     // Permisos de cuenta de usuario
     {
-      name: 'view_profile',
-      description: 'Ver perfil de usuario',
-      resource: 'profile',
       action: 'read',
-    },
-    {
-      name: 'update_profile',
-      description: 'Actualizar perfil de usuario',
+      description: 'Ver perfil de usuario',
+      name: 'view_profile',
       resource: 'profile',
-      action: 'update',
     },
-    { name: 'view_orders', description: 'Ver órdenes propias', resource: 'orders', action: 'read' },
-    { name: 'create_orders', description: 'Crear órdenes', resource: 'orders', action: 'create' },
     {
-      name: 'cancel_orders',
-      description: 'Cancelar órdenes propias',
-      resource: 'orders',
       action: 'update',
+      description: 'Actualizar perfil de usuario',
+      name: 'update_profile',
+      resource: 'profile',
+    },
+    { action: 'read', description: 'Ver órdenes propias', name: 'view_orders', resource: 'orders' },
+    { action: 'create', description: 'Crear órdenes', name: 'create_orders', resource: 'orders' },
+    {
+      action: 'update',
+      description: 'Cancelar órdenes propias',
+      name: 'cancel_orders',
+      resource: 'orders',
     },
 
     // Permisos de direcciones
     {
-      name: 'view_addresses',
-      description: 'Ver direcciones propias',
-      resource: 'addresses',
       action: 'read',
+      description: 'Ver direcciones propias',
+      name: 'view_addresses',
+      resource: 'addresses',
     },
     {
-      name: 'manage_addresses',
-      description: 'Gestionar direcciones propias',
-      resource: 'addresses',
       action: 'crud',
+      description: 'Gestionar direcciones propias',
+      name: 'manage_addresses',
+      resource: 'addresses',
     },
 
     // Permisos de carrito
     {
-      name: 'manage_cart',
-      description: 'Gestionar carrito de compras',
-      resource: 'cart',
       action: 'crud',
+      description: 'Gestionar carrito de compras',
+      name: 'manage_cart',
+      resource: 'cart',
     },
 
     // Permisos de administración
     {
-      name: 'access_admin',
+      action: 'read',
       description: 'Acceder al panel de administración',
+      name: 'access_admin',
       resource: 'admin',
-      action: 'read',
     },
     {
-      name: 'manage_users',
+      action: 'crud',
       description: 'Gestionar usuarios del sistema',
+      name: 'manage_users',
       resource: 'users',
-      action: 'crud',
     },
     {
-      name: 'manage_roles',
+      action: 'crud',
       description: 'Gestionar roles y permisos',
+      name: 'manage_roles',
       resource: 'roles',
-      action: 'crud',
     },
     {
-      name: 'view_all_orders',
-      description: 'Ver todas las órdenes',
-      resource: 'orders',
       action: 'read_all',
-    },
-    {
-      name: 'manage_all_orders',
-      description: 'Gestionar todas las órdenes',
+      description: 'Ver todas las órdenes',
+      name: 'view_all_orders',
       resource: 'orders',
+    },
+    {
       action: 'crud_all',
+      description: 'Gestionar todas las órdenes',
+      name: 'manage_all_orders',
+      resource: 'orders',
     },
     {
-      name: 'view_analytics',
-      description: 'Ver analíticas y reportes',
-      resource: 'analytics',
       action: 'read',
+      description: 'Ver analíticas y reportes',
+      name: 'view_analytics',
+      resource: 'analytics',
     },
     {
-      name: 'manage_events',
-      description: 'Gestionar eventos del sistema',
-      resource: 'events',
       action: 'crud',
+      description: 'Gestionar eventos del sistema',
+      name: 'manage_events',
+      resource: 'events',
     },
 
     // Permisos de productos (si planeas permitir gestión)
-    { name: 'view_products', description: 'Ver productos', resource: 'products', action: 'read' },
+    { action: 'read', description: 'Ver productos', name: 'view_products', resource: 'products' },
     {
-      name: 'manage_products',
-      description: 'Gestionar productos',
-      resource: 'products',
       action: 'crud',
+      description: 'Gestionar productos',
+      name: 'manage_products',
+      resource: 'products',
     },
     {
-      name: 'manage_inventory',
-      description: 'Gestionar inventario',
-      resource: 'inventory',
       action: 'crud',
+      description: 'Gestionar inventario',
+      name: 'manage_inventory',
+      resource: 'inventory',
     },
 
     // Permisos de artistas (si planeas permitir gestión)
     {
-      name: 'manage_own_products',
+      action: 'crud_own',
       description: 'Crear, editar y borrar sus propios productos',
+      name: 'manage_own_products',
       resource: 'products',
-      action: 'crud_own',
     },
     {
-      name: 'manage_own_blog_posts',
+      action: 'crud_own',
       description: 'Crear y editar sus propios artículos de blog',
+      name: 'manage_own_blog_posts',
       resource: 'blog_posts',
-      action: 'crud_own',
     },
     {
-      name: 'manage_all_blog_posts',
-      description: 'Gestionar todos los artículos de blog',
-      resource: 'blog_posts',
       action: 'crud_all',
+      description: 'Gestionar todos los artículos de blog',
+      name: 'manage_all_blog_posts',
+      resource: 'blog_posts',
     },
 
     // Permisos especiales
     {
-      name: 'export_data',
-      description: 'Exportar datos del sistema',
-      resource: 'system',
       action: 'export',
+      description: 'Exportar datos del sistema',
+      name: 'export_data',
+      resource: 'system',
     },
-    { name: 'view_logs', description: 'Ver logs del sistema', resource: 'logs', action: 'read' },
+    { action: 'read', description: 'Ver logs del sistema', name: 'view_logs', resource: 'logs' },
     {
-      name: 'manage_private_rooms',
-      description: 'Gestionar private rooms',
-      resource: 'private_rooms',
       action: 'crud',
+      description: 'Gestionar private rooms',
+      name: 'manage_private_rooms',
+      resource: 'private_rooms',
     },
     {
-      name: 'view_private_rooms',
-      description: 'Ver private rooms',
-      resource: 'private_rooms',
       action: 'read',
+      description: 'Ver private rooms',
+      name: 'view_private_rooms',
+      resource: 'private_rooms',
     },
   ]
 
   console.log('📝 Creando permisos...')
   for (const permission of permissions) {
     await prisma.permission.upsert({
-      where: { name: permission.name },
-      update: permission,
       create: permission,
+      update: permission,
+      where: { name: permission.name },
     })
   }
 
   // Crear roles básicos
   const roles = [
     {
-      name: 'customer',
       description: 'Cliente básico del sistema',
+      name: 'customer',
       permissions: [
         'view_profile',
         'update_profile',
@@ -179,8 +179,8 @@ async function main() {
       ],
     },
     {
-      name: 'vip_customer',
       description: 'Cliente VIP con beneficios adicionales',
+      name: 'vip_customer',
       permissions: [
         'view_profile',
         'update_profile',
@@ -196,8 +196,8 @@ async function main() {
       ],
     },
     {
-      name: 'artist',
       description: 'Colaborador que puede gestionar sus propias obras',
+      name: 'artist',
       permissions: [
         'view_profile',
         'update_profile',
@@ -207,8 +207,8 @@ async function main() {
       ],
     },
     {
-      name: 'support',
       description: 'Personal de soporte al cliente',
+      name: 'support',
       permissions: [
         'view_profile',
         'view_all_orders',
@@ -219,8 +219,8 @@ async function main() {
       ],
     },
     {
-      name: 'manager',
       description: 'Gerente con acceso amplio al sistema',
+      name: 'manager',
       permissions: [
         'access_admin',
         'view_profile',
@@ -243,8 +243,8 @@ async function main() {
       ],
     },
     {
-      name: 'admin',
       description: 'Administrador con acceso completo',
+      name: 'admin',
       permissions: permissions.map((p) => p.name), // Todos los permisos
     },
   ]
@@ -254,9 +254,9 @@ async function main() {
     const { permissions: rolePermissions, ...roleInfo } = roleData
 
     const role = await prisma.role.upsert({
-      where: { name: roleInfo.name },
-      update: roleInfo,
       create: roleInfo,
+      update: roleInfo,
+      where: { name: roleInfo.name },
     })
 
     // Asignar permisos al rol
@@ -268,16 +268,16 @@ async function main() {
 
       if (permission) {
         await prisma.rolePermission.upsert({
-          where: {
-            roleId_permissionId: {
-              roleId: role.id,
-              permissionId: permission.id,
-            },
+          create: {
+            permissionId: permission.id,
+            roleId: role.id,
           },
           update: {},
-          create: {
-            roleId: role.id,
-            permissionId: permission.id,
+          where: {
+            roleId_permissionId: {
+              permissionId: permission.id,
+              roleId: role.id,
+            },
           },
         })
       }
@@ -286,21 +286,21 @@ async function main() {
 
   // Crear configuraciones de la aplicación
   const appConfigs = [
-    { key: 'default_user_role', value: 'customer', type: 'string' },
-    { key: 'auto_assign_vip_threshold', value: '1000', type: 'number' },
-    { key: 'session_timeout_minutes', value: '60', type: 'number' },
-    { key: 'enable_registration', value: 'true', type: 'boolean' },
-    { key: 'require_email_verification', value: 'false', type: 'boolean' },
-    { key: 'max_login_attempts', value: '5', type: 'number' },
-    { key: 'lockout_duration_minutes', value: '15', type: 'number' },
+    { key: 'default_user_role', type: 'string', value: 'customer' },
+    { key: 'auto_assign_vip_threshold', type: 'number', value: '1000' },
+    { key: 'session_timeout_minutes', type: 'number', value: '60' },
+    { key: 'enable_registration', type: 'boolean', value: 'true' },
+    { key: 'require_email_verification', type: 'boolean', value: 'false' },
+    { key: 'max_login_attempts', type: 'number', value: '5' },
+    { key: 'lockout_duration_minutes', type: 'number', value: '15' },
   ]
 
   console.log('⚙️ Creando configuraciones de la aplicación...')
   for (const config of appConfigs) {
     await prisma.appConfig.upsert({
-      where: { key: config.key },
-      update: { value: config.value, type: config.type },
       create: config,
+      update: { type: config.type, value: config.value },
+      where: { key: config.key },
     })
   }
 

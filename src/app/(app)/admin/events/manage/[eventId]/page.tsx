@@ -12,8 +12,9 @@ import {
   useGetPendingIncomeEntries,
   type FinancialEntry,
 } from '@/services/financial-events/hooks'
-import { Dialog, useDialogForm } from '@/src/components/Dialog'
+import { Dialog } from '@/src/components/Dialog'
 import { Form } from '@/src/components/Forms'
+import { useDialog } from '@/src/hooks/useDialog'
 
 interface Props {
   params: Promise<{ eventId: string }>
@@ -42,9 +43,9 @@ export default function FinancialEventDetailPage({ params }: Props) {
     isLoading: isLoadingPendingIncomes,
   } = useGetPendingIncomeEntries()
 
-  const incomeDialog = useDialogForm()
-  const expenseDialog = useDialogForm()
-  const entryEditDialog = useDialogForm()
+  const incomeDialog = useDialog()
+  const expenseDialog = useDialog()
+  const entryEditDialog = useDialog()
 
   const [editingEntry, setEditingEntry] = useState<FinancialEntry | null>(null)
 

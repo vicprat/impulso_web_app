@@ -1,18 +1,18 @@
 import { makeCustomerRequest } from '@/lib/shopify'
 
 import {
-  GET_CUSTOMER_PROFILE_QUERY,
+  CREATE_CUSTOMER_ADDRESS_MUTATION,
+  DELETE_CUSTOMER_ADDRESS_MUTATION,
+  GET_BASIC_INFO_QUERY,
   GET_CUSTOMER_ADDRESSES_QUERY,
   GET_CUSTOMER_ORDERS_QUERY,
+  GET_CUSTOMER_PROFILE_QUERY,
   GET_SINGLE_ORDER_QUERY,
-  GET_BASIC_INFO_QUERY,
-  UPDATE_CUSTOMER_MUTATION,
-  CREATE_CUSTOMER_ADDRESS_MUTATION,
-  UPDATE_CUSTOMER_ADDRESS_MUTATION,
-  DELETE_CUSTOMER_ADDRESS_MUTATION,
   SET_DEFAULT_ADDRESS_MUTATION,
+  UPDATE_CUSTOMER_ADDRESS_MUTATION,
+  UPDATE_CUSTOMER_MUTATION,
 } from './queries'
-import { type CustomerAddressInput } from './types'
+import { type AllOrdersResult, type CustomerAddressInput } from './types'
 
 export const api = {
   createAddress: (address: CustomerAddressInput) => {
@@ -25,6 +25,37 @@ export const api = {
     makeCustomerRequest(DELETE_CUSTOMER_ADDRESS_MUTATION, { addressId }),
   getAddresses: (first = 10) => makeCustomerRequest(GET_CUSTOMER_ADDRESSES_QUERY, { first }),
 
+  getAllOrders: async (params?: {
+    first?: number
+    after?: string
+    query?: string
+  }): Promise<AllOrdersResult> => {
+    const { after, first = 10, query } = params ?? {}
+
+    const searchParams = new URLSearchParams()
+    searchParams.append('first', first.toString())
+    if (after) {
+      searchParams.append('after', after)
+    }
+    if (query) {
+      searchParams.append('query', query)
+    }
+
+    const response = await fetch(`/api/orders/all?${searchParams.toString()}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+      throw new Error(errorData.error ?? `HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    return response.json()
+  },
   getBasicInfo: () => makeCustomerRequest(GET_BASIC_INFO_QUERY),
   getOrder: (orderId: string) => makeCustomerRequest(GET_SINGLE_ORDER_QUERY, { id: orderId }),
   getOrders: (params: { first?: number; after?: string } = {}) => {

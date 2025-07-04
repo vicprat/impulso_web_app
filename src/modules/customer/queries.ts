@@ -216,16 +216,93 @@ export const GET_SINGLE_ORDER_QUERY = `
         amount
         currencyCode
       }
-      fulfillments {
+      fulfillments(first: 10) {
         edges {
           node {
             id
             status
-            trackingCompany
-            trackingNumbers
             updatedAt
           }
         }
+      }
+    }
+  }
+`
+
+export const GET_ALL_ORDERS_QUERY = `
+  query GetAllOrders($first: Int!, $after: String, $query: String) {
+    orders(first: $first, after: $after, query: $query) {
+      edges {
+        node {
+          id
+          name
+          processedAt
+          createdAt
+          updatedAt
+          displayFulfillmentStatus
+          displayFinancialStatus
+          currencyCode
+          totalPriceSet {
+            shopMoney {
+              amount
+              currencyCode
+            }
+          }
+          currentTotalPriceSet {
+            shopMoney {
+              amount
+              currencyCode
+            }
+          }
+          customer {
+            id
+            firstName
+            lastName
+            email
+          }
+          shippingAddress {
+            firstName
+            lastName
+            address1
+            city
+            province
+            country
+            zip
+          }
+          lineItems(first: 5) {
+            edges {
+              node {
+                id
+                title
+                quantity
+                currentQuantity
+                originalUnitPriceSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+                discountedUnitPriceSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+              }
+            }
+          }
+          fulfillments(first: 5) {
+            id
+            status
+          }
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
       }
     }
   }

@@ -66,11 +66,7 @@ export const Main: React.FC<Props> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          size={triggerSize}
-          variant={triggerVariant}
-          className={`flex items-center gap-2 ${triggerClassName}`}
-        >
+        <Button variant={triggerVariant} className={`flex items-center gap-2 ${triggerClassName}`}>
           {TriggerIcon && <TriggerIcon className='size-4' />}
           {triggerText}
         </Button>

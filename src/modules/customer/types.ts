@@ -110,16 +110,130 @@ export interface SyncOperation {
   error?: string
 }
 
+export interface MoneyAmount {
+  amount: string
+  currencyCode: string
+}
+
+export interface ShopMoney {
+  amount: string
+  currencyCode: string
+}
+
+export interface PriceSet {
+  shopMoney: ShopMoney
+}
+
+export interface LineItem {
+  id: string
+  title: string
+  quantity: number
+  price: MoneyAmount
+}
+
+export interface Fulfillment {
+  id: string
+  status: string
+  updatedAt: string
+}
+
 export interface CustomerOrder {
   id: string
   name: string
   processedAt: string
+  createdAt: string
+  updatedAt: string
+  totalPrice: MoneyAmount
+  fulfillmentStatus: string
+  financialStatus: string
+  currencyCode: string
+  email: string
+  cancelledAt?: string | null
+  cancelReason?: string | null
+  confirmationNumber: string
+  edited: boolean
+  requiresShipping: boolean
+  statusPageUrl?: string
+  subtotal: MoneyAmount
+  totalRefunded: MoneyAmount
+  totalShipping: MoneyAmount
+  totalTax: MoneyAmount
+  lineItems: {
+    edges: {
+      node: LineItem
+    }[]
+  }
+  shippingAddress?: CustomerAddress
+  billingAddress?: CustomerAddress
+  fulfillments: {
+    edges: {
+      node: Fulfillment
+    }[]
+  }
+}
+
+export interface AdminOrder {
+  id: string
+  name: string
+  processedAt: string
+  createdAt: string
+  updatedAt: string
+  displayFulfillmentStatus: string
+  displayFinancialStatus: string
+  currencyCode: string
+  totalPriceSet?: PriceSet
+  currentTotalPriceSet?: PriceSet
+  customer: {
+    id: string
+    firstName?: string
+    lastName?: string
+    email: string
+  }
+  shippingAddress?: {
+    firstName?: string
+    lastName?: string
+    address1?: string
+    city?: string
+    province?: string
+    country?: string
+    zip?: string
+  }
+  lineItems: {
+    edges: {
+      node: {
+        id: string
+        title: string
+        quantity: number
+        currentQuantity: number
+        originalUnitPriceSet?: PriceSet
+        discountedUnitPriceSet?: PriceSet
+      }
+    }[]
+  }
+  fulfillments: {
+    id: string
+    status: string
+  }[]
+}
+
+export interface Order {
+  id: string
+  name: string
+  processedAt: string
+  displayFinancialStatus?: string
+  displayFulfillmentStatus?: string
+  fulfillmentStatus?: string
   totalPrice: {
     amount: string
     currencyCode: string
   }
-  fulfillmentStatus: string
-  financialStatus: string
+  customer?: {
+    id: string
+    firstName?: string
+    lastName?: string
+    email: string
+  }
+  lineItemsCount: number
 }
 
 export interface CustomerAddress {
@@ -129,9 +243,9 @@ export interface CustomerAddress {
   address1: string
   address2?: string
   city: string
-  province: string
   zip: string
   country: string
+  province?: string
   phone?: string
 }
 
@@ -143,7 +257,6 @@ export interface CustomerBasicInfo {
   }
 }
 
-// Tipo para PageInfo de GraphQL
 export interface PageInfo {
   hasNextPage: boolean
   hasPreviousPage: boolean
@@ -151,21 +264,76 @@ export interface PageInfo {
   endCursor?: string | null
 }
 
-// Tipo para el resultado de órdenes
+export interface CustomerOrderResult {
+  data: {
+    order: CustomerOrder
+  }
+  extensions?: {
+    cost: {
+      requestedQueryCost: number
+      actualQueryCost: number
+      throttleStatus: {
+        maximumAvailable: number
+        currentlyAvailable: number
+        restoreRate: number
+      }
+    }
+  }
+}
+
 export interface CustomerOrdersResult {
-  customer: {
-    orders: {
+  customer?: {
+    orders?: {
       edges: { node: CustomerOrder }[]
       pageInfo: PageInfo
     }
   }
 }
 
-// Tipo para el resultado de direcciones
 export interface CustomerAddressesResult {
   customer: {
     addresses: {
       edges: { node: CustomerAddress }[]
     }
+  }
+}
+
+export type FulfillmentStatus = 'FULFILLED' | 'UNFULFILLED' | 'PARTIALLY_FULFILLED' | 'RESTOCKED'
+
+export type FinancialStatus =
+  | 'AUTHORIZED'
+  | 'PAID'
+  | 'PARTIALLY_PAID'
+  | 'PARTIALLY_REFUNDED'
+  | 'PENDING'
+  | 'REFUNDED'
+  | 'VOIDED'
+
+export type FulfillmentStatusType = 'SUCCESS' | 'CANCELLED' | 'ERROR' | 'FAILURE'
+
+export interface CustomerOrderSummary {
+  id: string
+  name: string
+  processedAt: string
+  totalPrice: MoneyAmount
+  fulfillmentStatus: FulfillmentStatus
+  financialStatus: FinancialStatus
+}
+
+export interface OrderFilters {
+  status?: FulfillmentStatus
+  financialStatus?: FinancialStatus
+  dateFrom?: string
+  dateTo?: string
+  first?: number
+  after?: string
+  before?: string
+  last?: number
+}
+
+export interface AllOrdersResult {
+  orders: {
+    edges: { node: AdminOrder }[]
+    pageInfo: PageInfo
   }
 }

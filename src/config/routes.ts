@@ -85,25 +85,17 @@ export const CustomerRoutes: RouteConfig[] = [
     permissions: ['view_profile', 'update_profile'],
   },
   {
-    children: [
-      {
-        icon: 'list',
-        label: 'Todos los Pedidos',
-        path: '/orders',
-        permissions: ['view_orders'],
-      },
-      {
-        breadcrumb: 'Detalle',
-        hideInNav: true,
-        label: 'Detalle del Pedido',
-        path: '/orders/:id',
-        permissions: ['view_orders'],
-      },
-    ],
     description: 'Historial de pedidos',
     icon: 'package',
     label: 'Mis Pedidos',
     path: '/orders',
+    permissions: ['view_orders'],
+  },
+  {
+    breadcrumb: 'Detalle',
+    hideInNav: true,
+    label: 'Detalle del Pedido',
+    path: '/orders/:id',
     permissions: ['view_orders'],
   },
   {

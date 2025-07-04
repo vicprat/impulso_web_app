@@ -23,7 +23,7 @@ interface Props<TData> {
   onPageSizeChange?: (size: number) => void
 }
 
-export function TablePagination<TData>({
+export const Pagination = <TData,>({
   currentPage,
   hasNextPage,
   hasPreviousPage,
@@ -33,7 +33,7 @@ export function TablePagination<TData>({
   onPageSizeChange,
   table,
   totalItems,
-}: Props<TData>) {
+}: Props<TData>) => {
   if (isServerSide) {
     const handlePageSizeChange = (value: string) => {
       const newSize = Number(value)
@@ -97,7 +97,7 @@ export function TablePagination<TData>({
           </div>
 
           <div className='flex w-[100px] items-center justify-center text-sm font-medium'>
-            Página {currentPage || 1}
+            Página {currentPage ?? 1}
             {!hasNextPage && ' (última)'}
           </div>
 

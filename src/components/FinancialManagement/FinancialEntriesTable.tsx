@@ -15,7 +15,6 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { DataTable } from '@/components/ui/data-table'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -31,12 +30,13 @@ import {
   useRevertIncomeAssignment,
 } from '@/services/financial-events/hooks'
 
+import { Table } from '../Table'
 import { financialEntriesColumns } from './columns'
 import { GenericTableSelectionToolbar } from './Toolbar'
 
 import type { TableMeta } from '@tanstack/react-table'
 
-interface FinancialEntriesTableProps {
+interface Props {
   eventId: string
   financialEntries: FinancialEntry[]
   onEditEntry: (expense: FinancialEntry) => void
@@ -53,7 +53,7 @@ interface FinancialEntryTableMeta extends TableMeta<FinancialEntry> {
   isRevertingIncome: boolean
 }
 
-export const FinancialEntriesTable: React.FC<FinancialEntriesTableProps> = ({
+export const FinancialEntriesTable: React.FC<Props> = ({
   actionButtons,
   financialEntries,
   isFetching,
@@ -321,7 +321,7 @@ export const FinancialEntriesTable: React.FC<FinancialEntriesTableProps> = ({
           />
 
           <div className='rounded-md border'>
-            <DataTable
+            <Table.Data
               table={table}
               emptyMessage={
                 globalFilter

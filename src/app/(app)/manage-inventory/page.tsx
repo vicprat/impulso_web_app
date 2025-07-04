@@ -1,15 +1,13 @@
 'use client'
 
-import { useReactTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table'
-import { PlusCircle, Search, Filter, Download, RefreshCw } from 'lucide-react'
+import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
+import { Download, Filter, PlusCircle, RefreshCw, Search } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-import { TablePagination } from '@/components/Pagination/Table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/ui/data-table'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -22,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useGetProductsPaginated, useUpdateProduct } from '@/services/product/hook'
 import { type UpdateProductPayload } from '@/services/product/types'
+import { Table } from '@/src/components/Table'
 
 import { columns } from './columns'
 
@@ -63,7 +62,7 @@ export default function ManageInventoryPage() {
 
   const updateMutation = useUpdateProduct()
 
-  const products = paginatedData?.products || []
+  const products = paginatedData?.products ?? []
   const pageInfo = paginatedData?.pageInfo
 
   const filteredProducts =
@@ -106,7 +105,7 @@ export default function ManageInventoryPage() {
   )
 
   const handleRefresh = useCallback(() => {
-    refetch()
+    void refetch()
     toast.info('Actualizando datos...')
   }, [refetch])
 
@@ -245,7 +244,7 @@ export default function ManageInventoryPage() {
       )}
 
       <div className='rounded-md border'>
-        <DataTable
+        <Table.Data
           table={table}
           emptyMessage={
             debouncedSearch
@@ -257,7 +256,7 @@ export default function ManageInventoryPage() {
         />
       </div>
 
-      <TablePagination
+      <Table.Pagination
         table={table}
         isServerSide={true}
         hasNextPage={pageInfo?.hasNextPage}

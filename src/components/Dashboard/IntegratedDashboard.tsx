@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import { Guard } from '@/components/Guards'
 import { useAuth } from '@/modules/auth/context/useAuth'
-import { useCustomerOrder, useCustomerOrders } from '@/modules/customer/hooks'
+
 import { useCurrentUser } from '@/modules/user/hooks/management'
 
 import { EnhancedUserProfile } from './components/EnhancedUserProfile'
@@ -14,22 +14,9 @@ import { UserManagementAdmin } from './components/UserManagementAdmin'
 function DashboardContent() {
   const { hasPermission, hasRole } = useAuth()
   const { currentUser, isLoading: userLoading } = useCurrentUser()
-  const [activeSection, setActiveSection] = useState<'overview' | 'profile' | 'orders' | 'admin'>(
+  const [activeSection, setActiveSection] = useState<'overview' | 'profile' | 'admin'>(
     'overview'
   )
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
-
-  // Queries para órdenes
-  const {
-    data: ordersData,
-    isLoading: ordersLoading,
-    refetch: refetchOrders,
-  } = useCustomerOrders({ first: 10 })
-  const { data: orderDetail } = useCustomerOrder(selectedOrderId || '', {
-    enabled: !!selectedOrderId,
-  })
-
-  const orders = ordersData?.data?.customer?.orders?.edges?.map((edge) => edge.node) || []
 
   if (userLoading || !currentUser) {
     return (
@@ -56,12 +43,7 @@ function DashboardContent() {
       id: 'profile',
       label: 'Perfil',
     },
-    {
-      description: 'Historial de compras',
-      icon: '📦',
-      id: 'orders',
-      label: 'Órdenes',
-    },
+    
   ]
 
   // Agregar sección de administración si tiene permisos
@@ -74,14 +56,7 @@ function DashboardContent() {
     })
   }
 
-  const handleLoadOrders = () => {
-    setActiveSection('orders')
-    refetchOrders()
-  }
-
-  const handleViewOrderDetails = (orderId: string) => {
-    setSelectedOrderId(orderId)
-  }
+  
 
   return (
     <div className='min-h-screen bg-gray-100'>
@@ -189,16 +164,7 @@ function DashboardContent() {
                       <span className='text-gray-400'>→</span>
                     </button>
 
-                    <button
-                      onClick={handleLoadOrders}
-                      className='flex w-full items-center justify-between rounded-lg border border-gray-200 p-3 text-left hover:bg-gray-50'
-                    >
-                      <div className='flex items-center'>
-                        <span className='mr-3 text-green-600'>📦</span>
-                        <span className='text-sm font-medium'>Ver Órdenes</span>
-                      </div>
-                      <span className='text-gray-400'>→</span>
-                    </button>
+                    
 
                     {hasPermission('manage_users') && (
                       <button
@@ -221,105 +187,7 @@ function DashboardContent() {
           {/* Profile Section */}
           {activeSection === 'profile' && <EnhancedUserProfile />}
 
-          {/* Orders Section */}
-          {activeSection === 'orders' && (
-            <div className='rounded-lg bg-white p-6 shadow-md'>
-              <div className='mb-6 flex items-center justify-between'>
-                <h2 className='text-xl font-semibold'>Mis Órdenes</h2>
-                <button
-                  onClick={() => refetchOrders()}
-                  disabled={ordersLoading}
-                  className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50'
-                >
-                  {ordersLoading ? 'Cargando...' : 'Actualizar'}
-                </button>
-              </div>
-
-              {selectedOrderId && orderDetail ? (
-                <div>
-                  <button
-                    onClick={() => setSelectedOrderId(null)}
-                    className='mb-4 text-blue-600 hover:text-blue-800'
-                  >
-                    ← Volver a la lista
-                  </button>
-                  <div className='rounded-lg bg-gray-50 p-4'>
-                    <h3 className='font-semibold'>Orden {orderDetail.data.name}</h3>
-                    <p>Estado: {orderDetail.data.fulfillmentStatus}</p>
-                    <p>
-                      Total: {orderDetail.data.totalPrice.amount}{' '}
-                      {orderDetail.data.totalPrice.currencyCode}
-                    </p>
-                    <p>Fecha: {new Date(orderDetail.data.processedAt).toLocaleDateString()}</p>
-
-                    {orderDetail.data.lineItems?.edges?.length > 0 && (
-                      <div className='mt-4'>
-                        <h4 className='mb-2 font-medium'>Productos:</h4>
-                        <div className='space-y-2'>
-                          {orderDetail.data.lineItems.edges.map(({ node }: any) => (
-                            <div key={node.id} className='text-sm'>
-                              {node.quantity}x {node.title} - {node.price.amount}{' '}
-                              {node.price.currencyCode}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  {ordersLoading ? (
-                    <div className='space-y-3'>
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className='h-16 animate-pulse rounded bg-gray-200'></div>
-                      ))}
-                    </div>
-                  ) : orders.length > 0 ? (
-                    <div className='space-y-3'>
-                      {orders.map((order) => (
-                        <div
-                          key={order.id}
-                          className='rounded-lg border border-gray-200 p-4 hover:bg-gray-50'
-                        >
-                          <div className='flex items-start justify-between'>
-                            <div>
-                              <h3 className='font-medium'>{order.name}</h3>
-                              <p className='text-sm text-gray-600'>
-                                {order.fulfillmentStatus} •{' '}
-                                {new Date(order.processedAt).toLocaleDateString()}
-                              </p>
-                              <p className='mt-1 text-sm font-medium'>
-                                {order.totalPrice.amount} {order.totalPrice.currencyCode}
-                              </p>
-                              <button
-                                onClick={() => handleViewOrderDetails(order.id)}
-                                className='mt-1 rounded bg-blue-100 px-2 py-1 text-xs text-blue-700 hover:bg-blue-200'
-                              >
-                                Ver detalles
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className='py-8 text-center'>
-                      <span className='text-6xl'>📦</span>
-                      <h3 className='mt-4 text-lg font-medium text-gray-900'>No hay órdenes</h3>
-                      <p className='mt-2 text-gray-600'>Aún no tienes órdenes en tu cuenta</p>
-                      <button
-                        onClick={() => refetchOrders()}
-                        className='mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
-                      >
-                        Buscar órdenes
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+          
 
           {/* Admin Section */}
           {activeSection === 'admin' && (

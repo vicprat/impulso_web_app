@@ -6,10 +6,8 @@ import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-import { TablePagination } from '@/components/Pagination/Table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/ui/data-table'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -22,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useGetEventsPaginated, useUpdateEvent } from '@/services/event/hook'
 import { type UpdateEventPayload } from '@/services/event/types'
+import { Table } from '@/src/components/Table'
 import { TableSelectionToolbar } from '@/src/components/TableSelectionToolbar'
 
 import { columns } from './columns'
@@ -259,19 +258,19 @@ export default function ManageEventsPage() {
       <TableSelectionToolbar table={table} />
 
       <div className='rounded-md border'>
-        <DataTable
+        <Table.Data
           table={table}
           emptyMessage={
             debouncedSearch
               ? `No se encontraron eventos que coincidan con "${debouncedSearch}"`
               : statusFilter !== 'all'
-                ? `No hay eventos con estado "${statusFilter}"`
+                ? `No hay eventos con estsado "${statusFilter}"`
                 : 'No se encontraron eventos.'
           }
         />
       </div>
 
-      <TablePagination
+      <Table.Pagination
         table={table}
         isServerSide={true}
         hasNextPage={pageInfo?.hasNextPage}

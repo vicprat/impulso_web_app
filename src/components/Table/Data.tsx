@@ -11,19 +11,19 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-interface DataTableProps<TData extends { id: string | number }> {
+interface Props<TData extends { id: string | number }> {
   table: TanstackTable<TData>
   emptyMessage?: string
   editingRowClassName?: string
   className?: string
 }
 
-export function DataTable<TData extends { id: string | number }>({
+export const Data = <TData extends { id: string | number }>({
   className,
   editingRowClassName = 'bg-yellow-50/50',
   emptyMessage = 'No se encontraron resultados.',
   table,
-}: DataTableProps<TData>) {
+}: Props<TData>) => {
   return (
     <Table className={className}>
       <TableHeader>

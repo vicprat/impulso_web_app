@@ -46,17 +46,7 @@ Diseño base de la tienda y páginas de producto.
 🚧 Pendientes por Desarrollar
 A continuación, se presenta la lista de tareas prioritarias para completar el ecosistema.
 
-1. Módulo de Exclusividad y Eventos
-
-[ ] Eventos como Productos: Crear un tipo de producto específico para "Eventos", permitiendo su venta y gestión a través de Shopify.
-
-[ ] Módulo de Tickets para Eventos: Desarrollar una sección donde los usuarios que compren acceso a un evento puedan ver y descargar su "boleto" digital.
-
-[ ] Módulo de Gestión Financiera de Eventos: Un panel de administración para ver la rentabilidad, asistencia y otros KPIs de los eventos realizados.
-
-[ ] Módulo de Invoices Personalizados: Crear una herramienta para que Admin/Manager puedan generar y descargar facturas personalizadas para ventas especiales.
-
-2. Herramientas de Contenido y Administración
+1. Herramientas de Contenido y Administración
 
 [ ] Blog: Crear un sistema de gestión de artículos y noticias para la galería.
 
