@@ -12,7 +12,7 @@ interface Props {
   description?: string
   children: React.ReactNode
 
-  triggerText: string
+  triggerText?: string
   triggerIcon?: LucideIcon
   triggerVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
   triggerSize?: 'default' | 'sm' | 'lg' | 'icon'

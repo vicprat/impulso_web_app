@@ -1,13 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
-import { Upload, X, CheckCircle, Loader2 } from 'lucide-react'
-import React, { useState } from 'react'
+import { CheckCircle, Loader2, Upload, X } from 'lucide-react'
+import React, { useEffect, useId, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 interface ImageUploaderProps {
-  onUploadComplete: (resourceUrl: string) => void
+  value?: string | null // Current image URL
+  onChange: (resourceUrl: string | null) => void // Callback for when the URL changes
+  hidePreview?: boolean // New prop to hide the internal preview
 }
 
 interface UploadedImage {
@@ -19,20 +21,41 @@ interface UploadedImage {
   status: 'uploading' | 'completed' | 'error'
 }
 
-export const ImageUploader: React.FC<ImageUploaderProps> = ({ onUploadComplete }) => {
-  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
+export const ImageUploader: React.FC<ImageUploaderProps> = ({ hidePreview, onChange, value }) => {
+  const inputId = useId()
+  const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+
+  useEffect(() => {
+    if (value && !uploadedImage) {
+      // Initialize if a value is provided and no image is currently set
+      setUploadedImage({
+        filename: value.substring(value.lastIndexOf('/') + 1),
+        id: 'initial',
+
+        // Size is unknown for initial URL
+        preview: value,
+
+        // A dummy ID for initial value
+        resourceUrl: value,
+        // Extract filename from URL
+        size: 0,
+        status: 'completed',
+      })
+    } else if (!value && uploadedImage && uploadedImage.id === 'initial') {
+      // Clear if value becomes null and it was an initial image
+      setUploadedImage(null)
+    }
+  }, [value, uploadedImage])
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
     if (!files || files.length === 0) return
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      await uploadFile(file)
-    }
+    const file = files[0] // Only take the first file for single upload
+    await uploadFile(file)
 
-    event.target.value = ''
+    event.target.value = '' // Clear the input
   }
 
   const uploadFile = async (file: File) => {
@@ -48,7 +71,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onUploadComplete }
       status: 'uploading',
     }
 
-    setUploadedImages((prev) => [...prev, newImage])
+    setUploadedImage(newImage)
     setIsUploading(true)
 
     try {
@@ -62,41 +85,34 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onUploadComplete }
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Error al subir el archivo')
+        throw new Error(errorData.error ?? 'Error al subir el archivo')
       }
 
       const data = await response.json()
 
-      setUploadedImages((prev) =>
-        prev.map((img) =>
-          img.id === uploadId
-            ? { ...img, resourceUrl: data.resourceUrl, status: 'completed' as const }
-            : img
-        )
+      setUploadedImage((prev) =>
+        prev ? { ...prev, resourceUrl: data.resourceUrl, status: 'completed' as const } : null
       )
 
-      onUploadComplete(data.resourceUrl)
+      onChange(data.resourceUrl) // Notify parent of the new URL
       toast.success(`Imagen "${file.name}" subida exitosamente`)
     } catch (error) {
-      setUploadedImages((prev) =>
-        prev.map((img) => (img.id === uploadId ? { ...img, status: 'error' as const } : img))
-      )
+      setUploadedImage((prev) => (prev ? { ...prev, status: 'error' as const } : null))
 
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
       toast.error(`Error subiendo "${file.name}": ${errorMessage}`)
+      onChange(null) // Notify parent of upload failure
     } finally {
       setIsUploading(false)
     }
   }
 
-  const removeImage = (imageId: string) => {
-    setUploadedImages((prev) => {
-      const imageToRemove = prev.find((img) => img.id === imageId)
-      if (imageToRemove?.preview) {
-        URL.revokeObjectURL(imageToRemove.preview)
-      }
-      return prev.filter((img) => img.id !== imageId)
-    })
+  const removeImage = () => {
+    if (uploadedImage?.preview) {
+      URL.revokeObjectURL(uploadedImage.preview)
+    }
+    setUploadedImage(null)
+    onChange(null) // Notify parent that the image is removed
   }
 
   const formatFileSize = (bytes: number): string => {
@@ -114,7 +130,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onUploadComplete }
           type='button'
           variant='outline'
           disabled={isUploading}
-          onClick={() => document.getElementById('file-upload')?.click()}
+          onClick={() => document.getElementById(inputId)?.click()}
           className='flex items-center gap-2'
         >
           {isUploading ? (
@@ -122,93 +138,91 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onUploadComplete }
           ) : (
             <Upload className='size-4' />
           )}
-          {isUploading ? 'Subiendo...' : 'Subir Imágenes'}
+          {isUploading ? 'Subiendo...' : 'Subir Imagen'}
         </Button>
 
         <Input
-          id='file-upload'
+          id={inputId}
           type='file'
           accept='image/*'
-          multiple
           onChange={handleFileChange}
           className='hidden'
         />
 
-        <span className='text-sm text-muted-foreground'>JPG, PNG, WebP (máx. 10MB cada una)</span>
+        <span className='text-sm text-muted-foreground'>JPG, PNG, WebP (máx. 10MB)</span>
       </div>
 
-      {uploadedImages.length > 0 && (
+      {uploadedImage && !hidePreview && (
         <div className='space-y-2'>
-          <h4 className='text-sm font-medium'>Imágenes para el producto:</h4>
-          <div className='grid grid-cols-2 gap-4 md:grid-cols-3'>
-            {uploadedImages.map((image) => (
-              <div
-                key={image.id}
-                className={`group relative overflow-hidden rounded-lg border-2 transition-all ${
-                  image.status === 'completed'
-                    ? 'border-green-200 bg-green-50'
-                    : image.status === 'error'
-                      ? 'border-red-200 bg-red-50'
-                      : 'border-yellow-200 bg-yellow-50'
-                }`}
-              >
-                <div className='relative aspect-square'>
-                  <img
-                    src={image.preview}
-                    alt={image.filename}
-                    className='size-full object-cover'
-                  />
+          <div
+            key={uploadedImage.id}
+            className={`group relative overflow-hidden rounded-lg border-2 transition-all ${
+              uploadedImage.status === 'completed'
+                ? 'border-green-200 bg-green-50'
+                : uploadedImage.status === 'error'
+                  ? 'border-red-200 bg-red-50'
+                  : 'border-yellow-200 bg-yellow-50'
+            }`}
+          >
+            <div className='relative aspect-square'>
+              <img
+                src={uploadedImage.preview}
+                alt={uploadedImage.filename}
+                className='size-full object-cover'
+              />
 
-                  <div className='absolute inset-0 flex items-center justify-center bg-black/50'>
-                    {image.status === 'uploading' && (
-                      <Loader2 className='size-6 animate-spin text-white' />
-                    )}
-                    {image.status === 'completed' && (
-                      <CheckCircle className='size-6 text-green-400' />
-                    )}
-                    {image.status === 'error' && <X className='size-6 text-red-400' />}
-                  </div>
-
-                  <Button
-                    type='button'
-                    variant='destructive'
-                    size='sm'
-                    className='absolute right-2 top-2 size-6 p-0 opacity-0 transition-opacity group-hover:opacity-100'
-                    onClick={() => removeImage(image.id)}
-                  >
-                    <X className='size-3' />
-                  </Button>
-                </div>
-
-                <div className='space-y-1 p-2'>
-                  <p className='truncate text-xs font-medium' title={image.filename}>
-                    {image.filename}
-                  </p>
-                  <p className='text-xs text-muted-foreground'>{formatFileSize(image.size)}</p>
-                  {image.status === 'completed' && (
-                    <p className='text-xs font-medium text-green-600'>✅ Listo para usar</p>
-                  )}
-                  {image.status === 'error' && (
-                    <p className='text-xs font-medium text-red-600'>❌ Error en subida</p>
-                  )}
-                  {image.status === 'uploading' && (
-                    <p className='text-xs font-medium text-yellow-600'>⏳ Subiendo...</p>
-                  )}
-                </div>
+              <div className='absolute inset-0 flex items-center justify-center bg-black/50'>
+                {uploadedImage.status === 'uploading' && (
+                  <Loader2 className='size-6 animate-spin text-white' />
+                )}
+                {uploadedImage.status === 'completed' && (
+                  <CheckCircle className='size-6 text-green-400' />
+                )}
+                {uploadedImage.status === 'error' && <X className='size-6 text-red-400' />}
               </div>
-            ))}
+
+              <Button
+                type='button'
+                variant='destructive'
+                size='sm'
+                className='absolute right-2 top-2 size-6 p-0 opacity-0 transition-opacity group-hover:opacity-100'
+                onClick={removeImage}
+              >
+                <X className='size-3' />
+              </Button>
+            </div>
+
+            <div className='space-y-1 p-2'>
+              <p className='truncate text-xs font-medium' title={uploadedImage.filename}>
+                {uploadedImage.filename}
+              </p>
+              {uploadedImage.size > 0 && (
+                <p className='text-xs text-muted-foreground'>
+                  {formatFileSize(uploadedImage.size)}
+                </p>
+              )}
+              {uploadedImage.status === 'completed' && (
+                <p className='text-xs font-medium text-green-600'>✅ Listo para usar</p>
+              )}
+              {uploadedImage.status === 'error' && (
+                <p className='text-xs font-medium text-red-600'>❌ Error en subida</p>
+              )}
+              {uploadedImage.status === 'uploading' && (
+                <p className='text-xs font-medium text-yellow-600'>⏳ Subiendo...</p>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {uploadedImages.length === 0 && (
+      {!uploadedImage && (
         <div className='rounded-lg border-2 border-dashed border-gray-300 py-6 text-center'>
           <Upload className='mx-auto mb-2 size-8 text-gray-400' />
           <p className='text-sm text-gray-600'>
-            Haz clic en &quot;Subir Imágenes&quot; para agregar fotos de tu obra
+            Haz clic en &quot;Subir Imagen&quot; para agregar una foto
           </p>
           <p className='mt-1 text-xs text-gray-500'>
-            Las imágenes se optimizarán automáticamente para la web
+            La imagen se optimizará automáticamente para la web
           </p>
         </div>
       )}

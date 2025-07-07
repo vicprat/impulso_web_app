@@ -1,44 +1,28 @@
-import { PrismaClient } from '@prisma/client'
+// src/app/api/users/[id]/roles/route.ts
 import { type NextRequest, NextResponse } from 'next/server'
 
-import { AuthService } from '@/modules/auth/service'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
+import { requirePermission } from '@/modules/auth/server/server'
+import { updateUserRole } from '@/modules/user/user.service' // ✅ Importar método actualizado
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const authConfig = {
-      clientId: process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID!,
-      clientSecret: process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET,
-      redirectUri: `${process.env.NEXTAUTH_URL}/api/auth/callback`,
-      shopId: process.env.SHOPIFY_SHOP_ID!,
-    }
-
-    const authService = new AuthService(authConfig)
-    const accessToken = request.cookies.get('access_token')?.value
-
-    if (!accessToken) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
-    const session = await authService.getSessionByAccessToken(accessToken)
-    if (!session?.user.permissions.includes('manage_roles')) {
-      return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
-    }
+    const session = await requirePermission('manage_roles')
 
     const targetUserId = params.id
-    const { roles } = await request.json()
+    const { role } = await request.json() // ✅ Recibir un solo rol
 
-    if (!Array.isArray(roles)) {
-      return NextResponse.json({ error: 'Roles debe ser un array' }, { status: 400 })
+    if (!role || typeof role !== 'string') {
+      return NextResponse.json({ error: 'Role debe ser un string válido' }, { status: 400 })
     }
 
-    const existingRoles = await prisma.role.findMany({
-      where: { name: { in: roles } },
+    // Verificar que el rol existe
+    const existingRole = await prisma.role.findUnique({
+      where: { name: role },
     })
 
-    if (existingRoles.length !== roles.length) {
-      return NextResponse.json({ error: 'Algunos roles no existen' }, { status: 400 })
+    if (!existingRole) {
+      return NextResponse.json({ error: 'El rol no existe' }, { status: 400 })
     }
 
     const hasAdminRole = session.user.roles.includes('admin')
@@ -46,9 +30,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     if (!hasSuperAdminRole) {
       const restrictedRoles = ['admin', 'super_admin']
-      const hasRestrictedRole = roles.some((role) => restrictedRoles.includes(role))
+      const isRestrictedRole = restrictedRoles.includes(role)
 
-      if (hasRestrictedRole && !hasAdminRole) {
+      if (isRestrictedRole && !hasAdminRole) {
         return NextResponse.json(
           {
             error: 'No tienes permisos para asignar roles administrativos',
@@ -58,27 +42,15 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       }
     }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.userRole.deleteMany({
-        where: { userId: targetUserId },
-      })
+    // ✅ USAR: Método actualizado que maneja UserRole
+    const updatedUser = await updateUserRole(targetUserId, role)
 
-      const roleRecords = await tx.role.findMany({
-        where: { name: { in: roles } },
-      })
-
-      await tx.userRole.createMany({
-        data: roleRecords.map((role) => ({
-          assignedBy: session.user.id,
-          roleId: role.id,
-          userId: targetUserId,
-        })),
-      })
+    return NextResponse.json({
+      success: true,
+      user: updatedUser,
     })
-
-    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error updating user roles:', error)
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+    console.error('Error updating user role:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

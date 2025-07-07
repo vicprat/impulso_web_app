@@ -1,43 +1,19 @@
-import { PrismaClient } from '@prisma/client'
 import { type NextRequest, NextResponse } from 'next/server'
 
-import { AuthService } from '@/modules/auth/service'
+import { requirePermission } from '@/modules/auth/server/server'
+import { reactivateUser } from '@/modules/user/user.service'
 
-const prisma = new PrismaClient()
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const authConfig = {
-      clientId: process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID!,
-      clientSecret: process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET,
-      redirectUri: `${process.env.NEXTAUTH_URL}/api/auth/callback`,
-      shopId: process.env.SHOPIFY_SHOP_ID!,
-    }
-
-    const authService = new AuthService(authConfig)
-    const accessToken = request.cookies.get('access_token')?.value
-
-    if (!accessToken) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
-    const session = await authService.getSessionByAccessToken(accessToken)
-    if (!session?.user.permissions.includes('manage_users')) {
-      return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
-    }
+    await requirePermission('manage_users')
 
     const targetUserId = params.id
 
-    await prisma.user.update({
-      data: {
-        isActive: true,
-        updatedAt: new Date(),
-      },
-      where: { id: targetUserId },
-    })
+    await reactivateUser(targetUserId)
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error reactivating user:', error)
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

@@ -22,7 +22,7 @@ interface Props {
   children: React.ReactNode
 
   // Trigger button
-  triggerText: string
+  triggerText?: string
   triggerIcon?: LucideIcon
   triggerVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
   triggerSize?: 'default' | 'sm' | 'lg' | 'icon'
@@ -66,10 +66,15 @@ export const Main: React.FC<Props> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant={triggerVariant} className={`flex items-center gap-2 ${triggerClassName}`}>
-          {TriggerIcon && <TriggerIcon className='size-4' />}
-          {triggerText}
-        </Button>
+        {triggerText && (
+          <Button
+            variant={triggerVariant}
+            className={`flex items-center gap-2 ${triggerClassName}`}
+          >
+            {TriggerIcon && <TriggerIcon className='size-4' />}
+            {triggerText}
+          </Button>
+        )}
       </DialogTrigger>
 
       <DialogContent className={`${getMaxWidthClass(maxWidth)} ${contentClassName}`}>

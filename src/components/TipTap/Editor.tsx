@@ -4,6 +4,7 @@ import Heading from '@tiptap/extension-heading'
 import TextAlign from '@tiptap/extension-text-align'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import { useEffect } from 'react'
 
 import { Toolbar } from './Toolbar'
 
@@ -18,7 +19,7 @@ export const Editor: React.FC<Props> = ({ content, onChange }) => {
     editorProps: {
       attributes: {
         class:
-          'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl max-w-none border border-border rounded-md p-4 min-h-[300px] focus:outline-none dark:prose-invert',
+          'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl max-w-none border border-border rounded-md p-4 min-h-[300px] focus:outline-none dark:prose-invert bg-background',
       },
     },
     extensions: [
@@ -38,6 +39,11 @@ export const Editor: React.FC<Props> = ({ content, onChange }) => {
     },
   })
 
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content)
+    }
+  }, [editor, content])
   return (
     <div className='flex flex-col justify-stretch gap-4'>
       <Toolbar editor={editor} />

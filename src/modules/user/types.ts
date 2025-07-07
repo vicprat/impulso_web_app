@@ -12,6 +12,8 @@ export interface UserProfile {
   updatedAt: Date
   lastLoginAt?: Date
 
+  isPublic: boolean // ✅ NUEVO: Campo para visibilidad pública del perfil
+
   // Estado de sincronización
   needsShopifySync?: boolean
 
@@ -30,7 +32,7 @@ export interface UserProfile {
     }
   }
 
-  // Control de acceso
+  // Control de acceso - mantener como arrays para compatibilidad
   roles: string[]
   permissions: string[]
 
@@ -44,6 +46,45 @@ export interface UserProfile {
       push: boolean
     }
   }
+}
+
+// ✅ NUEVO: Tipo para los datos crudos de la base de datos con UserRole
+export interface UserWithUserRole {
+  id: string
+  shopifyCustomerId: string
+  email: string
+  firstName?: string
+  lastName?: string
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+  lastLoginAt?: Date
+
+  // Relación UserRole de la base de datos
+  UserRole: {
+    id: string
+    userId: string
+    roleId: string
+    assignedAt: Date
+    assignedBy?: string
+    role: {
+      id: string
+      name: string
+      description?: string
+      permissions: {
+        id: string
+        roleId: string
+        permissionId: string
+        permission: {
+          id: string
+          name: string
+          description?: string
+          resource?: string
+          action?: string
+        }
+      }[]
+    }
+  }[]
 }
 
 export interface UserManagementContextType {
@@ -71,7 +112,10 @@ export interface UserManagementContextType {
   // Acciones administrativas
   getAllUsers: (filters?: UserFilters) => Promise<void>
   getUserById: (id: string) => Promise<UserProfile | null>
-  updateUserRole: (userId: string, roles: string[]) => Promise<void>
+
+  // ✅ ACTUALIZADO: Un solo rol en lugar de array
+  updateUserRole: (userId: string, role: string) => Promise<void>
+
   deactivateUser: (userId: string) => Promise<void>
   reactivateUser: (userId: string) => Promise<void>
 
@@ -85,10 +129,63 @@ export interface UserFilters {
   search?: string
   role?: string
   isActive?: boolean
+  isPublic?: boolean // ✅ NUEVO: Filtro para visibilidad pública del perfil
   page?: number
   limit?: number
   sortBy?: 'createdAt' | 'lastLoginAt' | 'email' | 'firstName'
   sortOrder?: 'asc' | 'desc'
+}
+
+// ✅ NUEVO: Tipos para operaciones de roles
+export interface RoleAssignment {
+  userId: string
+  roleName: string
+  assignedBy?: string
+}
+
+export interface UserRoleInfo {
+  id: string
+  name: string
+  description?: string
+  assignedAt: Date
+  assignedBy?: string
+}
+
+// ✅ NUEVO: Tipo para crear/actualizar usuarios
+export interface UserCreateInput {
+  shopifyCustomerId: string
+  email: string
+  firstName?: string
+  lastName?: string
+  roleId?: string
+}
+
+export interface UserUpdateInput {
+  email?: string
+  firstName?: string
+  lastName?: string
+  isActive?: boolean
+}
+
+// ✅ ACTUALIZADO: Inputs para perfil y links
+export interface ProfileUpdateInput {
+  occupation?: string | null
+  description?: string | null
+  bio?: string | null
+}
+
+export interface LinkCreateInput {
+  platform: string
+  url: string
+  order?: number
+  isPrimary?: boolean
+}
+
+export interface LinkUpdateInput {
+  platform?: string
+  url?: string
+  order?: number
+  isPrimary?: boolean
 }
 
 export class AuthenticationError extends Error {
@@ -96,4 +193,29 @@ export class AuthenticationError extends Error {
     super(message)
     this.name = 'AuthenticationError'
   }
+}
+
+export class AuthorizationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AuthorizationError'
+  }
+}
+
+// ✅ NUEVO: Tipos para transformar datos de DB a frontend
+export interface UserTransformer {
+  /**
+   * Convierte un usuario con UserRole de la DB a UserProfile para el frontend
+   */
+  fromUserWithUserRole(user: UserWithUserRole): UserProfile
+
+  /**
+   * Extrae roles de UserRole array
+   */
+  extractRoles(userRoles: UserWithUserRole['UserRole']): string[]
+
+  /**
+   * Extrae permisos de UserRole array
+   */
+  extractPermissions(userRoles: UserWithUserRole['UserRole']): string[]
 }

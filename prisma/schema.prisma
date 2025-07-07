@@ -9,7 +9,7 @@ datasource db {
 
 model User {
   id                String    @id @default(cuid())
-  shopifyCustomerId String    @unique // GID del customer de Shopify
+  shopifyCustomerId String    @unique
   email             String    @unique
   firstName         String?
   lastName          String?
@@ -18,20 +18,62 @@ model User {
   updatedAt         DateTime  @updatedAt
   lastLoginAt       DateTime?
 
-  roles         UserRole[]
-  sessionTokens SessionToken[]
-  activityLogs  ActivityLog[]
+  roleId            String?
+  role              Role?     @relation(fields: [roleId], references: [id])
 
-  articles ArticleMetadata[]
-  artist   Artist?           @relation(fields: [artistId], references: [id])
-  artistId String?           @unique
-
-  cartId String? @unique
-
-  privateRooms PrivateRoom[]
-  tickets      Ticket[]
+  sessionTokens     SessionToken[]
+  activityLogs      ActivityLog[]
+  articles          ArticleMetadata[]
+  artist            Artist?           @relation(fields: [artistId], references: [id])
+  artistId          String?           @unique
+  cartId            String?           @unique
+  privateRooms      PrivateRoom[]
+  tickets           Ticket[]
+  profile           Profile?
+  links             Links[]
+  isPublic          Boolean   @default(false)
 
   @@map("users")
+  UserRole UserRole[]
+}
+
+model Links {
+  id String @id @default(cuid())
+
+  platform String
+
+  url String
+
+  order Int @default(0)
+
+  isPrimary Boolean @default(false)
+
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  companyId String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([userId])
+  @@index([companyId])
+}
+
+model Profile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  occupation  String?
+  description String? @db.Text
+  bio         String? @db.Text
+  avatarUrl   String?
+  backgroundImageUrl String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
 }
 
 model Role {
@@ -42,11 +84,11 @@ model Role {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relaciones
-  users       UserRole[]
+  users       User[]
   permissions RolePermission[]
 
   @@map("roles")
+  UserRole UserRole[]
 }
 
 model Permission {
@@ -243,7 +285,7 @@ model FinancialEntry {
   status        FinancialEntryStatus @default(PENDING)
   notes         String?
   createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  updatedAt     DateTime @updatedAt
 
   @@index([eventId])
   @@index([type])

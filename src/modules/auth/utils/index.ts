@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 
-import { type AuthConfig, type CustomerInfo, type TokenResponse } from '@/types'
+import { type AuthConfig, type CustomerInfo, type TokenResponse } from '@/src/types'
 
 export async function generateCodeVerifier(): Promise<string> {
   const array = new Uint8Array(32)
@@ -63,54 +63,50 @@ export async function exchangeCodeForTokens(
   code: string,
   codeVerifier: string
 ): Promise<TokenResponse> {
-  try {
-    const tokenUrl = `https://shopify.com/authentication/${config.shopId}/oauth/token`
+  const tokenUrl = `https://shopify.com/authentication/${config.shopId}/oauth/token`
 
-    const body = new URLSearchParams({
-      client_id: config.clientId,
-      code,
-      code_verifier: codeVerifier,
-      grant_type: 'authorization_code',
-      redirect_uri: config.redirectUri,
-    })
+  const body = new URLSearchParams({
+    client_id: config.clientId,
+    code,
+    code_verifier: codeVerifier,
+    grant_type: 'authorization_code',
+    redirect_uri: config.redirectUri,
+  })
 
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-      'content-type': 'application/x-www-form-urlencoded',
-    }
-
-    if (config.clientSecret) {
-      const credentials = btoa(`${config.clientId}:${config.clientSecret}`)
-      headers['Authorization'] = `Basic ${credentials}`
-    }
-
-    const response = await fetch(tokenUrl, {
-      body: body.toString(),
-      headers,
-      method: 'POST',
-    })
-
-    if (!response.ok) {
-      throw new Error(`Token exchange failed: ${response.status}`)
-    }
-
-    const responseText = await response.text()
-
-    let tokens
-    try {
-      tokens = JSON.parse(responseText)
-    } catch {
-      throw new Error(`Invalid JSON response from token endpoint: ${responseText}`)
-    }
-
-    if (!tokens.access_token) {
-      throw new Error('No access token received from Shopify')
-    }
-
-    return tokens
-  } catch (error) {
-    throw error
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'content-type': 'application/x-www-form-urlencoded',
   }
+
+  if (config.clientSecret) {
+    const credentials = btoa(`${config.clientId}:${config.clientSecret}`)
+    headers['Authorization'] = `Basic ${credentials}`
+  }
+
+  const response = await fetch(tokenUrl, {
+    body: body.toString(),
+    headers,
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    throw new Error(`Token exchange failed: ${response.status}`)
+  }
+
+  const responseText = await response.text()
+
+  let tokens
+  try {
+    tokens = JSON.parse(responseText)
+  } catch {
+    throw new Error(`Invalid JSON response from token endpoint: ${responseText}`)
+  }
+
+  if (!tokens.access_token) {
+    throw new Error('No access token received from Shopify')
+  }
+
+  return tokens
 }
 
 export async function refreshAccessToken(
@@ -162,7 +158,7 @@ export function decodeJwt(token: string) {
 export function getNonceFromIdToken(idToken: string): string | null {
   try {
     const decoded = decodeJwt(idToken)
-    return decoded.payload.nonce || null
+    return decoded.payload.nonce ?? null
   } catch (error) {
     console.error('Error decoding ID token:', error)
     return null
@@ -173,82 +169,78 @@ export async function getCustomerInfo(
   config: AuthConfig,
   accessToken: string
 ): Promise<CustomerInfo> {
-  try {
-    if (!accessToken) {
-      throw new Error('Access token is required')
-    }
-
-    const apiVersion = process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION ?? '2025-04'
-    const url = `https://shopify.com/${config.shopId}/account/customer/api/${apiVersion}/graphql`
-
-    const query = `
-      query {
-        customer {
-          id
-          emailAddress {
-            emailAddress
-          }
-          firstName
-          lastName
-        }
-      }
-    `
-
-    const headers = {
-      Accept: 'application/json',
-      Authorization: accessToken,
-      'Content-Type': 'application/json',
-    }
-
-    const response = await fetch(url, {
-      body: JSON.stringify({ query }),
-      headers,
-      method: 'POST',
-    })
-
-    const responseText = await response.text()
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch customer info: ${response.status} - ${responseText}`)
-    }
-
-    let result
-    try {
-      result = JSON.parse(responseText)
-    } catch {
-      throw new Error(`Invalid JSON response from customer API: ${responseText}`)
-    }
-
-    if (result.errors) {
-      throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`)
-    }
-
-    if (!result.data?.customer) {
-      throw new Error('No customer data returned from API')
-    }
-
-    const customer = result.data.customer
-
-    if (!customer.id) {
-      throw new Error('Customer data is incomplete - missing ID')
-    }
-
-    const email = customer.emailAddress?.emailAddress
-    if (!email) {
-      throw new Error('Customer data is incomplete - missing email')
-    }
-
-    const customerInfo = {
-      email,
-      firstName: customer.firstName || '',
-      id: customer.id,
-      lastName: customer.lastName || '',
-    }
-
-    return customerInfo
-  } catch (error) {
-    throw error
+  if (!accessToken) {
+    throw new Error('Access token is required')
   }
+
+  const apiVersion = process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION ?? '2025-04'
+  const url = `https://shopify.com/${config.shopId}/account/customer/api/${apiVersion}/graphql`
+
+  const query = `
+    query {
+      customer {
+        id
+        emailAddress {
+          emailAddress
+        }
+        firstName
+        lastName
+      }
+    }
+  `
+
+  const headers = {
+    Accept: 'application/json',
+    Authorization: accessToken,
+    'Content-Type': 'application/json',
+  }
+
+  const response = await fetch(url, {
+    body: JSON.stringify({ query }),
+    headers,
+    method: 'POST',
+  })
+
+  const responseText = await response.text()
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch customer info: ${response.status} - ${responseText}`)
+  }
+
+  let result
+  try {
+    result = JSON.parse(responseText)
+  } catch {
+    throw new Error(`Invalid JSON response from customer API: ${responseText}`)
+  }
+
+  if (result.errors) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`)
+  }
+
+  if (!result.data?.customer) {
+    throw new Error('No customer data returned from API')
+  }
+
+  const customer = result.data.customer
+
+  if (!customer.id) {
+    throw new Error('Customer data is incomplete - missing ID')
+  }
+
+  const email = customer.emailAddress?.emailAddress
+  if (!email) {
+    throw new Error('Customer data is incomplete - missing email')
+  }
+
+  const customerInfo = {
+    email,
+    firstName: customer.firstName ?? '',
+    id: customer.id,
+    lastName: customer.lastName ?? '',
+  }
+
+  return customerInfo
 }
 
 export function buildLogoutUrl(

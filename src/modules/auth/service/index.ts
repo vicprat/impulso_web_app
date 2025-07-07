@@ -1,15 +1,12 @@
-import { PrismaClient } from '@prisma/client'
-
-import { type AuthConfig, type CustomerInfo, type TokenResponse } from '@/types'
+import { prisma } from '@/src/lib/prisma'
+import { type AuthConfig, type CustomerInfo, type TokenResponse } from '@/src/types'
 
 import {
-  exchangeCodeForTokens,
-  refreshAccessToken,
-  getCustomerInfo,
   calculateExpiresAt,
+  exchangeCodeForTokens,
+  getCustomerInfo,
+  refreshAccessToken,
 } from '../utils'
-
-const prisma = new PrismaClient()
 
 export interface AuthSession {
   user: {
@@ -83,7 +80,7 @@ export class AuthService {
           id: user.id,
           lastName: user.lastName ?? undefined,
           permissions: effectivePermissions,
-          roles: userWithPermissions.roles.map((ur) => ur.role.name),
+          roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
           shopifyCustomerId: user.shopifyCustomerId,
         },
       }
@@ -138,7 +135,7 @@ export class AuthService {
           id: existingSession.user.id,
           lastName: existingSession.user.lastName ?? undefined,
           permissions: effectivePermissions,
-          roles: userWithPermissions.roles.map((ur) => ur.role.name),
+          roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
           shopifyCustomerId: existingSession.user.shopifyCustomerId,
         },
       }
@@ -203,7 +200,7 @@ export class AuthService {
           id: session.user.id,
           lastName: session.user.lastName ?? undefined,
           permissions: effectivePermissions,
-          roles: userWithPermissions.roles.map((ur) => ur.role.name),
+          roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
           shopifyCustomerId: session.user.shopifyCustomerId,
         },
       }
@@ -282,12 +279,16 @@ export class AuthService {
         userId,
       },
     })
+
+    await this.logActivity(userId, 'role_removed', 'user_role', {
+      roleName,
+    })
   }
 
   async hasPermission(userId: string, permissionName: string): Promise<boolean> {
     const userWithPermissions = await this.getUserWithPermissions(userId)
 
-    for (const userRole of userWithPermissions.roles) {
+    for (const userRole of userWithPermissions.UserRole) {
       const rolePermission = await prisma.rolePermission.findFirst({
         where: {
           permission: { name: permissionName },
@@ -304,7 +305,7 @@ export class AuthService {
 
   private async upsertUser(customerInfo: CustomerInfo) {
     const existingUser = await prisma.user.findUnique({
-      include: { roles: true },
+      include: { UserRole: true },
       where: { shopifyCustomerId: customerInfo.id },
     })
 
@@ -324,7 +325,7 @@ export class AuthService {
       where: { key: 'default_user_role' },
     })
 
-    const defaultRoleName = defaultRoleConfig?.value || 'customer'
+    const defaultRoleName = defaultRoleConfig?.value ?? 'customer'
 
     const defaultRole = await prisma.role.findUnique({
       where: { name: defaultRoleName },
@@ -376,7 +377,7 @@ export class AuthService {
       const tokenData = {
         accessToken: tokens.access_token.trim(),
         expiresAt,
-        idToken: tokens.id_token?.trim(),
+        idToken: tokens.id_token.trim(),
         isActive: true,
         refreshToken: tokens.refresh_token.trim(),
         userId,
@@ -415,7 +416,7 @@ export class AuthService {
   private async getUserWithPermissions(userId: string) {
     return prisma.user.findUniqueOrThrow({
       include: {
-        roles: {
+        UserRole: {
           include: {
             role: {
               include: {
@@ -434,14 +435,16 @@ export class AuthService {
   }
 
   private async getEffectivePermissions(userId: string): Promise<string[]> {
-    const userWithRoles = await prisma.user.findUniqueOrThrow({
+    const user = await prisma.user.findUniqueOrThrow({
       include: {
-        roles: {
+        UserRole: {
           include: {
             role: {
               include: {
                 permissions: {
-                  include: { permission: true },
+                  include: {
+                    permission: true,
+                  },
                 },
               },
             },
@@ -452,7 +455,7 @@ export class AuthService {
     })
 
     const permissions = new Set<string>()
-    userWithRoles.roles.forEach((userRole) => {
+    user.UserRole.forEach((userRole) => {
       userRole.role.permissions.forEach((rolePermission) => {
         permissions.add(rolePermission.permission.name)
       })
@@ -472,12 +475,9 @@ export class AuthService {
     return prisma.activityLog.create({
       data: {
         action,
-
         ipAddress,
-
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         metadata: metadata as any,
-
         resource,
         userAgent,
         userId,

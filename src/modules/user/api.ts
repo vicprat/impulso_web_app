@@ -1,71 +1,146 @@
+import { type UserFilters } from './types'
+
 export const postgresUserApi = {
   deactivateUser: async (userId: string) => {
     const response = await fetch(`/api/users/${userId}/deactivate`, {
-      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       method: 'PATCH',
     })
-    if (!response.ok) throw new Error('Failed to deactivate user')
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Error al desactivar usuario')
+    }
+
     return response.json()
   },
 
-  getAllUsers: async (filters: any = {}) => {
-    const queryParams = new URLSearchParams()
+  getAllUsers: async (filters: UserFilters = {}) => {
+    const params = new URLSearchParams()
+
+    // Construir query string con los filtros
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        queryParams.append(key, value.toString())
+      if (value !== undefined && value !== '') {
+        params.append(key, value.toString())
       }
     })
 
-    const response = await fetch(`/api/users?${queryParams}`, { credentials: 'include' })
-    if (!response.ok) throw new Error('Failed to fetch users')
+    const response = await fetch(`/api/users?${params.toString()}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Error al obtener usuarios')
+    }
+
     return response.json()
   },
 
-  getProfile: async () => {
-    const response = await fetch('/api/users/profile', { credentials: 'include' })
-    if (!response.ok) throw new Error('Failed to fetch user profile')
+  getUserById: async (userId: string) => {
+    const response = await fetch(`/api/users/${userId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Error al obtener usuario')
+    }
+
     return response.json()
   },
 
   reactivateUser: async (userId: string) => {
     const response = await fetch(`/api/users/${userId}/reactivate`, {
-      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       method: 'PATCH',
     })
-    if (!response.ok) throw new Error('Failed to reactivate user')
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Error al reactivar usuario')
+    }
+
     return response.json()
   },
 
-  updatePreferences: async (preferences: any) => {
-    const response = await fetch('/api/users/preferences', {
-      body: JSON.stringify({ preferences }),
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      method: 'PATCH',
+  // ✅ NUEVO: Obtener perfil público por ID
+  getPublicProfile: async (userId: string) => {
+    const response = await fetch(`/api/public-profiles/${userId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
     })
-    if (!response.ok) throw new Error('Failed to update preferences')
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Error al obtener perfil público')
+    }
+
     return response.json()
   },
 
-  updateProfile: async (data: any) => {
-    const response = await fetch('/api/users/profile', {
-      body: JSON.stringify(data),
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+  // ✅ NUEVO: Alternar estado público de usuario
+  toggleUserPublicStatus: async (userId: string, isPublic: boolean) => {
+    const response = await fetch(`/api/users/${userId}/public`, {
+      body: JSON.stringify({ isPublic }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
       method: 'PATCH',
     })
-    if (!response.ok) throw new Error('Failed to update profile')
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Error al alternar estado público del usuario')
+    }
+
     return response.json()
   },
 
-  updateUserRole: async (userId: string, roles: string[]) => {
+  // ✅ NUEVO: Obtener lista de artistas públicos
+  getPublicArtists: async () => {
+    const response = await fetch(`/api/public-profiles/artists`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Error al obtener artistas públicos')
+    }
+
+    return response.json()
+  },
+
+  // ✅ CORREGIDO: Un solo rol
+  updateUserRole: async (userId: string, role: string) => {
     const response = await fetch(`/api/users/${userId}/roles`, {
-      body: JSON.stringify({ roles }),
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role }), // ✅ Un solo rol
+      headers: {
+        'Content-Type': 'application/json',
+      },
       method: 'PATCH',
     })
-    if (!response.ok) throw new Error('Failed to update roles')
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Error al actualizar rol')
+    }
+
     return response.json()
   },
 }

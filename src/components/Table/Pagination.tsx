@@ -68,11 +68,6 @@ export const Pagination = <TData,>({
               {table.getFilteredRowModel().rows.length} fila(s) seleccionadas.
             </span>
           )}
-          {totalItems && (
-            <span className={table.getFilteredSelectedRowModel().rows.length > 0 ? 'ml-4' : ''}>
-              {totalItems}+ productos encontrados
-            </span>
-          )}
         </div>
 
         <div className='flex items-center space-x-6 lg:space-x-8'>
