@@ -1,8 +1,5 @@
 const EVENT_METAFIELD_NAMESPACE = 'event_details'
 
-// Re-using interfaces from Product.ts for consistency.
-// In a real-world scenario, these might be moved to a shared types file.
-
 export interface Money {
   amount: string
   currencyCode: string
@@ -51,7 +48,6 @@ interface ShopifyVariantNode {
   }
 }
 
-// This is the same as ShopifyProductData, can be reused
 interface ShopifyEventData {
   id: string
   handle: string
@@ -80,7 +76,6 @@ export interface EventDetails {
   organizer: string | null
 }
 
-// Definimos las claves válidas para EventDetails
 const VALID_EVENT_DETAIL_KEYS: (keyof EventDetails)[] = [
   'date',
   'location',
@@ -111,13 +106,13 @@ export class Event {
     this.vendor = shopifyEventData.vendor
     this.productType = shopifyEventData.productType
     this.status = shopifyEventData.status
-    this.tags = shopifyEventData.tags || []
-    this.images = (shopifyEventData.images?.edges || []).map((edge) => edge.node)
-    this.variants = (shopifyEventData.variants?.edges || []).map((edge) =>
+    this.tags = shopifyEventData.tags
+    this.images = shopifyEventData.images.edges.map((edge) => edge.node)
+    this.variants = shopifyEventData.variants.edges.map((edge) =>
       this._convertVariantFromApi(edge.node)
     )
     this.primaryLocationId = primaryLocationId
-    this.eventDetails = this._parseDetailsFromMetafields(shopifyEventData.metafields?.edges || [])
+    this.eventDetails = this._parseDetailsFromMetafields(shopifyEventData.metafields.edges)
   }
 
   private _convertVariantFromApi(apiVariant: ShopifyVariantNode): Variant {
@@ -125,12 +120,12 @@ export class Event {
       availableForSale: apiVariant.availableForSale,
       compareAtPrice: null,
       id: apiVariant.id,
-      inventoryManagement: apiVariant.inventoryItem?.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
+      inventoryManagement: apiVariant.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
       inventoryPolicy: apiVariant.inventoryPolicy,
       inventoryQuantity: apiVariant.inventoryQuantity,
       price: {
         amount: apiVariant.price,
-        currencyCode: 'MXN', // Assuming MXN, can be made configurable
+        currencyCode: 'MXN',
       },
       selectedOptions: [],
       sku: apiVariant.sku,
@@ -141,17 +136,15 @@ export class Event {
   private _parseDetailsFromMetafields(
     metafieldEdges: { node: ShopifyMetafieldNode }[]
   ): EventDetails {
-    // Inicializamos con valores por defecto
     const details: EventDetails = {
       date: null,
-      location: null,
-      startTime: null,
       endTime: null,
+      location: null,
       organizer: null,
+      startTime: null,
     }
 
     for (const { node } of metafieldEdges) {
-      // Corregimos la lógica: verificamos namespace y si la key es válida
       if (
         node.namespace === EVENT_METAFIELD_NAMESPACE &&
         VALID_EVENT_DETAIL_KEYS.includes(node.key as keyof EventDetails)
@@ -174,23 +167,44 @@ export class Event {
   public get formattedPrice(): string {
     const variant = this.primaryVariant
     if (!variant) return 'Sin precio'
-    return `$${parseFloat(variant.price.amount).toLocaleString('es-MX')} ${
+    return `${parseFloat(variant.price.amount).toLocaleString('es-MX')} ${
       variant.price.currencyCode
     }`
+  }
+
+  public get description(): string {
+    return this.descriptionHtml
+  }
+
+  public get createdAt(): string {
+    // You might want to get this from Shopify data if available
+    return new Date().toISOString()
+  }
+
+  public get priceRange(): {
+    minVariantPrice: Money
+    maxVariantPrice: Money
+  } {
+    const price = this.primaryVariant?.price ?? { amount: '0', currencyCode: 'MXN' }
+    return {
+      maxVariantPrice: price,
+      minVariantPrice: price,
+    }
   }
 
   public get isAvailable(): boolean {
     const variant = this.primaryVariant
     if (!variant) return false
 
-    // Para eventos, si el inventario no está siendo gestionado por Shopify,
-    // solo verificamos que esté disponible para la venta
     if (variant.inventoryManagement === 'NOT_MANAGED') {
       return variant.availableForSale
     }
 
-    // Si está siendo gestionado por Shopify, verificamos tanto disponibilidad como cantidad
-    return variant.availableForSale && (variant.inventoryQuantity || 0) > 0
+    return variant.availableForSale && (variant.inventoryQuantity ?? 0) > 0
+  }
+
+  public get availableForSale(): boolean {
+    return this.isAvailable
   }
 
   public get statusLabel(): string {
@@ -201,8 +215,6 @@ export class Event {
     }
     return statusLabels[this.status] || this.status
   }
-
-  // Getter para formatear detalles del evento para mostrar
   public get formattedEventDetails(): string {
     const details = []
 
@@ -225,19 +237,15 @@ export class Event {
 
     return details.join(' • ')
   }
-
-  // Método para verificar si el evento ya pasó
   public get isPastEvent(): boolean {
     if (!this.eventDetails.date) return false
 
     const eventDate = new Date(this.eventDetails.date)
     const today = new Date()
-    today.setHours(0, 0, 0, 0) // Reset time to start of day
+    today.setHours(0, 0, 0, 0)
 
     return eventDate < today
   }
-
-  // Método para obtener los días restantes hasta el evento
   public get daysUntilEvent(): number | null {
     if (!this.eventDetails.date) return null
 

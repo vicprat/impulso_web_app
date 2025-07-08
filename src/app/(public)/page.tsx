@@ -12,34 +12,14 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Landing } from '@/components/Landing'
 import { Button } from '@/components/ui/button'
 import { useEmblaParallax } from '@/hooks/useEmblaParallax'
+import { usePublicArtists } from '@/src/modules/user/hooks/management'
 
-// ===== TYPES =====
 interface Slide {
   imageUrl: string
   alt: string
   title: string
   subtitle: string
-  parallaxFactor?: number // Opcional: para aprovechar la nueva funcionalidad del hook
-}
-interface Category {
-  name: string
-  imageUrl: string
-  href: string
-}
-
-interface Artist {
-  name: string
-  avatarUrl: string
-  bio: string
-  href: string
-  featuredWorkUrl: string
-}
-
-interface Event {
-  title: string
-  date: string
-  imageUrl: string
-  description: string
+  parallaxFactor?: number
 }
 
 interface NewsArticle {
@@ -82,7 +62,6 @@ const DotButton: React.FC<DotButtonProps> = ({ isSelected, onClick }) => (
   />
 )
 
-// ===== HOOKS =====
 const usePrevNextButtons = (emblaApi: EmblaCarouselType | undefined) => {
   const [prevBtnDisabled, setPrevBtnDisabled] = useState(true)
   const [nextBtnDisabled, setNextBtnDisabled] = useState(true)
@@ -155,7 +134,6 @@ const useDotButton = (emblaApi: EmblaCarouselType | undefined) => {
   }
 }
 
-// ===== DATA =====
 const heroSlides: Slide[] = [
   {
     alt: 'Espacio de Impulso Galería',
@@ -180,75 +158,6 @@ const heroSlides: Slide[] = [
   },
 ]
 
-const categories: Category[] = [
-  {
-    href: '/store/collections/pintura',
-    imageUrl: 'https://impulsogaleria.com/wp-content/uploads/2021/08/ic_pintura_categoria.jpeg',
-    name: 'Pintura',
-  },
-  {
-    href: '/store/collections/escultura',
-    imageUrl: 'https://impulsogaleria.com/wp-content/uploads/2021/08/ic_escultura_categoria.jpeg',
-    name: 'Escultura',
-  },
-  {
-    href: '/store/collections/fotografia',
-    imageUrl: 'https://via.placeholder.com/300/0000FF/808080?Text=Fotografia',
-    name: 'Fotografía',
-  },
-  {
-    href: '/store/collections/arte-digital',
-    imageUrl: 'https://via.placeholder.com/300/FFA500/FFFFFF?Text=Arte+Digital',
-    name: 'Arte Digital',
-  },
-  {
-    href: '/store/collections/merch',
-    imageUrl: 'https://impulsogaleria.com/wp-content/uploads/2021/08/ic_merch_categoria.jpeg',
-    name: 'Merch',
-  },
-]
-
-const artists: Artist[] = [
-  {
-    avatarUrl: 'https://impulsogaleria.com/wp-content/uploads/2023/02/Alva-de-la-Canal.jpg',
-    bio: 'Artista con una profunda conexión con...',
-    featuredWorkUrl: 'https://impulsogaleria.com/wp-content/uploads/2023/02/obra-alva.jpg',
-    href: '/artistas/alva-de-la-canal',
-    name: 'Alva de la Canal',
-  },
-  {
-    avatarUrl: 'https://impulsogaleria.com/wp-content/uploads/2023/02/Armando-Garcia-Nunez.jpeg',
-    bio: 'Reconocido por su uso innovador de...',
-    featuredWorkUrl: 'https://impulsogaleria.com/wp-content/uploads/2023/02/obra-armando.jpg',
-    href: '/artistas/armando-garcia-nunez',
-    name: 'Armando García Nuñez',
-  },
-  {
-    avatarUrl: 'https://impulsogaleria.com/wp-content/uploads/2023/02/Frida-Kahlo.jpg',
-    bio: 'Ícono del arte mexicano...',
-    featuredWorkUrl: 'https://impulsogaleria.com/wp-content/uploads/2023/02/obra-frida.jpg',
-    href: '/artistas/frida-kahlo',
-    name: 'Frida Kahlo (Ejemplo)',
-  },
-]
-
-const events: Event[] = [
-  {
-    date: '2024-05-15',
-    description: 'No te pierdas nuestra próxima subasta con una selección excepcional de obras.',
-    imageUrl:
-      'https://impulsogaleria.com/wp-content/uploads/2023/11/Subasta-de-Arte-Impulso-Galeria-1-960x640.jpeg',
-    title: 'Próxima Subasta de Arte',
-  },
-  {
-    date: '2024-06-01',
-    description: 'Celebra con nosotros la llegada de nuevas y emocionantes colecciones.',
-    imageUrl:
-      'https://impulsogaleria.com/wp-content/uploads/2023/10/Inauguracion-de-la-exposicion-Tiempo-Color-y-Tradiccion-960x640.jpg',
-    title: 'Inauguración: Nuevas Colecciones',
-  },
-]
-
 const news: NewsArticle[] = [
   {
     excerpt: 'Descubre las corrientes artísticas que están marcando la pauta este año.',
@@ -262,7 +171,6 @@ const news: NewsArticle[] = [
   },
 ]
 
-// ===== ANIMATION VARIANTS =====
 const fadeIn = {
   animate: { opacity: 1 },
   initial: { opacity: 0 },
@@ -306,10 +214,10 @@ const ParallaxHeroCarousel: React.FC<ParallaxCarouselProps> = ({ options, slides
             <div
               key={index}
               className='relative min-w-0 flex-[0_0_100%]'
-              data-parallax-factor={slide.parallaxFactor || 1}
+              data-parallax-factor={slide.parallaxFactor ?? 1}
             >
               <motion.div className='relative size-full overflow-hidden rounded-2xl'>
-                <div className='embla__parallax__layer absolute inset-0 h-full w-[120%]'>
+                <div className=' absolute inset-0 h-full w-[120%]'>
                   <Image
                     src={slide.imageUrl}
                     alt={slide.alt}
@@ -346,7 +254,7 @@ const ParallaxHeroCarousel: React.FC<ParallaxCarouselProps> = ({ options, slides
                     <Button
                       asChild
                       size='lg'
-                      className='bg-accent text-accent-foreground transition-colors duration-200 hover:bg-accent/80'
+                      className='hover:bg-accent/80 bg-accent text-accent-foreground transition-colors duration-200'
                     >
                       <Link href='/store'>Explorar la Galería</Link>
                     </Button>
@@ -373,85 +281,13 @@ const ParallaxHeroCarousel: React.FC<ParallaxCarouselProps> = ({ options, slides
     </div>
   )
 }
-// Carousel para Eventos (sin parallax)
-const EventsCarousel = ({ events }: { events: Event[] }) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    align: 'start',
-    breakpoints: {
-      '(min-width: 1024px)': { slidesToScroll: 3 },
-      '(min-width: 768px)': { slidesToScroll: 2 },
-    },
-    dragFree: true,
-    skipSnaps: false,
-  })
 
-  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi])
-  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi])
-
-  return (
-    <div className='relative'>
-      <div className='overflow-hidden' ref={emblaRef}>
-        <div className='flex gap-4'>
-          {events.map((event) => (
-            <div
-              key={event.title}
-              className='min-w-0 flex-[0_0_90%] md:flex-[0_0_45%] lg:flex-[0_0_30%]'
-            >
-              <motion.div
-                variants={fadeIn}
-                initial='initial'
-                whileInView='animate'
-                viewport={{ amount: 0.4, once: true }}
-                className='h-full overflow-hidden rounded-md bg-white shadow-md dark:bg-gray-800'
-              >
-                <div className='relative aspect-video'>
-                  <Image src={event.imageUrl} alt={event.title} fill className='object-cover' />
-                </div>
-                <div className='p-6'>
-                  <h3 className='mb-2 text-xl font-semibold text-gray-800 dark:text-gray-200'>
-                    {event.title}
-                  </h3>
-                  <p className='mb-3 text-sm text-gray-600 dark:text-gray-400'>
-                    {new Date(event.date).toLocaleDateString()}
-                  </p>
-                  <p className='mb-4 text-sm text-gray-600 dark:text-gray-400'>
-                    {event.description.substring(0, 100)}...
-                  </p>
-                  <Button asChild variant='secondary' size='sm'>
-                    <Link href='/eventos'>Ver Detalles</Link>
-                  </Button>
-                </div>
-              </motion.div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Navigation Buttons */}
-      <button
-        className='absolute left-0 top-1/2 z-10 flex size-10 -translate-x-4 -translate-y-1/2 items-center justify-center rounded-full border bg-white text-gray-800 shadow-lg transition-all duration-300 hover:bg-gray-50'
-        onClick={scrollPrev}
-      >
-        <ChevronLeft className='size-5' />
-      </button>
-
-      <button
-        className='absolute right-0 top-1/2 z-10 flex size-10 -translate-y-1/2 translate-x-4 items-center justify-center rounded-full border bg-white text-gray-800 shadow-lg transition-all duration-300 hover:bg-gray-50'
-        onClick={scrollNext}
-      >
-        <ChevronRight className='size-5' />
-      </button>
-    </div>
-  )
-}
-
-// ===== MAIN COMPONENT =====
-export default function HomePage() {
+export default function Page() {
+  const { data: artists } = usePublicArtists()
   return (
     <main className='overflow-hidden'>
       <Landing.Hero videoId='j5RAiTZ-w6E' />
 
-      {/* Descubre Impulso Galería */}
       <section className='bg-gray-50 py-20 dark:bg-gray-900'>
         <div className='container mx-auto px-6 text-center'>
           <motion.h2
@@ -527,124 +363,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Hero Section con Parallax Carousel */}
       <section>
         <ParallaxHeroCarousel slides={heroSlides} />
       </section>
 
-      {/* Categorías Destacadas */}
-      {/* <section className="py-16">
-        <div className="container mx-auto px-6">
-          <motion.h2
-            variants={slideUp}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            className="text-3xl font-semibold text-center text-gray-800 dark:text-gray-200 mb-8"
-          >
-            Explora por Categoría
-          </motion.h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {categories.map((category) => (
-              <motion.div
-                key={category.name}
-                variants={fadeIn}
-                initial="initial"
-                whileInView="animate"
-                viewport={{ once: true, amount: 0.4 }}
-                className="rounded-md overflow-hidden shadow-md hover:shadow-lg transition duration-300 group"
-              >
-                <Link href={category.href} className="block">
-                  <div className="relative aspect-square overflow-hidden">
-                    <Image
-                      src={category.imageUrl}
-                      alt={category.name}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-4 bg-white dark:bg-gray-800 text-center">
-                    <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">{category.name}</h3>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-          <div className="text-center mt-8">
-            <Button asChild variant="outline" size="lg">
-              <Link href="/store/collections">Ver Todas las Categorías</Link>
-            </Button>
-          </div>
-        </div>
-      </section> */}
+      <pre>{JSON.stringify(artists, null, 2)}</pre>
 
-      {/* Artistas Destacados */}
-      {/* <section className="py-20 bg-gray-50 dark:bg-gray-900">
-        <div className="container mx-auto px-6">
-          <motion.h2
-            variants={slideUp}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            className="text-3xl font-semibold text-center text-gray-800 dark:text-gray-200 mb-10"
-          >
-            Artistas Destacados
-          </motion.h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {artists.map((artist) => (
-              <motion.div
-                key={artist.name}
-                variants={slideUp}
-                initial="initial"
-                whileInView="animate"
-                viewport={{ once: true, amount: 0.3 }}
-                className="text-center flex flex-col items-center"
-              >
-                <Link
-                  href={artist.href}
-                  className="relative w-32 h-32 rounded-full overflow-hidden shadow-md hover:shadow-lg transition duration-300 mb-4"
-                >
-                  <Image
-                    src={artist.avatarUrl}
-                    alt={artist.name}
-                    fill
-                    className="object-cover"
-                  />
-                </Link>
-                <h4 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-1">
-                  {artist.name}
-                </h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm truncate max-w-[80%]">
-                  {artist.bio}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-          <div className="text-center mt-8">
-            <Button asChild variant="outline" size="lg">
-              <Link href="/artistas">Conocer a Todos los Artistas</Link>
-            </Button>
-          </div>
-        </div>
-      </section> */}
-
-      {/* Próximos Eventos */}
-      {/* <section className="py-16">
-        <div className="container mx-auto px-6">
-          <motion.h2
-            variants={slideUp}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            className="text-3xl font-semibold text-center text-gray-800 dark:text-gray-200 mb-8"
-          >
-            Próximos Eventos
-          </motion.h2>
-          <EventsCarousel events={events} />
-        </div>
-      </section> */}
-
-      {/* Últimas Noticias */}
       <section className='bg-gray-50 py-20 dark:bg-gray-900'>
         <div className='container mx-auto px-6'>
           <motion.h2

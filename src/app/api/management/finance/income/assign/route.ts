@@ -5,11 +5,7 @@ import { requirePermission } from '@/src/modules/auth/server/server'
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission('manage_events')
-    console.log(
-      'User with manage_events permission accessed income assignment API:',
-      session.user.email
-    )
+    await requirePermission('manage_events')
 
     const { eventId, incomeEntryId } = await request.json()
 
@@ -17,27 +13,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Missing incomeEntryId or eventId' }, { status: 400 })
     }
 
-    const updatedEntry = await prisma.financialEntry.update({
-      data: {
-        eventId,
-        status: 'COMPLETED',
-      },
-      where: {
-        eventId: null,
-        id: incomeEntryId,
-        status: 'PENDING',
-        type: 'INCOME', // Ensure it's still unassigned and pending
-      },
-    })
+    try {
+      const updatedEntry = await prisma.financialEntry.update({
+        data: {
+          eventId,
+          status: 'COMPLETED',
+        },
+        where: {
+          eventId: null,
+          id: incomeEntryId,
+          status: 'PENDING',
+          type: 'INCOME',
+        },
+      })
 
-    if (!updatedEntry) {
+      return NextResponse.json(updatedEntry)
+    } catch {
       return NextResponse.json(
         { message: 'Financial entry not found or not eligible for assignment' },
         { status: 404 }
       )
     }
-
-    return NextResponse.json(updatedEntry)
   } catch (error) {
     console.error('Error assigning income entry:', error)
     if (error instanceof Error && error.message.includes('Permission denied')) {

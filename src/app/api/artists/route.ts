@@ -1,4 +1,3 @@
-// src/app/api/artists/route.ts
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
@@ -15,7 +14,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Faltan userId y vendorName' }, { status: 400 })
     }
 
-    // Verificar que el usuario existe
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
     })
@@ -24,7 +22,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
     }
 
-    // Verificar que el vendor name no existe
     const existingArtist = await prisma.artist.findUnique({
       where: { name: vendorName },
     })
@@ -34,20 +31,17 @@ export async function POST(request: NextRequest) {
     }
 
     const updatedUser = await prisma.$transaction(async (tx) => {
-      // 1. Crear el nuevo artista
       const newArtist = await tx.artist.create({
         data: {
           name: vendorName,
         },
       })
 
-      // 2. Buscar el rol de artista
       const artistRole = await tx.role.findUnique({ where: { name: 'artist' } })
       if (!artistRole) {
         throw new Error("El rol 'artist' no se encuentra en la base de datos.")
       }
 
-      // 3. Actualizar el usuario con el artistId
       await tx.user.update({
         data: {
           artistId: newArtist.id,
@@ -55,13 +49,10 @@ export async function POST(request: NextRequest) {
         where: { id: userId },
       })
 
-      // 4. ✅ CORREGIDO: Usar UserRole en lugar de roles directo
-      // Primero eliminar roles existentes del usuario
       await tx.userRole.deleteMany({
         where: { userId },
       })
 
-      // Crear el nuevo rol de artista
       await tx.userRole.create({
         data: {
           assignedBy: session.user.id,
@@ -70,13 +61,19 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // 5. Retornar el usuario actualizado con las relaciones correctas
       return tx.user.findUnique({
         include: {
-          // ✅ CORREGIDO: Usar UserRole en lugar de roles
           UserRole: {
             include: {
-              role: true,
+              role: {
+                include: {
+                  permissions: {
+                    include: {
+                      permission: true,
+                    },
+                  },
+                },
+              },
             },
           },
 
@@ -86,14 +83,13 @@ export async function POST(request: NextRequest) {
       })
     })
 
-    // ✅ TRANSFORMAR: Convertir UserRole a formato esperado por frontend
     const transformedUser = {
       ...updatedUser,
       permissions:
-        updatedUser?.UserRole.flatMap(
-          (ur) => ur.role.permissions?.map((rp) => rp.permission.name) || []
-        ) || [],
-      roles: updatedUser?.UserRole.map((ur) => ur.role.name) || [],
+        updatedUser?.UserRole.flatMap((ur) =>
+          ur.role.permissions.map((rp) => rp.permission.name)
+        ) ?? [],
+      roles: updatedUser?.UserRole.map((ur) => ur.role.name) ?? [],
     }
 
     return NextResponse.json(transformedUser)

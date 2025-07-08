@@ -1,22 +1,21 @@
-// src/app/api/users/[id]/roles/route.ts
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/modules/auth/server/server'
-import { updateUserRole } from '@/modules/user/user.service' // ✅ Importar método actualizado
+import { updateUserRole } from '@/modules/user/user.service'
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requirePermission('manage_roles')
 
-    const targetUserId = params.id
-    const { role } = await request.json() // ✅ Recibir un solo rol
+    const { id } = await params
+    const targetUserId = id
 
+    const { role } = await request.json()
     if (!role || typeof role !== 'string') {
       return NextResponse.json({ error: 'Role debe ser un string válido' }, { status: 400 })
     }
 
-    // Verificar que el rol existe
     const existingRole = await prisma.role.findUnique({
       where: { name: role },
     })
@@ -42,7 +41,6 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       }
     }
 
-    // ✅ USAR: Método actualizado que maneja UserRole
     const updatedUser = await updateUserRole(targetUserId, role)
 
     return NextResponse.json({

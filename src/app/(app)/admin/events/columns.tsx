@@ -160,7 +160,7 @@ export const columns: ColumnDef<Event>[] = [
   {
     cell: ({ row }) => {
       const event = row.original
-      const inventoryQuantity = event.variants?.[0]?.inventoryQuantity ?? 0
+      const inventoryQuantity = event.variants[0]?.inventoryQuantity ?? 0
       return <span>{inventoryQuantity}</span>
     },
     header: 'Boletos Vendidos',

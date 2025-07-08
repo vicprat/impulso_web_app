@@ -1,4 +1,4 @@
-import { type CreatePrivateRoomDto, type PrivateRoom } from '../types'
+import { type CreatePrivateRoomDto, type PrivateRoom, type UpdatePrivateRoomDto } from '../types'
 
 const BASE_URL = '/api/private-rooms'
 
@@ -24,7 +24,7 @@ export const privateRoomsApi = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || 'Failed to delete private room')
+      throw new Error(errorData.error ?? 'Failed to delete private room')
     }
 
     return response.json()
@@ -54,18 +54,9 @@ export const privateRoomsApi = {
     return response.json()
   },
 
-  updatePrivateRoom: async (
-    id: string,
-    data: {
-      name: string
-      description?: string | null
-      userId: string
-      productIds: string[]
-    }
-  ) => {
+  updatePrivateRoom: async (id: string, data: UpdatePrivateRoomDto) => {
     const response = await fetch(`/api/private-rooms/${id}`, {
       body: JSON.stringify(data),
-      // ✅ Cambiar de PATCH a PUT
       headers: {
         'Content-Type': 'application/json',
       },
@@ -74,7 +65,7 @@ export const privateRoomsApi = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || 'Failed to update private room')
+      throw new Error(errorData.error ?? 'Failed to update private room')
     }
 
     return response.json()

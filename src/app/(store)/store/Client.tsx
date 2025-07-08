@@ -4,7 +4,7 @@ import { Package2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 
-import { Card } from '@/components/Card.tsx'
+import { Card } from '@/components/Card'
 import { Pagination } from '@/components/Pagination'
 import {
   Select,
@@ -25,9 +25,9 @@ export const Client = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const pageInUrl = parseInt(searchParams.get('page') || '1', 10)
-  const afterCursorInUrl = searchParams.get('after') || null
-  const limitInUrl = parseInt(searchParams.get('limit') || defaultLimit.toString(), 10)
+  const pageInUrl = parseInt(searchParams.get('page') ?? '1', 10)
+  const afterCursorInUrl = searchParams.get('after') ?? null
+  const limitInUrl = parseInt(searchParams.get('limit') ?? defaultLimit.toString(), 10)
 
   const [historyCursors, setHistoryCursors] = useState<Record<number, string | null>>({})
   const [previousLimit, setPreviousLimit] = useState(limitInUrl)
@@ -44,7 +44,7 @@ export const Client = () => {
     }
     const priceMin = searchParams.get('price_min')
     const priceMax = searchParams.get('price_max')
-    if (priceMin || priceMax) {
+    if (priceMin ?? priceMax) {
       let priceQuery = ''
       if (priceMin) priceQuery += `variants.price:>=${priceMin}`
       if (priceMax) {
@@ -76,18 +76,16 @@ export const Client = () => {
     } else {
       targetCursor = historyCursors[newPage]
     }
-    if (targetCursor === undefined && newPage > pageInUrl && newPage === pageInUrl + 1) {
+    if (newPage > pageInUrl && newPage === pageInUrl + 1) {
       if (productsData?.pageInfo.hasNextPage && productsData.pageInfo.endCursor) {
         targetCursor = productsData.pageInfo.endCursor
       }
     }
-    if (targetCursor !== undefined) {
-      newUrlParams.set('page', newPage.toString())
-      if (targetCursor === null) {
-        newUrlParams.delete('after')
-      } else {
-        newUrlParams.set('after', targetCursor)
-      }
+    newUrlParams.set('page', newPage.toString())
+    if (targetCursor === null) {
+      newUrlParams.delete('after')
+    } else if (targetCursor) {
+      newUrlParams.set('after', targetCursor)
     } else {
       console.warn(`Cursor para página ${newPage} no encontrado. Volviendo a página 1.`)
       newUrlParams.set('page', '1')
@@ -141,7 +139,7 @@ export const Client = () => {
         }
       } else if (productsData && !productsData.pageInfo.hasNextPage) {
         const nextPageNumber = pageInUrl + 1
-        if (newCursors[nextPageNumber] !== undefined) {
+        if (nextPageNumber in newCursors) {
           delete newCursors[nextPageNumber]
           changed = true
         }
@@ -156,7 +154,7 @@ export const Client = () => {
     if (pageStr) {
       const pageNum = parseInt(pageStr, 10)
       if (pageNum > 1 && !currentAfterCursor) {
-        if (productsData || error) {
+        if (productsData ?? error) {
           const params = new URLSearchParams(searchParams.toString())
           params.set('page', '1')
           params.delete('after')

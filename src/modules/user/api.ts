@@ -11,7 +11,7 @@ export const postgresUserApi = {
 
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.error || 'Error al desactivar usuario')
+      throw new Error(error.error ?? 'Error al desactivar usuario')
     }
 
     return response.json()
@@ -20,7 +20,6 @@ export const postgresUserApi = {
   getAllUsers: async (filters: UserFilters = {}) => {
     const params = new URLSearchParams()
 
-    // Construir query string con los filtros
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== '') {
         params.append(key, value.toString())
@@ -36,7 +35,39 @@ export const postgresUserApi = {
 
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.error || 'Error al obtener usuarios')
+      throw new Error(error.error ?? 'Error al obtener usuarios')
+    }
+
+    return response.json()
+  },
+
+  getPublicArtists: async () => {
+    const response = await fetch(`/api/public-profiles/artists`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error ?? 'Error al obtener artistas públicos')
+    }
+
+    return response.json()
+  },
+
+  getPublicProfile: async (userId: string) => {
+    const response = await fetch(`/api/public-profiles/${userId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error ?? 'Error al obtener perfil público')
     }
 
     return response.json()
@@ -52,7 +83,7 @@ export const postgresUserApi = {
 
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.error || 'Error al obtener usuario')
+      throw new Error(error.error ?? 'Error al obtener usuario')
     }
 
     return response.json()
@@ -68,30 +99,12 @@ export const postgresUserApi = {
 
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.error || 'Error al reactivar usuario')
+      throw new Error(error.error ?? 'Error al reactivar usuario')
     }
 
     return response.json()
   },
 
-  // ✅ NUEVO: Obtener perfil público por ID
-  getPublicProfile: async (userId: string) => {
-    const response = await fetch(`/api/public-profiles/${userId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'GET',
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Error al obtener perfil público')
-    }
-
-    return response.json()
-  },
-
-  // ✅ NUEVO: Alternar estado público de usuario
   toggleUserPublicStatus: async (userId: string, isPublic: boolean) => {
     const response = await fetch(`/api/users/${userId}/public`, {
       body: JSON.stringify({ isPublic }),
@@ -103,33 +116,15 @@ export const postgresUserApi = {
 
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.error || 'Error al alternar estado público del usuario')
+      throw new Error(error.error ?? 'Error al alternar estado público del usuario')
     }
 
     return response.json()
   },
 
-  // ✅ NUEVO: Obtener lista de artistas públicos
-  getPublicArtists: async () => {
-    const response = await fetch(`/api/public-profiles/artists`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'GET',
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Error al obtener artistas públicos')
-    }
-
-    return response.json()
-  },
-
-  // ✅ CORREGIDO: Un solo rol
   updateUserRole: async (userId: string, role: string) => {
     const response = await fetch(`/api/users/${userId}/roles`, {
-      body: JSON.stringify({ role }), // ✅ Un solo rol
+      body: JSON.stringify({ role }),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -138,7 +133,7 @@ export const postgresUserApi = {
 
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.error || 'Error al actualizar rol')
+      throw new Error(error.error ?? 'Error al actualizar rol')
     }
 
     return response.json()

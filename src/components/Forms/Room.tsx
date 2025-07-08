@@ -23,6 +23,8 @@ import { useProducts } from '@/modules/shopify/hooks'
 import { type Product } from '@/modules/shopify/types'
 import { useUsersManagement } from '@/modules/user/hooks/management'
 
+import type { User } from '@/src/types/user'
+
 export type PrivateRoomMode = 'create' | 'edit' | 'view' | 'delete'
 
 export interface PrivateRoomData {
@@ -30,10 +32,7 @@ export interface PrivateRoomData {
   name: string
   description?: string | null
   userId: string
-  products: {
-    id?: string
-    productId: string
-  }[]
+  products: Product[]
 }
 
 export interface Props {
@@ -156,9 +155,7 @@ export const Room: React.FC<Props> = ({
       description: roomDescription || null,
       id: initialData?.id,
       name: roomName,
-      products: selectedProducts.map((p) => ({
-        productId: p.id,
-      })),
+      products: selectedProducts,
 
       userId: selectedUser,
     }
@@ -254,7 +251,9 @@ export const Room: React.FC<Props> = ({
               <Label htmlFor='userSelect'>VIP User</Label>
               {isReadOnly ? (
                 <Input
-                  value={users.find((u) => u.id === selectedUser)?.email ?? 'Loading...'}
+                  value={
+                    users.find((user: User) => user.id === selectedUser)?.email ?? 'Loading...'
+                  }
                   disabled
                 />
               ) : (
@@ -273,7 +272,7 @@ export const Room: React.FC<Props> = ({
                   <SelectContent>
                     {!isLoadingUsers &&
                       users.length > 0 &&
-                      users.map((user) => (
+                      users.map((user: User) => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.email} ({user.firstName} {user.lastName})
                         </SelectItem>

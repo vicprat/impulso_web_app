@@ -16,7 +16,7 @@ export function useCreateCheckout() {
       console.error('Error creating checkout:', error)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: checkoutKeys.current() })
+      void queryClient.invalidateQueries({ queryKey: checkoutKeys.current() })
     },
   })
 }

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback, createContext, useContext } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 
 import { type Cart } from '@/modules/cart/types'
 
-import { type AuthContextType, type User, type AuthMeResponse } from '../types'
+import { type AuthContextType, type AuthMeResponse, type User } from '../types'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (response.ok) {
           const data: AuthMeResponse = await response.json()
           setUser(data.user)
-          setCart(data.cart) // Establecer el cart desde la respuesta
+          setCart(data.cart)
         } else {
           setUser(null)
           setCart(null)
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    checkAuth()
+    void checkAuth()
 
     return () => {
       controller.abort()
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       const data = await response.json()
       setUser(null)
-      setCart(null) // Limpiar cart al hacer logout
+      setCart(null)
       if (data.shopifyLogoutUrl) {
         window.location.href = data.shopifyLogoutUrl
       } else {
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data: AuthMeResponse = await response.json()
         setUser(data.user)
-        setCart(data.cart) // Actualizar cart en refresh
+        setCart(data.cart)
       } else {
         setUser(null)
         setCart(null)
@@ -96,7 +96,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Nueva función para actualizar solo el cart
   const updateCart = useCallback((updatedCart: Cart) => {
     setCart(updatedCart)
   }, [])

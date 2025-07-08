@@ -1,4 +1,3 @@
-// components/UserManagement/SyncStatusIndicator.tsx
 'use client'
 
 import { useCurrentUser, useSyncWithShopify } from '@/modules/user/hooks/management'
@@ -13,20 +12,18 @@ export function SyncStatusIndicator({ className = '' }: SyncStatusIndicatorProps
 
   if (!currentUser) return null
 
-  // Comparar datos locales vs Shopify
   const localData = {
-    firstName: currentUser.firstName || '',
-    lastName: currentUser.lastName || '',
+    firstName: currentUser.firstName ?? '',
+    lastName: currentUser.lastName ?? '',
   }
 
   const shopifyData = {
-    firstName: currentUser.shopifyData?.displayName?.split(' ')[0] || '',
-    lastName: currentUser.shopifyData?.displayName?.split(' ').slice(1).join(' ') || '',
+    firstName: currentUser.shopifyData?.displayName.split(' ')[0] ?? '',
+    lastName: currentUser.shopifyData?.displayName.split(' ').slice(1).join(' ') ?? '',
   }
 
   const hasChanges =
-    currentUser.needsShopifySync ||
-    localData.firstName !== shopifyData.firstName ||
+    (currentUser.needsShopifySync ?? localData.firstName !== shopifyData.firstName) ||
     localData.lastName !== shopifyData.lastName
 
   if (!hasChanges) {
@@ -92,182 +89,4 @@ export function SyncStatusIndicator({ className = '' }: SyncStatusIndicatorProps
       </div>
     </div>
   )
-}
-
-// components/UserManagement/SyncHistory.tsx - Historial de sincronizaciones
-export function SyncHistory() {
-  const { currentUser } = useCurrentUser()
-
-  if (!currentUser) return null
-
-  // En una implementación real, esto vendría de una API
-  const syncHistory = [
-    {
-      changes: ['firstName: "Victor" → "Enrique"', 'lastName: "Trujillo" → "Prado"'],
-
-      direction: 'local_to_shopify' as const,
-
-      id: '1',
-      // 2 horas atrás
-      status: 'success' as const,
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    },
-    {
-      changes: ['Initial sync'],
-
-      direction: 'shopify_to_local' as const,
-
-      id: '2',
-      // 1 día atrás
-      status: 'success' as const,
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    },
-  ]
-
-  return (
-    <div className='rounded-lg border border-gray-200 bg-white p-4'>
-      <h3 className='mb-3 font-medium text-gray-900'>Historial de Sincronización</h3>
-
-      <div className='space-y-3'>
-        {syncHistory.map((sync) => (
-          <div
-            key={sync.id}
-            className='flex items-start space-x-3 border-b border-gray-100 pb-3 last:border-b-0'
-          >
-            <div
-              className={`rounded-full p-1 ${
-                sync.status === 'success' ? 'bg-green-100' : 'bg-red-100'
-              }`}
-            >
-              <span
-                className={`text-xs ${
-                  sync.status === 'success' ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                {sync.status === 'success' ? '✓' : '✗'}
-              </span>
-            </div>
-
-            <div className='min-w-0 flex-1'>
-              <div className='mb-1 flex items-center space-x-2'>
-                <span className='text-sm font-medium text-gray-900'>
-                  {sync.direction === 'local_to_shopify'
-                    ? 'Enviado a Shopify'
-                    : 'Recibido de Shopify'}
-                </span>
-                <span className='text-xs text-gray-500'>
-                  {sync.direction === 'local_to_shopify' ? '📤' : '📥'}
-                </span>
-              </div>
-
-              <div className='mb-1 text-xs text-gray-500'>{sync.timestamp.toLocaleString()}</div>
-
-              <div className='text-xs text-gray-600'>
-                {sync.changes.map((change, index) => (
-                  <div key={index} className='mt-1 rounded bg-gray-50 px-2 py-1 font-mono'>
-                    {change}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className='mt-3 border-t border-gray-200 pt-3'>
-        <button className='text-xs text-blue-600 hover:text-blue-800'>
-          Ver historial completo
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// utils/syncHelpers.ts - Utilidades para sincronización
-export const SyncHelpers = {
-  /**
-   * Compara datos locales con datos de Shopify
-   */
-  compareProfileData: (localData: any, shopifyData: any) => {
-    const differences = []
-
-    const localName = {
-      firstName: localData.firstName || '',
-      lastName: localData.lastName || '',
-    }
-
-    const shopifyName = {
-      firstName: shopifyData?.displayName?.split(' ')[0] || '',
-      lastName: shopifyData?.displayName?.split(' ').slice(1).join(' ') || '',
-    }
-
-    if (localName.firstName !== shopifyName.firstName) {
-      differences.push({
-        field: 'firstName',
-        local: localName.firstName,
-        shopify: shopifyName.firstName,
-        type: 'update',
-      })
-    }
-
-    if (localName.lastName !== shopifyName.lastName) {
-      differences.push({
-        field: 'lastName',
-        local: localName.lastName,
-        shopify: shopifyName.lastName,
-        type: 'update',
-      })
-    }
-
-    return differences
-  },
-
-  /**
-   * Genera un resumen de cambios para mostrar al usuario
-   */
-  generateChangesSummary: (differences: any[]) => {
-    if (differences.length === 0) {
-      return 'No hay cambios pendientes'
-    }
-
-    const summary = differences.map((diff) => {
-      const fieldNames = {
-        firstName: 'Nombre',
-        lastName: 'Apellido',
-      }
-
-      const fieldName = fieldNames[diff.field as keyof typeof fieldNames] || diff.field
-      return `${fieldName}: "${diff.shopify}" → "${diff.local}"`
-    })
-
-    return summary.join(', ')
-  },
-
-  /**
-   * Valida que los datos pueden ser sincronizados
-   */
-  validateSyncData: (data: any) => {
-    const errors = []
-
-    if (!data.firstName?.trim()) {
-      errors.push('El nombre es requerido')
-    }
-
-    if (!data.lastName?.trim()) {
-      errors.push('El apellido es requerido')
-    }
-
-    if (data.firstName && data.firstName.length > 50) {
-      errors.push('El nombre no puede exceder 50 caracteres')
-    }
-
-    if (data.lastName && data.lastName.length > 50) {
-      errors.push('El apellido no puede exceder 50 caracteres')
-    }
-
-    return {
-      errors,
-      isValid: errors.length === 0,
-    }
-  },
 }

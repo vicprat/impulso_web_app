@@ -1,13 +1,17 @@
-// app/store/event/[handle]/page.tsx - CORREGIDA
+import { notFound } from 'next/navigation'
+
+import { type Event } from '@/models/Event'
 import { getServerSession } from '@/modules/auth/server/server'
-import { api } from '@/modules/shopify/api' // ✅ Usar Storefront API, no Admin API
+import { api } from '@/modules/shopify/api'
 import {
   getPrivateProductIds,
   getPrivateRoomByUserId,
   shopifyService,
 } from '@/modules/shopify/service'
-import { notFound } from 'next/navigation'
+
 import { EventClient } from './EventClient'
+
+import type { Product } from '@/src/modules/shopify/types'
 
 interface PrivateRoomProduct {
   id: string
@@ -23,36 +27,28 @@ export default async function EventPage({ params }: { params: Promise<{ handle: 
     const privateProductIds = await getPrivateProductIds()
 
     let productResponse
-    let product
+    let event: Event | null = null
 
     try {
-      // ✅ Usar Storefront API (no Admin API)
       productResponse = await api.getProductByHandle(handle)
-      product = productResponse?.data
+      event = productResponse.data as Event
     } catch (error) {
       console.error('Error fetching product by handle:', error)
       if (!session) {
         notFound()
       }
-      product = null
+      event = null
     }
 
-    if (!product) {
+    if (!event) {
       notFound()
     }
 
-    // ✅ Verificar que sea realmente un evento
-    if (product.productType !== 'Evento') {
-      console.log(
-        `Product ${handle} is not an event (type: ${product.productType}), redirecting to product page`
-      )
-      // Opcional: redirigir a la página de producto regular
-      // redirect(`/store/product/${handle}`)
+    if (event.productType !== 'Evento') {
       notFound()
     }
 
-    // ✅ Manejar productos privados (lógica existente)
-    if (privateProductIds.includes(product.id)) {
+    if (privateProductIds.includes(event.id)) {
       if (!session) {
         notFound()
       }
@@ -68,7 +64,7 @@ export default async function EventPage({ params }: { params: Promise<{ handle: 
           const userPrivateRoom = await getPrivateRoomByUserId(session.user.id)
 
           if (
-            !userPrivateRoom?.products.some((p: PrivateRoomProduct) => p.productId === product.id)
+            !userPrivateRoom?.products.some((p: PrivateRoomProduct) => p.productId === event.id)
           ) {
             notFound()
           }
@@ -81,53 +77,38 @@ export default async function EventPage({ params }: { params: Promise<{ handle: 
       }
     }
 
-    // ✅ Obtener eventos relacionados usando Storefront API
-    let relatedEvents: any[] = []
+    let relatedEvents: Event[] = []
     try {
-      const relatedProducts = await shopifyService.getRelatedProducts(product)
-      // Filtrar solo eventos de los productos relacionados
-      relatedEvents = relatedProducts.filter((p) => p.productType === 'Evento')
+      const relatedProducts = await shopifyService.getRelatedProducts(event as Product)
+      relatedEvents = relatedProducts.filter((p) => p.productType === 'Evento') as Event[]
     } catch (relatedError) {
       console.error('Error fetching related events:', relatedError)
       relatedEvents = []
     }
 
-    return (
-      <EventClient
-        product={product} // ✅ Pasar el producto de Storefront API
-        relatedEvents={relatedEvents}
-        session={session}
-      />
-    )
+    return <EventClient event={event} relatedEvents={relatedEvents} session={session} />
   } catch (error) {
     console.error('Error in EventPage:', error)
     notFound()
   }
 }
 
-// ✅ Generar metadata usando Storefront API
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params
 
   try {
-    // ✅ Usar Storefront API para metadata
     const productResponse = await api.getProductByHandle(handle)
-    const product = productResponse?.data
+    const event = productResponse.data as Event
 
-    if (!product || product.productType !== 'Evento') {
+    if (event.productType !== 'Evento') {
       return {
         title: 'Evento no encontrado',
       }
     }
 
-    // ✅ Extraer detalles del evento de metafields si están disponibles
-    const eventDate = product.metafields?.find(
-      (m) => m.namespace === 'event_details' && m.key === 'date'
-    )?.value
+    const eventDate = event.eventDetails?.date
 
-    const eventLocation = product.metafields?.find(
-      (m) => m.namespace === 'event_details' && m.key === 'location'
-    )?.value
+    const eventLocation = event.eventDetails?.location
 
     const eventDetails = [
       eventDate && `📅 ${new Date(eventDate).toLocaleDateString('es-MX')}`,
@@ -137,20 +118,20 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
       .join(' • ')
 
     return {
-      title: `${product.title} - Evento`,
-      description: eventDetails || product.description || `Evento: ${product.title}`,
+      description: eventDetails || event.descriptionHtml || `Evento: ${event.title}`,
       openGraph: {
-        title: `🎫 ${product.title}`,
         description:
-          eventDetails || product.description || `Únete a este evento especial: ${product.title}`,
-        images: product.images?.[0] ? [product.images[0].url] : [],
+          eventDetails || event.descriptionHtml || `Únete a este evento especial: ${event.title}`,
+        images: event.images[0] ? [event.images[0].url] : [],
+        title: `🎫 ${event.title}`,
         type: 'website',
       },
+      title: `${event.title} - Evento`,
       twitter: {
         card: 'summary_large_image',
-        title: `🎫 ${product.title}`,
-        description: eventDetails || product.description,
-        images: product.images?.[0] ? [product.images[0].url] : [],
+        description: eventDetails || event.descriptionHtml,
+        images: event.images[0] ? [event.images[0].url] : [],
+        title: `🎫 ${event.title}`,
       },
     }
   } catch (error) {

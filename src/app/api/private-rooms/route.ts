@@ -4,10 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/modules/auth/server/server'
 
 export async function GET() {
-  const session = await requirePermission('manage_private_rooms')
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  await requirePermission('manage_private_rooms')
 
   const privateRooms = await prisma.privateRoom.findMany({
     include: { products: true, user: true },
@@ -17,10 +14,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await requirePermission('manage_private_rooms')
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  await requirePermission('manage_private_rooms')
 
   const { description, name, productIds, userId } = await req.json()
 

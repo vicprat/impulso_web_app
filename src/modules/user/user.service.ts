@@ -71,7 +71,6 @@ export const deleteLink = async (linkId: string, userId: string) => {
   })
 }
 
-// ✅ CORREGIDO: Usando UserRole para schema actual
 export const getAllUsers = async (filters: UserFilters) => {
   const {
     isActive,
@@ -96,14 +95,12 @@ export const getAllUsers = async (filters: UserFilters) => {
     }),
     ...(typeof isActive === 'boolean' && { isActive }),
     ...(typeof isPublic === 'boolean' && { isPublic }),
-    // ✅ CORREGIDO: Usar UserRole en lugar de roles directos
     ...(role && { UserRole: { some: { role: { name: role } } } }),
   }
 
   const [users, total] = await prisma.$transaction([
     prisma.user.findMany({
       include: {
-        // ✅ CORREGIDO: Usar UserRole en lugar de role directo
         UserRole: {
           include: {
             role: {
@@ -130,23 +127,17 @@ export const getAllUsers = async (filters: UserFilters) => {
     prisma.user.count({ where }),
   ])
 
-  // ✅ TRANSFORMAR: Convertir UserRole a formato esperado por frontend
   const transformedUsers = users.map((user) => ({
     ...user,
 
-    // Agregar permisos si los necesitas
-    permissions: user.UserRole.flatMap(
-      (ur) => ur.role.permissions?.map((rp) => rp.permission.name) ?? []
-    ),
+    permissions: user.UserRole.flatMap((ur) => ur.role.permissions.map((rp) => rp.permission.name)),
 
-    // Mantener compatibilidad con frontend que espera roles como array
     roles: user.UserRole.map((ur) => ur.role.name),
   }))
 
   return { total, users: transformedUsers }
 }
 
-// ✅ CORREGIDO: Usando UserRole
 export const getUserById = async (userId: string) => {
   const user = await prisma.user.findUnique({
     include: {
@@ -164,14 +155,13 @@ export const getUserById = async (userId: string) => {
         },
       },
       links: true,
-      profile: true, // Add this line to include links
+      profile: true,
     },
     where: { id: userId },
   })
 
   if (!user) return null
 
-  // ✅ TRANSFORMAR: Convertir a formato esperado
   return {
     ...user,
     permissions: user.UserRole.flatMap((ur) => ur.role.permissions.map((rp) => rp.permission.name)),
@@ -179,7 +169,6 @@ export const getUserById = async (userId: string) => {
   }
 }
 
-// ✅ NUEVO: Función para obtener un perfil público por ID de usuario
 export const getPublicProfileByUserId = async (userId: string) => {
   const user = await prisma.user.findUnique({
     include: {
@@ -214,7 +203,6 @@ export const getPublicProfileByUserId = async (userId: string) => {
   }
 }
 
-// ✅ NUEVO: Método para actualizar rol usando UserRole
 export const updateUserRole = async (userId: string, roleName: string) => {
   const role = await prisma.role.findUnique({
     where: { name: roleName },
@@ -224,14 +212,11 @@ export const updateUserRole = async (userId: string, roleName: string) => {
     throw new Error(`Role ${roleName} not found`)
   }
 
-  // Eliminar rol actual y asignar nuevo (un solo rol por usuario)
   await prisma.$transaction(async (tx) => {
-    // Eliminar roles existentes
     await tx.userRole.deleteMany({
       where: { userId },
     })
 
-    // Crear nuevo rol
     await tx.userRole.create({
       data: {
         assignedBy: 'admin',
@@ -241,7 +226,6 @@ export const updateUserRole = async (userId: string, roleName: string) => {
     })
   })
 
-  // Retornar usuario actualizado
   return await getUserById(userId)
 }
 
@@ -259,7 +243,6 @@ export const reactivateUser = async (userId: string) => {
   })
 }
 
-// ✅ NUEVO: Función para actualizar el estado isPublic de un usuario
 export const updateUserPublicStatus = async (userId: string, isPublic: boolean) => {
   return await prisma.user.update({
     data: { isPublic },
@@ -309,7 +292,6 @@ export const updateUserAndRelatedData = async (
     }
 
     if (data.links) {
-      // Delete existing links for the user that are not in the new list
       const existingLinks = await tx.links.findMany({ where: { userId } })
       const linksToDelete = existingLinks.filter(
         (link) => !data.links?.some((newLink) => newLink.id === link.id)
@@ -318,16 +300,13 @@ export const updateUserAndRelatedData = async (
         await tx.links.delete({ where: { id: link.id } })
       }
 
-      // Create or update links
       for (const linkData of data.links) {
         if (linkData.id) {
-          // Update existing link
           await tx.links.update({
             data: linkData,
             where: { id: linkData.id },
           })
         } else {
-          // Create new link
           await tx.links.create({
             data: {
               userId,
@@ -338,7 +317,6 @@ export const updateUserAndRelatedData = async (
       }
     }
 
-    // Fetch the updated user with all related data
     return await tx.user.findUnique({
       include: {
         UserRole: {

@@ -5,11 +5,7 @@ import { requirePermission } from '@/src/modules/auth/server/server'
 
 export async function PUT(request: Request, { params }: { params: { expenseId: string } }) {
   try {
-    const session = await requirePermission('manage_events')
-    console.log(
-      'User with manage_events permission accessed expense update API:',
-      session.user.email
-    )
+    await requirePermission('manage_events')
 
     const { expenseId } = params
     const { amount, category, description, notes, paymentMethod, relatedParty } =
@@ -27,9 +23,9 @@ export async function PUT(request: Request, { params }: { params: { expenseId: s
         amount: parseFloat(amount),
         category,
         description,
-        notes: notes || null,
-        paymentMethod: paymentMethod || null,
-        relatedParty: relatedParty || null,
+        notes: notes ?? null,
+        paymentMethod: paymentMethod ?? null,
+        relatedParty: relatedParty ?? null,
       },
       where: {
         id: expenseId,
@@ -50,18 +46,12 @@ export async function PUT(request: Request, { params }: { params: { expenseId: s
   }
 }
 
-// DELETE - Eliminar gasto
 export async function DELETE(request: Request, { params }: { params: { expenseId: string } }) {
   try {
-    const session = await requirePermission('manage_events')
-    console.log(
-      'User with manage_events permission accessed expense delete API:',
-      session.user.email
-    )
+    await requirePermission('manage_events')
 
     const { expenseId } = params
 
-    // Verificar que el gasto existe y es del tipo EXPENSE
     const existingExpense = await prisma.financialEntry.findFirst({
       where: {
         id: expenseId,
@@ -76,7 +66,6 @@ export async function DELETE(request: Request, { params }: { params: { expenseId
       )
     }
 
-    // Eliminar el gasto
     await prisma.financialEntry.delete({
       where: {
         id: expenseId,
@@ -98,7 +87,6 @@ export async function DELETE(request: Request, { params }: { params: { expenseId
       return NextResponse.json({ message: 'Expense not found' }, { status: 404 })
     }
 
-    // Error de foreign key constraints (si existe)
     if (error instanceof Error && error.message.includes('Foreign key constraint')) {
       return NextResponse.json(
         { message: 'Cannot delete expense due to related records' },

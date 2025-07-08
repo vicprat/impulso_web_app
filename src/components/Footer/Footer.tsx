@@ -2,14 +2,14 @@
 'use client'
 
 import {
-  Instagram,
+  ArrowRight,
   Facebook,
+  Instagram,
+  Mail,
+  MapPin,
+  Phone,
   Twitter,
   Youtube,
-  Mail,
-  Phone,
-  MapPin,
-  ArrowRight,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -51,7 +51,6 @@ export const Footer = () => {
 
   const handleNewsletterSubmit = () => {
     if (email) {
-      console.log('Newsletter subscription:', email)
       setEmail('')
       // Aquí iría la lógica real de suscripción
     }

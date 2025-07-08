@@ -5,11 +5,7 @@ import { requirePermission } from '@/src/modules/auth/server/server'
 
 export async function GET() {
   try {
-    const session = await requirePermission('manage_events')
-    console.log(
-      'User with manage_events permission accessed pending income API:',
-      session.user.email
-    )
+    await requirePermission('manage_events')
 
     const pendingIncomeEntries = await prisma.financialEntry.findMany({
       orderBy: {

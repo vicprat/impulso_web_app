@@ -1,4 +1,3 @@
-// src/app/api/users/route.ts
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { requirePermission } from '@/modules/auth/server/server'
@@ -25,16 +24,7 @@ export async function GET(request: NextRequest) {
       sortOrder,
     }
 
-    console.log('🔍 API - Filtros recibidos:', filters)
-
-    // ✅ El service ya devuelve users transformados con roles array
     const { total, users } = await getAllUsers(filters)
-
-    console.log('✅ API - Usuarios obtenidos:', {
-      firstUserRoles: users[0]?.roles || 'No users',
-      total,
-      usersCount: users.length,
-    })
 
     const pagination = {
       hasNext: page * limit < total,
@@ -46,10 +36,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       pagination,
-      users, // Ya vienen transformados del service
+      users,
     })
-  } catch (error) {
-    console.error('❌ API - Error fetching users:', error)
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     const requestBody = JSON.stringify({
       query,
-      variables: variables || {},
+      variables: variables ?? {},
     })
 
     const response = await fetch(apiUrl, {

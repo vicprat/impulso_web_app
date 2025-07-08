@@ -5,8 +5,8 @@ import { buildLogoutUrl } from '@/modules/auth/utils'
 
 export async function POST(request: NextRequest) {
   try {
-    const accessToken = request.cookies.get('access_token')?.value?.trim()
-    const idToken = request.cookies.get('id_token')?.value?.trim()
+    const accessToken = request.cookies.get('access_token')?.value.trim()
+    const idToken = request.cookies.get('id_token')?.value.trim()
 
     const authConfig = {
       clientId: process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID!,
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       dbLogoutSuccess,
       message: 'Logged out successfully',
-      redirectUrl: shopifyLogoutUrl || `${process.env.NEXTAUTH_URL}/auth/login?logout=success`,
+      redirectUrl: shopifyLogoutUrl ?? `${process.env.NEXTAUTH_URL}/auth/login?logout=success`,
       shopifyLogoutUrl,
       success: true,
     })

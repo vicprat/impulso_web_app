@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useEffect } from 'react'
 import { type FieldValues, type UseFormReturn } from 'react-hook-form'
 
@@ -20,7 +21,9 @@ export const useFormDebug = <T extends FieldValues>(
       console.log(`${formName} isSubmitSuccessful:`, form.formState.isSubmitSuccessful)
     }
 
-    return () => {}
+    return () => {
+      /* cleanup */
+    }
   }, [form.formState.isSubmitSuccessful, form, formName])
 
   useEffect(() => {
@@ -30,6 +33,8 @@ export const useFormDebug = <T extends FieldValues>(
       console.log(`${formName} isSubmitting:`, form.formState.isSubmitting)
     }
 
-    return () => {}
+    return () => {
+      /* cleanup */
+    }
   }, [form.formState.isSubmitting, form, formName])
 }

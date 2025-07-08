@@ -5,11 +5,7 @@ import { requirePermission } from '@/src/modules/auth/server/server'
 
 export async function GET(request: Request, { params }: { params: { eventId: string } }) {
   try {
-    const session = await requirePermission('manage_events')
-    console.log(
-      'User with manage_events permission accessed financial entries API:',
-      session.user.email
-    )
+    await requirePermission('manage_events')
 
     const { eventId } = await params
 
@@ -19,7 +15,7 @@ export async function GET(request: Request, { params }: { params: { eventId: str
       },
       where: {
         eventId,
-        status: 'COMPLETED', // Only show completed entries for summary
+        status: 'COMPLETED',
       },
     })
 

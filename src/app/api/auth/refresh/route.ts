@@ -5,7 +5,7 @@ import { getOrCreateCartForUser } from '@/modules/cart/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const refreshToken = request.cookies.get('refresh_token')?.value?.trim()
+    const refreshToken = request.cookies.get('refresh_token')?.value.trim()
 
     if (!refreshToken) {
       return NextResponse.json({ error: 'No refresh token provided' }, { status: 401 })

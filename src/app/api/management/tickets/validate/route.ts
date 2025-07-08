@@ -1,14 +1,16 @@
-// app/api/management/tickets/validate/route.ts
+import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from '@/modules/auth/server/server'
-import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    // 1. Seguridad: Verificar que el usuario sea un administrador
     const session = await getServerSession()
-    if (!session || session.user.role !== 'ADMIN') {
+    if (
+      !session?.user.roles ||
+      !Array.isArray(session.user.roles) ||
+      !session.user.roles.includes('admin')
+    ) {
       return NextResponse.json(
         { error: 'Acceso denegado. Se requieren privilegios de administrador.' },
         { status: 403 }
@@ -19,15 +21,14 @@ export async function POST(request: Request) {
 
     if (!qrCode) {
       return NextResponse.json({ error: 'El código QR es requerido.' }, { status: 400 })
-    } // 2. Buscar el boleto en la base de datos, incluyendo la info del evento y del usuario
+    }
 
     const ticket = await prisma.ticket.findUnique({
-      where: { qrCode },
       include: {
-        user: { select: { name: true, email: true } },
-        event: true, // Asumiendo que tienes una relación 'event' en tu modelo Ticket
+        user: { select: { email: true } },
       },
-    }) // 3. Manejar los diferentes escenarios de validación
+      where: { qrCode },
+    })
 
     if (!ticket) {
       return NextResponse.json(
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
           ticket,
         },
         { status: 409 }
-      ) // 409 Conflict
+      )
     }
 
     if (ticket.status === 'CANCELLED') {
@@ -59,14 +60,12 @@ export async function POST(request: Request) {
     }
 
     if (ticket.status === 'VALID') {
-      // 4. Si es válido, actualizar su estado a 'USADO'
       const updatedTicket = await prisma.ticket.update({
-        where: { id: ticket.id },
         data: { status: 'USED' },
         include: {
-          user: { select: { name: true, email: true } },
-          event: true,
+          user: { select: { email: true } },
         },
+        where: { id: ticket.id },
       })
 
       return NextResponse.json({
@@ -74,7 +73,7 @@ export async function POST(request: Request) {
         status: 'SUCCESS',
         ticket: updatedTicket,
       })
-    } // Fallback para cualquier otro estado no manejado
+    }
 
     return NextResponse.json(
       { error: `Estado de boleto no válido: ${ticket.status}`, status: 'INVALID_STATUS' },

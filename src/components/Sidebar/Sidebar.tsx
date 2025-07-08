@@ -29,14 +29,14 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
   useEffect(() => {
     if (isLoading || !user) return
 
-    const userRoles = user.roles || []
-    const userPermissions = user.permissions || []
+    const userRoles = user.roles
+    const userPermissions = user.permissions
     const accessibleRoutes = getDashboardNavRoutes(userRoles, userPermissions)
     setVisibleRoutes(accessibleRoutes)
   }, [user, isLoading, routes])
 
   const handleLogout = () => {
-    logout()
+    void logout()
     router.push('/auth/login')
   }
 
@@ -69,12 +69,12 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
             className={`flex items-center p-2 text-sm hover:bg-accent hover:text-accent-foreground ${pathname === '/profile' ? 'bg-accent text-accent-foreground' : ''}`}
           >
             <Avatar className='size-8 min-h-8 min-w-8'>
-              <AvatarImage src={user?.avatarUrl ?? ''} alt={user?.firstName ?? ''} />
-              <AvatarFallback>{user?.firstName?.[0] || 'U'}</AvatarFallback>
+              <AvatarImage src={user?.profile?.avatarUrl ?? ''} alt={user?.firstName ?? ''} />
+              <AvatarFallback>{user?.firstName?.[0] ?? 'U'}</AvatarFallback>
             </Avatar>
             <div className='ml-3 overflow-hidden group-data-[collapsible=icon]:hidden'>
               <span className='block truncate text-sm font-medium'>
-                {user?.firstName || user?.email}
+                {user?.firstName ?? user?.email}
               </span>
             </div>
           </Link>

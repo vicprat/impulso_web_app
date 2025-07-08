@@ -1,16 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
 import {
-  MoreHorizontal,
-  Edit,
-  Eye,
-  Trash2,
-  Check,
-  X,
   ArrowUpDown,
+  Check,
+  Edit,
   ExternalLink,
+  Eye,
+  MoreHorizontal,
+  Trash2,
+  X,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -34,7 +33,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
 import { type Product } from '@/models/Product'
 
 declare module '@tanstack/react-table' {
@@ -49,6 +47,11 @@ declare module '@tanstack/react-table' {
       status?: 'ACTIVE' | 'DRAFT'
     }) => void
     isUpdating?: boolean
+    deactivateUser?: (userId: string) => void
+    handleManageRoles?: (user: TData) => void
+    handleToggleUserStatus?: (user: TData) => void
+    reactivateUser?: (userId: string) => void
+    toggleUserPublicStatus?: (userId: string, isPublic: boolean) => void
   }
 }
 
@@ -71,7 +74,7 @@ const EditableTitle = ({
         <span className='font-medium'>{product.title}</span>
         {product.primaryImage && (
           <span className='text-xs text-muted-foreground'>
-            SKU: {product.primaryVariant?.sku || 'N/A'}
+            SKU: {product.primaryVariant?.sku ?? 'N/A'}
           </span>
         )}
       </div>
@@ -110,9 +113,9 @@ const EditablePrice = ({
   onUpdate: (value: string) => void
   onCancel: () => void
 }) => {
-  const variant = product.variants?.[0]
-  const priceAmount = variant?.price?.amount || '0'
-  const currencyCode = variant?.price?.currencyCode || 'MXN'
+  const variant = product.variants[0]
+  const priceAmount = variant.price.amount || '0'
+  const currencyCode = variant.price.currencyCode || 'MXN'
   const [value, setValue] = useState(priceAmount)
 
   const formatPrice = (amount: string, currency: string) => {
@@ -121,7 +124,7 @@ const EditablePrice = ({
   }
 
   if (!isEditing) {
-    const displayPrice = variant ? formatPrice(priceAmount, currencyCode) : 'Sin precio'
+    const displayPrice = formatPrice(priceAmount, currencyCode)
 
     return <span className='font-medium'>{displayPrice}</span>
   }
@@ -160,8 +163,8 @@ const EditableInventory = ({
   onUpdate: (value: number) => void
   onCancel: () => void
 }) => {
-  const variant = product.variants?.[0]
-  const currentQuantity = variant?.inventoryQuantity ?? 0
+  const variant = product.variants[0]
+  const currentQuantity = variant.inventoryQuantity ?? 0
   const [value, setValue] = useState(currentQuantity.toString())
 
   if (!isEditing) {
@@ -202,7 +205,7 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'image',
     cell: ({ row }) => {
       const product = row.original
-      const image = product.images[0]
+      const image = product.images.length > 0 ? product.images[0] : undefined
 
       if (!image) {
         return (
@@ -216,7 +219,7 @@ export const columns: ColumnDef<Product>[] = [
         <div className='relative size-16 overflow-hidden rounded-md'>
           <Image
             src={image.url}
-            alt={image.altText || product.title}
+            alt={image.altText ?? product.title}
             fill
             className='object-cover'
             sizes='64px'
@@ -230,7 +233,7 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'title',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingRowId, setEditingRowId, updateProduct } = table.options.meta || {}
+      const { editingRowId, setEditingRowId, updateProduct } = table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       return (
@@ -284,21 +287,19 @@ export const columns: ColumnDef<Product>[] = [
     },
     header: 'Tipo',
   },
-  // Nueva columna para Técnica
   {
     accessorKey: 'artworkDetails.medium',
     cell: ({ row }) => {
       const product = row.original
-      return <span className='text-sm'>{product.artworkDetails?.medium || '-'}</span>
+      return <span className='text-sm'>{product.artworkDetails.medium ?? '-'}</span>
     },
     header: 'Técnica',
   },
-  // Nueva columna para Año
   {
     accessorKey: 'artworkDetails.year',
     cell: ({ row }) => {
       const product = row.original
-      return <span className='text-sm'>{product.artworkDetails?.year || '-'}</span>
+      return <span className='text-sm'>{product.artworkDetails.year ?? '-'}</span>
     },
     header: ({ column }) => {
       return (
@@ -313,11 +314,10 @@ export const columns: ColumnDef<Product>[] = [
       )
     },
   },
-  // Nueva columna para Medidas
   {
     cell: ({ row }) => {
       const product = row.original
-      const { depth, height, width } = product.artworkDetails || {}
+      const { depth, height, width } = product.artworkDetails
       const dimensions = [height, width, depth].filter(Boolean)
 
       if (dimensions.length === 0) return <span className='text-sm text-muted-foreground'>-</span>
@@ -327,12 +327,11 @@ export const columns: ColumnDef<Product>[] = [
     header: 'Medidas (cm)',
     id: 'dimensions',
   },
-  // Nueva columna para Localización
   {
     accessorKey: 'artworkDetails.location',
     cell: ({ row }) => {
       const product = row.original
-      const location = product.artworkDetails?.location
+      const location = product.artworkDetails.location
 
       if (!location) return <span className='text-sm text-muted-foreground'>-</span>
 
@@ -345,10 +344,10 @@ export const columns: ColumnDef<Product>[] = [
     header: 'Localización',
   },
   {
-    accessorFn: (row) => row.variants?.[0]?.price?.amount,
+    accessorFn: (row) => row.variants[0]?.price?.amount,
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingRowId, setEditingRowId, updateProduct } = table.options.meta || {}
+      const { editingRowId, setEditingRowId, updateProduct } = table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       return (
@@ -377,10 +376,10 @@ export const columns: ColumnDef<Product>[] = [
     id: 'price',
   },
   {
-    accessorFn: (row) => row.variants?.[0]?.inventoryQuantity,
+    accessorFn: (row) => row.variants[0]?.inventoryQuantity,
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingRowId, setEditingRowId, updateProduct } = table.options.meta || {}
+      const { editingRowId, setEditingRowId, updateProduct } = table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       return (
@@ -401,7 +400,7 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'status',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingRowId, setEditingRowId, updateProduct } = table.options.meta || {}
+      const { editingRowId, updateProduct } = table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       if (isEditing) {
@@ -429,9 +428,7 @@ export const columns: ColumnDef<Product>[] = [
         DRAFT: 'secondary',
       } as const
 
-      return (
-        <Badge variant={statusColors[product.status] || 'secondary'}>{product.statusLabel}</Badge>
-      )
+      return <Badge variant={statusColors[product.status]}>{product.statusLabel}</Badge>
     },
     header: 'Estado',
   },
@@ -462,7 +459,7 @@ export const columns: ColumnDef<Product>[] = [
   {
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingRowId, isUpdating, setEditingRowId } = table.options.meta || {}
+      const { editingRowId, isUpdating, setEditingRowId } = table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       if (isEditing) {
@@ -511,106 +508,6 @@ export const columns: ColumnDef<Product>[] = [
             <DropdownMenuItem className='text-red-600'>
               <Trash2 className='mr-2 size-4' />
               Eliminar
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-    id: 'actions',
-  },
-]
-
-// Columnas simplificadas para vista móvil/tableta
-export const mobileColumns: ColumnDef<Product>[] = [
-  {
-    cell: ({ row }) => {
-      const product = row.original
-      const image = product.images[0]
-      const variant = product.variants?.[0]
-
-      return (
-        <div className='flex items-start space-x-3'>
-          <div className='relative size-20 shrink-0 overflow-hidden rounded-md'>
-            {image ? (
-              <Image
-                src={image.url}
-                alt={image.altText || product.title}
-                fill
-                className='object-cover'
-                sizes='80px'
-              />
-            ) : (
-              <div className='flex size-full items-center justify-center bg-gray-200'>
-                <span className='text-xs text-gray-500'>Sin imagen</span>
-              </div>
-            )}
-          </div>
-
-          <div className='flex-1 space-y-1'>
-            <p className='line-clamp-2 font-medium'>{product.title}</p>
-            <p className='text-sm text-muted-foreground'>{product.vendor}</p>
-            <div className='flex items-center gap-2'>
-              <Badge variant='outline' className='text-xs'>
-                {product.productType}
-              </Badge>
-              {product.artworkDetails?.year && (
-                <Badge variant='secondary' className='text-xs'>
-                  {product.artworkDetails.year}
-                </Badge>
-              )}
-            </div>
-            <div className='flex items-center gap-3 text-sm'>
-              <span className='font-medium'>{product.formattedPrice}</span>
-              <span className='text-muted-foreground'>
-                Stock: {variant?.inventoryQuantity || 0}
-              </span>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    header: 'Producto',
-    id: 'product',
-  },
-  {
-    cell: ({ row }) => {
-      const product = row.original
-      const statusColors = {
-        ACTIVE: 'default',
-        ARCHIVED: 'destructive',
-        DRAFT: 'secondary',
-      } as const
-
-      return (
-        <Badge variant={statusColors[product.status] || 'secondary'}>{product.statusLabel}</Badge>
-      )
-    },
-    header: 'Estado',
-    id: 'status',
-  },
-  {
-    cell: ({ row }) => {
-      const product = row.original
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='ghost' className='size-8 p-0'>
-              <MoreHorizontal className='size-4' />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
-            <DropdownMenuItem asChild>
-              <Link href={`/manage-inventory/${product.id.split('/').pop()}`}>
-                <Eye className='mr-2 size-4' />
-                Ver detalles
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`/store/product/${product.handle}`} target='_blank'>
-                <ExternalLink className='mr-2 size-4' />
-                Ver en tienda
-              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

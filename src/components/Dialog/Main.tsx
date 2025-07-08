@@ -12,23 +12,19 @@ import {
 } from '@/components/ui/dialog'
 
 interface Props {
-  // Dialog state
   open: boolean
   onOpenChange: (open: boolean) => void
 
-  // Content
   title: string
   description?: string
   children: React.ReactNode
 
-  // Trigger button
   triggerText?: string
   triggerIcon?: LucideIcon
   triggerVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
   triggerSize?: 'default' | 'sm' | 'lg' | 'icon'
   triggerClassName?: string
 
-  // Dialog content
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl'
   contentClassName?: string
 }
@@ -43,7 +39,6 @@ export const Main: React.FC<Props> = ({
   title,
   triggerClassName = '',
   triggerIcon: TriggerIcon,
-  triggerSize = 'sm',
   triggerText,
   triggerVariant = 'default',
 }) => {

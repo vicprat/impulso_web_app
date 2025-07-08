@@ -9,7 +9,7 @@ export const storeClient = createStorefrontApiClient({
 export const makeStorefrontRequest = async (query: string, variables?: Record<string, unknown>) => {
   try {
     const response = await storeClient.request(query, {
-      variables: variables || {},
+      variables: variables ?? {},
     })
 
     if (response.errors) {
@@ -33,7 +33,7 @@ export { storeClient as default }
 export const makeCustomerRequest = async (query: string, variables?: Record<string, unknown>) => {
   try {
     const response = await fetch('/api/customer/graphql', {
-      body: JSON.stringify({ query, variables: variables || {} }),
+      body: JSON.stringify({ query, variables: variables ?? {} }),
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
@@ -47,8 +47,8 @@ export const makeCustomerRequest = async (query: string, variables?: Record<stri
     }
 
     if (!response.ok) {
-      const errorMessage = body.error || `Request failed with status ${response.status}`
-      console.error('Customer API request failed:', errorMessage, body.details || '')
+      const errorMessage = body.error ?? `Request failed with status ${response.status}`
+      console.error('Customer API request failed:', errorMessage, body.details ?? '')
       throw new Error(errorMessage)
     }
 

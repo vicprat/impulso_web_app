@@ -9,7 +9,7 @@ export const Search = () => {
     <Suspense
       fallback={
         <div className='relative w-full max-w-md'>
-          <Skeleton className='bg-surface-container-high h-14 w-full rounded-full' />
+          <Skeleton className='h-14 w-full rounded-full bg-surface-container-high' />
         </div>
       }
     >

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetProduct, useUpdateProduct, useDeleteProduct } from '@/services/product/hook'
+import { useDeleteProduct, useGetProduct, useUpdateProduct } from '@/services/product/hook'
 import { type UpdateProductPayload } from '@/services/product/types'
 
 export default function ProductDetailPage() {
@@ -41,7 +41,7 @@ export default function ProductDetailPage() {
       await updateMutation.mutateAsync(updatePayload)
       toast.success('Producto actualizado exitosamente')
       setIsEditing(false)
-      refetch()
+      void refetch()
     } catch (error) {
       toast.error(
         `Error al actualizar: ${error instanceof Error ? error.message : 'Error desconocido'}`
@@ -257,7 +257,7 @@ export default function ProductDetailPage() {
                       <div key={index} className='relative aspect-square'>
                         <Image
                           src={image.url}
-                          alt={image.altText || product.title}
+                          alt={image.altText ?? product.title}
                           fill
                           className='rounded-md object-cover'
                         />
@@ -294,7 +294,7 @@ export default function ProductDetailPage() {
                   <div className='flex items-center justify-between'>
                     <span className='text-sm font-medium'>Cantidad disponible</span>
                     <span className='text-lg font-semibold'>
-                      {product.primaryVariant?.inventoryQuantity || 0}
+                      {product.primaryVariant?.inventoryQuantity ?? 0}
                     </span>
                   </div>
                   <div className='flex items-center justify-between'>
@@ -306,7 +306,7 @@ export default function ProductDetailPage() {
                   <div className='flex items-center justify-between'>
                     <span className='text-sm font-medium'>Gestión</span>
                     <span className='text-sm text-muted-foreground'>
-                      {product.primaryVariant?.inventoryManagement || 'N/A'}
+                      {product.primaryVariant?.inventoryManagement ?? 'N/A'}
                     </span>
                   </div>
                 </div>

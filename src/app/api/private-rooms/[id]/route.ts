@@ -6,11 +6,7 @@ import { requirePermission } from '@/modules/auth/server/server'
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const session = await requirePermission('manage_private_rooms')
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requirePermission('manage_private_rooms')
 
     const privateRoom = await prisma.privateRoom.findUnique({
       include: {
@@ -41,23 +37,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const session = await requirePermission('manage_private_rooms')
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requirePermission('manage_private_rooms')
 
     const { description, name, productIds, userId } = await req.json()
 
-    // ✅ CORRECCIÓN: Usar transacción para actualizar productos correctamente
     const updatedPrivateRoom = await prisma.$transaction(async (tx) => {
-      // 1. Eliminar todos los productos existentes
       await tx.privateRoomProduct.deleteMany({
         where: { privateRoomId: id },
       })
 
-      // 2. Actualizar el private room
-      const room = await tx.privateRoom.update({
+      await tx.privateRoom.update({
         data: {
           description,
           name,
@@ -66,7 +55,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         where: { id },
       })
 
-      // 3. Crear nuevos productos si existen
       if (productIds && productIds.length > 0) {
         await tx.privateRoomProduct.createMany({
           data: productIds.map((productId: string) => ({
@@ -76,7 +64,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         })
       }
 
-      // 4. Retornar el room actualizado con productos y usuario
       return tx.privateRoom.findUnique({
         include: {
           products: true,
@@ -103,13 +90,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const session = await requirePermission('manage_private_rooms')
+    await requirePermission('manage_private_rooms')
 
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Los productos se eliminan automáticamente por cascade
     await prisma.privateRoom.delete({
       where: { id },
     })
@@ -121,46 +103,36 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   }
 }
 
-// ✅ BONUS: Agregar método PATCH para actualizaciones parciales
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const session = await requirePermission('manage_private_rooms')
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await requirePermission('manage_private_rooms')
 
     const body = await req.json()
     const { description, name, productIds, userId, ...otherFields } = body
 
-    // Construir el objeto de actualización dinámicamente
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {}
 
     if (name !== undefined) updateData.name = name
     if (description !== undefined) updateData.description = description
     if (userId !== undefined) updateData.userId = userId
 
-    // Si hay otros campos, agregarlos
     Object.assign(updateData, otherFields)
 
     let updatedPrivateRoom
 
     if (productIds !== undefined) {
-      // Si se actualizan productos, usar transacción
       updatedPrivateRoom = await prisma.$transaction(async (tx) => {
-        // Eliminar productos existentes
         await tx.privateRoomProduct.deleteMany({
           where: { privateRoomId: id },
         })
 
-        // Actualizar room
-        const room = await tx.privateRoom.update({
+        await tx.privateRoom.update({
           data: updateData,
           where: { id },
         })
 
-        // Crear nuevos productos
         if (productIds.length > 0) {
           await tx.privateRoomProduct.createMany({
             data: productIds.map((productId: string) => ({
@@ -186,7 +158,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         })
       })
     } else {
-      // Solo actualizar campos del room
       updatedPrivateRoom = await prisma.privateRoom.update({
         data: updateData,
         include: {

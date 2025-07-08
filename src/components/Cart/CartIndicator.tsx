@@ -26,7 +26,7 @@ export function CartIndicator({
     return null
   }
 
-  const itemCount = cart?.totalQuantity || 0
+  const itemCount = cart?.totalQuantity ?? 0
   const isEmpty = itemCount === 0
   const total = cart?.cost.totalAmount
 

@@ -1,21 +1,22 @@
 'use client'
 
-import { ShoppingCart, Plus, Minus, Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, Minus, Plus, ShoppingCart } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import { useCartActions } from '@/modules/cart/hook'
-import { type Product, type Variant } from '@/modules/shopify/types'
+import { type IProductForCart, type Variant } from '@/modules/shopify/types'
 
 interface AddToCartButtonProps {
-  product: Product
+  product: IProductForCart
   selectedVariant?: Variant
   quantity?: number
   size?: 'sm' | 'default' | 'lg'
   className?: string
   showQuantitySelector?: boolean
+  disabled?: boolean
 }
 
 export function AddToCartButton({
@@ -30,16 +31,7 @@ export function AddToCartButton({
   const { addProduct, cartSummary, isAdding } = useCartActions()
   const [quantity, setQuantity] = useState(initialQuantity)
 
-  const variantToAdd = selectedVariant || product.variants[0]
-
-  if (!variantToAdd) {
-    return (
-      <Button disabled size={size} className={className}>
-        <AlertCircle className='mr-2 size-4' />
-        No disponible
-      </Button>
-    )
-  }
+  const variantToAdd = selectedVariant ?? product.variants[0]
 
   const existingLine = cartSummary?.lines.find((line) => line.merchandise.id === variantToAdd.id)
 
@@ -54,7 +46,7 @@ export function AddToCartButton({
       return
     }
 
-    addProduct(variantToAdd.id, quantity)
+    void addProduct(variantToAdd.id, quantity)
   }
 
   const incrementQuantity = () => {

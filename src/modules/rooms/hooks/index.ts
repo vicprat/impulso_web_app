@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { privateRoomsApi } from '../api'
 import { type CreatePrivateRoomDto, type UpdatePrivateRoomDto } from '../types'
@@ -31,7 +31,7 @@ export const useCreatePrivateRoom = () => {
   return useMutation({
     mutationFn: (data: CreatePrivateRoomDto) => privateRoomsApi.createPrivateRoom(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['privateRooms'] })
+      void queryClient.invalidateQueries({ queryKey: ['privateRooms'] })
     },
   })
 }
@@ -42,8 +42,8 @@ export const useUpdatePrivateRoom = () => {
     mutationFn: ({ data, id }: { id: string; data: UpdatePrivateRoomDto }) =>
       privateRoomsApi.updatePrivateRoom(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['privateRooms'] })
-      queryClient.invalidateQueries({ queryKey: ['privateRoom'] })
+      void queryClient.invalidateQueries({ queryKey: ['privateRooms'] })
+      void queryClient.invalidateQueries({ queryKey: ['privateRoom'] })
     },
   })
 }
@@ -53,7 +53,7 @@ export const useDeletePrivateRoom = () => {
   return useMutation({
     mutationFn: (id: string) => privateRoomsApi.deletePrivateRoom(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['privateRooms'] })
+      void queryClient.invalidateQueries({ queryKey: ['privateRooms'] })
     },
   })
 }

@@ -29,5 +29,5 @@ export interface UserFilters {
   limit?: number
   sortBy?: 'createdAt' | 'lastLoginAt' | 'email' | 'firstName'
   sortOrder?: 'asc' | 'desc'
-  isPublic?: string
+  isPublic?: boolean
 }

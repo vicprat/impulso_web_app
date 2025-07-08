@@ -1,38 +1,37 @@
 import { prisma } from '@/lib/prisma'
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
+import { Product } from '@/models/Product'
 import { requirePermission } from '@/modules/auth/server/server'
 import { type AuthSession } from '@/modules/auth/service'
 
 import {
-  GET_PRODUCTS_QUERY,
   CREATE_PRODUCT_MUTATION,
-  UPDATE_PRODUCT_MUTATION,
   DELETE_PRODUCT_MUTATION,
-  GET_SINGLE_PRODUCT_QUERY,
-  GET_PUBLICATIONS_QUERY,
-  PUBLISH_PRODUCT_MUTATION,
-  INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
   GET_INVENTORY_ITEM_QUERY,
-  PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
+  GET_PRODUCTS_QUERY,
+  GET_PUBLICATIONS_QUERY,
+  GET_SINGLE_PRODUCT_QUERY,
+  INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
   PRODUCT_CREATE_MEDIA_MUTATION,
+  PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
+  PUBLISH_PRODUCT_MUTATION,
+  UPDATE_PRODUCT_MUTATION,
 } from './queries'
 import {
-  type GetProductsParams,
-  type PaginatedProductsResponse,
   type CreateProductPayload,
-  type UpdateProductPayload,
-  type ShopifyProductData,
-  type ProductMutationResponse,
   type DeleteMutationResponse,
-  type GetProductsApiResponse,
-  type GetPublicationsApiResponse,
-  type ShopifyUserError,
   type GetInventoryItemResponse,
+  type GetProductsApiResponse,
+  type GetProductsParams,
+  type GetPublicationsApiResponse,
   type InventorySetOnHandQuantitiesResponse,
+  type PaginatedProductsResponse,
   type ProductCreateMediaResponse,
+  type ProductMutationResponse,
+  type ShopifyProductData,
+  type ShopifyUserError,
+  type UpdateProductPayload,
 } from './types'
-
-import { Product } from '@/models/Product'
 
 type ValidatedSession = NonNullable<AuthSession>
 
@@ -46,7 +45,7 @@ interface ProductVariantsBulkUpdateResponse {
 let primaryLocationId: string | null = null
 
 function validateSession(session: AuthSession): asserts session is ValidatedSession {
-  if (!session?.user?.id) {
+  if (!session.user.id) {
     throw new Error('Sesión no válida o usuario no autenticado.')
   }
 }
@@ -59,7 +58,7 @@ async function getPrimaryLocationId(): Promise<string> {
     {}
   )
 
-  const locationId = response.locations?.edges[0]?.node?.id
+  const locationId = response.locations.edges[0]?.node?.id
   if (!locationId) {
     throw new Error('No se pudo encontrar una ubicación de Shopify para gestionar el inventario.')
   }
@@ -75,12 +74,12 @@ async function getProducts(
   validateSession(session)
 
   const user = await prisma.user.findUnique({
-    include: { artist: true, roles: { include: { role: true } } },
+    include: { artist: true, role: true },
     where: { id: session.user.id },
   })
   if (!user) throw new Error('Usuario no encontrado.')
 
-  const userRoles = user.roles.map((r) => r.role.name)
+  const userRoles = user.role?.name ? [user.role.name] : []
   let shopifyQuery = ''
 
   if (userRoles.includes('admin') || userRoles.includes('manager')) {
@@ -122,10 +121,10 @@ async function getProductById(id: string, session: AuthSession): Promise<Product
   if (!response.product) return null
 
   const user = await prisma.user.findUnique({
-    include: { artist: true, roles: { include: { role: true } } },
+    include: { artist: true, role: true },
     where: { id: session.user.id },
   })
-  const userRoles = user?.roles.map((r) => r.role.name) || []
+  const userRoles = user?.role?.name ? [user.role.name] : []
 
   if (
     !userRoles.includes('admin') &&
@@ -148,9 +147,9 @@ async function getProductsFromRequest(
   const { searchParams } = new URL(request.url)
 
   const params: GetProductsParams = {
-    cursor: searchParams.get('cursor') || undefined,
+    cursor: searchParams.get('cursor') ?? undefined,
     limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
-    search: searchParams.get('search') || undefined,
+    search: searchParams.get('search') ?? undefined,
   }
 
   if (params.limit && (params.limit < 1 || params.limit > 100)) {
@@ -168,15 +167,12 @@ async function createProduct(
   await requirePermission('manage_own_products')
 
   const user = await prisma.user.findUnique({
-    include: { artist: true, roles: { include: { role: true } } },
+    include: { artist: true, role: true },
     where: { id: session.user.id },
   })
 
-  if (
-    user?.roles.some((r) => r.role.name === 'artist') &&
-    !user.roles.some((r) => r.role.name === 'admin')
-  ) {
-    payload.vendor = user?.artist?.name
+  if (user?.role?.name === 'artist' || user?.role?.name === 'admin') {
+    payload.vendor = user.artist?.name
   }
 
   if (!payload.vendor) {
@@ -187,7 +183,7 @@ async function createProduct(
     descriptionHtml: payload.description ? `<p>${payload.description}</p>` : '',
     productType: payload.productType || '',
     status: payload.status,
-    tags: payload.tags || [],
+    tags: payload.tags,
     title: payload.title,
     vendor: payload.vendor,
   }
@@ -212,64 +208,60 @@ async function createProduct(
   }
 
   if (payload.price && parseFloat(payload.price) > 0) {
-    const defaultVariant = newProductData.variants?.edges[0]?.node
-    if (defaultVariant) {
-      try {
-        const variantUpdatePayload = {
-          productId: newProductData.id,
-          variants: [
-            {
-              id: defaultVariant.id,
-              price: payload.price,
-            },
-          ],
-        }
-
-        await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
-          PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
-          variantUpdatePayload
-        )
-      } catch (variantError) {
-        console.error('Error al actualizar el precio del producto:', variantError)
+    const defaultVariant = newProductData.variants.edges[0]?.node
+    try {
+      const variantUpdatePayload = {
+        productId: newProductData.id,
+        variants: [
+          {
+            id: defaultVariant.id,
+            price: payload.price,
+          },
+        ],
       }
+
+      await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
+        PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
+        variantUpdatePayload
+      )
+    } catch (variantError) {
+      console.error('Error al actualizar el precio del producto:', variantError)
     }
   }
 
   if (payload.inventoryQuantity && payload.inventoryQuantity > 0) {
-    const defaultVariant = newProductData.variants?.edges[0]?.node
-    if (defaultVariant) {
-      try {
-        const locationId = await getPrimaryLocationId()
+    const defaultVariant = newProductData.variants.edges[0]?.node
+    try {
+      const locationId = await getPrimaryLocationId()
 
-        const inventoryItemResponse = await makeAdminApiRequest<GetInventoryItemResponse>(
-          GET_INVENTORY_ITEM_QUERY,
-          { variantId: defaultVariant.id }
-        )
+      const inventoryItemResponse = await makeAdminApiRequest<GetInventoryItemResponse>(
+        GET_INVENTORY_ITEM_QUERY,
+        { variantId: defaultVariant.id }
+      )
 
-        if (inventoryItemResponse.productVariant?.inventoryItem?.id) {
-          const inventoryItemId = inventoryItemResponse.productVariant.inventoryItem.id
+      if (inventoryItemResponse.productVariant?.inventoryItem.id) {
+        const inventoryItemId = inventoryItemResponse.productVariant.inventoryItem.id
 
-          const inventoryUpdatePayload = {
-            input: {
-              reason: 'correction',
-              setQuantities: [
-                {
-                  inventoryItemId,
-                  locationId,
-                  quantity: payload.inventoryQuantity,
-                },
-              ],
-            },
-          }
-
-          await makeAdminApiRequest<InventorySetOnHandQuantitiesResponse>(
-            INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
-            inventoryUpdatePayload
-          )
+        const inventoryUpdatePayload = {
+          input: {
+            reason: 'correction',
+            setQuantities: [
+              {
+                inventoryItemId,
+                locationId,
+                quantity: payload.inventoryQuantity,
+              },
+            ],
+          },
         }
-      } catch (inventoryError) {
-        console.error('Error al actualizar la cantidad de inventario del producto:', inventoryError)
+
+        await makeAdminApiRequest<InventorySetOnHandQuantitiesResponse>(
+          INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
+          inventoryUpdatePayload
+        )
       }
+    } catch (inventoryError) {
+      console.error('Error al actualizar la cantidad de inventario del producto:', inventoryError)
     }
   }
 
@@ -317,13 +309,13 @@ async function addImagesToProduct(
     }
   )
 
-  if (response.productCreateMedia?.mediaUserErrors?.length > 0) {
+  if (response.productCreateMedia.mediaUserErrors.length > 0) {
     throw new Error(
       response.productCreateMedia.mediaUserErrors.map((e: ShopifyUserError) => e.message).join(', ')
     )
   }
 
-  if (response.productCreateMedia?.userErrors?.length > 0) {
+  if (response.productCreateMedia.userErrors.length > 0) {
     throw new Error(
       response.productCreateMedia.userErrors.map((e: ShopifyUserError) => e.message).join(', ')
     )
@@ -351,24 +343,24 @@ async function createProductFromRequest(request: Request, session: AuthSession):
   }
 
   const payload: CreateProductPayload = {
-    description: body.description?.trim() || '',
-    details: body.details || {},
+    description: body.description?.trim() ?? '',
+    details: body.details ?? {},
     images: Array.isArray(body.images) ? body.images : undefined,
-    inventoryQuantity: body.inventoryQuantity || 1,
-    price: body.price || '0',
-    productType: body.productType?.trim() || '',
-    status: body.status || 'DRAFT',
-    tags: Array.isArray(body.tags) ? body.tags.filter((tag: string) => tag?.trim()) : [],
+    inventoryQuantity: body.inventoryQuantity ?? 1,
+    price: body.price ?? '0',
+    productType: body.productType?.trim() ?? '',
+    status: body.status ?? 'DRAFT',
+    tags: Array.isArray(body.tags) ? body.tags.filter((tag: string) => tag.trim()) : [],
     title: body.title.trim(),
-    vendor: body.vendor?.trim() || undefined,
+    vendor: body.vendor?.trim() ?? undefined,
   }
 
-  if (payload.status && !['ACTIVE', 'DRAFT', 'ARCHIVED'].includes(payload.status)) {
+  if (!['ACTIVE', 'DRAFT', 'ARCHIVED'].includes(payload.status)) {
     throw new Error('El status debe ser ACTIVE, DRAFT o ARCHIVED')
   }
 
-  if (payload.images?.some((img) => !img.originalSource || !img.mediaContentType)) {
-    throw new Error('Las imágenes deben tener originalSource y mediaContentType válidos')
+  if (payload.images?.some((img) => !img.originalSource)) {
+    throw new Error('Las imágenes deben tener originalSource válidos')
   }
 
   return createProduct(payload, session)
@@ -398,7 +390,7 @@ async function updateProduct(
     throw new Error(productUpdateResponse.productUpdate.userErrors.map((e) => e.message).join(', '))
   }
 
-  if (variants && variants.length > 0) {
+  if (variants.length > 0) {
     const variant = variants[0]
 
     if (payload.price) {
@@ -433,7 +425,7 @@ async function updateProduct(
           { variantId: variant.id }
         )
 
-        if (inventoryItemResponse.productVariant?.inventoryItem?.id) {
+        if (inventoryItemResponse.productVariant?.inventoryItem.id) {
           const inventoryItemId = inventoryItemResponse.productVariant.inventoryItem.id
           const locationId = await getPrimaryLocationId()
 

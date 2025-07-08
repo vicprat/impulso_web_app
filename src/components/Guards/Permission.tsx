@@ -16,7 +16,7 @@ export const Permission: React.FC<Props> = ({ children, fallback, permission }) 
   }
 
   if (!hasPermission(permission)) {
-    return fallback || null
+    return fallback ?? null
   }
 
   return <>{children}</>

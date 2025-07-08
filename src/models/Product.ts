@@ -17,7 +17,7 @@ export interface Variant {
   id: string
   title: string
   availableForSale: boolean
-  price: Money // Mantenemos el tipo Money interno
+  price: Money
   compareAtPrice: Money | null
   sku: string | null
   selectedOptions: {
@@ -39,7 +39,7 @@ interface ShopifyVariantNode {
   id: string
   title: string
   availableForSale: boolean
-  price: string // La API devuelve string, no objeto Money
+  price: string
   sku: string | null
   inventoryQuantity: number | null
   inventoryPolicy: 'DENY' | 'CONTINUE'
@@ -213,17 +213,15 @@ export class Product {
     this.vendor = shopifyProductData.vendor
     this.productType = shopifyProductData.productType
     this.status = shopifyProductData.status
-    this.tags = shopifyProductData.tags || []
-    this.images = (shopifyProductData.images?.edges || []).map((edge) => edge.node)
+    this.tags = shopifyProductData.tags
+    this.images = shopifyProductData.images.edges.map((edge) => edge.node)
 
-    this.variants = (shopifyProductData.variants?.edges || []).map((edge) =>
+    this.variants = shopifyProductData.variants.edges.map((edge) =>
       this._convertVariantFromApi(edge.node)
     )
 
     this.primaryLocationId = primaryLocationId
-    this.artworkDetails = this._parseDetailsFromMetafields(
-      shopifyProductData.metafields?.edges || []
-    )
+    this.artworkDetails = this._parseDetailsFromMetafields(shopifyProductData.metafields.edges)
     this._parseTags()
   }
 
@@ -232,12 +230,12 @@ export class Product {
       availableForSale: apiVariant.availableForSale,
       compareAtPrice: null,
       id: apiVariant.id,
-      inventoryManagement: apiVariant.inventoryItem?.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
+      inventoryManagement: apiVariant.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
       inventoryPolicy: apiVariant.inventoryPolicy,
       inventoryQuantity: apiVariant.inventoryQuantity,
       price: {
         amount: apiVariant.price,
-        currencyCode: 'MXN', // Asumiendo MXN, puedes hacerlo configurable
+        currencyCode: 'MXN',
       },
       selectedOptions: [],
       sku: apiVariant.sku,
@@ -258,7 +256,7 @@ export class Product {
   }
 
   private _parseTags(): void {
-    if (!this.tags || this.tags.length === 0) return
+    if (this.tags.length === 0) return
     const artists = this.vendor ? [this.vendor] : []
     const types = this.productType ? [this.productType] : []
     this.autoTags = this.tags.filter((tag) => isAutoTag(tag, artists, types))
@@ -318,19 +316,19 @@ export class Product {
   }
 
   private _getFormatTag(): string | null {
-    const height = parseFloat(this.artworkDetails.height || '0')
-    const width = parseFloat(this.artworkDetails.width || '0')
+    const height = parseFloat(this.artworkDetails.height ?? '0')
+    const width = parseFloat(this.artworkDetails.width ?? '0')
 
     if (height === 0 && width === 0) return null
 
     const maxDimension = Math.max(height, width)
     const rule = FORMAT_RULES.find((rule) => maxDimension >= rule.minSize)
-    return rule?.tag || null
+    return rule?.tag ?? null
   }
 
   private _getMaterialTags(): string[] {
     const fullText = normalizeString(
-      `${this.artworkDetails.medium || ''} ${this.productType || ''}`
+      `${this.artworkDetails.medium ?? ''} ${this.productType || ''}`
     )
     return Object.entries(materialKeywords)
       .filter(([keyword]) => fullText.includes(keyword))
@@ -353,7 +351,7 @@ export class Product {
 
   public get isAvailable(): boolean {
     const variant = this.primaryVariant
-    return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
+    return variant ? variant.availableForSale && (variant.inventoryQuantity ?? 0) > 0 : false
   }
 
   public get statusLabel(): string {
@@ -430,10 +428,10 @@ export class Product {
     const variantsInput: ShopifyVariantInput[] = this.variants.map((variant) => ({
       id: variant.id,
       inventoryItem: { tracked: true },
-      inventoryPolicy: variant.inventoryPolicy || 'DENY',
+      inventoryPolicy: variant.inventoryPolicy,
       inventoryQuantities: [
         {
-          availableQuantity: variant.inventoryQuantity || 0,
+          availableQuantity: variant.inventoryQuantity ?? 0,
           locationId: this.primaryLocationId,
         },
       ],
@@ -455,8 +453,7 @@ export class Product {
     const createInput = { ...input }
     delete createInput.id
     createInput.variants = createInput.variants.map((v) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id, ...rest } = v
+      const { id: _id, ...rest } = v
       return rest
     })
 

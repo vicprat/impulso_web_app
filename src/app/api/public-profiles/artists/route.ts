@@ -1,24 +1,15 @@
 import { NextResponse } from 'next/server'
+
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const artists = await prisma.user.findMany({
-      where: {
-        isPublic: true,
-        UserRole: {
-          some: {
-            role: {
-              name: 'artist',
-            },
-          },
-        },
-      },
       select: {
-        id: true,
-        firstName: true,
-        lastName: true,
         email: true,
+        firstName: true,
+        id: true,
+        lastName: true,
         profile: {
           select: {
             avatarUrl: true,
@@ -27,14 +18,21 @@ export async function GET(request: Request) {
           },
         },
       },
+      where: {
+        UserRole: {
+          some: {
+            role: {
+              name: 'artist',
+            },
+          },
+        },
+        isPublic: true,
+      },
     })
 
     return NextResponse.json(artists)
   } catch (error) {
     console.error('[API/public-profiles/artists GET]', error)
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

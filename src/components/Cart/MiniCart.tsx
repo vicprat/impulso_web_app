@@ -1,6 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
-import { ExternalLink, Minus, Plus, ShoppingCart, X } from 'lucide-react'
+import { ArrowRight, ExternalLink, Minus, Plus, ShoppingCart, X } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -26,13 +27,13 @@ interface Props {
 }
 
 export function MiniCart({ children }: Props) {
-  const { isAuthenticated } = useAuth()
+  const { cart, isAuthenticated } = useAuth()
   const { cartSummary, isRemoving, isUpdating, removeProduct, updateQuantity } = useCartActions()
   const [open, setOpen] = useState(false)
 
   if (!isAuthenticated) {
     return (
-      children || (
+      children ?? (
         <Button variant='outline' size='sm' asChild>
           <Link href='/auth/login'>
             <ShoppingCart className='size-4' />
@@ -42,13 +43,13 @@ export function MiniCart({ children }: Props) {
     )
   }
 
-  const itemCount = cartSummary?.itemCount || 0
+  const itemCount = cartSummary?.itemCount ?? 0
   const isEmpty = cartSummary?.isEmpty ?? true
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        {children || (
+        {children ?? (
           <Button variant='outline' size='sm' className='relative'>
             <ShoppingCart className='size-4' />
             {itemCount > 0 && (
@@ -97,12 +98,11 @@ export function MiniCart({ children }: Props) {
               <div className='space-y-4'>
                 {cartSummary?.lines.map((line) => (
                   <div key={line.id} className='flex items-start space-x-4'>
-                    {/* Imagen del producto */}
                     <div className='aspect-square size-16 overflow-hidden rounded-md border'>
                       {line.merchandise.image ? (
                         <img
                           src={line.merchandise.image.url}
-                          alt={line.merchandise.image.altText || line.merchandise.title}
+                          alt={line.merchandise.image.altText ?? line.merchandise.title}
                           className='size-full object-cover'
                         />
                       ) : (
@@ -112,7 +112,6 @@ export function MiniCart({ children }: Props) {
                       )}
                     </div>
 
-                    {/* Información del producto */}
                     <div className='flex-1 space-y-1'>
                       <h4 className='line-clamp-2 text-sm font-medium'>
                         {line.merchandise.product.title}
@@ -134,7 +133,6 @@ export function MiniCart({ children }: Props) {
                           )}
                         </p>
 
-                        {/* Controles de cantidad */}
                         <div className='flex items-center space-x-1'>
                           <Button
                             variant='outline'
@@ -170,7 +168,6 @@ export function MiniCart({ children }: Props) {
                         </div>
                       </div>
 
-                      {/* Total por línea */}
                       <p className='text-xs text-muted-foreground'>
                         Subtotal:{' '}
                         {formatCurrency(
@@ -184,10 +181,8 @@ export function MiniCart({ children }: Props) {
               </div>
             </ScrollArea>
 
-            {/* Resumen y acciones */}
             <SheetFooter className='px-1'>
               <div className='w-full space-y-4'>
-                {/* Resumen de precios */}
                 <div className='space-y-2 rounded-lg bg-muted p-4'>
                   <div className='flex justify-between text-sm'>
                     <span>Subtotal:</span>
@@ -218,20 +213,25 @@ export function MiniCart({ children }: Props) {
                   </div>
                 </div>
 
-                {/* Botones de acción */}
                 <div className='grid gap-2'>
                   <Button
                     className='w-full'
+                    size='lg'
                     onClick={async () => {
                       try {
-                        if (!cartSummary?.lines?.length) {
+                        if (!cartSummary?.lines.length) {
                           toast.error('El carrito está vacío')
+                          return
+                        }
+
+                        if (!cart?.id) {
+                          toast.error('No se pudo obtener el carrito')
                           return
                         }
 
                         const response = await fetch('/api/checkout/create', {
                           body: JSON.stringify({
-                            cartId: localStorage.getItem('shopify_cart_id'),
+                            cartId: cart.id,
                           }),
                           headers: {
                             'Content-Type': 'application/json',
@@ -242,10 +242,9 @@ export function MiniCart({ children }: Props) {
                         const data = await response.json()
 
                         if (!data.success) {
-                          throw new Error(data.error || 'Error al crear el checkout')
+                          throw new Error(data.error ?? 'Error al crear el checkout')
                         }
 
-                        // Redirigir al checkout de Shopify
                         window.location.href = data.checkout.webUrl
                       } catch (error) {
                         console.error('Error al procesar el checkout:', error)
@@ -254,6 +253,7 @@ export function MiniCart({ children }: Props) {
                     }}
                   >
                     Proceder al checkout
+                    <ArrowRight className='ml-2 size-4' />
                   </Button>
 
                   <Button variant='outline' asChild className='w-full'>

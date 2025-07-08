@@ -10,7 +10,7 @@ export const Client = () => {
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/dashboard'
+  const redirect = searchParams.get('redirect') ?? '/dashboard'
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {

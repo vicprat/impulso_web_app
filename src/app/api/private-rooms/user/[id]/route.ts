@@ -9,10 +9,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const session = await requirePermission('view_private_rooms')
 
-    if (!session) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
-
     const isOwner = session.user.id === id
     const isAdmin = session.user.roles.includes('admin') || session.user.roles.includes('manager')
 

@@ -1,14 +1,13 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 
+import { type Product } from '@/models/Product'
 import {
-  type PaginatedProductsResponse,
-  type GetProductsParams,
   type CreateProductPayload,
+  type GetProductsParams,
+  type PaginatedProductsResponse,
   type UpdateProductPayload,
 } from '@/services/product/types'
-
-import { type Product } from '@/models/Product'
 
 const PRODUCTS_QUERY_KEY = 'managementProducts'
 
@@ -25,25 +24,6 @@ export const useGetProductsPaginated = (params: GetProductsParams = {}) => {
       return data
     },
     queryKey: [PRODUCTS_QUERY_KEY, 'paginated', params],
-    staleTime: 5 * 60 * 1000,
-  })
-}
-
-export const useGetProductsInfinite = (params: Omit<GetProductsParams, 'cursor'> = {}) => {
-  return useInfiniteQuery<PaginatedProductsResponse>({
-    queryFn: async ({ pageParam }) => {
-      const searchParams = new URLSearchParams()
-      if (params.search) searchParams.append('search', params.search)
-      if (params.limit) searchParams.append('limit', params.limit.toString())
-      if (pageParam) searchParams.append('cursor', pageParam as string)
-
-      const { data } = await axios.get(`/api/management/products?${searchParams.toString()}`)
-      return data
-    },
-    getNextPageParam: (lastPage) =>
-      lastPage.pageInfo.hasNextPage ? lastPage.pageInfo.endCursor : undefined,
-    initialPageParam: null,
-    queryKey: [PRODUCTS_QUERY_KEY, 'infinite', params],
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -70,7 +50,7 @@ export const useCreateProduct = () => {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY] })
     },
   })
 }
@@ -88,8 +68,8 @@ export const useUpdateProduct = () => {
     onSuccess: (updatedProduct) => {
       const productId = updatedProduct.id.split('/').pop()
 
-      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'paginated'] })
-      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'infinite'] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'paginated'] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'infinite'] })
 
       queryClient.setQueryData([PRODUCTS_QUERY_KEY, 'detail', productId], updatedProduct)
 
@@ -123,8 +103,8 @@ export const useDeleteProduct = () => {
     onSuccess: (_, deletedProductId) => {
       const numericId = deletedProductId.split('/').pop()
 
-      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'paginated'] })
-      queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'infinite'] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'paginated'] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'infinite'] })
 
       queryClient.removeQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'detail', numericId] })
     },
@@ -138,7 +118,7 @@ export const useProductStats = (params: Omit<GetProductsParams, 'cursor' | 'limi
       searchParams.append('limit', '1000')
 
       const { data } = await axios.get(`/api/management/products?${searchParams.toString()}`)
-      const products: Product[] = data.products || []
+      const products: Product[] = data.products ?? []
 
       return {
         active: products.filter((p) => p.status === 'ACTIVE').length,

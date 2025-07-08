@@ -1,10 +1,9 @@
 'use client'
 
-import { ShoppingBag, Star, Package, Sparkles } from 'lucide-react'
+import { Package, ShoppingBag, Sparkles, Star } from 'lucide-react'
 import Link from 'next/link'
-import React from 'react'
 
-import { Card } from '@/components/Card.tsx'
+import { Card } from '@/components/Card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,7 +11,9 @@ import { Card as ShadcnCard } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import { useUserPrivateRoom } from '@/modules/rooms/hooks'
-import { useProductsByIds } from '@/modules/shopify/hooks' // Nuevo hook
+import { useProductsByIds } from '@/modules/shopify/hooks'
+
+import type { Product } from '@/src/modules/shopify/types'
 
 export default function PrivateRoomPage() {
   const { user } = useAuth()
@@ -24,7 +25,7 @@ export default function PrivateRoomPage() {
     isLoading: isLoadingRoom,
   } = useUserPrivateRoom(userId ?? '')
 
-  const productIds = privateRoom?.products?.map((p) => p.productId) || []
+  const productIds = privateRoom?.products.map((p) => p.productId) ?? []
   const {
     data,
     error: productsError,
@@ -33,12 +34,8 @@ export default function PrivateRoomPage() {
     enabled: productIds.length > 0,
   })
 
-  const products = data?.products || []
+  const products = data?.products ?? []
   const isLoading = isLoadingRoom || isLoadingProducts
-
-  console.log('Private Room Data:', privateRoom)
-  console.log('Product IDs being searched:', productIds)
-  console.log('Products Data:', products)
 
   if (isLoading) {
     return (
@@ -60,7 +57,7 @@ export default function PrivateRoomPage() {
       <div className='container mx-auto max-w-4xl p-6'>
         <Alert variant='destructive'>
           <AlertDescription>
-            Error loading your private room: {roomError?.message || productsError?.message}
+            Error loading your private room: {roomError?.message ?? productsError?.message}
           </AlertDescription>
         </Alert>
       </div>
@@ -126,7 +123,7 @@ export default function PrivateRoomPage() {
             {products.length > 0 && <Badge variant='outline'>{products.length} items</Badge>}
           </div>
 
-          {privateRoom.products?.length === 0 ? (
+          {privateRoom.products.length === 0 ? (
             <ShadcnCard className='p-12'>
               <div className='space-y-4 text-center'>
                 <div className='mx-auto flex size-16 items-center justify-center rounded-full bg-muted'>
@@ -141,7 +138,7 @@ export default function PrivateRoomPage() {
                 </div>
               </div>
             </ShadcnCard>
-          ) : products.length === 0 && !isLoading ? (
+          ) : products.length === 0 ? (
             <ShadcnCard className='p-12'>
               <div className='space-y-4 text-center'>
                 <div className='mx-auto flex size-16 items-center justify-center rounded-full bg-yellow-100'>
@@ -150,7 +147,7 @@ export default function PrivateRoomPage() {
                 <div className='space-y-2'>
                   <h3 className='text-lg font-semibold'>Products Not Found</h3>
                   <p className='text-muted-foreground'>
-                    We found {privateRoom.products?.length} products in your room but couldn't load
+                    We found {privateRoom.products.length} products in your room but couldn't load
                     their details. This might be a temporary issue.
                   </p>
                   <Button onClick={() => window.location.reload()} variant='outline' size='sm'>
@@ -161,16 +158,15 @@ export default function PrivateRoomPage() {
             </ShadcnCard>
           ) : (
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-              {products.map((product) => (
+              {products.map((product: Product) => (
                 <Card.Product product={product} key={product.id} />
               ))}
             </div>
           )}
         </div>
 
-        {/* Call to Action */}
         {products.length > 0 && (
-          <ShadcnCard className='border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 p-8'>
+          <ShadcnCard className='border-primary/20  bg-gradient-to-r p-8'>
             <div className='space-y-4 text-center'>
               <h3 className='text-xl font-semibold'>Ready to Shop?</h3>
               <p className='text-muted-foreground'>

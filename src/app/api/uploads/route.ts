@@ -75,8 +75,8 @@ export async function POST(request: NextRequest) {
       input: [stagedUploadsInput],
     })) as StagedUploadsCreateResponse
 
-    const userErrors = stagedUploadsResponse.stagedUploadsCreate?.userErrors
-    if (userErrors && userErrors.length > 0) {
+    const userErrors = stagedUploadsResponse.stagedUploadsCreate.userErrors
+    if (userErrors.length > 0) {
       return NextResponse.json(
         {
           details: userErrors,
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!stagedUploadsResponse.stagedUploadsCreate?.stagedTargets?.length) {
+    if (!stagedUploadsResponse.stagedUploadsCreate.stagedTargets.length) {
       return NextResponse.json(
         { error: 'No se obtuvieron URLs de subida de Shopify.' },
         { status: 500 }
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     const fullResourceUrl = `${stagedTarget.url.replace(/\/$/, '')}/${keyParameter.value}`
 
-    if (!fullResourceUrl?.startsWith('http')) {
+    if (!fullResourceUrl.startsWith('http')) {
       return NextResponse.json(
         {
           details: { resourceUrl: fullResourceUrl },

@@ -10,10 +10,10 @@ interface Props {
 
 export const Error: React.FC<Props> = ({ error, handleRetry }) => {
   return (
-    <div className='bg-surface min-h-screen'>
+    <div className='min-h-screen bg-surface'>
       <div className='mx-auto px-4 py-12'>
-        <Alert className='border-error-container bg-error-container/10 mx-auto max-w-md'>
-          <AlertCircle className='text-error size-4' />
+        <Alert className='bg-error-container/10 mx-auto max-w-md border-error-container'>
+          <AlertCircle className='size-4 text-error' />
           <AlertDescription className='text-on-error-container'>
             <span className='font-medium'>Error al cargar los productos:</span>
             <br />
@@ -24,7 +24,7 @@ export const Error: React.FC<Props> = ({ error, handleRetry }) => {
           <Button
             onClick={handleRetry}
             variant='default'
-            className='text-on-primary bg-primary shadow-md hover:bg-primary/90'
+            className='hover:bg-primary/90 bg-primary text-on-primary shadow-md'
           >
             <RefreshCw className='mr-2 size-4' />
             Reintentar

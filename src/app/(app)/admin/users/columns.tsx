@@ -11,14 +11,12 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { type UserProfile } from '@/modules/user/types'
 
-declare module '@tanstack/react-table' {
-  interface TableMeta<TData> {
-    deactivateUser: UseMutationResult<any, Error, string, unknown>
-    reactivateUser: UseMutationResult<any, Error, string, unknown>
-    handleManageRoles: (user: UserProfile) => void
-    handleToggleUserStatus: (user: UserProfile) => void
-    toggleUserPublicStatus: (userId: string, isPublic: boolean) => void
-  }
+export interface UserTableMeta {
+  deactivateUser: UseMutationResult<void, Error, string, unknown>
+  reactivateUser: UseMutationResult<void, Error, string, unknown>
+  handleManageRoles: (user: UserProfile) => void
+  handleToggleUserStatus: (user: UserProfile) => void
+  toggleUserPublicStatus: (userId: string, isPublic: boolean) => void
 }
 
 export const columns: ColumnDef<UserProfile>[] = [
@@ -116,10 +114,8 @@ export const columns: ColumnDef<UserProfile>[] = [
     accessorKey: 'isPublic',
     cell: ({ row, table }) => {
       const user = row.original
-      const { meta } = table.options
-      const { toggleUserPublicStatus } = meta ?? {}
+      const meta = table.options.meta as UserTableMeta | undefined
 
-      // Verificar si el usuario tiene roles que no pueden tener perfil público
       const restrictedRoles = ['customer', 'vip_customer']
       const hasRestrictedRole = user.roles.some((role) => restrictedRoles.includes(role))
 
@@ -134,7 +130,7 @@ export const columns: ColumnDef<UserProfile>[] = [
       return (
         <Switch
           checked={user.isPublic}
-          onCheckedChange={(checked) => toggleUserPublicStatus?.(user.id, checked)}
+          onCheckedChange={(checked) => meta?.toggleUserPublicStatus(user.id, checked)}
           aria-label='Toggle public status'
         />
       )
@@ -166,9 +162,7 @@ export const columns: ColumnDef<UserProfile>[] = [
   {
     cell: ({ row, table }) => {
       const user = row.original
-      const { meta } = table.options
-      const { deactivateUser, handleManageRoles, handleToggleUserStatus, reactivateUser } =
-        meta ?? {}
+      const meta = table.options.meta as UserTableMeta | undefined
 
       return (
         <div className='flex items-center space-x-2'>
@@ -177,14 +171,14 @@ export const columns: ColumnDef<UserProfile>[] = [
               <Eye className='size-4' />
             </Button>
           </Link>
-          <Button variant='ghost' size='sm' onClick={() => handleManageRoles?.(user)}>
+          <Button variant='ghost' size='sm' onClick={() => meta?.handleManageRoles(user)}>
             <Edit className='size-4' />
           </Button>
           <Button
             variant='ghost'
             size='sm'
-            onClick={() => handleToggleUserStatus?.(user)}
-            disabled={deactivateUser?.isPending ?? reactivateUser?.isPending}
+            onClick={() => meta?.handleToggleUserStatus(user)}
+            disabled={meta?.deactivateUser.isPending ?? meta?.reactivateUser.isPending}
             className={user.isActive ? 'text-red-600' : 'text-green-600'}
           >
             {user.isActive ? 'Desactivar' : 'Activar'}

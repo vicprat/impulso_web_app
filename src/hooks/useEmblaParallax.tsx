@@ -6,7 +6,7 @@ const lerp = (start: number, end: number, amt: number): number => {
 }
 
 interface TweenNode {
-  node: HTMLElement
+  node: HTMLElement | null
   factor: number
   targetOpacity: number
   currentOpacity: number
@@ -18,7 +18,7 @@ export const useEmblaParallax = (emblaApi: EmblaCarouselType | undefined) => {
 
   const setTweenNodes = useCallback((emblaApi: EmblaCarouselType): void => {
     tweenNodes.current = emblaApi.slideNodes().map((slideNode) => {
-      const parallaxLayer = slideNode.querySelector('.embla__parallax__layer') as HTMLElement
+      const parallaxLayer = slideNode.querySelector('.embla__parallax__layer') as HTMLElement | null
 
       const factor = Number(slideNode.dataset.parallaxFactor) || 1
 
@@ -55,8 +55,7 @@ export const useEmblaParallax = (emblaApi: EmblaCarouselType | undefined) => {
           })
         }
 
-        const tweenNode = tweenNodes.current[slideIndex]
-        if (!tweenNode) return
+        const tweenNode = tweenNodes.current[slideIndex] as TweenNode
 
         const targetOpacity = 1 - Math.abs(diffToTarget) * 0.3
 
@@ -69,9 +68,9 @@ export const useEmblaParallax = (emblaApi: EmblaCarouselType | undefined) => {
     if (!tweenNodes.current.length) return
 
     tweenNodes.current.forEach((tweenNode) => {
-      if (!tweenNode) return
-
       const { currentOpacity, node, targetOpacity } = tweenNode
+
+      if (!node) return
 
       const smoothness = 0.5
       tweenNode.currentOpacity = lerp(currentOpacity, targetOpacity, smoothness)
@@ -104,7 +103,7 @@ export const useEmblaParallax = (emblaApi: EmblaCarouselType | undefined) => {
     return () => {
       cancelAnimationFrame(animationFrame.current)
       tweenNodes.current.forEach((tweenNode) => {
-        if (tweenNode) {
+        if (tweenNode.node) {
           tweenNode.node.style.willChange = 'auto'
           tweenNode.node.style.transform = ''
         }

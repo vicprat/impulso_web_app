@@ -1,6 +1,6 @@
 'use client'
 
-import { Moon, Sun, Monitor } from 'lucide-react'
+import { Monitor, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 
@@ -22,7 +22,6 @@ export const ThemeSwitch = () => {
   if (!mounted) return null
 
   const getThemeIcon = () => {
-    if (!mounted) return null
     if (theme === 'dark') return <Moon className='size-4' />
     if (theme === 'light') return <Sun className='size-4' />
     return <Monitor className='size-4' />

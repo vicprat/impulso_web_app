@@ -5,11 +5,7 @@ import { requirePermission } from '@/src/modules/auth/server/server'
 
 export async function PUT(request: Request, { params }: { params: { incomeId: string } }) {
   try {
-    const session = await requirePermission('manage_events')
-    console.log(
-      'User with manage_events permission accessed income update API:',
-      session.user.email
-    )
+    await requirePermission('manage_events')
 
     const { incomeId } = params
     const { amount, category, description, notes, paymentMethod, relatedParty } =
@@ -27,9 +23,9 @@ export async function PUT(request: Request, { params }: { params: { incomeId: st
         amount: parseFloat(amount),
         category,
         description,
-        notes: notes || null,
-        paymentMethod: paymentMethod || null,
-        relatedParty: relatedParty || null,
+        notes: notes ?? null,
+        paymentMethod: paymentMethod ?? null,
+        relatedParty: relatedParty ?? null,
       },
       where: {
         id: incomeId,
@@ -52,11 +48,7 @@ export async function PUT(request: Request, { params }: { params: { incomeId: st
 
 export async function DELETE(request: Request, { params }: { params: { incomeId: string } }) {
   try {
-    const session = await requirePermission('manage_events')
-    console.log(
-      'User with manage_events permission accessed income delete API:',
-      session.user.email
-    )
+    await requirePermission('manage_events')
 
     const { incomeId } = params
 

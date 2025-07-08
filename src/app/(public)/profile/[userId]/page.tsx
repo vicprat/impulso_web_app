@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
@@ -11,7 +12,7 @@ import { postgresUserApi } from '@/modules/user/api'
 
 import type { Link as LinkType } from '@/src/types/user'
 
-export default function PublicProfilePage() {
+export default function Page() {
   const params = useParams()
   const userId = params.userId as string
 
@@ -44,10 +45,6 @@ export default function PublicProfilePage() {
     )
   }
 
-  const getInitials = (firstName?: string, lastName?: string) => {
-    return `${userProfile.firstName?.[0] ?? ''}${userProfile.lastName?.[0] ?? ''}`.toUpperCase()
-  }
-
   return (
     <div className='container mx-auto p-4 md:p-8'>
       <Card className='overflow-hidden shadow-lg'>
@@ -65,7 +62,8 @@ export default function PublicProfilePage() {
                 <AvatarImage src={userProfile.profile.avatarUrl} alt='Avatar' />
               ) : (
                 <AvatarFallback className='text-5xl font-bold'>
-                  {getInitials(userProfile.firstName, userProfile.lastName)}
+                  {userProfile.firstName.charAt(0).toUpperCase()}{' '}
+                  {userProfile.lastName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               )}
             </Avatar>

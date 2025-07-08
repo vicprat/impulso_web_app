@@ -44,11 +44,11 @@ export const Content = () => {
       <div
         className={cn(
           'relative flex items-center',
-          'bg-surface-container-high rounded-full',
+          'rounded-full bg-surface-container-high',
           'border-outline-variant/40 border',
           'transition-all duration-200 ease-out',
           'hover:border-outline/60 hover:shadow-md',
-          isFocused && 'border-primary shadow-lg ring-2 ring-primary/20'
+          isFocused && 'ring-primary/20 border-primary shadow-lg ring-2'
         )}
       >
         <div className='pointer-events-none absolute left-4 flex items-center'>
@@ -85,8 +85,8 @@ export const Content = () => {
             className={cn(
               'absolute right-2 size-10 rounded-full',
               'text-on-surface-variant hover:text-on-surface',
-              'hover:bg-surface-container transition-all duration-200',
-              'focus-visible:ring-2 focus-visible:ring-primary/20'
+              'transition-all duration-200 hover:bg-surface-container',
+              'focus-visible:ring-primary/20 focus-visible:ring-2'
             )}
           >
             <X className='size-4' />
@@ -96,8 +96,8 @@ export const Content = () => {
       </div>
 
       {isFocused && searchTerm && (
-        <div className='bg-surface-container border-outline-variant/40 absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border shadow-lg'>
-          <div className='text-on-surface-variant p-4 text-sm'>
+        <div className='border-outline-variant/40 absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border bg-surface-container shadow-lg'>
+          <div className='p-4 text-sm text-on-surface-variant'>
             Presiona Enter para buscar &quot;{searchTerm}&quot;
           </div>
         </div>

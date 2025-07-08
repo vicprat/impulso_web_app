@@ -32,7 +32,6 @@ export const Pagination = <TData,>({
   onPageChange,
   onPageSizeChange,
   table,
-  totalItems,
 }: Props<TData>) => {
   if (isServerSide) {
     const handlePageSizeChange = (value: string) => {

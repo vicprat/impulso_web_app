@@ -4,7 +4,7 @@
 import { useParams } from 'next/navigation'
 import { useState } from 'react'
 
-import { Card } from '@/components/Card.tsx'
+import { Card } from '@/components/Card'
 import { Pagination } from '@/components/Pagination'
 import { useCollectionByHandle } from '@/modules/shopify/hooks'
 
@@ -54,13 +54,12 @@ export default function Page() {
 
   return (
     <div>
-      {/* Collection Header */}
       <div className='mb-8'>
         {collection.image && (
           <div className='mx-auto mb-6 aspect-video w-full max-w-4xl overflow-hidden rounded-lg'>
             <img
               src={collection.image.url}
-              alt={collection.image.altText || collection.title}
+              alt={collection.image.altText ?? collection.title}
               className='size-full object-cover'
             />
           </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { User, LogOut, ShoppingBag } from 'lucide-react'
+import { LogOut, ShoppingBag, User } from 'lucide-react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,7 @@ export function UserMenu() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end' className='w-56'>
-          <DropdownMenuLabel>Hola, {user.firstName || 'Usuario'}</DropdownMenuLabel>
+          <DropdownMenuLabel>Hola, {user.firstName ?? 'Usuario'}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link href='/dashboard'>

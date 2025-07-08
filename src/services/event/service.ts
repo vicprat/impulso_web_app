@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from '@/lib/prisma'
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { Event } from '@/models/Event'
@@ -29,7 +30,6 @@ import {
 
 type ValidatedSession = NonNullable<AuthSession>
 
-// Adaptamos los tipos para eventos
 type PaginatedEventsResponse = PaginatedProductsResponse
 type CreateEventPayload = CreateProductPayload
 type UpdateEventPayload = UpdateProductPayload
@@ -45,7 +45,7 @@ interface ProductVariantsBulkUpdateResponse {
 let primaryLocationId: string | null = null
 
 function validateSession(session: AuthSession): asserts session is ValidatedSession {
-  if (!session?.user?.id) {
+  if (!session.user.id) {
     throw new Error('Sesión no válida o usuario no autenticado.')
   }
 }
@@ -58,7 +58,7 @@ async function getPrimaryLocationId(): Promise<string> {
     {}
   )
 
-  const locationId = response.locations?.edges[0]?.node?.id
+  const locationId = response.locations.edges[0]?.node?.id
   if (!locationId) {
     throw new Error('No se pudo encontrar una ubicación de Shopify para gestionar el inventario.')
   }
@@ -116,11 +116,9 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
 
   const { description, details, inventoryQuantity, price, ...rest } = payload
 
-  // Paso 1: Crear el producto sin variants (igual que en productService)
   const createInput = {
     ...rest,
     descriptionHtml: description ? `<p>${description}</p>` : '',
-    // Agregamos los metafields de detalles del evento
     metafields: details
       ? Object.keys(details).map((key) => ({
           key,
@@ -144,11 +142,10 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
 
   const newEventData = response.productCreate.product
 
-  // Paso 1.5: Crear metafields por separado si existen details
   if (details && Object.keys(details).length > 0) {
     try {
       const metafieldsInput = Object.entries(details)
-        .filter(([_, value]) => value !== null && value !== undefined && value !== '')
+        .filter(([_, value]) => value !== '')
         .map(([key, value]) => ({
           key,
           namespace: 'event_details',
@@ -176,8 +173,6 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
           }
         `
 
-        console.log('createEvent: Creating metafields:', metafieldsInput)
-
         const metafieldsResponse = await makeAdminApiRequest<{
           metafieldsSet: {
             metafields: any[]
@@ -185,14 +180,11 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
           }
         }>(METAFIELDS_SET_MUTATION, { metafields: metafieldsInput })
 
-        console.log('createEvent: Metafields created:', metafieldsResponse.metafieldsSet)
-
         if (metafieldsResponse.metafieldsSet.userErrors.length > 0) {
           console.error(
             'Error al crear metafields del evento:',
             metafieldsResponse.metafieldsSet.userErrors
           )
-          // No fallar la creación del evento por problemas con metafields
         }
       }
     } catch (metafieldsError) {
@@ -201,93 +193,81 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
     }
   }
 
-  // Paso 2: Actualizar precio si se proporciona (igual que en productService)
   if (price && parseFloat(price) > 0) {
-    console.log('createEvent: Updating price to:', price)
-    const defaultVariant = newEventData.variants?.edges[0]?.node
-    if (defaultVariant) {
-      try {
-        const variantUpdatePayload = {
-          productId: newEventData.id,
-          variants: [
-            {
-              id: defaultVariant.id,
-              price,
-            },
-          ],
-        }
-
-        await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
-          PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
-          variantUpdatePayload
-        )
-        console.log('createEvent: Price updated successfully')
-      } catch (variantError) {
-        console.error('Error al actualizar el precio del evento:', variantError)
-        throw new Error('Error al actualizar el precio del evento.')
+    const defaultVariant = newEventData.variants.edges[0]?.node
+    try {
+      const variantUpdatePayload = {
+        productId: newEventData.id,
+        variants: [
+          {
+            id: defaultVariant.id,
+            price,
+          },
+        ],
       }
+
+      await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
+        PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
+        variantUpdatePayload
+      )
+    } catch (variantError) {
+      console.error('Error al actualizar el precio del evento:', variantError)
+      throw new Error('Error al actualizar el precio del evento.')
     }
   }
 
-  // Paso 3: Actualizar inventario si se proporciona (igual que en productService)
   if (inventoryQuantity && inventoryQuantity > 0) {
-    const defaultVariant = newEventData.variants?.edges[0]?.node
-    if (defaultVariant) {
-      try {
-        const locationId = await getPrimaryLocationId()
+    const defaultVariant = newEventData.variants.edges[0]?.node
+    try {
+      const locationId = await getPrimaryLocationId()
 
-        // Primero, necesitamos habilitar el tracking del inventario
-        const variantUpdatePayload = {
-          productId: newEventData.id,
-          variants: [
-            {
-              id: defaultVariant.id,
-              inventoryItem: { tracked: true },
-            },
-          ],
-        }
-
-        await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
-          PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
-          variantUpdatePayload
-        )
-
-        // Luego actualizamos la cantidad
-        const inventoryItemResponse = await makeAdminApiRequest<GetInventoryItemResponse>(
-          GET_INVENTORY_ITEM_QUERY,
-          { variantId: defaultVariant.id }
-        )
-
-        if (inventoryItemResponse.productVariant?.inventoryItem?.id) {
-          const inventoryItemId = inventoryItemResponse.productVariant.inventoryItem.id
-
-          const inventoryUpdatePayload = {
-            input: {
-              reason: 'correction',
-              setQuantities: [
-                {
-                  inventoryItemId,
-                  locationId,
-                  quantity: inventoryQuantity,
-                },
-              ],
-            },
-          }
-
-          await makeAdminApiRequest<InventorySetOnHandQuantitiesResponse>(
-            INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
-            inventoryUpdatePayload
-          )
-        }
-      } catch (inventoryError) {
-        console.error('Error al actualizar la cantidad de inventario del evento:', inventoryError)
+      const variantUpdatePayload = {
+        productId: newEventData.id,
+        variants: [
+          {
+            id: defaultVariant.id,
+            inventoryItem: { tracked: true },
+          },
+        ],
       }
+
+      await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
+        PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
+        variantUpdatePayload
+      )
+
+      const inventoryItemResponse = await makeAdminApiRequest<GetInventoryItemResponse>(
+        GET_INVENTORY_ITEM_QUERY,
+        { variantId: defaultVariant.id }
+      )
+
+      if (inventoryItemResponse.productVariant?.inventoryItem.id) {
+        const inventoryItemId = inventoryItemResponse.productVariant.inventoryItem.id
+
+        const inventoryUpdatePayload = {
+          input: {
+            reason: 'correction',
+            setQuantities: [
+              {
+                inventoryItemId,
+                locationId,
+                quantity: inventoryQuantity,
+              },
+            ],
+          },
+        }
+
+        await makeAdminApiRequest<InventorySetOnHandQuantitiesResponse>(
+          INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
+          inventoryUpdatePayload
+        )
+      }
+    } catch (inventoryError) {
+      console.error('Error al actualizar la cantidad de inventario del evento:', inventoryError)
     }
   }
 
-  // Paso 4: Publicar el evento en los canales de venta (igual que en productService)
   try {
-    console.log('createEvent: Publishing event to sales channels')
     const publications = await makeAdminApiRequest<GetPublicationsApiResponse>(
       GET_PUBLICATIONS_QUERY,
       {}
@@ -301,34 +281,27 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
         id: newEventData.id,
         input: publicationInputs,
       })
-      console.log('createEvent: Event published successfully')
     }
   } catch (publishError) {
     console.error('Error al publicar el evento:', publishError)
   }
 
-  // Paso 5: Obtener el evento final actualizado
-  console.log('createEvent: Fetching final event')
   const finalEvent = await getEventById(newEventData.id, session)
   if (!finalEvent) {
     throw new Error('Error al obtener el evento creado')
   }
 
-  // Paso 6: Crear una entrada en el modelo Event de Prisma
   try {
     await prisma.event.create({
       data: {
         name: newEventData.title,
-        shopifyProductId: newEventData.id.split('/').pop() || '',
+        shopifyProductId: newEventData.id.split('/').pop() ?? '',
       },
     })
-    console.log('createEvent: Prisma Event entry created successfully')
   } catch (prismaError) {
     console.error('Error al crear la entrada de Prisma Event:', prismaError)
-    // Considerar si se debe revertir la creación en Shopify o solo loggear el error
   }
 
-  console.log('createEvent: Event created successfully:', finalEvent.id)
   return finalEvent
 }
 
@@ -341,7 +314,6 @@ async function updateEvent(payload: UpdateEventPayload, session: AuthSession): P
 
   const { description, details, id, inventoryQuantity, price, ...rest } = payload
 
-  // Paso 1: Actualizar el producto base
   const updateInput: any = {
     id,
     ...rest,
@@ -369,87 +341,78 @@ async function updateEvent(payload: UpdateEventPayload, session: AuthSession): P
     throw new Error(response.productUpdate.userErrors.map((e) => e.message).join(', '))
   }
 
-  // Paso 2: Actualizar precio si se proporciona
   if (price !== undefined) {
     const defaultVariant = existingEvent.variants[0]
-    if (defaultVariant) {
-      try {
-        const variantUpdatePayload = {
-          productId: payload.id,
-          variants: [
-            {
-              id: defaultVariant.id,
-              price,
-            },
-          ],
-        }
-
-        await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
-          PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
-          variantUpdatePayload
-        )
-      } catch (variantError) {
-        console.error('Error al actualizar el precio del evento:', variantError)
+    try {
+      const variantUpdatePayload = {
+        productId: payload.id,
+        variants: [
+          {
+            id: defaultVariant.id,
+            price,
+          },
+        ],
       }
+
+      await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
+        PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
+        variantUpdatePayload
+      )
+    } catch (variantError) {
+      console.error('Error al actualizar el precio del evento:', variantError)
     }
   }
 
-  // Paso 3: Actualizar inventario si se proporciona
   if (inventoryQuantity !== undefined) {
     const defaultVariant = existingEvent.variants[0]
-    if (defaultVariant) {
-      try {
-        // Primero, asegurar que el tracking esté habilitado
-        const variantUpdatePayload = {
-          productId: payload.id,
-          variants: [
-            {
-              id: defaultVariant.id,
-              inventoryItem: { tracked: true },
-            },
-          ],
-        }
-
-        await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
-          PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
-          variantUpdatePayload
-        )
-
-        // Luego actualizar la cantidad
-        const inventoryItemResponse = await makeAdminApiRequest<GetInventoryItemResponse>(
-          GET_INVENTORY_ITEM_QUERY,
-          { variantId: defaultVariant.id }
-        )
-
-        if (inventoryItemResponse.productVariant?.inventoryItem?.id) {
-          const inventoryItemId = inventoryItemResponse.productVariant.inventoryItem.id
-          const locationId = await getPrimaryLocationId()
-
-          const inventoryUpdatePayload = {
-            input: {
-              reason: 'correction',
-              setQuantities: [
-                {
-                  inventoryItemId,
-                  locationId,
-                  quantity: inventoryQuantity,
-                },
-              ],
-            },
-          }
-
-          await makeAdminApiRequest<InventorySetOnHandQuantitiesResponse>(
-            INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
-            inventoryUpdatePayload
-          )
-        }
-      } catch (inventoryError) {
-        console.error('Error al actualizar la cantidad de inventario del evento:', inventoryError)
+    try {
+      const variantUpdatePayload = {
+        productId: payload.id,
+        variants: [
+          {
+            id: defaultVariant.id,
+            inventoryItem: { tracked: true },
+          },
+        ],
       }
+
+      await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
+        PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
+        variantUpdatePayload
+      )
+
+      const inventoryItemResponse = await makeAdminApiRequest<GetInventoryItemResponse>(
+        GET_INVENTORY_ITEM_QUERY,
+        { variantId: defaultVariant.id }
+      )
+
+      if (inventoryItemResponse.productVariant?.inventoryItem.id) {
+        const inventoryItemId = inventoryItemResponse.productVariant.inventoryItem.id
+        const locationId = await getPrimaryLocationId()
+
+        const inventoryUpdatePayload = {
+          input: {
+            reason: 'correction',
+            setQuantities: [
+              {
+                inventoryItemId,
+                locationId,
+                quantity: inventoryQuantity,
+              },
+            ],
+          },
+        }
+
+        await makeAdminApiRequest<InventorySetOnHandQuantitiesResponse>(
+          INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
+          inventoryUpdatePayload
+        )
+      }
+    } catch (inventoryError) {
+      console.error('Error al actualizar la cantidad de inventario del evento:', inventoryError)
     }
   }
 
-  // Paso 4: Obtener el evento final actualizado
   const locationId = await getPrimaryLocationId()
   return new Event(response.productUpdate.product, locationId)
 }

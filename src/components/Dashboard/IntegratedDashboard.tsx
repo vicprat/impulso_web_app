@@ -6,8 +6,6 @@ import { Guard } from '@/components/Guards'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import { useCurrentUser } from '@/modules/user/hooks/management'
 
-import { RolePermissionsGuide } from './components/RolePermissionsGuide'
-
 export default function IntegratedDashboard() {
   const { hasPermission, hasRole } = useAuth()
   const { currentUser, isLoading: userLoading } = useCurrentUser()
@@ -154,7 +152,11 @@ export default function IntegratedDashboard() {
               </div>
             }
           >
-            <RolePermissionsGuide />
+            <div className='rounded-lg bg-surface-container-high p-6 shadow-sm'>
+              <h3 className='mb-4 text-lg font-medium text-gray-900'>Panel de Administración</h3>
+              <p className='text-gray-600'>Aquí puedes gestionar usuarios, roles y permisos.</p>
+            </div>
+            {/* Aquí puedes agregar el contenido del panel de administración */}
           </Guard.Permission>
         )}
       </div>

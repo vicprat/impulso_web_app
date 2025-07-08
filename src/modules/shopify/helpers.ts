@@ -1,9 +1,9 @@
 import {
-  type Product,
   type Collection,
-  type RawProduct,
-  type RawCollection,
   type Edge,
+  type Product,
+  type RawCollection,
+  type RawProduct,
 } from './types'
 
 export const transformProductData = (rawProduct: RawProduct): Product => {
@@ -14,11 +14,11 @@ export const transformProductData = (rawProduct: RawProduct): Product => {
     descriptionHtml: rawProduct.descriptionHtml,
     handle: rawProduct.handle,
     id: rawProduct.id,
-    images: rawProduct.images?.edges?.map((edge) => edge.node) ?? [],
+    images: rawProduct.images?.edges.map((edge) => edge.node) ?? [],
     priceRange: rawProduct.priceRange,
     productType: rawProduct.productType,
     title: rawProduct.title,
-    variants: rawProduct.variants?.edges?.map((edge) => edge.node) ?? [],
+    variants: rawProduct.variants?.edges.map((edge) => edge.node) ?? [],
     vendor: rawProduct.vendor,
   }
 }
@@ -31,7 +31,7 @@ export const transformCollectionData = (rawCollection: RawCollection): Collectio
     id: rawCollection.id,
     image: rawCollection.image,
     products:
-      rawCollection.products?.edges?.map((edge: Edge<RawProduct>) =>
+      rawCollection.products?.edges.map((edge: Edge<RawProduct>) =>
         transformProductData(edge.node)
       ) ?? [],
     title: rawCollection.title,

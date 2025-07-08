@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     let refreshed = false
 
     if (!session) {
-      const refreshToken = request.cookies.get('refresh_token')?.value?.trim()
+      const refreshToken = request.cookies.get('refresh_token')?.value.trim()
       if (refreshToken) {
         try {
           const refreshedSession = await authService.refreshSession(refreshToken)

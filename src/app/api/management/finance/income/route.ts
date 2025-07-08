@@ -5,11 +5,7 @@ import { requirePermission } from '@/src/modules/auth/server/server'
 
 export async function POST(request: Request) {
   try {
-    const session = await requirePermission('manage_events')
-    console.log(
-      'User with manage_events permission accessed income creation API:',
-      session.user.email
-    )
+    await requirePermission('manage_events')
 
     const { amount, category, description, eventId, notes, paymentMethod, relatedParty } =
       await request.json()
@@ -25,16 +21,16 @@ export async function POST(request: Request) {
       data: {
         amount: parseFloat(amount),
         category,
-        currency: 'MXN', // Assuming MXN as default
+        currency: 'MXN',
         date: new Date(),
         description,
         eventId,
-        notes: notes || null,
-        paymentMethod: paymentMethod || null,
-        relatedParty: relatedParty || null,
+        notes: notes ?? null,
+        paymentMethod: paymentMethod ?? null,
+        relatedParty: relatedParty ?? null,
         source: 'Manual Entry',
-        type: 'INCOME',
         status: 'COMPLETED',
+        type: 'INCOME',
       },
     })
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { notFound } from 'next/navigation'
 
 import { getServerSession } from '@/modules/auth/server/server'
@@ -30,8 +29,8 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
 
     try {
       productResponse = await api.getProductByHandle(handle)
-      product = productResponse?.data
-    } catch (error) {
+      product = productResponse.data
+    } catch {
       if (!session) {
         notFound()
       }
@@ -52,6 +51,7 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
       const isVipCustomer = userRoles.includes('vip_customer')
 
       if (isAdminOrManager) {
+        // Admins and managers are allowed; do nothing
       } else if (isVipCustomer) {
         try {
           const userPrivateRoom = await getPrivateRoomByUserId(session.user.id)
@@ -61,7 +61,7 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
           ) {
             notFound()
           }
-        } catch (privateRoomError) {
+        } catch {
           notFound()
         }
       } else {
@@ -72,12 +72,12 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
     let relatedProducts: Product[] = []
     try {
       relatedProducts = await shopifyService.getRelatedProducts(product)
-    } catch (relatedError) {
+    } catch {
       relatedProducts = []
     }
 
     return <Client product={product} relatedProducts={relatedProducts} />
-  } catch (error) {
+  } catch {
     notFound()
   }
 }

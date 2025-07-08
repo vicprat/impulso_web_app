@@ -1,3 +1,5 @@
+import { type Links, type Profile } from '@prisma/client'
+
 import { type Cart } from '@/modules/cart/types'
 
 export interface User {
@@ -8,6 +10,9 @@ export interface User {
   lastName?: string
   roles: string[]
   permissions: string[]
+  isPublic?: boolean
+  profile?: Profile | null
+  links?: Links[] | null
 }
 
 export interface AuthContextType {

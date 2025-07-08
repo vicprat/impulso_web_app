@@ -11,22 +11,22 @@ const badgeVariants = cva(
     },
     variants: {
       variant: {
+        active: 'border-transparent bg-success-container text-on-success-container shadow-sm',
+        archived: 'border-transparent bg-error-container text-on-error-container shadow-sm',
+        available: 'border-transparent bg-success text-on-success shadow-sm',
         default: 'hover:bg-primary/80 border-transparent bg-primary text-primary-foreground shadow',
+
         destructive:
           'hover:bg-destructive/80 border-transparent bg-destructive text-destructive-foreground shadow',
-        active: 'border-transparent bg-success-container text-on-success-container shadow-sm',
-        error: 'hover:bg-error/80 border-transparent bg-error text-on-error shadow',
 
-        archived: 'border-transparent bg-error-container text-on-error-container shadow-sm',
+        draft: 'border-transparent bg-warning-container text-on-warning-container shadow-sm',
+
+        error: 'hover:bg-error/80 border-transparent bg-error text-on-error shadow',
 
         'error-container':
           'hover:bg-error-container/80 border-transparent bg-error-container text-on-error-container',
 
-        available: 'border-transparent bg-success text-on-success shadow-sm',
-
         outline: 'border-outline text-foreground',
-
-        draft: 'border-transparent bg-warning-container text-on-warning-container shadow-sm',
 
         'outline-error': 'hover:bg-error/10 border-error bg-transparent text-error',
 

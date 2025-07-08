@@ -1,7 +1,8 @@
+import { Providers } from '@/components/Providers'
+
 import type { Metadata } from 'next'
 
 import './globals.css'
-import { Providers } from '@/components/Providers'
 
 export const metadata: Metadata = {
   description: 'Plataforma para gestionar tus enlaces y perfil',
@@ -15,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='es' suppressHydrationWarning>
-      <body className='min-h-screen bg-background' suppressHydrationWarning>
+      <body className='min-h-screen ' suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

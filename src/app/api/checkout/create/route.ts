@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       variables: {
         buyerIdentity: {
           countryCode: 'MX',
-          email: email || session.user.email,
+          email: email ?? session.user.email,
         },
         cartId,
       },

@@ -1,10 +1,10 @@
 'use client'
 
-import { Plus, Eye, Edit3, Trash2, Users, Package, Calendar, ExternalLink } from 'lucide-react'
+import { Calendar, Edit3, ExternalLink, Eye, Package, Plus, Trash2, Users } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
-import { Card } from '@/components/Card.tsx'
+import { Card } from '@/components/Card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card as ShadcnCard } from '@/components/ui/card'
@@ -30,7 +30,7 @@ export default function PrivateRoomsListPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    loadPrivateRooms()
+    void loadPrivateRooms()
   }, [])
 
   const loadPrivateRooms = async () => {
@@ -44,7 +44,7 @@ export default function PrivateRoomsListPage() {
       }
 
       const data = await response.json()
-      setPrivateRooms(data.privateRooms || data)
+      setPrivateRooms(data.privateRooms ?? data)
     } catch (error) {
       console.error('Error loading private rooms:', error)
       setError(error instanceof Error ? error.message : 'Failed to load private rooms')
@@ -74,7 +74,6 @@ export default function PrivateRoomsListPage() {
   return (
     <div className='container mx-auto max-w-6xl p-6'>
       <div className='space-y-6'>
-        {/* Header */}
         <div className='flex items-center justify-between'>
           <div className='space-y-1'>
             <h1 className='text-3xl font-bold tracking-tight'>Private Rooms</h1>
@@ -95,11 +94,10 @@ export default function PrivateRoomsListPage() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <ShadcnCard className='p-4'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-primary/10 p-2'>
+              <div className='bg-primary/10 rounded-lg p-2'>
                 <Users className='size-5 text-primary' />
               </div>
               <div>
@@ -142,7 +140,6 @@ export default function PrivateRoomsListPage() {
           </ShadcnCard>
         </div>
 
-        {/* Private Rooms List */}
         {isLoading ? (
           <Card.Loader />
         ) : privateRooms.length === 0 ? (
@@ -171,7 +168,6 @@ export default function PrivateRoomsListPage() {
             {privateRooms.map((room) => (
               <ShadcnCard key={room.id} className='p-6 transition-shadow hover:shadow-lg'>
                 <div className='space-y-4'>
-                  {/* Header con link al room */}
                   <div className='space-y-2'>
                     <Link href={`/admin/private-rooms/${room.id}`} className='group block'>
                       <h3 className='line-clamp-1 text-lg font-semibold transition-colors group-hover:text-primary'>
@@ -186,7 +182,6 @@ export default function PrivateRoomsListPage() {
                     )}
                   </div>
 
-                  {/* User Info */}
                   {room.user && (
                     <div className='flex items-center gap-2 text-sm'>
                       <Users className='size-4 text-muted-foreground' />
@@ -196,7 +191,6 @@ export default function PrivateRoomsListPage() {
                     </div>
                   )}
 
-                  {/* Stats */}
                   <div className='flex items-center justify-between text-sm'>
                     <div className='flex items-center gap-1'>
                       <Package className='size-4 text-muted-foreground' />
@@ -208,7 +202,6 @@ export default function PrivateRoomsListPage() {
                     </div>
                   </div>
 
-                  {/* Actions - ACTUALIZADO con URLs simplificadas */}
                   <div className='grid grid-cols-3 gap-2'>
                     <Button size='sm' variant='outline' asChild>
                       <Link href={`/admin/private-rooms/${room.id}`}>

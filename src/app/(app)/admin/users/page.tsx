@@ -141,7 +141,7 @@ export default function UserManagementPage() {
 
     const canManage = (() => {
       if (!currentUser) return false
-      if (!hasPermission('manage_users')) return false // Asumiendo que 'manage_users' cubre esto
+      if (!hasPermission('manage_users')) return false
       if (hasRole('admin')) return true
       if (hasRole('manager')) {
         return !user.roles.includes('manager') && !user.roles.includes('admin')
@@ -174,11 +174,11 @@ export default function UserManagementPage() {
     manualPagination: true,
     manualSorting: true,
     meta: {
-      deactivateUser,
+      deactivateUser: deactivateUser.mutate,
       handleManageRoles,
       handleToggleUserStatus,
-      reactivateUser,
-      toggleUserPublicStatus: handleToggleUserPublicStatus, // Añadir la nueva función
+      reactivateUser: reactivateUser.mutate,
+      toggleUserPublicStatus: handleToggleUserPublicStatus,
     },
     onSortingChange: setSorting,
     rowCount: pagination.total,
@@ -193,7 +193,7 @@ export default function UserManagementPage() {
 
   return (
     <div className='space-y-6'>
-      <div className='rounded-lg bg-card p-6 shadow-md'>
+      <div className='rounded-lg p-6'>
         <div className='mb-6 flex items-center justify-between'>
           <div>
             <h1 className='text-2xl font-bold'>Gestión de Usuarios</h1>
@@ -206,59 +206,63 @@ export default function UserManagementPage() {
           </div>
         </div>
 
-        <Table.Toolbar searchTerm={searchTerm} onSearchChange={(value) => setSearchTerm(value)}>
-          <div className='flex items-center space-x-2'>
-            <select
-              value={filters.role}
-              onChange={(e) => setFilters({ ...filters, page: 1, role: e.target.value })}
-              className='w-full rounded-lg border border-input bg-background p-2 text-sm focus:ring-2 focus:ring-ring'
-            >
-              <option value=''>Todos los roles</option>
-              {availableRoles.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
+        <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
+          <div className='mb-6'>
+            <Table.Toolbar searchTerm={searchTerm} onSearchChange={(value) => setSearchTerm(value)}>
+              <div className='flex items-center space-x-2'>
+                <select
+                  value={filters.role}
+                  onChange={(e) => setFilters({ ...filters, page: 1, role: e.target.value })}
+                  className='w-full rounded-lg border border-input p-2 text-sm focus:ring-2 focus:ring-ring'
+                >
+                  <option value=''>Todos los roles</option>
+                  {availableRoles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
 
-            <select
-              value={filters.isActive === undefined ? '' : filters.isActive.toString()}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  isActive: e.target.value === '' ? undefined : e.target.value === 'true',
-                  page: 1,
-                })
-              }
-              className='w-full rounded-lg border border-input bg-background p-2 text-sm focus:ring-2 focus:ring-ring'
-            >
-              <option value=''>Todos</option>
-              <option value='true'>Activos</option>
-              <option value='false'>Inactivos</option>
-            </select>
+                <select
+                  value={filters.isActive === undefined ? '' : filters.isActive.toString()}
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      isActive: e.target.value === '' ? undefined : e.target.value === 'true',
+                      page: 1,
+                    })
+                  }
+                  className='w-full rounded-lg border border-input bg-background p-2 text-sm focus:ring-2 focus:ring-ring'
+                >
+                  <option value=''>Todos</option>
+                  <option value='true'>Activos</option>
+                  <option value='false'>Inactivos</option>
+                </select>
+              </div>
+            </Table.Toolbar>
           </div>
-        </Table.Toolbar>
-      </div>
-
-      {usersLoading ? (
-        <Table.Loader />
-      ) : (
-        <div className='overflow-hidden rounded-lg border bg-card shadow-md'>
-          <Table.Data table={table} />
         </div>
-      )}
 
-      <Table.Pagination
-        table={table}
-        isServerSide
-        currentPage={filters.page}
-        hasNextPage={pagination.hasNext}
-        hasPreviousPage={pagination.hasPrev}
-        onPageChange={(page) => setFilters({ ...filters, page })}
-        onPageSizeChange={(limit) => setFilters({ ...filters, limit, page: 1 })}
-        totalItems={pagination.total}
-        isLoading={usersLoading}
-      />
+        {usersLoading ? (
+          <Table.Loader />
+        ) : (
+          <div className='overflow-hidden rounded-lg border bg-card shadow-md'>
+            <Table.Data table={table} />
+          </div>
+        )}
+
+        <Table.Pagination
+          table={table}
+          isServerSide
+          currentPage={filters.page}
+          hasNextPage={pagination.hasNext}
+          hasPreviousPage={pagination.hasPrev}
+          onPageChange={(page) => setFilters({ ...filters, page })}
+          onPageSizeChange={(limit) => setFilters({ ...filters, limit, page: 1 })}
+          totalItems={pagination.total}
+          isLoading={usersLoading}
+        />
+      </div>
 
       <Dialog.Form
         open={roleDialog.open}

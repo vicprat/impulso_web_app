@@ -1,3 +1,5 @@
+import { type Links, type Profile } from '@prisma/client'
+
 import { prisma } from '@/src/lib/prisma'
 import { type AuthConfig, type CustomerInfo, type TokenResponse } from '@/src/types'
 
@@ -17,6 +19,8 @@ export interface AuthSession {
     lastName?: string
     roles: string[]
     permissions: string[]
+    profile?: Profile | null
+    links?: Links[] | null
   }
   tokens: {
     accessToken: string
@@ -429,6 +433,8 @@ export class AuthService {
             },
           },
         },
+        links: true,
+        profile: true,
       },
       where: { id: userId },
     })
@@ -450,6 +456,8 @@ export class AuthService {
             },
           },
         },
+        links: true,
+        profile: true,
       },
       where: { id: userId },
     })

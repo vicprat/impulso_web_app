@@ -7,22 +7,18 @@ import { useSidebar } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCurrentUser } from '@/modules/user/hooks/management'
 
-import { SearchTrigger } from './components/SearchTrigger'
 import { Breadcrumbs } from '../Navigation/Breadcrumbs'
-import { ThemeSwitch } from './components/ThemeSwitch'
 import { Button } from '../ui/button'
+import { SearchTrigger } from './components/SearchTrigger'
+import { ThemeSwitch } from './components/ThemeSwitch'
 
 const AuthenticatedSkeleton = () => (
-  <div className='border-b bg-white shadow-sm'>
+  <div className='border-b shadow-sm'>
     <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
       <div className='flex items-center justify-between py-4'>
         <div>
-          <Skeleton className='mb-2 h-8 w-64' />
-          <Skeleton className='h-4 w-48' />
-        </div>
-        <div className='flex items-center gap-4'>
-          <Skeleton className='size-10 rounded-full' />
-          <Skeleton className='size-10 rounded-full' />
+          <Skeleton className='mb-2 h-8 w-64 bg-secondary-foreground' />
+          <Skeleton className='h-4 w-48 bg-secondary-foreground' />
         </div>
       </div>
     </div>
@@ -51,7 +47,7 @@ export const Authenticated = () => {
               <Button onClick={toggleSidebar} variant='ghost'>
                 <PanelLeft />
               </Button>
-              Bienvenido, {currentUser.firstName || currentUser.email}
+              Bienvenido, {currentUser.firstName ?? currentUser.email}
             </h1>
           </div>
           <SearchTrigger />

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { updateUserPublicStatus } from '@/modules/user/user.service'
-import { auth } from '@/lib/auth'
+
 
 export async function PATCH(
   request: Request,

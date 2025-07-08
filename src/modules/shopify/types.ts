@@ -1,4 +1,4 @@
-import { type ApiResponse } from '@/types'
+import type { ApiResponse } from '@/src/types'
 
 export interface Money {
   amount: string
@@ -6,11 +6,11 @@ export interface Money {
 }
 
 export interface Image {
-  id: string
+  id?: string
   url: string
   altText: string | null
-  width: number
-  height: number
+  width?: number
+  height?: number
 }
 
 export interface SelectedOption {
@@ -24,7 +24,7 @@ export interface Variant {
   availableForSale: boolean
   price: Money
   compareAtPrice: Money | null
-  sku: string
+  sku: string | null
   selectedOptions: SelectedOption[]
 }
 
@@ -46,6 +46,23 @@ export interface Product {
   variants: Variant[]
   tags?: string[]
   status?: 'ACTIVE' | 'DRAFT' | 'ARCHIVED'
+}
+
+export interface IProductForCart {
+  id: string
+  title: string
+  handle: string
+  descriptionHtml: string
+  vendor: string
+  images: Image[]
+  variants: Variant[]
+  availableForSale: boolean
+  description?: string
+  createdAt?: string
+  priceRange?: {
+    minVariantPrice: Money
+    maxVariantPrice: Money
+  }
 }
 export interface Collection {
   id: string
@@ -114,17 +131,44 @@ export interface Edge<T> {
   node: T
 }
 export interface ProductSearchParams {
-  first?: number
   after?: string | null
-  sortKey?: string
-  reverse?: boolean
+  before?: string | null
+  first?: number
+  last?: number
   filters?: ProductSearchFilters
+  query?: string
+
+  sortKey?:
+    | 'CREATED_AT'
+    | 'UPDATED_AT'
+    | 'TITLE'
+    | 'PRICE'
+    | 'VENDOR'
+    | 'PRODUCT_TYPE'
+    | 'BEST_SELLING'
+    | 'RELEVANCE'
+  reverse?: boolean
+
+  collections?: string[]
+  productType?: string
+  vendor?: string
+  tag?: string
+  availableForSale?: boolean
+  variantOption?: string
+
+  // Filtros de precio
+  priceMin?: number
+  priceMax?: number
 }
 
 export interface CollectionSearchParams {
-  first?: number
   after?: string | null
+  before?: string | null
+  first?: number
+  last?: number
   query?: string
+  sortKey?: 'TITLE' | 'UPDATED_AT' | 'ID'
+  reverse?: boolean
 }
 
 export type ShopInfoResponse = ApiResponse<ShopInfo>

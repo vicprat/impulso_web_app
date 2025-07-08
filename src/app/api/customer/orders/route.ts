@@ -12,9 +12,9 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams
-    const first = parseInt(searchParams.get('first') || '10')
+    const first = parseInt(searchParams.get('first') ?? '10')
     const afterParam = searchParams.get('after')
-    const after = afterParam !== null ? afterParam : undefined
+    const after = afterParam ?? undefined
 
     const result = await api.getOrders({ after, first })
 

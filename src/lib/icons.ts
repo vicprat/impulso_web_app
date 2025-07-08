@@ -1,22 +1,22 @@
 'use client'
 
 import {
+  Activity,
+  Archive,
+  BarChart,
+  Headphones,
   Home,
-  User,
-  Settings,
-  Package,
   LayoutDashboard,
   MapPin,
-  ShoppingCart,
-  BarChart,
-  Star,
-  Headphones,
   MessageSquare,
-  Users,
-  Activity,
+  Package,
+  Settings,
   Shield,
-  Archive,
+  ShoppingCart,
+  Star,
   TrendingUp,
+  User,
+  Users,
 } from 'lucide-react'
 import { type FC } from 'react'
 export interface IconProps {
@@ -59,5 +59,6 @@ const iconMap: Record<string, FC<IconProps>> = {
 
 export const getIconComponent = (iconName?: string): FC<IconProps> => {
   if (!iconName) return () => null
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   return iconMap[iconName] || Package
 }

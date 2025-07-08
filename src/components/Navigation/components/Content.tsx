@@ -1,19 +1,19 @@
 'use client'
 
 import {
-  SlidersHorizontal,
   ArrowLeft,
-  Home,
   ChevronRight,
-  Store,
   FolderOpen,
-  Menu,
-  X,
+  Home,
   Lock,
+  Menu,
+  SlidersHorizontal,
+  Store,
+  X,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -162,8 +162,8 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                       'h-auto min-w-[90px] flex-col gap-1 p-2 lg:min-w-[120px] lg:px-4 lg:py-3',
                       'rounded-xl transition-all duration-200',
                       isActive
-                        ? 'bg-primary-container text-on-primary-container border border-primary/20 shadow-md'
-                        : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+                        ? 'border-primary/20 border bg-primary-container text-on-primary-container shadow-md'
+                        : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                     )}
                   >
                     <Link href={item.href}>
@@ -186,7 +186,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
 
               {/* Search page indicator - Desktop */}
               {isSearchPage && (
-                <div className='bg-primary-container text-on-primary-container flex h-auto min-w-[90px] flex-col gap-1 rounded-xl border border-primary/20 p-2 shadow-md lg:min-w-[120px] lg:px-4 lg:py-3'>
+                <div className='border-primary/20 flex h-auto min-w-[90px] flex-col gap-1 rounded-xl border bg-primary-container p-2 text-on-primary-container shadow-md lg:min-w-[120px] lg:px-4 lg:py-3'>
                   <Store className='mx-auto mb-1 size-4 text-primary lg:size-5' />
                   <span className='text-center text-xs font-medium leading-tight lg:text-sm'>
                     {searchQuery && searchQuery.length > 10
@@ -203,7 +203,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
 
               {/* Collection page indicator - Desktop */}
               {isCollectionPage && (
-                <div className='bg-primary-container text-on-primary-container flex h-auto min-w-[90px] flex-col gap-1 rounded-xl border border-primary/20 p-2 shadow-md lg:min-w-[120px] lg:px-4 lg:py-3'>
+                <div className='border-primary/20 flex h-auto min-w-[90px] flex-col gap-1 rounded-xl border bg-primary-container p-2 text-on-primary-container shadow-md lg:min-w-[120px] lg:px-4 lg:py-3'>
                   <FolderOpen className='mx-auto mb-1 size-4 text-primary lg:size-5' />
                   <span className='text-center text-xs font-medium capitalize leading-tight lg:text-sm'>
                     {collectionHandle?.replace('-', ' ')}
@@ -221,7 +221,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                 variant='ghost'
                 size='sm'
                 onClick={toggleMobileMenu}
-                className='hover:bg-surface-container-high size-8 rounded-full p-2'
+                className='size-8 rounded-full p-2 hover:bg-surface-container-high'
               >
                 {mobileMenuOpen ? <X className='size-4' /> : <Menu className='size-4' />}
               </Button>
@@ -235,7 +235,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                 variant='ghost'
                 size='sm'
                 asChild
-                className='hover:bg-primary-container h-8 gap-2 rounded-full px-3 text-primary hover:text-primary/80 lg:h-9 lg:px-4'
+                className='hover:text-primary/80 h-8 gap-2 rounded-full px-3 text-primary hover:bg-primary-container lg:h-9 lg:px-4'
               >
                 <Link href='/store'>
                   <ArrowLeft className='size-3.5 lg:size-4' />
@@ -250,7 +250,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div className='fixed inset-0 z-50 md:hidden '>
-          <div className='bg-surface-variant fixed inset-0' onClick={toggleMobileMenu} />
+          <div className='fixed inset-0 bg-surface' onClick={toggleMobileMenu} />
           <div className='fixed inset-x-0 top-16 bg-gray-300 shadow-lg dark:bg-gray-900'>
             <div className='space-y-2 p-4'>
               <div className='mb-2 flex items-center justify-end'>
@@ -258,7 +258,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                   variant='ghost'
                   size='sm'
                   onClick={toggleMobileMenu}
-                  className='hover:bg-surface-container-high size-8 rounded-full p-2'
+                  className='size-8 rounded-full p-2 hover:bg-surface-container-high'
                 >
                   <X className='size-4' />
                 </Button>
@@ -280,7 +280,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                       'h-12 w-full justify-start gap-3 rounded-xl px-4',
                       isActive
                         ? 'bg-primary-container text-on-primary-container'
-                        : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+                        : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                     )}
                   >
                     <Link href={item.href}>
@@ -308,7 +308,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                   size='sm'
                   asChild
                   onClick={toggleMobileMenu}
-                  className='hover:bg-primary-container border-outline-variant/20 mt-4 h-12 w-full justify-start gap-3 rounded-xl border-t px-4 pt-6 text-primary hover:text-primary/80'
+                  className='border-outline-variant/20 hover:text-primary/80 mt-4 h-12 w-full justify-start gap-3 rounded-xl border-t px-4 pt-6 text-primary hover:bg-primary-container'
                 >
                   <Link href='/store'>
                     <ArrowLeft className='size-5' />
@@ -323,14 +323,14 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
 
       {/* Breadcrumbs - Enhanced responsiveness */}
       {(pathname.includes('/product/') || isCollectionPage) && (
-        <div className='bg-surface-container border-outline-variant/10 border-t'>
+        <div className='border-outline-variant/10 border-t bg-surface-container'>
           <div className='container mx-auto px-3 py-2 sm:px-4 lg:px-6 lg:py-3'>
-            <div className='scrollbar-hide flex items-center space-x-1 overflow-x-auto text-xs sm:space-x-2 sm:text-sm'>
+            <div className='flex items-center space-x-1 overflow-x-auto text-xs sm:space-x-2 sm:text-sm'>
               <Button
                 variant='ghost'
                 size='sm'
                 asChild
-                className='text-on-surface-variant hover:text-on-surface h-5 shrink-0 px-1 sm:h-6 sm:px-2'
+                className='h-5 shrink-0 px-1 text-on-surface-variant hover:text-on-surface sm:h-6 sm:px-2'
               >
                 <Link href='/' className='flex items-center gap-1'>
                   <Home className='size-3' />
@@ -344,7 +344,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                 variant='ghost'
                 size='sm'
                 asChild
-                className='text-on-surface-variant hover:text-on-surface h-5 shrink-0 px-1 sm:h-6 sm:px-2'
+                className='h-5 shrink-0 px-1 text-on-surface-variant hover:text-on-surface sm:h-6 sm:px-2'
               >
                 <Link href='/store'>Tienda</Link>
               </Button>
@@ -356,7 +356,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                     variant='ghost'
                     size='sm'
                     asChild
-                    className='text-on-surface-variant hover:text-on-surface h-5 shrink-0 px-1 sm:h-6 sm:px-2'
+                    className='h-5 shrink-0 px-1 text-on-surface-variant hover:text-on-surface sm:h-6 sm:px-2'
                   >
                     <Link href='/store/collections'>
                       <span className='hidden sm:inline'>Colecciones</span>
@@ -364,7 +364,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                     </Link>
                   </Button>
                   <ChevronRight className='text-on-surface-variant/50 size-3 shrink-0' />
-                  <span className='text-on-surface truncate px-1 font-medium capitalize sm:px-2'>
+                  <span className='truncate px-1 font-medium capitalize text-on-surface sm:px-2'>
                     {collectionHandle?.replace('-', ' ')}
                   </span>
                 </>
@@ -373,7 +373,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
               {pathname.includes('/product/') && (
                 <>
                   <ChevronRight className='text-on-surface-variant/50 size-3 shrink-0' />
-                  <span className='text-on-surface shrink-0 px-1 font-medium sm:px-2'>
+                  <span className='shrink-0 px-1 font-medium text-on-surface sm:px-2'>
                     Producto
                   </span>
                 </>

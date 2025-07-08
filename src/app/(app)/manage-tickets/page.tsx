@@ -1,5 +1,11 @@
 'use client'
 
+import { Calendar, Eye, MapPin, QrCode, Ticket, User } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { QRCodeSVG } from 'qrcode.react'
+import { useState } from 'react'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,11 +14,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useGetTicketsByUserId } from '@/services/ticket/hook'
 import { formatCurrency } from '@/src/helpers'
 import { useAuth } from '@/src/modules/auth/context/useAuth'
-import { Calendar, Eye, MapPin, QrCode, Ticket, User } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { QRCodeSVG } from 'qrcode.react' // ✅ 1. Importar la librería de QR
-import { useState } from 'react'
 
 interface TicketWithEvent {
   id: string
@@ -47,8 +48,8 @@ interface TicketWithEvent {
 }
 
 export default function ManageTicketsPage() {
-  const { user, isLoading: authLoading } = useAuth()
-  const { data: tickets, error, isLoading } = useGetTicketsByUserId() // ✅ 2. Añadir estado para controlar el diálogo del QR
+  const { isLoading: authLoading } = useAuth()
+  const { data: tickets, error, isLoading } = useGetTicketsByUserId()
 
   const [ticketToShowQr, setTicketToShowQr] = useState<TicketWithEvent | null>(null)
 
@@ -83,19 +84,19 @@ export default function ManageTicketsPage() {
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      VALID: 'default',
-      USED: 'secondary',
       CANCELLED: 'destructive',
+      USED: 'secondary',
+      VALID: 'default',
     } as const
 
     const labels = {
-      VALID: 'Válido',
-      USED: 'Usado',
       CANCELLED: 'Cancelado',
+      USED: 'Usado',
+      VALID: 'Válido',
     }
 
     return (
-      <Badge variant={variants[status as keyof typeof variants] || 'outline'}>
+      <Badge variant={variants[status as keyof typeof variants]}>
         {labels[status as keyof typeof labels] || status}
       </Badge>
     )
@@ -106,10 +107,10 @@ export default function ManageTicketsPage() {
 
     const eventDate = new Date(date)
     const dateStr = eventDate.toLocaleDateString('es-MX', {
+      day: 'numeric',
+      month: 'long',
       weekday: 'long',
       year: 'numeric',
-      month: 'long',
-      day: 'numeric',
     })
 
     if (startTime) {
@@ -133,7 +134,7 @@ export default function ManageTicketsPage() {
           <div className='flex items-center gap-2'>
             <Ticket className='size-5' />
             <span className='text-sm text-muted-foreground'>
-              {tickets?.length || 0} boleto{tickets?.length !== 1 ? 's' : ''}
+              {tickets?.length ?? 0} boleto{tickets?.length !== 1 ? 's' : ''}
             </span>
           </div>
         </div>
@@ -146,36 +147,32 @@ export default function ManageTicketsPage() {
                   <div className='flex items-start justify-between'>
                     <CardTitle className='flex items-center gap-2 text-lg'>
                       <QrCode className='size-5' />
-                      {ticket.event?.title || 'Evento sin título'}
+                      {ticket.event?.title ?? 'Evento sin título'}
                     </CardTitle>
                     {getStatusBadge(ticket.status)}
                   </div>
                 </CardHeader>
 
                 <CardContent className='space-y-4'>
-                  {/* Imagen del evento */}
                   {ticket.event?.primaryImage && (
                     <div className='relative aspect-video w-full overflow-hidden rounded-md'>
                       <Image
                         src={ticket.event.primaryImage.url}
-                        alt={ticket.event.primaryImage.altText || ticket.event.title}
+                        alt={ticket.event.primaryImage.altText ?? ticket.event.title}
                         fill
                         className='object-cover'
                       />
                     </div>
                   )}
-                  {/* Información del evento */}
                   {ticket.event ? (
                     <div className='space-y-3'>
-                      {/* Organizador */}
                       <div className='flex items-center gap-2 text-sm'>
                         <User className='size-4 text-muted-foreground' />
                         <span>{ticket.event.vendor}</span>
                       </div>
-                      {/* Fecha y hora */}
                       {ticket.event.eventDetails.date && (
                         <div className='flex items-start gap-2 text-sm'>
-                          <Calendar className='size-4 text-muted-foreground mt-0.5' />
+                          <Calendar className='mt-0.5 size-4 text-muted-foreground' />
 
                           <div>
                             <div>
@@ -186,7 +183,7 @@ export default function ManageTicketsPage() {
                             </div>
 
                             {ticket.event.eventDetails.endTime && (
-                              <div className='text-muted-foreground text-xs'>
+                              <div className='text-xs text-muted-foreground'>
                                 Hasta las
                                 {ticket.event.eventDetails.endTime}
                               </div>
@@ -194,15 +191,13 @@ export default function ManageTicketsPage() {
                           </div>
                         </div>
                       )}
-                      {/* Ubicación */}
                       {ticket.event.eventDetails.location && (
                         <div className='flex items-center gap-2 text-sm'>
                           <MapPin className='size-4 text-muted-foreground' />
                           <span>{ticket.event.eventDetails.location}</span>
                         </div>
                       )}
-                      {/* Precio */}
-                      <div className='flex items-center justify-between pt-2 border-t'>
+                      <div className='flex items-center justify-between border-t pt-2'>
                         <span className='text-sm text-muted-foreground'>Precio pagado:</span>
 
                         <span className='font-semibold'>
@@ -218,18 +213,16 @@ export default function ManageTicketsPage() {
                       Información del evento no disponible
                     </div>
                   )}
-                  {/* Código QR (texto) */}
-                  <div className='pt-2 border-t'>
-                    <div className='text-xs text-muted-foreground mb-1'>Código QR:</div>
+                  <div className='border-t pt-2'>
+                    <div className='mb-1 text-xs text-muted-foreground'>Código QR:</div>
 
-                    <div className='font-mono text-xs bg-muted p-2 rounded'>{ticket.qrCode}</div>
+                    <div className='rounded bg-muted p-2 font-mono text-xs'>{ticket.qrCode}</div>
                   </div>
-                  {/* Acciones */}
                   <div className='flex gap-2 pt-2'>
                     {ticket.event && (
                       <Button variant='outline' size='sm' className='flex-1' asChild>
                         <Link href={`/store/product/${ticket.event.handle}`} target='_blank'>
-                          <Eye className='size-4 mr-1' />
+                          <Eye className='mr-1 size-4' />
                           Ver Evento
                         </Link>
                       </Button>
@@ -238,10 +231,10 @@ export default function ManageTicketsPage() {
                     {ticket.status === 'VALID' && (
                       <Button
                         size='sm'
-                        className='flex-1' // ✅ 3. Añadir onClick para abrir el diálogo
+                        className='flex-1'
                         onClick={() => setTicketToShowQr(ticket)}
                       >
-                        <QrCode className='size-4 mr-1' />
+                        <QrCode className='mr-1 size-4' />
                         Mostrar QR
                       </Button>
                     )}
@@ -253,9 +246,9 @@ export default function ManageTicketsPage() {
         ) : (
           <div className='flex min-h-96 items-center justify-center'>
             <div className='text-center'>
-              <Ticket className='size-16 text-muted-foreground mx-auto mb-4' />
-              <h3 className='text-lg font-semibold mb-2'>No tienes boletos</h3>
-              <p className='text-muted-foreground mb-4'>
+              <Ticket className='mx-auto mb-4 size-16 text-muted-foreground' />
+              <h3 className='mb-2 text-lg font-semibold'>No tienes boletos</h3>
+              <p className='mb-4 text-muted-foreground'>
                 Cuando compres boletos para eventos, aparecerán aquí.
               </p>
 
@@ -266,7 +259,6 @@ export default function ManageTicketsPage() {
           </div>
         )}
       </div>
-      {/* ✅ 4. Diálogo para mostrar el QR */}
       <Dialog
         open={!!ticketToShowQr}
         onOpenChange={(isOpen) => {
@@ -277,11 +269,11 @@ export default function ManageTicketsPage() {
       >
         <DialogContent className='sm:max-w-md'>
           <DialogHeader>
-            <DialogTitle>Boleto para: {ticketToShowQr?.event?.title || 'Evento'}</DialogTitle>
+            <DialogTitle>Boleto para: {ticketToShowQr?.event?.title ?? 'Evento'}</DialogTitle>
           </DialogHeader>
 
           {ticketToShowQr && (
-            <div className='flex flex-col items-center justify-center p-4 gap-4'>
+            <div className='flex flex-col items-center justify-center gap-4 p-4'>
               <QRCodeSVG
                 value={ticketToShowQr.qrCode}
                 size={256}
@@ -289,11 +281,11 @@ export default function ManageTicketsPage() {
                 fgColor='#000000'
               />
 
-              <div className='font-mono text-sm bg-muted p-2 rounded-md'>
+              <div className='rounded-md bg-muted p-2 font-mono text-sm'>
                 {ticketToShowQr.qrCode}
               </div>
 
-              <p className='text-center text-muted-foreground text-sm'>
+              <p className='text-center text-sm text-muted-foreground'>
                 Presenta este código QR en la entrada del evento.
               </p>
             </div>

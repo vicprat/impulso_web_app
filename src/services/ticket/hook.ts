@@ -35,16 +35,14 @@ export interface TicketWithEvent {
 
 const TICKETS_QUERY_KEY = 'userTickets'
 
-// 🔄 FIXED: No pasar userId - el backend usará session.user.id
 export const useGetTicketsByUserId = () => {
   return useQuery<TicketWithEvent[]>({
-    queryKey: [TICKETS_QUERY_KEY],
     queryFn: async () => {
-      // ✅ NO enviar userId - el backend lo tomará de la sesión
       const { data } = await axios.get('/api/management/tickets')
       return data
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryKey: [TICKETS_QUERY_KEY],
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -69,7 +67,7 @@ export const useCreateTicket = () => {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [TICKETS_QUERY_KEY] })
+      void queryClient.invalidateQueries({ queryKey: [TICKETS_QUERY_KEY] })
     },
   })
 }
@@ -83,7 +81,7 @@ export const useUpdateTicket = () => {
     },
     onSuccess: (updatedTicket) => {
       queryClient.setQueryData([TICKETS_QUERY_KEY, 'detail', updatedTicket.id], updatedTicket)
-      queryClient.invalidateQueries({ queryKey: [TICKETS_QUERY_KEY] })
+      void queryClient.invalidateQueries({ queryKey: [TICKETS_QUERY_KEY] })
     },
   })
 }

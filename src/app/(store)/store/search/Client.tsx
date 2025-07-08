@@ -1,10 +1,10 @@
 'use client'
 
-import { Search, X, RefreshCw, ArrowUp, ArrowDown } from 'lucide-react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { useState, useMemo } from 'react'
+import { ArrowDown, ArrowUp, RefreshCw, Search, X } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useMemo, useState } from 'react'
 
-import { Card } from '@/components/Card.tsx'
+import { Card } from '@/components/Card'
 import { Pagination } from '@/components/Pagination'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -16,8 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useProducts, useFilterOptions, useCollections } from '@/modules/shopify/hooks'
-import { type ProductSearchParams, type ProductSearchFilters } from '@/modules/shopify/types'
+import { useCollections, useFilterOptions, useProducts } from '@/modules/shopify/hooks'
+import { type ProductSearchFilters, type ProductSearchParams } from '@/modules/shopify/types'
 
 const sortOptions = [
   { label: 'Relevancia', supportsOrder: false, value: 'RELEVANCE' },
@@ -48,7 +48,7 @@ export const Client = () => {
     if (collections) filters.collections = collections.split(',')
     const productTypes = searchParams.get('product_types')
     if (productTypes) filters.productType = productTypes.split(',')
-    const vendors = searchParams.get('vendor') // Correctamente 'vendor'
+    const vendors = searchParams.get('vendor')
     if (vendors) filters.vendor = vendors.split(',')
     const tags = searchParams.get('tags')
     if (tags) filters.tags = tags.split(',')
@@ -66,7 +66,7 @@ export const Client = () => {
     return filters
   }, [searchParams])
 
-  const currentSort = (searchParams.get('sort') as ProductSearchParams['sortKey']) || 'RELEVANCE'
+  const currentSort = (searchParams.get('sort') as ProductSearchParams['sortKey']) ?? 'RELEVANCE'
   const currentOrder = searchParams.get('order')
 
   const {
@@ -91,7 +91,7 @@ export const Client = () => {
       if (nextCursor) {
         setPageHistory((prev) => {
           const newHistory = [...prev]
-          newHistory[newPage] = nextCursor // history for page n+1 is at index n
+          newHistory[newPage] = nextCursor
           return newHistory
         })
         newParams.set('page', newPage.toString())
@@ -99,7 +99,6 @@ export const Client = () => {
     } else if (newPage < currentPage) {
       newParams.set('page', newPage.toString())
     } else {
-      // Stay on the same page, but maybe refresh data
       newParams.set('page', newPage.toString())
     }
     router.push(`/store/search?${newParams.toString()}`)
@@ -143,7 +142,7 @@ export const Client = () => {
     if (searchFilters.collections && collectionsData) {
       const names = searchFilters.collections
         .map(
-          (handle) => collectionsData.collections.find((c) => c.handle === handle)?.title || handle
+          (handle) => collectionsData.collections.find((c) => c.handle === handle)?.title ?? handle
         )
         .join(', ')
       if (names) filters.push({ key: 'collections', label: 'Colecciones', value: names })
@@ -157,7 +156,6 @@ export const Client = () => {
     if (searchFilters.vendor)
       filters.push({ key: 'vendor', label: 'Artistas', value: searchFilters.vendor.join(', ') })
 
-    // --> ACTUALIZADO: Muestra etiquetas amigables para todos los tags seleccionados
     if (searchFilters.tags && filterOptions) {
       const allTagOptions = [
         ...filterOptions.techniques,
@@ -223,13 +221,13 @@ export const Client = () => {
   const activeFilters = getActiveFilters()
   const currentSortOption = sortOptions.find((opt) => opt.value === currentSort)
 
-  if (isLoading && !productsData) return <Card.Loader />
+  if (isLoading) return <Card.Loader />
   if (error) {
     return (
-      <div className='bg-surface min-h-screen'>
+      <div className='min-h-screen'>
         <div className='mx-auto px-4 py-12'>
-          <Alert className='border-error-container bg-error-container/10 mx-auto max-w-md'>
-            <RefreshCw className='text-error size-4' />
+          <Alert className='bg-error-container/10 mx-auto max-w-md border-error-container'>
+            <RefreshCw className='size-4 text-error' />
             <AlertDescription className='text-on-error-container'>
               <span className='font-medium'>Error al realizar la búsqueda</span>
               <br />
@@ -240,7 +238,7 @@ export const Client = () => {
             <Button
               onClick={() => window.location.reload()}
               variant='default'
-              className='text-on-primary bg-primary hover:bg-primary/90'
+              className='hover:bg-primary/90 bg-primary text-on-primary'
             >
               <RefreshCw className='mr-2 size-4' />
               Reintentar
@@ -252,21 +250,21 @@ export const Client = () => {
   }
 
   return (
-    <div className='bg-surface min-h-screen'>
+    <div className='min-h-screen bg-surface'>
       <div className='mx-auto px-4 py-6'>
         <div className='mb-8'>
-          <h1 className='text-on-surface mb-4 text-3xl font-bold tracking-tight'>
+          <h1 className='mb-4 text-3xl font-bold tracking-tight text-on-surface'>
             Resultados de búsqueda
           </h1>
           {activeFilters.length > 0 && (
-            <div className='bg-surface-container border-outline mb-6 rounded-lg border p-4'>
+            <div className='mb-6 rounded-lg border border-outline bg-surface-container p-4'>
               <div className='mb-3 flex items-center justify-between'>
-                <h3 className='text-on-surface text-sm font-medium'>Filtros activos</h3>
+                <h3 className='text-sm font-medium text-on-surface'>Filtros activos</h3>
                 <Button
                   variant='ghost'
                   size='sm'
                   onClick={clearAllFilters}
-                  className='text-primary hover:text-primary/80'
+                  className='hover:text-primary/80 text-primary'
                 >
                   Limpiar todos
                 </Button>
@@ -276,14 +274,14 @@ export const Client = () => {
                   <Badge
                     key={filter.key}
                     variant='secondary'
-                    className='bg-surface-container-highest flex items-center gap-2'
+                    className='flex items-center gap-2 bg-surface-container-highest'
                   >
                     <span className='text-xs'>
                       <span className='font-medium'>{filter.label}:</span> {filter.value}
                     </span>
                     <button
                       onClick={() => removeFilter(filter.key)}
-                      className='hover:bg-surface-container-high rounded-full p-0.5'
+                      className='rounded-full p-0.5 hover:bg-surface-container-high'
                     >
                       <X className='size-3' />
                     </button>
@@ -293,7 +291,7 @@ export const Client = () => {
             </div>
           )}
           <div className='mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center'>
-            <div className='text-on-surface-variant text-sm'>
+            <div className='text-sm text-on-surface-variant'>
               {productsData?.products ? (
                 <>
                   Mostrando {(currentPage - 1) * 24 + 1}-
@@ -308,12 +306,12 @@ export const Client = () => {
               )}
             </div>
             <div className='flex items-center gap-3'>
-              <label className='text-on-surface-variant whitespace-nowrap text-sm font-medium'>
+              <label className='whitespace-nowrap text-sm font-medium text-on-surface-variant'>
                 Ordenar por:
               </label>
               <div className='flex items-center gap-2'>
                 <Select value={currentSort} onValueChange={handleSortChange}>
-                  <SelectTrigger className='border-outline w-[140px]'>
+                  <SelectTrigger className='w-[140px] border-outline'>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className='border-outline-variant'>
@@ -329,7 +327,7 @@ export const Client = () => {
                     variant='outline'
                     size='sm'
                     onClick={toggleSortOrder}
-                    className='border-outline hover:bg-surface-container h-9 px-3'
+                    className='h-9 border-outline px-3 hover:bg-surface-container'
                     title={`Ordenar ${currentOrder === 'asc' ? 'descendente' : 'ascendente'}`}
                   >
                     {currentOrder === 'asc' ? (
@@ -361,13 +359,13 @@ export const Client = () => {
         ) : (
           <div className='py-16 text-center'>
             <div className='mx-auto max-w-md'>
-              <div className='bg-surface-container-highest mx-auto mb-6 flex size-16 items-center justify-center rounded-full'>
-                <Search className='text-on-surface-variant size-8' />
+              <div className='mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-surface-container-highest'>
+                <Search className='size-8 text-on-surface-variant' />
               </div>
-              <h3 className='text-on-surface mb-2 text-xl font-semibold'>
+              <h3 className='mb-2 text-xl font-semibold text-on-surface'>
                 No se encontraron productos
               </h3>
-              <p className='text-on-surface-variant mb-6'>
+              <p className='mb-6 text-on-surface-variant'>
                 No hay productos que coincidan con los filtros aplicados.
               </p>
             </div>

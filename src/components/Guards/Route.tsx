@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 import { getRouteMeta, isPublicRoute } from '@/config/routes'
@@ -49,7 +49,7 @@ export const Route: React.FC<Props> = ({ children, fallback }) => {
 
   if (isLoading) {
     return (
-      fallback || (
+      fallback ?? (
         <div className='flex min-h-screen items-center justify-center'>
           <div className='size-12 animate-spin rounded-full border-b-2 border-primary'></div>
         </div>

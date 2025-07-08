@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import {
@@ -18,7 +19,6 @@ import { Guard } from '@/components/Guards'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { useCartActions } from '@/modules/cart/hook'
 import { formatCurrency } from '@/src/helpers'
@@ -26,21 +26,12 @@ import { useAuth } from '@/src/modules/auth/context/useAuth'
 
 export default function CartPage() {
   const { cart } = useAuth()
-  const {
-    applyDiscount,
-    cartSummary,
-    isApplyingDiscount,
-    isRemoving,
-    isUpdating,
-    removeProduct,
-    updateQuantity,
-  } = useCartActions()
+  const { cartSummary, isRemoving, isUpdating, removeProduct, updateQuantity } = useCartActions()
 
-  const [discountCode, setDiscountCode] = useState('')
   const [localQuantities, setLocalQuantities] = useState<Record<string, number>>({})
 
   const isEmpty = cartSummary?.isEmpty ?? true
-  const itemCount = cartSummary?.itemCount || 0
+  const itemCount = cartSummary?.itemCount ?? 0
 
   const handleQuantityChange = (lineId: string, newQuantity: number) => {
     if (newQuantity < 1) return
@@ -73,25 +64,9 @@ export default function CartPage() {
     }
   }
 
-  const handleApplyDiscount = async () => {
-    if (!discountCode.trim()) {
-      toast.error('Ingresa un código de descuento')
-      return
-    }
-
-    try {
-      await applyDiscount(discountCode.trim())
-      toast.success('Código de descuento aplicado')
-      setDiscountCode('')
-    } catch {
-      toast.error('Código de descuento inválido')
-    }
-  }
-
   return (
     <Guard.Auth>
       <div className='container mx-auto max-w-6xl px-4 py-8'>
-        {/* Header */}
         <div className='mb-8 flex items-center justify-between'>
           <div>
             <h1 className='text-3xl font-bold'>Carrito de compras</h1>
@@ -111,7 +86,6 @@ export default function CartPage() {
         </div>
 
         {isEmpty ? (
-          /* Carrito vacío */
           <Card className='py-16 text-center'>
             <CardContent className='space-y-4'>
               <div className='mx-auto flex size-24 items-center justify-center rounded-full bg-muted'>
@@ -135,25 +109,23 @@ export default function CartPage() {
           </Card>
         ) : (
           <div className='grid gap-8 lg:grid-cols-3'>
-            {/* Productos en el carrito */}
             <div className='space-y-4 lg:col-span-2'>
               {cartSummary?.lines.map((line) => {
                 const pendingQuantity = localQuantities[line.id]
-                const currentQuantity = pendingQuantity ?? line.quantity
+                const currentQuantity = line.quantity
                 const hasChanges = pendingQuantity && pendingQuantity !== line.quantity
 
                 return (
                   <Card key={line.id}>
                     <CardContent className='p-6'>
                       <div className='flex gap-4'>
-                        {/* Imagen del producto */}
                         <div className='shrink-0'>
                           <Link href={`/store/product/${line.merchandise.product.handle}`}>
                             <div className='aspect-square size-24 overflow-hidden rounded-lg border'>
                               {line.merchandise.image ? (
                                 <img
                                   src={line.merchandise.image.url}
-                                  alt={line.merchandise.image.altText || line.merchandise.title}
+                                  alt={line.merchandise.image.altText ?? line.merchandise.title}
                                   className='size-full object-cover transition-transform hover:scale-105'
                                 />
                               ) : (
@@ -165,7 +137,6 @@ export default function CartPage() {
                           </Link>
                         </div>
 
-                        {/* Información del producto */}
                         <div className='flex-1 space-y-3'>
                           <div>
                             <Link
@@ -190,7 +161,6 @@ export default function CartPage() {
                             )}
                           </div>
 
-                          {/* Precio y controles */}
                           <div className='flex items-center justify-between'>
                             <div className='space-y-1'>
                               <p className='font-medium'>
@@ -212,7 +182,6 @@ export default function CartPage() {
                                 )}
                             </div>
 
-                            {/* Controles de cantidad */}
                             <div className='flex items-center gap-2'>
                               <div className='flex items-center rounded-md border'>
                                 <Button
@@ -239,7 +208,6 @@ export default function CartPage() {
                                 </Button>
                               </div>
 
-                              {/* Botón actualizar (solo si hay cambios) */}
                               {hasChanges && (
                                 <Button
                                   size='sm'
@@ -254,7 +222,6 @@ export default function CartPage() {
                                 </Button>
                               )}
 
-                              {/* Botón eliminar */}
                               <Button
                                 variant='outline'
                                 size='sm'
@@ -269,7 +236,6 @@ export default function CartPage() {
                             </div>
                           </div>
 
-                          {/* Subtotal por línea */}
                           <div className='text-right'>
                             <p className='text-sm font-medium'>
                               Subtotal:{' '}
@@ -287,45 +253,7 @@ export default function CartPage() {
               })}
             </div>
 
-            {/* Resumen del pedido */}
             <div className='space-y-6'>
-              {/* Código de descuento */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className='text-lg'>Código de descuento</CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-3'>
-                  <div className='flex gap-2'>
-                    <Input
-                      placeholder='Ingresa tu código'
-                      value={discountCode}
-                      onChange={(e) => setDiscountCode(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleApplyDiscount()}
-                    />
-                    <Button
-                      onClick={handleApplyDiscount}
-                      disabled={isApplyingDiscount || !discountCode.trim()}
-                    >
-                      {isApplyingDiscount ? <Loader2 className='size-4 animate-spin' /> : 'Aplicar'}
-                    </Button>
-                  </div>
-
-                  {/* Mostrar códigos aplicados */}
-                  {cartSummary?.cart?.discountCodes &&
-                    cartSummary.cart.discountCodes.length > 0 && (
-                      <div className='space-y-1'>
-                        <p className='text-sm font-medium'>Descuentos aplicados:</p>
-                        {cartSummary.cart.discountCodes.map((discount, index) => (
-                          <Badge key={index} variant='secondary' className='mr-1'>
-                            {discount.code}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                </CardContent>
-              </Card>
-
-              {/* Resumen de precios */}
               <Card>
                 <CardHeader>
                   <CardTitle className='text-lg'>Resumen del pedido</CardTitle>
@@ -351,25 +279,23 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  {/* Mostrar descuentos aplicados */}
-                  {cartSummary?.cart?.discountAllocations &&
-                    cartSummary.cart.discountAllocations.length > 0 && (
-                      <>
-                        <Separator />
-                        {cartSummary.cart.discountAllocations.map((discount, index) => (
-                          <div key={index} className='flex justify-between text-green-600'>
-                            <span>Descuento {discount.code ? `(${discount.code})` : ''}:</span>
-                            <span>
-                              -
-                              {formatCurrency(
-                                discount.discountedAmount.amount,
-                                discount.discountedAmount.currencyCode
-                              )}
-                            </span>
-                          </div>
-                        ))}
-                      </>
-                    )}
+                  {cart?.discountAllocations && cart.discountAllocations.length > 0 && (
+                    <>
+                      <Separator />
+                      {cart.discountAllocations.map((discount, index) => (
+                        <div key={index} className='flex justify-between text-green-600'>
+                          <span>Descuento {discount.code ? `(${discount.code})` : ''}:</span>
+                          <span>
+                            -
+                            {formatCurrency(
+                              discount.discountedAmount.amount,
+                              discount.discountedAmount.currencyCode
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </>
+                  )}
 
                   <Separator />
 
@@ -388,12 +314,12 @@ export default function CartPage() {
                     size='lg'
                     onClick={async () => {
                       try {
-                        if (!cartSummary?.lines?.length) {
+                        if (!cartSummary?.lines.length) {
                           toast.error('El carrito está vacío')
                           return
                         }
 
-                        if (!cart || !cart.id) {
+                        if (!cart?.id) {
                           toast.error('No se pudo obtener el carrito')
                           return
                         }
@@ -411,10 +337,9 @@ export default function CartPage() {
                         const data = await response.json()
 
                         if (!data.success) {
-                          throw new Error(data.error || 'Error al crear el checkout')
+                          throw new Error(data.error ?? 'Error al crear el checkout')
                         }
 
-                        // Redirigir al checkout de Shopify
                         window.location.href = data.checkout.webUrl
                       } catch (error) {
                         console.error('Error al procesar el checkout:', error)
@@ -428,7 +353,6 @@ export default function CartPage() {
                 </CardFooter>
               </Card>
 
-              {/* Políticas */}
               <Card>
                 <CardContent className='space-y-2 p-4 text-sm text-muted-foreground'>
                   <p className='flex items-center gap-2'>

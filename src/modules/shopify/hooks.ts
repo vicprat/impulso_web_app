@@ -1,20 +1,21 @@
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
 
 import { api } from './api'
-import {
-  type ShopInfo,
-  type Product,
-  type Collection,
-  type ProductSearchParams,
-  type CollectionSearchParams,
-  type ShopInfoResponse,
-  type ProductResponse,
-  type ProductsResponse,
-  type CollectionResponse,
-  type CollectionsResponse,
-  type EnrichedFilterOptions,
-} from './types'
+import { shopifyService } from './service'
 
+import type {
+  Collection,
+  CollectionResponse,
+  CollectionSearchParams,
+  CollectionsResponse,
+  EnrichedFilterOptions,
+  Product,
+  ProductResponse,
+  ProductSearchParams,
+  ProductsResponse,
+  ShopInfo,
+  ShopInfoResponse,
+} from './types'
 export const SHOPIFY_KEYS = {
   all: ['shopify'] as const,
   collection: (handle: string) => [...SHOPIFY_KEYS.collections(), handle] as const,
@@ -35,8 +36,6 @@ export const useShopInfo = (
     ...options,
   })
 }
-
-import { shopifyService } from './service'
 
 export const useProducts = (
   params: ProductSearchParams = {},

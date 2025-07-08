@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export interface SphereConfig {
   id: string
@@ -162,7 +162,7 @@ export const AnimatedSpheres: React.FC<Props> = ({
   return (
     <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
       {spheres.map((sphere, index) => {
-        const position = spherePositions[sphere.id] || sphere.initialPosition
+        const position = spherePositions[sphere.id]
         const mouseOffset = calculateMouseOffset(index)
 
         return (
@@ -177,7 +177,7 @@ export const AnimatedSpheres: React.FC<Props> = ({
               left: `${position.x}%`,
               top: `${position.y}%`,
               transform: `translate(-50%, -50%) translate(${mouseOffset.x}px, ${mouseOffset.y}px)`,
-              transition: `all ${sphere.animationDuration}ms ${sphere.transitionCurve || 'ease-in-out'}`,
+              transition: `all ${sphere.animationDuration}ms ${sphere.transitionCurve ?? 'ease-in-out'}`,
             }}
           />
         )

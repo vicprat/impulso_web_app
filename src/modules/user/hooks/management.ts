@@ -26,6 +26,7 @@ export function useCurrentUser() {
         firstName: authUser.firstName,
         id: authUser.id,
         isActive: true,
+        isPublic: typeof authUser.isPublic === 'boolean' ? authUser.isPublic : false,
         lastName: authUser.lastName,
         permissions: authUser.permissions,
         roles: authUser.roles,

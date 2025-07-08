@@ -41,7 +41,7 @@ const inferPlatformFromUrl = (url: string): string => {
     }
     // Add more platforms as needed
     return 'website' // Default platform
-  } catch (error) {
+  } catch {
     return 'website' // Fallback if URL is invalid
   }
 }
@@ -75,7 +75,7 @@ export const Links = () => {
 
     try {
       new URL(validatedUrl) // Attempt to create a URL object to validate
-    } catch (e) {
+    } catch {
       toast.error('Formato de URL inválido. Asegúrate de incluir http:// o https://')
       return
     }
@@ -123,7 +123,7 @@ export const Links = () => {
 
     try {
       new URL(validatedUrl) // Attempt to create a URL object to validate
-    } catch (e) {
+    } catch {
       toast.error('Formato de URL inválido. Asegúrate de incluir http:// o https://')
       return
     }
@@ -170,7 +170,7 @@ export const Links = () => {
         </div>
 
         <div className='space-y-3'>
-          <h3 className='text-md font-medium text-muted-foreground'>Existing Links</h3>
+          <h3 className='font-medium text-muted-foreground'>Existing Links</h3>
           {isLinksLoading ? (
             <div className='rounded-md bg-surface-container p-4 text-muted-foreground'>
               Loading links...

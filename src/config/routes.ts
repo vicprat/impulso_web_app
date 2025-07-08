@@ -386,7 +386,7 @@ export const buildBreadcrumbs = (
     const route = findRouteByPath(currentPath, routes)
     if (route) {
       breadcrumbs.push({
-        label: route.breadcrumb || route.label,
+        label: route.breadcrumb ?? route.label,
         path: currentPath,
       })
     } else if (segment.match(/^[a-zA-Z0-9-]+$/)) {
@@ -395,7 +395,7 @@ export const buildBreadcrumbs = (
       const dynamicRoute = findDynamicRoute(`${parentPath}/:param`, routes)
       if (dynamicRoute) {
         breadcrumbs.push({
-          label: dynamicRoute.breadcrumb || segment,
+          label: dynamicRoute.breadcrumb ?? segment,
           path: currentPath,
         })
       }
@@ -462,14 +462,14 @@ export const getRouteMeta = (
     ...UtilityRoutes,
   ]
 
-  const route = findRouteByPath(pathname, allRoutes) || findDynamicRoute(pathname, allRoutes)
+  const route = findRouteByPath(pathname, allRoutes) ?? findDynamicRoute(pathname, allRoutes)
 
   if (!route) {
     return { isPublic: false }
   }
 
   return {
-    isPublic: route.isPublic || false,
+    isPublic: route.isPublic ?? false,
     requiredPermissions: route.permissions,
     requiredRoles: route.roles,
   }

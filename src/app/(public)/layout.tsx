@@ -10,7 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isHomePage = pathname === '/'
 
   return (
-    <div className='bg-surface min-h-screen'>
+    <div className='min-h-screen'>
       <main className='w-full'>
         <Header.Public isHomePage={isHomePage} />
 

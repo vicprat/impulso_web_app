@@ -455,7 +455,7 @@ const ManualIncomeFormComponent: React.FC<Omit<IncomeFormProps, 'pendingIncomes'
               )}
             />
 
-            {isEditMode && income && (
+            {isEditMode && (
               <div className='bg-muted/50 rounded-lg border p-4'>
                 <h4 className='mb-3 flex items-center gap-2 font-medium'>
                   Información Original

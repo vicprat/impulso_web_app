@@ -232,7 +232,8 @@ export function ProductForm({
     )
   }
 
-  const handleUploadComplete = (resourceUrl: string) => {
+  const handleUploadComplete = (resourceUrl: string | null) => {
+    if (!resourceUrl) return
     const newImage: NewImage = {
       mediaContentType: 'IMAGE',
       originalSource: resourceUrl,
@@ -632,7 +633,7 @@ export function ProductForm({
                 <Label className='mb-3 block text-sm font-medium'>
                   {isEditing ? 'Agregar Nuevas Imágenes' : 'Imágenes de la Obra'}
                 </Label>
-                <ImageUploader onUploadComplete={handleUploadComplete} />
+                <ImageUploader onChange={handleUploadComplete} />
 
                 {!isEditing && newImages.length === 0 && (
                   <p className='mt-2 text-sm text-muted-foreground'>

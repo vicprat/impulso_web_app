@@ -1,19 +1,19 @@
 'use client'
 
 import {
-  Filter as FilterIcon,
-  ChevronDown,
-  X,
-  Search,
-  Palette,
-  User,
-  Tag,
-  Grid3X3,
-  DollarSign,
-  Package,
-  Square,
-  MapPin,
   CalendarDays,
+  ChevronDown,
+  DollarSign,
+  Filter as FilterIcon,
+  Grid3X3,
+  MapPin,
+  Package,
+  Palette,
+  Search,
+  Square,
+  Tag,
+  User,
+  X,
 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
@@ -24,9 +24,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,7 +34,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useCollections, useFilterOptions } from '@/modules/shopify/hooks'
 
-// El estado del filtro se mantiene, los tags inteligentes se consolidarán en `tags`.
 interface State {
   collections: string[]
   productTypes: string[]
@@ -159,54 +158,57 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
   }
 
   const collectionOptions = useMemo(
-    () => collectionsData?.collections.map((c) => ({ label: c.title, value: c.handle })) || [],
+    () =>
+      collectionsData?.collections.map((c: { title: string; handle: string }) => ({
+        label: c.title,
+        value: c.handle,
+      })) ?? [],
     [collectionsData]
   )
 
   const artistOptions = useMemo(
-    () => filterOptions?.artists.map((v) => ({ label: v.label, value: v.input })) || [],
+    () => filterOptions?.artists.map((v) => ({ label: v.label, value: v.input })) ?? [],
     [filterOptions]
   )
 
   const productTypeOptions = useMemo(
-    () => filterOptions?.productTypes.map((pt) => ({ label: pt.label, value: pt.input })) || [],
+    () => filterOptions?.productTypes.map((pt) => ({ label: pt.label, value: pt.input })) ?? [],
     [filterOptions]
   )
 
-  // --> CORREGIDO: Se mapea la propiedad `input` a `value` para que coincida con el tipo esperado por FilterSection.
   const techniqueOptions = useMemo(
     () =>
       filterOptions?.techniques
         .map((o) => ({ label: o.label, value: o.input }))
-        .sort((a, b) => a.label.localeCompare(b.label)) || [],
+        .sort((a, b) => a.label.localeCompare(b.label)) ?? [],
     [filterOptions]
   )
   const formatOptions = useMemo(
     () =>
       filterOptions?.formats
         .map((o) => ({ label: o.label, value: o.input }))
-        .sort((a, b) => a.label.localeCompare(b.label)) || [],
+        .sort((a, b) => a.label.localeCompare(b.label)) ?? [],
     [filterOptions]
   )
   const locationOptions = useMemo(
     () =>
       filterOptions?.locations
         .map((o) => ({ label: o.label, value: o.input }))
-        .sort((a, b) => a.label.localeCompare(b.label)) || [],
+        .sort((a, b) => a.label.localeCompare(b.label)) ?? [],
     [filterOptions]
   )
   const yearOptions = useMemo(
     () =>
       filterOptions?.years
         .map((o) => ({ label: o.label, value: o.input }))
-        .sort((a, b) => b.label.localeCompare(a.label)) || [],
+        .sort((a, b) => b.label.localeCompare(a.label)) ?? [],
     [filterOptions]
   )
   const otherTagOptions = useMemo(
     () =>
       filterOptions?.otherTags
         .map((o) => ({ label: o.label, value: o.input }))
-        .sort((a, b) => a.label.localeCompare(b.label)) || [],
+        .sort((a, b) => a.label.localeCompare(b.label)) ?? [],
     [filterOptions]
   )
 
@@ -245,13 +247,13 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
   }
 
   useEffect(() => {
-    const collections = searchParams.get('collections')?.split(',').filter(Boolean) || []
-    const productTypes = searchParams.get('product_types')?.split(',').filter(Boolean) || []
-    const vendors = searchParams.get('vendor')?.split(',').filter(Boolean) || []
-    const tags = searchParams.get('tags')?.split(',').filter(Boolean) || []
-    const priceMin = searchParams.get('price_min') || ''
-    const priceMax = searchParams.get('price_max') || ''
-    const availability = (searchParams.get('availability') as State['availability']) || 'all'
+    const collections = searchParams.get('collections')?.split(',').filter(Boolean) ?? []
+    const productTypes = searchParams.get('product_types')?.split(',').filter(Boolean) ?? []
+    const vendors = searchParams.get('vendor')?.split(',').filter(Boolean) ?? []
+    const tags = searchParams.get('tags')?.split(',').filter(Boolean) ?? []
+    const priceMin = searchParams.get('price_min') ?? ''
+    const priceMax = searchParams.get('price_max') ?? ''
+    const availability = searchParams.get('availability') as State['availability']
 
     setFilters({
       availability,
@@ -289,7 +291,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       <Card className='border shadow-sm'>
         <div
           onClick={() => toggleSection(sectionKey)}
-          className='hover flex w-full cursor-pointer items-center justify-between p-4 transition-colors'
+          className='flex w-full cursor-pointer items-center justify-between p-4 transition-colors'
         >
           <div className='flex items-center space-x-3'>
             <div className='rounded-lg bg-blue-100 p-2'>
@@ -441,7 +443,6 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                 showSearch={productTypeOptions.length > 5}
               />
 
-              {/* Secciones de Tags Inteligentes - todas escriben en `filters.tags` */}
               <FilterSection
                 title='Técnicas'
                 icon={Palette}
@@ -491,7 +492,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
               <Card className='border shadow-sm'>
                 <div
                   onClick={() => toggleSection('price')}
-                  className='hover flex w-full cursor-pointer items-center justify-between p-4 transition-colors'
+                  className='flex w-full cursor-pointer items-center justify-between p-4 transition-colors'
                 >
                   <div className='flex items-center space-x-3'>
                     <div className='rounded-lg bg-green-100 p-2'>

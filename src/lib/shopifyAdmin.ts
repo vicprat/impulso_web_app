@@ -12,7 +12,7 @@ export const makeAdminApiRequest = async <T = unknown>(
 ): Promise<T> => {
   try {
     const { data, errors } = await adminClient.request<T>(query, {
-      variables: variables || {},
+      variables: variables ?? {},
     })
 
     if (errors) {

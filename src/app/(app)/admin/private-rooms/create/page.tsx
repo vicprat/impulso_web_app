@@ -16,14 +16,14 @@ export default function CreatePrivateRoomPage() {
     setIsLoading(true)
     try {
       await privateRoomsApi.createPrivateRoom({
-        description: data.description,
+        description: data.description ?? undefined,
         name: data.name,
-        productIds: data.products.map((p) => p.productId),
+        productIds: data.products.map((p) => p.id),
         userId: data.userId,
       })
 
       toast.success('Private room created successfully!')
-      router.push('/admin/private-rooms') // Redirigir a la lista
+      router.push('/admin/private-rooms')
     } catch (error) {
       console.error('Error creating private room:', error)
       toast.error('Failed to create private room.')

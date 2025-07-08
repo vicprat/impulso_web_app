@@ -6,7 +6,7 @@ import Link from 'next/link'
 
 import { useCollections } from '@/modules/shopify/hooks'
 
-export default function CollectionsPage() {
+export default function Page() {
   const {
     data: collectionsData,
     error,
@@ -52,7 +52,7 @@ export default function CollectionsPage() {
                   <div className='aspect-video overflow-hidden'>
                     <img
                       src={collection.image.url}
-                      alt={collection.image.altText || collection.title}
+                      alt={collection.image.altText ?? collection.title}
                       className='size-full object-cover transition-transform group-hover:scale-105'
                     />
                   </div>

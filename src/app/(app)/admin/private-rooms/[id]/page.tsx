@@ -3,7 +3,7 @@
 import { ArrowLeft, Edit3, Eye, Trash2, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect, use } from 'react'
+import { use, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Form } from '@/components/Forms'
@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { privateRoomsApi } from '@/modules/rooms/api'
-import { useProductsByIds } from '@/modules/shopify/hooks' // ✅ Importar el hook
+import { useProductsByIds } from '@/modules/shopify/hooks'
 
 interface PrivateRoomPageProps {
   params: Promise<{ id: string }>
@@ -23,18 +23,17 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Estado para el modo actual - viene de query param o default 'view'
   const [currentMode, setCurrentMode] = useState<PrivateRoomMode>(
-    (searchParams.get('mode') as PrivateRoomMode) || 'view'
+    searchParams.get('mode') as PrivateRoomMode
   )
 
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingRoom, setIsLoadingRoom] = useState(true)
-  const [roomData, setRoomData] = useState<any>(null) // Datos raw del API
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [roomData, setRoomData] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // ✅ CORRECCIÓN: Usar el hook para cargar productos
-  const productIds = roomData?.products?.map((p: any) => p.productId) || []
+  const productIds = roomData?.products?.map((p: { productId: string }) => p.productId) ?? []
   const {
     data: productsData,
     error: productsError,
@@ -43,16 +42,15 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
     enabled: productIds.length > 0,
   })
 
-  const products = productsData?.products || []
+  const products = productsData?.products ?? []
 
-  // Cargar datos del private room
   useEffect(() => {
-    loadRoomData()
+    void loadRoomData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  // Actualizar el modo cuando cambia el query param
   useEffect(() => {
-    const mode = (searchParams.get('mode') as PrivateRoomMode) || 'view'
+    const mode = searchParams.get('mode') as PrivateRoomMode
     setCurrentMode(mode)
   }, [searchParams])
 
@@ -80,17 +78,15 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
     setIsLoading(true)
     try {
       await privateRoomsApi.updatePrivateRoom(id, {
-        description: data.description,
+        description: data.description ?? undefined,
         name: data.name,
-        productIds: data.products.map((p) => p.productId),
+        productIds: data.products.map((p) => p.id),
         userId: data.userId,
       })
 
       toast.success('Private room updated successfully!')
       setCurrentMode('view')
-      // Actualizar URL sin recargar
       router.replace(`/admin/private-rooms/${id}?mode=view`)
-      // Recargar datos
       await loadRoomData()
     } catch (error) {
       console.error('Error updating private room:', error)
@@ -133,10 +129,8 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
     router.replace(`/admin/private-rooms/${id}?mode=view`)
   }
 
-  // ✅ Loading combinado - esperar tanto room como productos
   const isLoadingAll = isLoadingRoom || (productIds.length > 0 && isLoadingProducts)
 
-  // Loading state
   if (isLoadingAll) {
     return (
       <div className='container mx-auto max-w-4xl p-6'>
@@ -154,8 +148,6 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
       </div>
     )
   }
-
-  // Error state
   if (error || !roomData || productsError) {
     return (
       <div className='container mx-auto max-w-4xl p-6'>
@@ -169,7 +161,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
 
           <Alert variant='destructive'>
             <AlertDescription>
-              {error || productsError?.message || 'Private room not found'}
+              {error ?? productsError?.message ?? 'Private room not found'}
             </AlertDescription>
           </Alert>
         </div>
@@ -177,18 +169,15 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
     )
   }
 
-  // ✅ CORRECCIÓN: Preparar datos correctos para el formulario
   const initialData: PrivateRoomData = {
     description: roomData.description,
     id: roomData.id,
     name: roomData.name,
-    // ✅ Pasar los productos completos de Shopify, no solo los IDs
     products: products.length > 0 ? products : [],
 
-    userId: roomData.userId, // Usar directamente los productos del hook
+    userId: roomData.userId,
   }
 
-  // Configuración de la UI según el modo
   const getModeConfig = () => {
     switch (currentMode) {
       case 'view':
@@ -227,9 +216,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
   return (
     <div className='container mx-auto max-w-4xl p-6'>
       <div className='space-y-6'>
-        {/* Header con navegación y acciones */}
         <div className='space-y-4'>
-          {/* Breadcrumb */}
           <Button variant='ghost' asChild>
             <Link href='/admin/private-rooms'>
               <ArrowLeft className='mr-2 size-4' />
@@ -252,7 +239,6 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
               </div>
             )}
 
-            {/* Cancel button para edit mode */}
             {currentMode === 'edit' && (
               <div className='flex gap-2'>
                 <Button onClick={cancelEdit} variant='outline'>
@@ -262,7 +248,6 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
               </div>
             )}
 
-            {/* Cancel button para delete mode */}
             {currentMode === 'delete' && (
               <div className='flex gap-2'>
                 <Button onClick={() => changeMode('view')} variant='outline'>

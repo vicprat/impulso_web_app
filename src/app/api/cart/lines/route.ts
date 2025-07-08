@@ -5,8 +5,8 @@ import { makeStorefrontRequest } from '@/lib/shopify'
 import { getServerSession } from '@/modules/auth/server/server'
 import {
   ADD_TO_CART_MUTATION,
-  UPDATE_CART_LINES_MUTATION,
   REMOVE_FROM_CART_MUTATION,
+  UPDATE_CART_LINES_MUTATION,
 } from '@/modules/cart/queries'
 import { getOrCreateCartForUser } from '@/modules/cart/server'
 import { type CartLineInput, type CartLineUpdateInput } from '@/modules/cart/types'
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     const lines = (await request.json()) as CartLineInput[]
 
-    if (!lines || !Array.isArray(lines) || lines.length === 0) {
+    if (!Array.isArray(lines) || lines.length === 0) {
       return NextResponse.json({ error: 'Cart lines are required' }, { status: 400 })
     }
 
@@ -37,8 +37,6 @@ export async function POST(request: Request) {
     }
 
     const cart = await getOrCreateCartForUser(session.user.id, session.user.email)
-
-    console.log('Adding to cart:', { cartId: cart.id, lines })
 
     const data = await makeStorefrontRequest(ADD_TO_CART_MUTATION, {
       cartId: cart.id,
@@ -73,7 +71,7 @@ export async function PUT(request: Request) {
 
     const lines = (await request.json()) as CartLineUpdateInput[]
 
-    if (!lines || !Array.isArray(lines) || lines.length === 0) {
+    if (!Array.isArray(lines) || lines.length === 0) {
       return NextResponse.json({ error: 'Cart lines are required' }, { status: 400 })
     }
 
@@ -90,8 +88,6 @@ export async function PUT(request: Request) {
     }
 
     const cart = await getOrCreateCartForUser(session.user.id, session.user.email)
-
-    console.log('Updating cart lines:', { cartId: cart.id, lines })
 
     const data = await makeStorefrontRequest(UPDATE_CART_LINES_MUTATION, {
       cartId: cart.id,
@@ -130,8 +126,6 @@ export async function DELETE(request: Request) {
     }
 
     const cart = await getOrCreateCartForUser(session.user.id, session.user.email)
-
-    console.log('Removing from cart:', { cartId: cart.id, lineIds })
 
     const data = await makeStorefrontRequest(REMOVE_FROM_CART_MUTATION, {
       cartId: cart.id,

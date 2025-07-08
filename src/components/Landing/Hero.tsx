@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
-import { ArrowDown, Maximize2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
+import { ArrowDown, Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -9,26 +10,26 @@ import { FloatingParticles } from '@/components/Animations'
 import { Button } from '@/components/ui/button'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
 
-type YTPlayerEvent = {
+interface YTPlayerEvent {
   target: any
   data?: number
 }
 
-type YTReadyEvent = {
+interface YTReadyEvent {
   target: any
 }
 
-type Props = {
+interface Props {
   videoId?: string
   className?: string
 }
 
 const generateParticlePositions = (count: number) => {
   return Array.from({ length: count }, () => ({
-    left: Math.random() * 100,
-    top: Math.random() * 100,
     delay: Math.random() * 2,
     duration: 3 + Math.random() * 2,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
   }))
 }
 
@@ -180,7 +181,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
     }
 
     return () => {
-      if (interval) clearInterval(interval)
+      clearInterval(interval)
     }
   }, [isPlaying])
 
@@ -386,7 +387,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
           >
             <Link href='/store'>
               <Button
-                className={`group relative bg-primary text-base text-primary-foreground hover:bg-primary/90 sm:text-lg ${
+                className={`hover:bg-primary/90 group relative bg-primary text-base text-primary-foreground sm:text-lg ${
                   isTabletOrMobile ? 'px-8 py-5' : 'px-6 py-4 sm:px-8 sm:py-5 md:px-10 md:py-6'
                 } overflow-hidden rounded-full bg-white font-bold text-black transition-all duration-500`}
               >
@@ -434,7 +435,6 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
         {[
           { icon: isPlaying ? Pause : Play, ml: !isPlaying, onClick: handlePlayPause },
           { icon: isMuted ? VolumeX : Volume2, onClick: handleMuteToggle },
-          { icon: Maximize2, onClick: () => {} },
         ].map((control, index) => (
           <Button
             key={index}

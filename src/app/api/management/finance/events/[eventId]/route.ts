@@ -5,11 +5,7 @@ import { requirePermission } from '@/src/modules/auth/server/server'
 
 export async function GET(request: Request, { params }: { params: { eventId: string } }) {
   try {
-    const session = await requirePermission('manage_events')
-    console.log(
-      'User with manage_events permission accessed finance event detail API:',
-      session.user.email
-    )
+    await requirePermission('manage_events')
 
     const { eventId } = await params
 

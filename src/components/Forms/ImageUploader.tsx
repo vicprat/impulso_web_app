@@ -10,6 +10,7 @@ interface ImageUploaderProps {
   value?: string | null // Current image URL
   onChange: (resourceUrl: string | null) => void // Callback for when the URL changes
   hidePreview?: boolean // New prop to hide the internal preview
+  onUploadComplete?: (resourceUrl: string) => void // Callback for when upload completes
 }
 
 interface UploadedImage {
@@ -21,7 +22,12 @@ interface UploadedImage {
   status: 'uploading' | 'completed' | 'error'
 }
 
-export const ImageUploader: React.FC<ImageUploaderProps> = ({ hidePreview, onChange, value }) => {
+export const ImageUploader: React.FC<ImageUploaderProps> = ({
+  hidePreview,
+  onChange,
+  onUploadComplete,
+  value,
+}) => {
   const inputId = useId()
   const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -95,6 +101,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ hidePreview, onCha
       )
 
       onChange(data.resourceUrl) // Notify parent of the new URL
+      onUploadComplete?.(data.resourceUrl) // Notify parent that the upload is complete
       toast.success(`Imagen "${file.name}" subida exitosamente`)
     } catch (error) {
       setUploadedImage((prev) => (prev ? { ...prev, status: 'error' as const } : null))

@@ -16,7 +16,7 @@ export const Role: React.FC<Props> = ({ children, fallback, role }) => {
   }
 
   if (!hasRole(role)) {
-    return fallback || null
+    return fallback ?? null
   }
 
   return <>{children}</>

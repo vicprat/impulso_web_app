@@ -3,27 +3,27 @@ import { storeClient } from '@/lib/shopify'
 
 import { transformCollectionData, transformProductData } from './helpers'
 import {
-  SHOP_INFO_QUERY,
   COLLECTIONS_QUERY,
   COLLECTION_BY_HANDLE_QUERY,
-  PRODUCTS_QUERY,
-  PRODUCT_BY_HANDLE_QUERY,
   HOMEPAGE_QUERY,
   PRODUCTS_BY_IDS_QUERY,
+  PRODUCTS_QUERY,
+  PRODUCT_BY_HANDLE_QUERY,
+  SHOP_INFO_QUERY,
 } from './queries'
 import {
-  type ProductSearchParams,
-  type CollectionSearchParams,
-  type ShopInfoResponse,
-  type ProductResponse,
-  type ProductsResponse,
+  type Collection,
   type CollectionResponse,
+  type CollectionSearchParams,
   type CollectionsResponse,
   type Edge,
-  type RawProduct,
-  type RawCollection,
-  type Collection,
   type Product,
+  type ProductResponse,
+  type ProductSearchParams,
+  type ProductsResponse,
+  type RawCollection,
+  type RawProduct,
+  type ShopInfoResponse,
 } from './types'
 export const api = {
   getCollectionByHandle: async (
@@ -226,7 +226,7 @@ export const api = {
       }
 
       const products = data.nodes
-        .filter((node: RawProduct) => node && node.id)
+        .filter((node: RawProduct) => node.id)
         .map((rawProduct: RawProduct) => {
           return transformProductData(rawProduct)
         })

@@ -1,3 +1,7 @@
+import { handleGraphQLErrors } from '@/src/lib/graphql'
+import { makeStorefrontRequest } from '@/src/lib/shopify'
+
+import { APPLY_DISCOUNT_CODE_MUTATION } from './queries'
 import { type Cart, type CartLineInput, type CartLineUpdateInput } from './types'
 
 export const api = {
@@ -10,16 +14,12 @@ export const api = {
     })
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(errorData.details || 'Failed to add to cart')
+      throw new Error(errorData.details ?? 'Failed to add to cart')
     }
     return response.json()
   },
 
   applyDiscountCode: async (cartId: string, discountCodes: string[]): Promise<Cart> => {
-    const { makeStorefrontRequest } = await import('@/lib/shopify')
-    const { APPLY_DISCOUNT_CODE_MUTATION } = await import('./queries')
-    const { handleGraphQLErrors } = await import('@/lib/graphql')
-
     const data = await makeStorefrontRequest(APPLY_DISCOUNT_CODE_MUTATION, {
       cartId,
       discountCodes,
@@ -32,7 +32,7 @@ export const api = {
     try {
       const response = await fetch('/api/cart', { credentials: 'include' })
       if (!response.ok) {
-        if (response.status === 401) return null // No autenticado
+        if (response.status === 401) return null
         throw new Error('Failed to fetch cart')
       }
       return await response.json()
@@ -51,7 +51,7 @@ export const api = {
     })
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(errorData.details || 'Failed to remove from cart')
+      throw new Error(errorData.details ?? 'Failed to remove from cart')
     }
     return response.json()
   },
@@ -65,7 +65,7 @@ export const api = {
     })
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(errorData.details || 'Failed to update cart lines')
+      throw new Error(errorData.details ?? 'Failed to update cart lines')
     }
     return response.json()
   },

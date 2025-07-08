@@ -42,7 +42,7 @@ export const Data = <TData extends { id: string | number }>({
         ))}
       </TableHeader>
       <TableBody>
-        {table.getRowModel().rows?.length ? (
+        {table.getRowModel().rows.length ? (
           table.getRowModel().rows.map((row) => (
             <TableRow
               key={row.id}

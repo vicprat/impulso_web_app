@@ -5,11 +5,7 @@ import { requirePermission } from '@/src/modules/auth/server/server'
 
 export async function PUT(request: Request, { params }: { params: { incomeId: string } }) {
   try {
-    const session = await requirePermission('manage_events')
-    console.log(
-      'User with manage_events permission accessed income revert API:',
-      session.user.email
-    )
+    await requirePermission('manage_events')
 
     const { incomeId } = params
 
@@ -21,16 +17,9 @@ export async function PUT(request: Request, { params }: { params: { incomeId: st
       where: {
         id: incomeId,
         status: 'COMPLETED',
-        type: 'INCOME', // Ensure it's a completed income entry
+        type: 'INCOME',
       },
     })
-
-    if (!revertedEntry) {
-      return NextResponse.json(
-        { message: 'Financial entry not found or not eligible for reversion' },
-        { status: 404 }
-      )
-    }
 
     return NextResponse.json(revertedEntry)
   } catch (error) {

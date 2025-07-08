@@ -7,8 +7,7 @@ import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useRoutes } from '@/hooks/useRoutes'
 import { cn } from '@/lib/utils'
-
-import { useCart } from '@/modules/customer/hooks/cart'
+import { useCart } from '@/src/modules/cart/hook'
 
 export const StoreNav = () => {
   const pathname = usePathname()
@@ -30,7 +29,6 @@ export const StoreNav = () => {
         </Link>
       ))}
 
-      {/* Carrito con badge dinámico */}
       <Link href='/store/cart'>
         <Button variant='ghost' size='icon' className='relative'>
           <ShoppingCart className='size-5' />

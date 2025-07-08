@@ -5,10 +5,9 @@
 import Autoplay from 'embla-carousel-autoplay'
 import useEmblaCarousel from 'embla-carousel-react'
 import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
-import { unstable_ViewTransition as ViewTransition } from 'react'
+import { useCallback, useEffect, useState, unstable_ViewTransition as ViewTransition } from 'react'
 
-import { Card } from '@/components/Card.tsx'
+import { Card } from '@/components/Card'
 import { AddToCartButton } from '@/components/Cart/AddToCartButton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -69,7 +68,7 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
   const transitionName = `product-image-${product.id}`
 
   useEffect(() => {
-    if (product.variants && product.variants.length > 0 && !state.variant) {
+    if (product.variants.length > 0 && !state.variant) {
       setState((previous) => ({ ...previous, variant: product.variants[0] }))
     }
   }, [product.variants, state.variant])
@@ -126,6 +125,7 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.lightboxOpen])
 
   return (
@@ -164,7 +164,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
               </div>
             </div>
 
-            {/* Availability Status */}
             <div className='mt-6'>
               <Badge
                 variant={product.availableForSale ? 'default' : 'destructive'}
@@ -175,25 +174,22 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
             </div>
           </div>
 
-          {/* Image Gallery */}
           <div className='mt-8 lg:col-span-7 lg:col-start-1 lg:row-span-3 lg:row-start-1 lg:mt-0'>
             <h2 className='sr-only'>Imágenes del producto</h2>
 
             {product.images.length > 0 ? (
               <div className='space-y-4'>
-                {/* Main Image */}
                 <div className='group relative aspect-square cursor-pointer overflow-hidden rounded-2xl bg-muted shadow-lg'>
                   <ViewTransition name={transitionName}>
                     <img
                       src={product.images[state.image]?.url}
-                      alt={product.images[state.image]?.altText || product.title}
+                      alt={product.images[state.image]?.altText ?? product.title}
                       className='size-full object-cover transition-transform duration-500 hover:scale-105'
                       style={{ viewTransitionName: transitionName }}
                       onClick={() => openLightbox(state.image)}
                     />
                   </ViewTransition>
 
-                  {/* Overlay con ícono de zoom */}
                   <div
                     className='absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100'
                     onClick={() => openLightbox(state.image)}
@@ -204,7 +200,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                   </div>
                 </div>
 
-                {/* Thumbnail Gallery */}
                 {product.images.length > 1 && (
                   <div className='grid grid-cols-4 gap-2 sm:gap-3 lg:grid-cols-6'>
                     {product.images.map((image, index) => (
@@ -225,7 +220,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                           />
                         </button>
 
-                        {/* Botón para abrir lightbox en thumbnail */}
                         <button
                           onClick={() => openLightbox(index)}
                           className='absolute inset-0 flex items-center justify-center rounded-lg bg-black/20 opacity-0 transition-opacity duration-200 group-hover:opacity-100'
@@ -244,16 +238,15 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
             )}
           </div>
 
-          {/* Product Options and Add to Cart */}
           <div className='mt-8 space-y-8 lg:col-span-5'>
             <form className='space-y-6'>
-              {/* Variant Options */}
-              {product.variants && product.variants.length > 1 && (
+              {product.variants.length > 1 && (
                 <div className='space-y-4'>
                   {(() => {
                     const optionGroups = product.variants.reduce(
-                      (acc, variant) => {
+                      (acc: Record<string, Set<string>>, variant) => {
                         variant.selectedOptions.forEach((option) => {
+                          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                           if (!acc[option.name]) {
                             acc[option.name] = new Set()
                           }
@@ -314,11 +307,10 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                 </div>
               )}
 
-              {/* Add to Cart Button */}
               <div className='pt-4'>
                 <AddToCartButton
                   product={product}
-                  selectedVariant={state.variant || undefined}
+                  selectedVariant={state.variant ?? undefined}
                   size='lg'
                   className='w-full'
                   showQuantitySelector={true}
@@ -326,20 +318,18 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
               </div>
             </form>
 
-            {/* Product Description */}
             {product.description && (
               <div className='border-t border-border pt-8'>
                 <h3 className='mb-4 text-lg font-semibold text-foreground'>Descripción</h3>
                 <div
                   className='prose prose-sm max-w-none text-muted-foreground prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground'
                   dangerouslySetInnerHTML={{
-                    __html: product.descriptionHtml || product.description,
+                    __html: product.description,
                   }}
                 />
               </div>
             )}
 
-            {/* Product Details */}
             <div className='border-t border-border pt-8'>
               <h3 className='mb-4 text-lg font-semibold text-foreground'>Detalles del producto</h3>
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
@@ -350,7 +340,7 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                   </div>
                   <div className='flex justify-between text-sm'>
                     <span className='font-medium text-muted-foreground'>SKU:</span>
-                    <span className='font-mono text-foreground'>{state.variant?.sku || 'N/A'}</span>
+                    <span className='font-mono text-foreground'>{state.variant?.sku ?? 'N/A'}</span>
                   </div>
                 </div>
                 <div className='space-y-3'>
@@ -372,7 +362,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
           </div>
         </div>
 
-        {/* Related Products Section */}
         {relatedProducts.length > 0 && (
           <div className='mt-16 lg:mt-24'>
             <div className='mb-8 flex items-center justify-between'>
@@ -396,13 +385,12 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
               <div className='flex gap-4 md:gap-6'>
                 {relatedProducts.map((relatedProduct) => (
                   <div key={relatedProduct.id} className='w-64 flex-none sm:w-72 md:w-80'>
-                    <Card.Product product={relatedProduct} showAddToCart={true} />
+                    <Card.Product product={relatedProduct} />
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Mobile carousel controls */}
             <div className='mt-6 flex justify-center gap-2 sm:hidden'>
               <Button variant='outline' size='sm' onClick={scrollPrev}>
                 <ChevronLeft className='mr-1 size-4' />
@@ -417,20 +405,17 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
         )}
       </div>
 
-      {/* Lightbox Modal */}
       <Dialog open={state.lightboxOpen} onOpenChange={closeLightbox}>
         <DialogContent className='h-[calc(100vh-4rem)] max-h-screen w-full max-w-screen-xl border-none bg-black/95 p-0'>
           <div className='relative flex size-full items-center justify-center'>
-            {/* Imagen principal */}
             <div className='relative flex size-full items-center justify-center p-4'>
               <img
                 src={product.images[state.lightboxImage]?.url}
-                alt={product.images[state.lightboxImage]?.altText || product.title}
+                alt={product.images[state.lightboxImage]?.altText ?? product.title}
                 className='max-h-full max-w-full rounded-lg object-cover shadow-lg'
               />
             </div>
 
-            {/* Controles de navegación */}
             {product.images.length > 1 && (
               <>
                 <Button
@@ -452,15 +437,12 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                 </Button>
               </>
             )}
-
-            {/* Indicador de imagen actual */}
             {product.images.length > 1 && (
               <div className='absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-4 py-2 text-sm font-medium text-white'>
                 {state.lightboxImage + 1} / {product.images.length}
               </div>
             )}
 
-            {/* Thumbnails de navegación */}
             {product.images.length > 1 && (
               <div className='absolute bottom-16 left-1/2 flex max-w-4xl -translate-x-1/2 gap-2 overflow-x-auto px-4'>
                 {product.images.map((image, index) => (

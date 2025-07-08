@@ -2,7 +2,7 @@
 
 import { Menu, X } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import { MiniCart } from '@/components/Cart/MiniCart'
 import { Logo } from '@/components/Logo'
@@ -91,7 +91,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
   return (
     <>
       <header
-        className={`${isHomePage ? 'fixed' : 'sticky'} top-0 z-50 w-full border-b bg-background/95 backdrop-blur transition-transform duration-300 ease-in-out supports-[backdrop-filter]:bg-background/60 ${
+        className={`${isHomePage ? 'fixed' : 'sticky'} bg-background/95 supports-[backdrop-filter]:bg-background/60 top-0 z-50 w-full border-b backdrop-blur transition-transform duration-300 ease-in-out ${
           shouldShowHeader ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
@@ -150,13 +150,13 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
           isMobileMenuOpen ? 'visible opacity-100' : 'invisible opacity-0'
         }`}
       >
-        <div className='bg-background/98 absolute inset-0 backdrop-blur-xl'>
-          <div className='absolute inset-0 bg-gradient-to-br from-background via-accent/10 to-background'></div>
-          <div className='absolute inset-0 bg-gradient-to-tl from-primary/5 via-transparent to-secondary/5'></div>
+        <div className='absolute inset-0 bg-background backdrop-blur-xl'>
+          <div className=' absolute inset-0 bg-gradient-to-br from-background to-background'></div>
+          <div className='  absolute inset-0 bg-gradient-to-tl via-transparent'></div>
 
           {/* Esferas animadas - ajustadas para desktop */}
           <div
-            className='absolute size-64 rounded-full bg-gradient-to-br from-primary/20 to-secondary/10 opacity-40 blur-3xl md:size-80 lg:size-96 xl:size-[28rem]'
+            className=' absolute size-64 rounded-full bg-gradient-to-br opacity-40 blur-3xl md:size-80 lg:size-96 xl:size-[28rem]'
             style={{
               left: `${sphere1Pos.x}%`,
               top: `${sphere1Pos.y}%`,
@@ -166,7 +166,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
           ></div>
 
           <div
-            className='absolute size-48 rounded-full bg-gradient-to-bl from-accent/30 to-muted/20 opacity-30 blur-2xl md:size-60 lg:size-72 xl:size-80'
+            className=' absolute size-48 rounded-full bg-gradient-to-bl opacity-30 blur-2xl md:size-60 lg:size-72 xl:size-80'
             style={{
               left: `${sphere2Pos.x}%`,
               top: `${sphere2Pos.y}%`,
@@ -176,7 +176,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
           ></div>
 
           <div
-            className='absolute size-32 rounded-full bg-gradient-to-tr from-muted-foreground/10 to-primary/15 opacity-50 blur-xl md:size-40 lg:size-48 xl:size-56'
+            className=' absolute size-32 rounded-full bg-gradient-to-tr opacity-50 blur-xl md:size-40 lg:size-48 xl:size-56'
             style={{
               left: `${sphere3Pos.x}%`,
               top: `${sphere3Pos.y}%`,
@@ -230,7 +230,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
               <UserMenu />
             </div>
 
-            <div className='mt-8 border-t border-border/50 pt-8'>
+            <div className='border-border/50 mt-8 border-t pt-8'>
               <p className='text-sm text-muted-foreground lg:text-base'>
                 © {new Date().getFullYear()} Impulso Galería
               </p>

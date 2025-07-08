@@ -223,16 +223,15 @@ export function useCartActions() {
   }
 }
 
-// Hook simplificado para obtener el estado del cart
 export function useCartStatus() {
   const { cart, isAuthenticated, isLoading } = useAuth()
 
   return {
-    hasItems: (cart?.totalQuantity || 0) > 0,
+    hasItems: (cart?.totalQuantity ?? 0) > 0,
     isAuthenticated,
     isEmpty: cart?.totalQuantity === 0 || !cart,
     isLoading,
-    itemCount: cart?.totalQuantity || 0,
+    itemCount: cart?.totalQuantity ?? 0,
     total: cart?.cost.totalAmount,
   }
 }

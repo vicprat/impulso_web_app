@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { prisma } from '@/lib/prisma'
 
 import { api } from './api'
-import { type ProductsResponse, type ProductSearchParams, type Product } from './types'
+import { type Product, type ProductSearchParams, type ProductsResponse } from './types'
 
 export const privateRoomsServerApi = {
   getPrivateProductIds: async (): Promise<string[]> => {
@@ -13,7 +12,7 @@ export const privateRoomsServerApi = {
         },
       })
       return privateRoomProducts.map((p) => p.productId)
-    } catch (error) {
+    } catch {
       return []
     }
   },
@@ -30,7 +29,7 @@ export const privateRoomsServerApi = {
       })
 
       return privateRoom
-    } catch (error) {
+    } catch {
       return null
     }
   },
@@ -48,7 +47,7 @@ export const getPrivateProductIds = async (): Promise<string[]> => {
       const data = await response.json()
       return data
     }
-  } catch (error) {
+  } catch {
     return []
   }
 }
@@ -65,7 +64,7 @@ export const getPrivateRoomByUserId = async (userId: string) => {
       const data = await response.json()
       return data
     }
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -92,7 +91,7 @@ export const shopifyService = {
 
   getRelatedProducts: async (product: Product): Promise<Product[]> => {
     const vendorQuery = product.vendor ? `vendor:'${product.vendor}'` : ''
-    const priceRangeQuery = product.priceRange ? `priceRange:'${product.priceRange}'` : ''
+    const priceRangeQuery = `priceRange:'${product.priceRange}'`
     const combinedQuery = [vendorQuery, priceRangeQuery].filter(Boolean).join(' OR ')
 
     const [relatedData, privateProductIds] = await Promise.all([
@@ -110,7 +109,7 @@ export const shopifyService = {
     }
 
     const filtered = relatedData.data.products.filter(
-      (p) => p.id !== product.id && !privateProductIds.includes(p.id)
+      (p: Product) => p.id !== product.id && !privateProductIds.includes(p.id)
     )
 
     const shuffleArray = (array: Product[]) => {

@@ -3,20 +3,22 @@
 import { Search as SearchIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   CommandDialog,
-  CommandInput,
-  CommandList,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
+  CommandList,
   CommandSeparator,
 } from '@/components/ui/command'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useProducts } from '@/modules/shopify/hooks'
+
+import type { Product } from '@/src/modules/shopify/types'
 
 interface Props {
   open: boolean
@@ -40,7 +42,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
     }
   )
 
-  const products = data?.products || []
+  const products = data?.products ?? []
 
   const handleSelect = (handle: string) => {
     router.push(`/store/product/${handle}`)
@@ -81,10 +83,9 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
 
         {isError && <CommandEmpty>Ocurrió un error al buscar.</CommandEmpty>}
 
-        {/* Grupo de productos */}
         {products.length > 0 && !isLoading && (
           <CommandGroup heading='Obras'>
-            {products.map((product) => (
+            {products.map((product: Product) => (
               <CommandItem
                 key={product.id}
                 value={product.title}
@@ -93,7 +94,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
               >
                 <div className='relative size-10 overflow-hidden rounded-md'>
                   <Image
-                    src={product.images[0]?.url || '/placeholder.svg'}
+                    src={product.images[0]?.url ?? '/placeholder.svg'}
                     alt={product.title}
                     fill
                     sizes='40px'

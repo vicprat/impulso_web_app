@@ -26,7 +26,7 @@ export const Auth: React.FC<Props> = ({ children, fallback, requiredPermission, 
 
   if (!hasAccess) {
     return (
-      fallback || (
+      fallback ?? (
         <div className='py-12 text-center'>
           <h2 className='mb-4 text-xl font-semibold text-gray-700'>Acceso Requerido</h2>
           <p className='mb-6 text-gray-600'>
