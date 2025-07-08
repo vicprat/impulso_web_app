@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 
 import { MiniCart } from '@/components/Cart/MiniCart'
 import { Logo } from '@/components/Logo'
-import { PublicStoreRoutes } from '@/config/routes'
+import { getStoreNavRoutes } from '@/config/routes'
 
 import { SearchTrigger } from './components/SearchTrigger'
 import { ThemeSwitch } from './components/ThemeSwitch'
@@ -191,9 +191,9 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
 
           <div className='flex flex-1 flex-col justify-center p-8 md:px-16 lg:px-24 xl:px-32'>
             <nav className='space-y-1'>
-              {PublicStoreRoutes.map((route, index) => (
+              {getStoreNavRoutes().map((route, index) => (
                 <div
-                  key={route.label}
+                  key={route.path}
                   className={`transition-all duration-700 ease-out${
                     isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
                   }`}
@@ -218,7 +218,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
               isMobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
             }`}
             style={{
-              transitionDelay: `${isMobileMenuOpen ? PublicStoreRoutes.length * 100 + 400 : 0}ms`,
+              transitionDelay: `${isMobileMenuOpen ? getStoreNavRoutes().length * 100 + 400 : 0}ms`,
             }}
           >
             <div className='mb-8 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent'></div>

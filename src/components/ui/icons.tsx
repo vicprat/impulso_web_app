@@ -1,47 +1,87 @@
-// components/ui/icons.tsx
 import {
+  Activity,
+  Archive,
+  BarChart,
+  Calendar,
+  Download,
+  Edit,
+  Edit3,
+  Eye,
+  FileText,
+  Grid3X3,
+  Headphones,
   Home,
   LayoutDashboard,
-  User,
-  Package,
+  List,
+  Lock,
+  LogIn,
   MapPin,
-  ShoppingCart,
-  BarChart,
-  Star,
-  Headphones,
   MessageSquare,
-  Users,
-  Activity,
+  Package,
+  Plus,
+  Search,
   Settings,
   Shield,
-  Archive,
+  ShoppingBag,
+  ShoppingCart,
+  Star,
+  Ticket,
   TrendingUp,
-  List,
-  // ... importa todos los iconos que necesites de 'lucide-react'
+  User,
+  Users,
+  X,
 } from 'lucide-react'
 
-// Este es el objeto que importaremos en otros componentes
 export const Icons = {
   activity: Activity,
   archive: Archive,
   'bar-chart': BarChart,
+  calendar: Calendar,
+  download: Download,
+  edit: Edit,
+  'edit-3': Edit3,
+  eye: Eye,
+  'file-text': FileText,
+  grid: Grid3X3,
   headphones: Headphones,
   home: Home,
   'layout-dashboard': LayoutDashboard,
   list: List,
+  lock: Lock,
+  'log-in': LogIn,
   'map-pin': MapPin,
   'message-square': MessageSquare,
   package: Package,
+  plus: Plus,
+  search: Search,
   settings: Settings,
   shield: Shield,
+  'shopping-bag': ShoppingBag,
   'shopping-cart': ShoppingCart,
   star: Star,
+  ticket: Ticket,
   'trending-up': TrendingUp,
   user: User,
+  'user-edit': Edit,
   users: Users,
+  x: X,
 }
 
-// (Opcional pero recomendado)
-// Creamos un tipo dinámico a partir de las llaves del objeto Icons.
-// Si añades un nuevo ícono a `Icons`, se añade automáticamente a este tipo.
 export type IconName = keyof typeof Icons
+
+export interface IconProps {
+  name: IconName
+  className?: string
+  size?: number
+}
+
+export const Icon = ({ className, name, size = 24 }: IconProps) => {
+  const IconComponent = Icons[name]
+
+  if (!IconComponent) {
+    console.warn(`Icon "${name}" not found`)
+    return null
+  }
+
+  return <IconComponent className={className} size={size} />
+}

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
-import { getRouteMeta, isPublicRoute } from '@/config/routes'
+import { getRouteMeta, isPublicRoute, ROUTES } from '@/config/routes'
 
 const tokenVerificationCache = new Map<string, { valid: boolean; timestamp: number }>()
 const CACHE_DURATION = 5 * 60 * 1000
@@ -20,8 +20,8 @@ export async function middleware(request: NextRequest) {
 
   if (isPublicRoute(pathname)) {
     const accessToken = request.cookies.get('access_token')?.value
-    if (accessToken && pathname === '/auth/login') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+    if (accessToken && pathname === ROUTES.AUTH.LOGIN.path) {
+      return NextResponse.redirect(new URL(ROUTES.CUSTOMER.DASHBOARD.path, request.url))
     }
     return NextResponse.next()
   }
@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get('refresh_token')?.value
 
   if (!accessToken) {
-    const loginUrl = new URL('/auth/login', request.url)
+    const loginUrl = new URL(ROUTES.AUTH.LOGIN.path, request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
@@ -68,7 +68,7 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!isValid) {
-      const loginUrl = new URL('/auth/login', request.url)
+      const loginUrl = new URL(ROUTES.AUTH.LOGIN.path, request.url)
       loginUrl.searchParams.set('redirect', pathname)
 
       const response = NextResponse.redirect(loginUrl)
@@ -83,12 +83,12 @@ export async function middleware(request: NextRequest) {
     if (routeMeta.requiredRoles || routeMeta.requiredPermissions) {
       const hasAccess = await checkUserAccess(
         accessToken,
-        routeMeta.requiredRoles ?? [],
-        routeMeta.requiredPermissions ?? []
+        [...(routeMeta.requiredRoles ?? [])],
+        [...(routeMeta.requiredPermissions ?? [])]
       )
 
       if (!hasAccess) {
-        return NextResponse.redirect(new URL('/unauthorized', request.url))
+        return NextResponse.redirect(new URL(ROUTES.UTILITY.UNAUTHORIZED.path, request.url))
       }
     }
 
@@ -96,7 +96,7 @@ export async function middleware(request: NextRequest) {
   } catch (error) {
     console.error('Middleware error:', error)
 
-    const loginUrl = new URL('/auth/login', request.url)
+    const loginUrl = new URL(ROUTES.AUTH.LOGIN.path, request.url)
     loginUrl.searchParams.set('redirect', pathname)
 
     const response = NextResponse.redirect(loginUrl)

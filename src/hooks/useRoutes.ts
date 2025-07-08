@@ -4,17 +4,13 @@ import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
 
 import {
-  getStoreNavRoutes,
+  buildBreadcrumbs,
+  getAllRoutes,
   getDashboardNavRoutes,
   getRouteMeta,
-  buildBreadcrumbs,
+  getStoreNavRoutes,
   isPublicRoute,
   type RouteConfig,
-  CustomerRoutes,
-  VipRoutes,
-  SupportRoutes,
-  AdminRoutes,
-  PublicStoreRoutes,
 } from '@/config/routes'
 import { useAuth } from '@/modules/auth/context/useAuth'
 
@@ -34,13 +30,7 @@ export const useRoutes = () => {
   }, [pathname])
 
   const breadcrumbs = useMemo(() => {
-    const allRoutes = [
-      ...PublicStoreRoutes,
-      ...CustomerRoutes,
-      ...VipRoutes,
-      ...SupportRoutes,
-      ...AdminRoutes,
-    ]
+    const allRoutes = getAllRoutes()
     return buildBreadcrumbs(pathname, allRoutes)
   }, [pathname])
 

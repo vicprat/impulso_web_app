@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react'
 import { Logo } from '@/components/Logo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarMenu } from '@/components/ui/sidebar'
-import { getDashboardNavRoutes, type RouteConfig } from '@/config/routes'
+import { getDashboardNavRoutes, ROUTES, type RouteConfig } from '@/config/routes'
 import { useAuth } from '@/modules/auth/context/useAuth'
 
 import { MenuGroup } from './MenuGroup'
@@ -37,7 +37,7 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
 
   const handleLogout = () => {
     void logout()
-    router.push('/auth/login')
+    router.push(ROUTES.AUTH.LOGIN.path)
   }
 
   return (
@@ -53,8 +53,8 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
 
             const isActive = pathname === route.path || pathname.startsWith(`${route.path}/`)
 
-            if (route.children?.some((c) => !c.hideInNav)) {
-              return <MenuGroup key={route.path} route={route} />
+            if (route.children && Object.values(route.children).some((c) => !c.hideInNav)) {
+              return <MenuGroup key={route.path} route={route as RouteConfig} />
             }
 
             return <MenuItem key={route.path} route={route} isActive={isActive} />
@@ -65,8 +65,8 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
       <SidebarFooter className='border-t'>
         <div className='flex w-full flex-col'>
           <Link
-            href='/profile'
-            className={`flex items-center p-2 text-sm hover:bg-accent hover:text-accent-foreground ${pathname === '/profile' ? 'bg-accent text-accent-foreground' : ''}`}
+            href={ROUTES.CUSTOMER.PROFILE.path}
+            className={`flex items-center p-2 text-sm hover:bg-accent hover:text-accent-foreground ${pathname === ROUTES.CUSTOMER.PROFILE.path ? 'bg-accent text-accent-foreground' : ''}`}
           >
             <Avatar className='size-8 min-h-8 min-w-8'>
               <AvatarImage src={user?.profile?.avatarUrl ?? ''} alt={user?.firstName ?? ''} />

@@ -21,7 +21,7 @@ export const MenuGroup: React.FC<Props> = ({ route }) => {
   const pathname = usePathname()
   const IconComponent = route.icon ? Icons[route.icon as keyof typeof Icons] : null
 
-  const isGroupActive = route.children?.some((child) => pathname.startsWith(child.path))
+  const isGroupActive = route.children && Object.values(route.children).some((child) => pathname.startsWith(child.path))
 
   return (
     <Accordion type='single' collapsible defaultValue={isGroupActive ? route.path : undefined}>
@@ -36,7 +36,7 @@ export const MenuGroup: React.FC<Props> = ({ route }) => {
         </AccordionTrigger>
         <AccordionContent className='pb-0 pl-6 group-data-[collapsible=icon]:hidden'>
           <div className='space-y-1'>
-            {route.children?.map(
+            {route.children && Object.values(route.children).map(
               (child) =>
                 !child.hideInNav && (
                   <MenuItem key={child.path} route={child} isActive={pathname === child.path} />
