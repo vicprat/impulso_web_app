@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { type Product } from '@/models/Product'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData> {
@@ -493,13 +494,22 @@ export const columns: ColumnDef<Product>[] = [
               Editar
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/manage-inventory/${product.id.split('/').pop()}`}>
+              <Link
+                href={replaceRouteParams(ROUTES.INVENTORY.DETAIL.PATH, {
+                  id: product.id.split('/').pop() ?? '',
+                })}
+              >
                 <Eye className='mr-2 size-4' />
                 Ver detalles
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href={`/store/product/${product.handle}`} target='_blank'>
+              <Link
+                href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, {
+                  handle: product.handle,
+                })}
+                target='_blank'
+              >
                 <ExternalLink className='mr-2 size-4' />
                 Ver en la tienda
               </Link>

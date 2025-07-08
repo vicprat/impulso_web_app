@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Guard } from '@/components/Guards'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import { useCurrentUser } from '@/modules/user/hooks/management'
+import { ROUTES } from '@/src/config/routes'
 
 export default function IntegratedDashboard() {
   const { hasPermission, hasRole } = useAuth()
@@ -112,7 +113,7 @@ export default function IntegratedDashboard() {
             <div className='rounded-lg bg-surface-container-high p-6 shadow-sm'>
               <h3 className='mb-4 text-lg font-medium text-gray-900'>Acciones Rápidas</h3>
               <div className='space-y-3'>
-                <Link href='/profile'>
+                <Link href={ROUTES.CUSTOMER.PROFILE.PATH}>
                   <div className='flex items-center'>
                     <span className='mr-3 text-blue-600'>👤</span>
                     <span className='text-sm font-medium'>Editar Perfil</span>
@@ -121,7 +122,7 @@ export default function IntegratedDashboard() {
                 </Link>
 
                 {canManageUsers && (
-                  <Link href='/admin/users'>
+                  <Link href={ROUTES.USERS.MAIN.PATH}>
                     {' '}
                     {/* Asumiendo una ruta de admin para usuarios */}
                     <div className='flex items-center'>

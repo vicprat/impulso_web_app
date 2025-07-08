@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Landing } from '@/components/Landing'
 import { Button } from '@/components/ui/button'
 import { useEmblaParallax } from '@/hooks/useEmblaParallax'
+import { ROUTES } from '@/src/config/routes'
 import { usePublicArtists } from '@/src/modules/user/hooks/management'
 
 interface Slide {
@@ -256,7 +257,7 @@ const ParallaxHeroCarousel: React.FC<ParallaxCarouselProps> = ({ options, slides
                       size='lg'
                       className='hover:bg-accent/80 bg-accent text-accent-foreground transition-colors duration-200'
                     >
-                      <Link href='/store'>Explorar la Galería</Link>
+                      <Link href={ROUTES.STORE.MAIN.PATH}>Explorar la Galería</Link>
                     </Button>
                   </motion.div>
                 </div>
@@ -398,6 +399,7 @@ export default function Page() {
                     {article.title}
                   </h3>
                   <p className='text-sm text-gray-600 dark:text-gray-400'>{article.excerpt}...</p>
+                  {/* TODO: ROUTING - AddROUTES.NEWS.DETAIL.PATH */}
                   <Button asChild variant='secondary' size='sm' className='mt-4'>
                     <Link href='/noticias'>Leer Más</Link>
                   </Button>
@@ -406,6 +408,7 @@ export default function Page() {
             ))}
           </div>
           <div className='mt-8 text-center'>
+            {/* TODO: ROUTING - AddROUTES.NEWS.MAIN.PATH */}
             <Button asChild variant='outline' size='lg'>
               <Link href='/noticias'>Ver Todas las Noticias</Link>
             </Button>

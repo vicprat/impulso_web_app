@@ -53,6 +53,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             <div className='mt-6 text-center'>
               <p className='text-sm text-gray-400'>
                 ¿Necesitas ayuda?{' '}
+                {/* TODO: ROUTING - Handle mailto links if they should be part of ROUTES */}
                 <Link
                   href={`mailto:${contactEmail}`}
                   className='font-semibold text-orange-400 transition-colors hover:text-orange-300'
@@ -91,6 +92,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                 Si tienes alguna duda o problema para acceder a tu cuenta, contáctanos y te
                 ayudaremos.
               </p>
+              {/* TODO: ROUTING - Handle mailto links if they should be part of ROUTES */}
               <Link href={`mailto:${contactEmail}`}>
                 <Button className='w-full font-semibold text-white '>Contactar Soporte</Button>
               </Link>

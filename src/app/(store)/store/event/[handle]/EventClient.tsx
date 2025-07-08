@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { type Event } from '@/models/Event'
 import { type AuthSession } from '@/modules/auth/service'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 interface EventClientProps {
   event: Event
@@ -104,11 +105,11 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
     <div className='min-h-screen '>
       <div className='mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8'>
         <nav className='mb-6 text-sm text-muted-foreground'>
-          <Link href='/store' className='hover:text-foreground'>
+          <Link href={ROUTES.STORE.MAIN.PATH} className='hover:text-foreground'>
             Tienda
           </Link>
           <span className='mx-2'>/</span>
-          <Link href='/store/events' className='hover:text-foreground'>
+          <Link href={ROUTES.EVENTS.MAIN.PATH} className='hover:text-foreground'>
             Eventos
           </Link>
           <span className='mx-2'>/</span>
@@ -355,7 +356,11 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                 const relatedEventDetails = extractEventDetails(relatedEvent)
                 return (
                   <Card key={relatedEvent.id} className='group overflow-hidden'>
-                    <Link href={`/store/event/${relatedEvent.handle}`}>
+                    <Link
+                      href={replaceRouteParams(ROUTES.STORE.EVENT_DETAIL.PATH, {
+                        handle: relatedEvent.handle,
+                      })}
+                    >
                       <div className='aspect-[4/3] overflow-hidden'>
                         {relatedEvent.images[0] ? (
                           <Image

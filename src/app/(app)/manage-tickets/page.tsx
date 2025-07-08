@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useGetTicketsByUserId } from '@/services/ticket/hook'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
 import { useAuth } from '@/src/modules/auth/context/useAuth'
 
@@ -221,7 +222,12 @@ export default function ManageTicketsPage() {
                   <div className='flex gap-2 pt-2'>
                     {ticket.event && (
                       <Button variant='outline' size='sm' className='flex-1' asChild>
-                        <Link href={`/store/product/${ticket.event.handle}`} target='_blank'>
+                        <Link
+                          href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, {
+                            handle: ticket.event.handle,
+                          })}
+                          target='_blank'
+                        >
                           <Eye className='mr-1 size-4' />
                           Ver Evento
                         </Link>
@@ -253,7 +259,7 @@ export default function ManageTicketsPage() {
               </p>
 
               <Button asChild>
-                <Link href='/store'>Explorar Eventos</Link>
+                <Link href={ROUTES.STORE.MAIN.PATH}>Explorar Eventos</Link>
               </Button>
             </div>
           </div>

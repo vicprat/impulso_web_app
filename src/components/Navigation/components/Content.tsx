@@ -18,6 +18,7 @@ import React, { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { ROUTES } from '@/src/config/routes'
 
 interface Props {
   onOpenFilters?: () => void
@@ -35,7 +36,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
       setIsMobile(window.innerWidth < 1024)
     }
 
-    checkIsMobile() // Initial check
+    checkIsMobile()
 
     window.addEventListener('resize', checkIsMobile)
 
@@ -48,7 +49,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
     {
       description: 'Explora todo nuestro catálogo',
       exact: true,
-      href: '/store',
+      href: ROUTES.STORE.MAIN.PATH,
       icon: Store,
       label: 'Todos los productos',
       shortLabel: 'Productos',
@@ -56,7 +57,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
     {
       description: 'Productos organizados por categorías',
       exact: false,
-      href: '/store/collections',
+      href: ROUTES.COLLECTIONS.MAIN.PATH,
       icon: FolderOpen,
       label: 'Colecciones',
       shortLabel: 'Colecciones',
@@ -64,7 +65,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
     {
       description: 'Exclusive art for VIPs',
       exact: true,
-      href: '/store/private-rooms',
+      href: ROUTES.PRIVATE_ROOMS.ACCESS.PATH,
       icon: Lock,
       label: 'Private Rooms',
       shortLabel: 'Private',
@@ -237,7 +238,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                 asChild
                 className='hover:text-primary/80 h-8 gap-2 rounded-full px-3 text-primary hover:bg-primary-container lg:h-9 lg:px-4'
               >
-                <Link href='/store'>
+                <Link href={ROUTES.STORE.MAIN.PATH}>
                   <ArrowLeft className='size-3.5 lg:size-4' />
                   <span className='text-sm font-medium lg:text-base'>Volver a la tienda</span>
                 </Link>
@@ -310,7 +311,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                   onClick={toggleMobileMenu}
                   className='border-outline-variant/20 hover:text-primary/80 mt-4 h-12 w-full justify-start gap-3 rounded-xl border-t px-4 pt-6 text-primary hover:bg-primary-container'
                 >
-                  <Link href='/store'>
+                  <Link href={ROUTES.STORE.MAIN.PATH}>
                     <ArrowLeft className='size-5' />
                     <span className='text-sm font-medium'>Volver a la tienda</span>
                   </Link>
@@ -346,7 +347,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                 asChild
                 className='h-5 shrink-0 px-1 text-on-surface-variant hover:text-on-surface sm:h-6 sm:px-2'
               >
-                <Link href='/store'>Tienda</Link>
+                <Link href={ROUTES.STORE.MAIN.PATH}>Tienda</Link>
               </Button>
 
               {isCollectionPage && (
@@ -358,7 +359,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                     asChild
                     className='h-5 shrink-0 px-1 text-on-surface-variant hover:text-on-surface sm:h-6 sm:px-2'
                   >
-                    <Link href='/store/collections'>
+                    <Link href={ROUTES.COLLECTIONS.MAIN.PATH}>
                       <span className='hidden sm:inline'>Colecciones</span>
                       <span className='sm:hidden'>Col.</span>
                     </Link>

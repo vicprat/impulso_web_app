@@ -9,6 +9,7 @@ import { Form } from '@/components/Forms'
 import { Button } from '@/components/ui/button'
 import { useCreateProduct } from '@/services/product/hook'
 import { type CreateProductPayload } from '@/services/product/types'
+import { ROUTES } from '@/src/config/routes'
 
 export default function CreateProductPage() {
   const router = useRouter()
@@ -37,7 +38,7 @@ export default function CreateProductPage() {
     <div className='container mx-auto space-y-6 py-6'>
       <div>
         <div className='mb-2 flex items-center space-x-2 text-sm text-muted-foreground'>
-          <Link href='/manage-inventory' className='hover:text-foreground'>
+          <Link href={ROUTES.INVENTORY.MAIN.PATH} className='hover:text-foreground'>
             Gestión de Inventario
           </Link>
           <span>/</span>

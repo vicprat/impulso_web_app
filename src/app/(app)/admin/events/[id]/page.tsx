@@ -33,6 +33,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDeleteEvent, useGetEvent, useUpdateEvent } from '@/services/event/hook'
 import { type UpdateEventPayload } from '@/services/event/types'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
 
 export default function EventDetailPage() {
@@ -207,7 +208,9 @@ export default function EventDetailPage() {
               <div className='flex items-center space-x-3'>
                 <Button variant='outline' asChild>
                   <Link
-                    href={`/store/product/${event.handle}`}
+                    href={replaceRouteParams(ROUTES.STORE.EVENT_DETAIL.PATH, {
+                      handle: event.handle,
+                    })}
                     target='_blank'
                     className='flex items-center'
                   >

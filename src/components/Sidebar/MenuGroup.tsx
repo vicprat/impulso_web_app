@@ -15,31 +15,32 @@ import { MenuItem } from './MenuItem'
 
 interface Props {
   route: RouteConfig
+  children?: RouteConfig[]
 }
 
-export const MenuGroup: React.FC<Props> = ({ route }) => {
+export const MenuGroup: React.FC<Props> = ({ children = [], route }) => {
   const pathname = usePathname()
-  const IconComponent = route.icon ? Icons[route.icon as keyof typeof Icons] : null
+  const IconComponent = route.ICON ? Icons[route.ICON as keyof typeof Icons] : null
 
-  const isGroupActive = route.children && Object.values(route.children).some((child) => pathname.startsWith(child.path))
+  const isGroupActive = children.some((child) => pathname.startsWith(child.PATH))
 
   return (
-    <Accordion type='single' collapsible defaultValue={isGroupActive ? route.path : undefined}>
-      <AccordionItem value={route.path} className='border-b-0'>
+    <Accordion type='single' collapsible defaultValue={isGroupActive ? route.PATH : undefined}>
+      <AccordionItem value={route.PATH} className='border-b-0'>
         <AccordionTrigger
           className={`flex items-center rounded-md p-2 text-sm hover:bg-accent hover:text-accent-foreground ${isGroupActive ? 'bg-accent text-accent-foreground' : ''}`}
         >
           <div className='flex items-center'>
             {IconComponent && <IconComponent className='mr-3 size-4' />}
-            <span className='truncate group-data-[collapsible=icon]:hidden'>{route.label}</span>
+            <span className='truncate group-data-[collapsible=icon]:hidden'>{route.LABEL}</span>
           </div>
         </AccordionTrigger>
         <AccordionContent className='pb-0 pl-6 group-data-[collapsible=icon]:hidden'>
           <div className='space-y-1'>
-            {route.children && Object.values(route.children).map(
+            {children.map(
               (child) =>
-                !child.hideInNav && (
-                  <MenuItem key={child.path} route={child} isActive={pathname === child.path} />
+                !child.HIDE_IN_NAV && (
+                  <MenuItem key={child.PATH} route={child} isActive={pathname === child.PATH} />
                 )
             )}
           </div>

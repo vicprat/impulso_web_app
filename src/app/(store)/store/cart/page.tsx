@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useCartActions } from '@/modules/cart/hook'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
 import { useAuth } from '@/src/modules/auth/context/useAuth'
 
@@ -78,7 +79,7 @@ export default function CartPage() {
           </div>
 
           <Button variant='outline' asChild>
-            <Link href='/store'>
+            <Link href={ROUTES.STORE.MAIN.PATH}>
               <ArrowLeft className='mr-2 size-4' />
               Seguir comprando
             </Link>
@@ -100,7 +101,7 @@ export default function CartPage() {
             </CardContent>
             <CardFooter className='justify-center'>
               <Button asChild size='lg'>
-                <Link href='/store'>
+                <Link href={ROUTES.STORE.MAIN.PATH}>
                   <ShoppingCart className='mr-2 size-5' />
                   Explorar productos
                 </Link>
@@ -120,7 +121,11 @@ export default function CartPage() {
                     <CardContent className='p-6'>
                       <div className='flex gap-4'>
                         <div className='shrink-0'>
-                          <Link href={`/store/product/${line.merchandise.product.handle}`}>
+                          <Link
+                            href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, {
+                              handle: line.merchandise.product.handle,
+                            })}
+                          >
                             <div className='aspect-square size-24 overflow-hidden rounded-lg border'>
                               {line.merchandise.image ? (
                                 <img
@@ -140,7 +145,9 @@ export default function CartPage() {
                         <div className='flex-1 space-y-3'>
                           <div>
                             <Link
-                              href={`/store/product/${line.merchandise.product.handle}`}
+                              href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, {
+                                handle: line.merchandise.product.handle,
+                              })}
                               className='font-medium hover:underline'
                             >
                               {line.merchandise.product.title}

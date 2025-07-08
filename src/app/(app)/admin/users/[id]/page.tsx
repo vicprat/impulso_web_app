@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useUserById } from '@/modules/user/hooks/management'
 import { Button } from '@/src/components/ui/button'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 export default function UserDetailPage() {
   const params = useParams()
@@ -74,7 +75,7 @@ export default function UserDetailPage() {
                 {user.firstName} {user.lastName}
               </h1>
               <p className='text-lg text-muted-foreground'>{user.email}</p>
-              <Link href={`/profile/${user.id}`}>
+              <Link href={replaceRouteParams(ROUTES.PUBLIC.PROFILE_DETAIL.PATH, { id: user.id })}>
                 <Button variant='container-success' className='mt-4'>
                   <User className='mr-2 size-4' />
                   Ver Perfil Público

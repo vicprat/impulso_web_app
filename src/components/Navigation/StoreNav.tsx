@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useRoutes } from '@/hooks/useRoutes'
 import { cn } from '@/lib/utils'
+import { ROUTES } from '@/src/config/routes'
 import { useCart } from '@/src/modules/cart/hook'
 
 export const StoreNav = () => {
@@ -18,18 +19,18 @@ export const StoreNav = () => {
     <nav className='flex items-center space-x-6'>
       {storeNavRoutes.map((route) => (
         <Link
-          key={route.path}
-          href={route.path}
+          key={route.PATH}
+          href={route.PATH}
           className={cn(
             'text-sm font-medium transition-colors hover:text-primary',
-            pathname === route.path ? 'text-foreground' : 'text-muted-foreground'
+            pathname === route.PATH ? 'text-foreground' : 'text-muted-foreground'
           )}
         >
-          {route.label}
+          {route.LABEL}
         </Link>
       ))}
 
-      <Link href='/store/cart'>
+      <Link href={ROUTES.STORE.CART.PATH}>
         <Button variant='ghost' size='icon' className='relative'>
           <ShoppingCart className='size-5' />
           {(data?.totalQuantity ?? 0) > 0 && (

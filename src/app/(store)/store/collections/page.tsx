@@ -5,6 +5,7 @@
 import Link from 'next/link'
 
 import { useCollections } from '@/modules/shopify/hooks'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 export default function Page() {
   const {
@@ -44,7 +45,9 @@ export default function Page() {
           {collectionsData.collections.map((collection) => (
             <Link
               key={collection.id}
-              href={`/store/collections/${collection.handle}`}
+              href={replaceRouteParams(ROUTES.COLLECTIONS.DETAIL.PATH, {
+                collection: collection.handle,
+              })}
               className='group'
             >
               <div className='overflow-hidden rounded-lg bg-white shadow-md transition-shadow hover:shadow-lg'>

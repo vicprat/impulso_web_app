@@ -35,13 +35,13 @@ export const useRoutes = () => {
   }, [pathname])
 
   const canAccessRoute = (route: RouteConfig): boolean => {
-    if (route.isPublic) return true
+    if (route.IS_PUBLIC) return true
     if (!user) return false
 
-    const hasRequiredRole = !route.roles || route.roles.some((role) => hasRole(role))
+    const hasRequiredRole = !route.ROLES || route.ROLES.some((role) => hasRole(role))
 
     const hasRequiredPermission =
-      !route.permissions || route.permissions.every((permission) => hasPermission(permission))
+      !route.PERMISSIONS || route.PERMISSIONS.every((permission) => hasPermission(permission))
 
     return hasRequiredRole && hasRequiredPermission
   }

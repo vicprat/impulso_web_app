@@ -4,6 +4,7 @@ import { ChevronRight, Home } from 'lucide-react'
 import Link from 'next/link'
 
 import { useRoutes } from '@/hooks/useRoutes'
+import { ROUTES } from '@/src/config/routes'
 
 export const Breadcrumbs: React.FC = () => {
   const { breadcrumbs } = useRoutes()
@@ -12,7 +13,10 @@ export const Breadcrumbs: React.FC = () => {
 
   return (
     <nav className='flex items-center space-x-1 text-sm'>
-      <Link href='/' className='text-muted-foreground transition-colors hover:text-foreground'>
+      <Link
+        href={ROUTES.PUBLIC.HOME.PATH}
+        className='text-muted-foreground transition-colors hover:text-foreground'
+      >
         <Home className='size-4' />
       </Link>
 

@@ -7,6 +7,7 @@ import { Logo } from '@/components/Logo'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { type Product as ProductType } from '@/modules/shopify/types'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 interface Props {
   product: ProductType
@@ -54,7 +55,7 @@ export const Product: React.FC<Props> = ({ product }) => {
       </div>
 
       <Link
-        href={`/store/product/${product.handle}`}
+        href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })}
         className='block focus:outline-none'
         aria-label={`Ver detalles de ${product.title}`}
       >
@@ -91,7 +92,11 @@ export const Product: React.FC<Props> = ({ product }) => {
       <CardContent className='space-y-4 bg-card p-4'>
         <div className='space-y-2'>
           <div className='space-y-1'>
-            <Link href={`/store/product/${product.handle}`}>
+            <Link
+              href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, {
+                handle: product.handle,
+              })}
+            >
               <h3 className='line-clamp-2 font-medium leading-tight text-foreground transition-colors duration-200 hover:text-primary focus:text-primary focus:outline-none'>
                 {product.title}
               </h3>

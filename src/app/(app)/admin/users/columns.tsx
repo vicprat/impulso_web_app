@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { type UserProfile } from '@/modules/user/types'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 export interface UserTableMeta {
   deactivateUser: UseMutationResult<void, Error, string, unknown>
@@ -166,7 +167,7 @@ export const columns: ColumnDef<UserProfile>[] = [
 
       return (
         <div className='flex items-center space-x-2'>
-          <Link href={`/admin/users/${user.id}`}>
+          <Link href={replaceRouteParams(ROUTES.USERS.DETAIL.PATH, { id: user.id })}>
             <Button variant='ghost' size='sm'>
               <Eye className='size-4' />
             </Button>

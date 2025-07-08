@@ -19,13 +19,13 @@ export const RouteLink: React.FC<RouteLinkProps> = ({ className, onClick, route 
   if (!canAccessRoute(route)) return null
 
   const IconComponent =
-    route.icon && typeof Icons[route.icon as keyof typeof Icons] === 'function'
-      ? (Icons[route.icon as keyof typeof Icons] as React.ElementType)
+    route.ICON && typeof Icons[route.ICON as keyof typeof Icons] === 'function'
+      ? (Icons[route.ICON as keyof typeof Icons] as React.ElementType)
       : null
 
   return (
     <Link
-      href={route.path}
+      href={route.PATH}
       className={cn(
         'flex items-center gap-2 rounded-md px-3 py-2 transition-colors',
         'hover:bg-accent hover:text-accent-foreground',
@@ -34,10 +34,10 @@ export const RouteLink: React.FC<RouteLinkProps> = ({ className, onClick, route 
       onClick={onClick}
     >
       {IconComponent && <IconComponent className='size-4' />}
-      <span>{route.label}</span>
-      {route.badge && (
+      <span>{route.LABEL}</span>
+      {route.BADGE && (
         <Badge variant='secondary' className='ml-auto'>
-          {route.badge}
+          {route.BADGE}
         </Badge>
       )}
     </Link>

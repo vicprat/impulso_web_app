@@ -21,6 +21,7 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { useGetProductsPaginated, useUpdateProduct } from '@/services/product/hook'
 import { type UpdateProductPayload } from '@/services/product/types'
 import { Table } from '@/src/components/Table'
+import { ROUTES } from '@/src/config/routes'
 
 import { columns } from './columns'
 
@@ -170,7 +171,7 @@ export default function ManageInventoryPage() {
             <RefreshCw className={`mr-2 size-4 ${isFetching ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
-          <Link href='/manage-inventory/create'>
+          <Link href={ROUTES.INVENTORY.CREATE.PATH}>
             <Button>
               <PlusCircle className='mr-2 size-4' />
               Crear Nueva Obra

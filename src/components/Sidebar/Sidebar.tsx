@@ -11,7 +11,6 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarMenu } from '@/component
 import { getDashboardNavRoutes, ROUTES, type RouteConfig } from '@/config/routes'
 import { useAuth } from '@/modules/auth/context/useAuth'
 
-import { MenuGroup } from './MenuGroup'
 import { MenuItem } from './MenuItem'
 
 interface Props {
@@ -37,7 +36,7 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
 
   const handleLogout = () => {
     void logout()
-    router.push(ROUTES.AUTH.LOGIN.path)
+    router.push(ROUTES.AUTH.LOGIN.PATH)
   }
 
   return (
@@ -49,15 +48,11 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
       <SidebarContent className='mt-4'>
         <SidebarMenu>
           {visibleRoutes.map((route) => {
-            if (route.hideInNav) return null
+            if (route.HIDE_IN_NAV) return null
 
-            const isActive = pathname === route.path || pathname.startsWith(`${route.path}/`)
+            const isActive = pathname === route.PATH || pathname.startsWith(`${route.PATH}/`)
 
-            if (route.children && Object.values(route.children).some((c) => !c.hideInNav)) {
-              return <MenuGroup key={route.path} route={route as RouteConfig} />
-            }
-
-            return <MenuItem key={route.path} route={route} isActive={isActive} />
+            return <MenuItem key={route.PATH} route={route} isActive={isActive} />
           })}
         </SidebarMenu>
       </SidebarContent>
@@ -65,8 +60,8 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
       <SidebarFooter className='border-t'>
         <div className='flex w-full flex-col'>
           <Link
-            href={ROUTES.CUSTOMER.PROFILE.path}
-            className={`flex items-center p-2 text-sm hover:bg-accent hover:text-accent-foreground ${pathname === ROUTES.CUSTOMER.PROFILE.path ? 'bg-accent text-accent-foreground' : ''}`}
+            href={ROUTES.CUSTOMER.PROFILE.PATH}
+            className={`flex items-center p-2 text-sm hover:bg-accent hover:text-accent-foreground ${pathname === ROUTES.CUSTOMER.PROFILE.PATH ? 'bg-accent text-accent-foreground' : ''}`}
           >
             <Avatar className='size-8 min-h-8 min-w-8'>
               <AvatarImage src={user?.profile?.avatarUrl ?? ''} alt={user?.firstName ?? ''} />

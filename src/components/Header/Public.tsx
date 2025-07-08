@@ -193,7 +193,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
             <nav className='space-y-1'>
               {getStoreNavRoutes().map((route, index) => (
                 <div
-                  key={route.path}
+                  key={route.PATH}
                   className={`transition-all duration-700 ease-out${
                     isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
                   }`}
@@ -202,11 +202,11 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
                   }}
                 >
                   <Link
-                    href={route.path}
+                    href={route.PATH}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className='block py-3 text-4xl font-bold tracking-tight text-foreground transition-all duration-300 hover:translate-x-4 hover:scale-105 hover:text-primary sm:text-5xl md:text-6xl lg:py-4 lg:text-7xl xl:py-6 xl:text-8xl'
                   >
-                    {route.label}
+                    {route.LABEL}
                   </Link>
                 </div>
               ))}

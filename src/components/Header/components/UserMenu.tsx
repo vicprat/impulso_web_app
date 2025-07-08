@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/modules/auth/context/useAuth'
+import { ROUTES } from '@/src/config/routes'
 
 export function UserMenu() {
   const { isAuthenticated, logout, user } = useAuth()
@@ -29,13 +30,13 @@ export function UserMenu() {
           <DropdownMenuLabel>Hola, {user.firstName ?? 'Usuario'}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href='/dashboard'>
+            <Link href={ROUTES.CUSTOMER.DASHBOARD.PATH}>
               <User className='mr-2 size-4' />
               <span>Panel de usuario</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href='/orders'>
+            <Link href={ROUTES.ORDERS.MAIN.PATH}>
               <ShoppingBag className='mr-2 size-4' />
               <span>Mis pedidos</span>
             </Link>
@@ -52,7 +53,7 @@ export function UserMenu() {
 
   return (
     <Button variant='ghost' size='sm' asChild>
-      <Link href='/auth/login'>Iniciar sesión</Link>
+      <Link href={ROUTES.AUTH.LOGIN.PATH}>Iniciar sesión</Link>
     </Button>
   )
 }

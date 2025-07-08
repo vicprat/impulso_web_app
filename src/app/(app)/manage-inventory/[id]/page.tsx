@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDeleteProduct, useGetProduct, useUpdateProduct } from '@/services/product/hook'
 import { type UpdateProductPayload } from '@/services/product/types'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -91,7 +92,7 @@ export default function ProductDetailPage() {
             </p>
             <div className='space-x-2'>
               <Button onClick={() => refetch()}>Reintentar</Button>
-              <Button variant='outline' onClick={() => router.push('/manage-inventory')}>
+              <Button variant='outline' onClick={() => router.push(ROUTES.INVENTORY.MAIN.PATH)}>
                 Volver al listado
               </Button>
             </div>
@@ -110,7 +111,9 @@ export default function ProductDetailPage() {
             <p className='mb-4 text-muted-foreground'>
               El producto que buscas no existe o no tienes permisos para verlo.
             </p>
-            <Button onClick={() => router.push('/manage-inventory')}>Volver al listado</Button>
+            <Button onClick={() => router.push(ROUTES.INVENTORY.MAIN.PATH)}>
+              Volver al listado
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -122,7 +125,7 @@ export default function ProductDetailPage() {
       <div className='flex items-center justify-between'>
         <div>
           <div className='mb-2 flex items-center space-x-2 text-sm text-muted-foreground'>
-            <Link href='/manage-inventory' className='hover:text-foreground'>
+            <Link href={ROUTES.INVENTORY.MAIN.PATH} className='hover:text-foreground'>
               Gestión de Inventario
             </Link>
             <span>/</span>
@@ -135,7 +138,11 @@ export default function ProductDetailPage() {
             )}
           </div>
           <div className='flex items-center space-x-4'>
-            <Button variant='outline' size='sm' onClick={() => router.push('/manage-inventory')}>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => router.push(ROUTES.INVENTORY.MAIN.PATH)}
+            >
               <ArrowLeft className='mr-2 size-4' />
               Volver
             </Button>
@@ -163,7 +170,7 @@ export default function ProductDetailPage() {
               Editar
             </Button>
             <Link
-              href={`/store/product/${product.handle}`}
+              href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { id: product.id })}
               target='_blank'
               className='flex items-center'
             >

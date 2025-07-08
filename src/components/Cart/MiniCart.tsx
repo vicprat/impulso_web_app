@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/sheet'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import { useCartActions } from '@/modules/cart/hook'
+import { ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
 
 interface Props {
@@ -34,11 +35,11 @@ export function MiniCart({ children }: Props) {
   if (!isAuthenticated) {
     return (
       children ?? (
-        <Button variant='outline' size='sm' asChild>
-          <Link href='/auth/login'>
+        <Link href={ROUTES.AUTH.LOGIN.PATH} className='inline-flex items-center'>
+          <Button variant='outline' size='sm' asChild>
             <ShoppingCart className='size-4' />
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       )
     )
   }
@@ -46,23 +47,35 @@ export function MiniCart({ children }: Props) {
   const itemCount = cartSummary?.itemCount ?? 0
   const isEmpty = cartSummary?.isEmpty ?? true
 
+  const defaultTrigger = (
+    <Button variant='outline' size='sm' className='relative'>
+      <ShoppingCart className='size-4' />
+      {itemCount > 0 && (
+        <Badge
+          variant='destructive'
+          className='absolute -right-2 -top-2 size-5 rounded-full p-0 text-xs'
+        >
+          {itemCount > 99 ? '99+' : itemCount}
+        </Badge>
+      )}
+    </Button>
+  )
+
+  if (!isAuthenticated) {
+    return children ? (
+      <>{children}</>
+    ) : (
+      <Button variant='outline' size='sm' asChild>
+        <Link href={ROUTES.AUTH.LOGIN.PATH}>
+          <ShoppingCart className='size-4' />
+        </Link>
+      </Button>
+    )
+  }
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        {children ?? (
-          <Button variant='outline' size='sm' className='relative'>
-            <ShoppingCart className='size-4' />
-            {itemCount > 0 && (
-              <Badge
-                variant='destructive'
-                className='absolute -right-2 -top-2 size-5 rounded-full p-0 text-xs'
-              >
-                {itemCount > 99 ? '99+' : itemCount}
-              </Badge>
-            )}
-          </Button>
-        )}
-      </SheetTrigger>
+      <SheetTrigger asChild>{children ?? defaultTrigger}</SheetTrigger>
 
       <SheetContent className='flex w-full flex-col pr-0 sm:max-w-lg'>
         <SheetHeader className='px-1'>
@@ -87,7 +100,7 @@ export function MiniCart({ children }: Props) {
               ¡Agrega algunos productos para comenzar!
             </p>
             <Button asChild className='mt-4'>
-              <Link href='/store' onClick={() => setOpen(false)}>
+              <Link href={ROUTES.STORE.MAIN.PATH} onClick={() => setOpen(false)}>
                 Explorar productos
               </Link>
             </Button>
@@ -257,7 +270,7 @@ export function MiniCart({ children }: Props) {
                   </Button>
 
                   <Button variant='outline' asChild className='w-full'>
-                    <Link href='/store/cart' onClick={() => setOpen(false)}>
+                    <Link href={ROUTES.STORE.CART.PATH} onClick={() => setOpen(false)}>
                       <ExternalLink className='mr-2 size-4' />
                       Ver carrito completo
                     </Link>

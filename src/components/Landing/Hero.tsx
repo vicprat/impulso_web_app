@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FloatingParticles } from '@/components/Animations'
 import { Button } from '@/components/ui/button'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
+import { ROUTES } from '@/src/config/routes'
 
 interface YTPlayerEvent {
   target: any
@@ -385,7 +386,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
             }}
             className={`flex ${isTabletOrMobile ? 'flex-col' : 'flex-col sm:flex-row'} gap-4 sm:gap-6`}
           >
-            <Link href='/store'>
+            <Link href={ROUTES.STORE.MAIN.PATH}>
               <Button
                 className={`hover:bg-primary/90 group relative bg-primary text-base text-primary-foreground sm:text-lg ${
                   isTabletOrMobile ? 'px-8 py-5' : 'px-6 py-4 sm:px-8 sm:py-5 md:px-10 md:py-6'

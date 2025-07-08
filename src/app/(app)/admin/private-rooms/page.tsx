@@ -8,6 +8,7 @@ import { Card } from '@/components/Card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card as ShadcnCard } from '@/components/ui/card'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 interface PrivateRoom {
   id: string
@@ -83,7 +84,7 @@ export default function PrivateRoomsListPage() {
           </div>
           <div className='flex items-center space-x-2'>
             <Button asChild>
-              <Link href='/admin/private-rooms/create'>
+              <Link href={ROUTES.PRIVATE_ROOMS.CREATE.PATH}>
                 <Plus className='mr-2 size-5' />
                 Create New Room
               </Link>
@@ -156,7 +157,7 @@ export default function PrivateRoomsListPage() {
                 </p>
               </div>
               <Button asChild>
-                <Link href='/admin/private-rooms/create'>
+                <Link href={ROUTES.PRIVATE_ROOMS.CREATE.PATH}>
                   <Plus className='mr-2 size-4' />
                   Create First Room
                 </Link>
@@ -169,7 +170,10 @@ export default function PrivateRoomsListPage() {
               <ShadcnCard key={room.id} className='p-6 transition-shadow hover:shadow-lg'>
                 <div className='space-y-4'>
                   <div className='space-y-2'>
-                    <Link href={`/admin/private-rooms/${room.id}`} className='group block'>
+                    <Link
+                      href={replaceRouteParams(ROUTES.PRIVATE_ROOMS.DETAIL.PATH, { id: room.id })}
+                      className='group block'
+                    >
                       <h3 className='line-clamp-1 text-lg font-semibold transition-colors group-hover:text-primary'>
                         {room.name}
                         <ExternalLink className='ml-1 inline size-4 opacity-0 transition-opacity group-hover:opacity-100' />
@@ -204,21 +208,30 @@ export default function PrivateRoomsListPage() {
 
                   <div className='grid grid-cols-3 gap-2'>
                     <Button size='sm' variant='outline' asChild>
-                      <Link href={`/admin/private-rooms/${room.id}`}>
+                      <Link
+                        href={replaceRouteParams(ROUTES.PRIVATE_ROOMS.DETAIL.PATH, { id: room.id })}
+                      >
                         <Eye className='mr-1 size-3' />
                         View
                       </Link>
                     </Button>
 
                     <Button size='sm' variant='outline' asChild>
-                      <Link href={`/admin/private-rooms/${room.id}?mode=edit`}>
+                      <Link
+                        href={replaceRouteParams(ROUTES.PRIVATE_ROOMS.DETAIL.PATH, { id: room.id })}
+                      >
                         <Edit3 className='mr-1 size-3' />
                         Edit
                       </Link>
                     </Button>
 
                     <Button size='sm' variant='destructive' asChild>
-                      <Link href={`/admin/private-rooms/${room.id}?mode=delete`}>
+                      <Link
+                        href={replaceRouteParams(ROUTES.PRIVATE_ROOMS.DETAIL.PATH, {
+                          id: room.id,
+                          mode: 'delete',
+                        })}
+                      >
                         <Trash2 className='mr-1 size-3' />
                         Delete
                       </Link>

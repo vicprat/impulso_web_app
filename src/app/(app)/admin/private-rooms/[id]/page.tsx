@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { privateRoomsApi } from '@/modules/rooms/api'
 import { useProductsByIds } from '@/modules/shopify/hooks'
+import { ROUTES } from '@/src/config/routes'
 
 interface PrivateRoomPageProps {
   params: Promise<{ id: string }>
@@ -153,7 +154,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
       <div className='container mx-auto max-w-4xl p-6'>
         <div className='space-y-4'>
           <Button variant='ghost' asChild>
-            <Link href='/admin/private-rooms'>
+            <Link href={ROUTES.PRIVATE_ROOMS.CREATE.PATH}>
               <ArrowLeft className='mr-2 size-4' />
               Back to Private Rooms
             </Link>
@@ -218,7 +219,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
       <div className='space-y-6'>
         <div className='space-y-4'>
           <Button variant='ghost' asChild>
-            <Link href='/admin/private-rooms'>
+            <Link href={ROUTES.PRIVATE_ROOMS.CREATE.PATH}>
               <ArrowLeft className='mr-2 size-4' />
               Back to Private Rooms
             </Link>

@@ -2,280 +2,280 @@ import { PERMISSIONS } from './Permissions'
 import { ROLES } from './Roles'
 
 export interface RouteConfig {
-  path: string
-  label: string
-  icon?: string
-  description?: string
-  permissions?: readonly string[]
-  roles?: readonly string[]
-  isPublic?: boolean
-  hideInNav?: boolean
-  badge?: string | number
-  isExternal?: boolean
-  breadcrumb?: string
+  PATH: string
+  LABEL: string
+  ICON?: string
+  DESCRIPTION?: string
+  PERMISSIONS?: readonly string[]
+  ROLES?: readonly string[]
+  IS_PUBLIC?: boolean
+  HIDE_IN_NAV?: boolean
+  BADGE?: string | number
+  IS_EXTERNAL?: boolean
+  BREADCRUMB?: string
 }
 
 export const ROUTES = {
   ADMIN: {
     MAIN: {
-      icon: 'settings',
-      label: 'Administración',
-      path: '/admin',
-      permissions: [PERMISSIONS.ACCESS_ADMIN],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      ICON: 'settings',
+      LABEL: 'Administración',
+      PATH: '/admin',
+      PERMISSIONS: [PERMISSIONS.ACCESS_ADMIN],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
   },
 
   AUTH: {
     LOGIN: {
-      hideInNav: true,
-      icon: 'log-in',
-      isPublic: true,
-      label: 'Iniciar Sesión',
-      path: '/auth/login',
+      HIDE_IN_NAV: true,
+      ICON: 'log-in',
+      IS_PUBLIC: true,
+      LABEL: 'Iniciar Sesión',
+      PATH: '/auth/login',
     },
   },
 
   COLLECTIONS: {
     DETAIL: {
-      description: 'Detalle de una colección de productos',
-      icon: 'grid',
-      isPublic: true,
-      label: 'Detalle de la colección',
-      path: '/store/collections/:collection',
+      DESCRIPTION: 'Detalle de una colección de productos',
+      ICON: 'grid',
+      IS_PUBLIC: true,
+      LABEL: 'Detalle de la colección',
+      PATH: '/store/collections/:collection',
     },
     MAIN: {
-      description: 'Colecciones de productos',
-      icon: 'grid',
-      isPublic: true,
-      label: 'Colecciones',
-      path: '/store/collections',
+      DESCRIPTION: 'Colecciones de productos',
+      ICON: 'grid',
+      IS_PUBLIC: true,
+      LABEL: 'Colecciones',
+      PATH: '/store/collections',
     },
   },
 
   CUSTOMER: {
     DASHBOARD: {
-      description: 'Tu panel de control personal',
-      icon: 'layout-dashboard',
-      label: 'Panel Principal',
-      path: '/dashboard',
-      permissions: [PERMISSIONS.VIEW_PROFILE],
+      DESCRIPTION: 'Tu panel de control personal',
+      ICON: 'layout-dashboard',
+      LABEL: 'Panel Principal',
+      PATH: '/dashboard',
+      PERMISSIONS: [PERMISSIONS.VIEW_PROFILE],
     },
     PROFILE: {
-      description: 'Gestiona tu información personal',
-      icon: 'user',
-      label: 'Mi Perfil',
-      path: '/profile',
-      permissions: [PERMISSIONS.VIEW_PROFILE, PERMISSIONS.UPDATE_PROFILE],
+      DESCRIPTION: 'Gestiona tu información personal',
+      ICON: 'user',
+      LABEL: 'Mi Perfil',
+      PATH: '/profile',
+      PERMISSIONS: [PERMISSIONS.VIEW_PROFILE, PERMISSIONS.UPDATE_PROFILE],
     },
   },
 
-  EVENTOS: {
+  EVENTS: {
     CREATE: {
-      icon: 'plus',
-      label: 'Crear Evento',
-      path: '/admin/events/create',
-      permissions: [PERMISSIONS.MANAGE_EVENTS],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      ICON: 'plus',
+      LABEL: 'Crear Evento',
+      PATH: '/admin/events/create',
+      PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
     DETAIL: {
-      icon: 'edit',
-      label: 'Editar Evento',
-      path: '/admin/events/:id',
-      permissions: [PERMISSIONS.MANAGE_EVENTS],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      ICON: 'edit',
+      LABEL: 'Editar Evento',
+      PATH: '/admin/events/:id',
+      PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
     MAIN: {
-      description: 'Gestionar Eventos',
-      icon: 'calendar',
-      label: 'Eventos',
-      path: '/admin/events',
-      permissions: [PERMISSIONS.MANAGE_EVENTS],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      DESCRIPTION: 'Gestionar Eventos',
+      ICON: 'calendar',
+      LABEL: 'Eventos',
+      PATH: '/admin/events',
+      PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
     MANAGE: {
-      icon: 'edit',
-      label: 'Gestionar Evento',
-      path: '/admin/events/manage/:eventId',
-      permissions: [PERMISSIONS.MANAGE_EVENTS],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      ICON: 'edit',
+      LABEL: 'Gestionar Evento',
+      PATH: '/admin/events/manage/:eventId',
+      PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
   },
 
-  INVENTARIO: {
+  INVENTORY: {
     CREATE: {
-      icon: 'plus',
-      label: 'Crear Producto',
-      path: '/manage-inventory/create',
-      permissions: [PERMISSIONS.MANAGE_INVENTORY],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      ICON: 'plus',
+      LABEL: 'Crear Producto',
+      PATH: '/manage-inventory/create',
+      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
     DETAIL: {
-      icon: 'edit',
-      label: 'Editar Producto',
-      path: '/manage-inventory/:id',
-      permissions: [PERMISSIONS.MANAGE_INVENTORY],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      ICON: 'edit',
+      LABEL: 'Editar Producto',
+      PATH: '/manage-inventory/:id',
+      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
     MAIN: {
-      icon: 'archive',
-      label: 'Inventario',
-      path: '/manage-inventory',
-      permissions: [PERMISSIONS.MANAGE_INVENTORY],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      ICON: 'archive',
+      LABEL: 'Inventario',
+      PATH: '/manage-inventory',
+      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
   },
 
   ORDERS: {
     DETAIL: {
-      breadcrumb: 'Detalle',
-      hideInNav: true,
-      label: 'Detalle del Pedido',
-      path: '/orders/:orderId',
-      permissions: [PERMISSIONS.VIEW_ORDERS],
+      BREADCRUMB: 'Detalle',
+      HIDE_IN_NAV: true,
+      LABEL: 'Detalle del Pedido',
+      PATH: '/orders/:orderId',
+      PERMISSIONS: [PERMISSIONS.VIEW_ORDERS],
     },
     MAIN: {
-      description: 'Historial de pedidos',
-      icon: 'package',
-      label: 'Mis Pedidos',
-      path: '/orders',
-      permissions: [PERMISSIONS.VIEW_ORDERS],
+      DESCRIPTION: 'Historial de pedidos',
+      ICON: 'package',
+      LABEL: 'Mis Pedidos',
+      PATH: '/orders',
+      PERMISSIONS: [PERMISSIONS.VIEW_ORDERS],
+    },
+  },
+
+  PRIVATE_ROOMS: {
+    ACCESS: {
+      ICON: 'lock',
+      LABEL: 'Acceder a Sala Privada',
+      PATH: '/private-room',
+      PERMISSIONS: [PERMISSIONS.VIEW_PRIVATE_ROOMS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    },
+    CREATE: {
+      ICON: 'plus',
+      LABEL: 'Crear Sala Privada',
+      PATH: '/admin/private-rooms/create',
+      PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    },
+    DETAIL: {
+      ICON: 'edit',
+      LABEL: 'Editar Sala Privada',
+      PATH: '/admin/private-rooms/:id',
+      PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    },
+    MAIN: {
+      DESCRIPTION: 'Gestionar Salas Privadas',
+      ICON: 'lock',
+      LABEL: 'Salas Privadas',
+      PATH: '/admin/private-rooms',
+      PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
   },
 
   PUBLIC: {
     HOME: {
-      description: 'Página principal de la tienda',
-      icon: 'home',
-      isPublic: true,
-      label: 'Inicio',
-      path: '/',
+      DESCRIPTION: 'Página principal de la tienda',
+      ICON: 'home',
+      IS_PUBLIC: true,
+      LABEL: 'Inicio',
+      PATH: '/',
     },
     PROFILE_DETAIL: {
-      description: 'Perfil Público de un usuario',
-      icon: 'user',
-      isPublic: true,
-      label: 'Perfil Público',
-      path: '/profile/:userId',
-    },
-  },
-
-  SALAS_PRIVADAS: {
-    ACCESS: {
-      icon: 'lock',
-      label: 'Acceder a Sala Privada',
-      path: '/private-room',
-      permissions: [PERMISSIONS.VIEW_PRIVATE_ROOMS],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-    },
-    CREATE: {
-      icon: 'plus',
-      label: 'Crear Sala Privada',
-      path: '/admin/private-rooms/create',
-      permissions: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-    },
-    DETAIL: {
-      icon: 'edit',
-      label: 'Editar Sala Privada',
-      path: '/admin/private-rooms/:id',
-      permissions: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-    },
-    MAIN: {
-      description: 'Gestionar Salas Privadas',
-      icon: 'lock',
-      label: 'Salas Privadas',
-      path: '/admin/private-rooms',
-      permissions: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      DESCRIPTION: 'Perfil Público de un usuario',
+      ICON: 'user',
+      IS_PUBLIC: true,
+      LABEL: 'Perfil Público',
+      PATH: '/profile/:userId',
     },
   },
 
   STORE: {
     CART: {
-      description: 'Carrito de compras',
-      icon: 'shopping-cart',
-      isPublic: true,
-      label: 'Carrito',
-      path: '/store/cart',
+      DESCRIPTION: 'Carrito de compras',
+      ICON: 'shopping-cart',
+      IS_PUBLIC: true,
+      LABEL: 'Carrito',
+      PATH: '/store/cart',
     },
     EVENT_DETAIL: {
-      description: 'Detalle del evento',
-      icon: 'calendar',
-      isPublic: true,
-      label: 'Evento',
-      path: '/store/event/:handle',
+      DESCRIPTION: 'Detalle del evento',
+      ICON: 'calendar',
+      IS_PUBLIC: true,
+      LABEL: 'Evento',
+      PATH: '/store/event/:handle',
     },
     MAIN: {
-      description: 'Explorar todos los productos',
-      icon: 'shopping-bag',
-      isPublic: true,
-      label: 'Tienda',
-      path: '/store',
+      DESCRIPTION: 'Explorar todos los productos',
+      ICON: 'shopping-bag',
+      IS_PUBLIC: true,
+      LABEL: 'Tienda',
+      PATH: '/store',
     },
     PRODUCT_DETAIL: {
-      description: 'Detalle del producto',
-      icon: 'package',
-      isPublic: true,
-      label: 'Producto',
-      path: '/store/product/:handle',
+      DESCRIPTION: 'Detalle del producto',
+      ICON: 'package',
+      IS_PUBLIC: true,
+      LABEL: 'Producto',
+      PATH: '/store/product/:handle',
     },
     SEARCH: {
-      description: 'Búsqueda de productos',
-      icon: 'search',
-      isPublic: true,
-      label: 'Buscar',
-      path: '/store/search',
+      DESCRIPTION: 'Búsqueda de productos',
+      ICON: 'search',
+      IS_PUBLIC: true,
+      LABEL: 'Buscar',
+      PATH: '/store/search',
     },
   },
 
   TICKETS: {
     MAIN: {
-      icon: 'ticket',
-      label: 'Gestionar Tickets',
-      path: '/manage-tickets',
-      permissions: [PERMISSIONS.MANAGE_TICKETS],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      ICON: 'ticket',
+      LABEL: 'Gestionar Tickets',
+      PATH: '/manage-tickets',
+      PERMISSIONS: [PERMISSIONS.MANAGE_TICKETS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
   },
 
-  USUARIOS: {
+  USERS: {
     DETAIL: {
-      icon: 'edit',
-      label: 'Editar Usuario',
-      path: '/admin/users/:id',
-      permissions: [PERMISSIONS.MANAGE_USERS],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      ICON: 'edit',
+      LABEL: 'Editar Usuario',
+      PATH: '/admin/users/:id',
+      PERMISSIONS: [PERMISSIONS.MANAGE_USERS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
     MAIN: {
-      description: 'Gestionar Usuarios',
-      icon: 'users',
-      label: 'Usuarios',
-      path: '/admin/users',
-      permissions: [PERMISSIONS.MANAGE_USERS],
-      roles: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      DESCRIPTION: 'Gestionar Usuarios',
+      ICON: 'users',
+      LABEL: 'Usuarios',
+      PATH: '/admin/users',
+      PERMISSIONS: [PERMISSIONS.MANAGE_USERS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
   },
 
   UTILITY: {
     NOT_FOUND: {
-      hideInNav: true,
-      isPublic: true,
-      label: 'Página no encontrada',
-      path: '/404',
+      HIDE_IN_NAV: true,
+      IS_PUBLIC: true,
+      LABEL: 'Página no encontrada',
+      PATH: '/404',
     },
     SERVER_ERROR: {
-      hideInNav: true,
-      isPublic: true,
-      label: 'Error del servidor',
-      path: '/500',
+      HIDE_IN_NAV: true,
+      IS_PUBLIC: true,
+      LABEL: 'Error del servidor',
+      PATH: '/500',
     },
     UNAUTHORIZED: {
-      hideInNav: true,
-      isPublic: true,
-      label: 'No autorizado',
-      path: '/unauthorized',
+      HIDE_IN_NAV: true,
+      IS_PUBLIC: true,
+      LABEL: 'No autorizado',
+      PATH: '/unauthorized',
     },
   },
 } as const
@@ -292,8 +292,8 @@ export const getAllRoutes = (): RouteConfig[] => {
 
 export const getAllPublicRoutes = (): string[] => {
   return getAllRoutes()
-    .filter((route) => route.isPublic)
-    .map((route) => route.path)
+    .filter((route) => route.IS_PUBLIC)
+    .map((route) => route.PATH)
 }
 
 export const isPublicRoute = (path: string): boolean => {
@@ -313,10 +313,10 @@ export const filterRoutesByAccess = (
   userPermissions: string[]
 ): RouteConfig[] => {
   return routes.filter((route) => {
-    const hasRequiredRole = !route.roles || route.roles.some((role) => userRoles.includes(role))
+    const hasRequiredRole = !route.ROLES || route.ROLES.some((role) => userRoles.includes(role))
     const hasRequiredPermissions =
-      !route.permissions ||
-      route.permissions.every((permission) => userPermissions.includes(permission))
+      !route.PERMISSIONS ||
+      route.PERMISSIONS.every((permission) => userPermissions.includes(permission))
 
     return hasRequiredRole && hasRequiredPermissions
   })
@@ -330,22 +330,22 @@ export const getDashboardNavRoutes = (
     ...Object.values(ROUTES.CUSTOMER),
     ROUTES.ORDERS.MAIN,
     ...Object.values(ROUTES.ADMIN),
-    ROUTES.EVENTOS.MAIN,
-    ROUTES.USUARIOS.MAIN,
-    ROUTES.SALAS_PRIVADAS.MAIN,
-    ROUTES.INVENTARIO.MAIN,
+    ROUTES.EVENTS.MAIN,
+    ROUTES.USERS.MAIN,
+    ROUTES.PRIVATE_ROOMS.MAIN,
+    ROUTES.INVENTORY.MAIN,
     ROUTES.TICKETS.MAIN,
   ]
 
   return filterRoutesByAccess(navigationRoutes, userRoles, userPermissions).filter(
-    (route) => !route.hideInNav
+    (route) => !route.HIDE_IN_NAV
   )
 }
 
 export const getStoreNavRoutes = (): RouteConfig[] => {
   const publicStoreRoutes = [ROUTES.PUBLIC.HOME, ROUTES.STORE.MAIN, ROUTES.COLLECTIONS.MAIN]
 
-  return publicStoreRoutes.filter((route) => 'hideInNav' in route && !route.hideInNav)
+  return publicStoreRoutes.filter((route) => 'HIDE_IN_NAV' in route && !route.HIDE_IN_NAV)
 }
 
 export const getSectionRoutes = (
@@ -365,20 +365,20 @@ export const getRouteMeta = (
   requiredPermissions?: readonly string[]
 } => {
   const route = getAllRoutes().find((route) => {
-    if (route.path.includes(':')) {
-      const pattern = route.path.replace(/:[^/]+/g, '[^/]+')
+    if (route.PATH.includes(':')) {
+      const pattern = route.PATH.replace(/:[^/]+/g, '[^/]+')
       const regex = new RegExp(`^${pattern}$`)
       return regex.test(pathname)
     }
-    return route.path === pathname
+    return route.PATH === pathname
   })
 
   if (!route) return { isPublic: false }
 
   return {
-    isPublic: route.isPublic ?? false,
-    requiredPermissions: route.permissions,
-    requiredRoles: route.roles,
+    isPublic: route.IS_PUBLIC ?? false,
+    requiredPermissions: route.PERMISSIONS,
+    requiredRoles: route.ROLES,
   }
 }
 
@@ -392,17 +392,17 @@ export const generateSectionBreadcrumbs = (
   breadcrumbs.push({ label: sectionName, path: '/admin' })
 
   const route = getAllRoutes().find((r) => {
-    if (r.path.includes(':')) {
-      const pattern = r.path.replace(/:[^/]+/g, '[^/]+')
+    if (r.PATH.includes(':')) {
+      const pattern = r.PATH.replace(/:[^/]+/g, '[^/]+')
       const regex = new RegExp(`^${pattern}$`)
       return regex.test(pathname)
     }
-    return r.path === pathname
+    return r.PATH === pathname
   })
 
-  if (route && route.path !== '/admin') {
+  if (route && route.PATH !== '/admin') {
     breadcrumbs.push({
-      label: route.breadcrumb ?? route.label,
+      label: route.BREADCRUMB ?? route.LABEL,
       path: pathname,
     })
   }
@@ -421,17 +421,17 @@ export const buildBreadcrumbs = (
   for (const segment of pathSegments) {
     currentPath += `/${segment}`
     const route = routes.find((r) => {
-      if (r.path.includes(':')) {
-        const pattern = r.path.replace(/:[^/]+/g, '[^/]+')
+      if (r.PATH.includes(':')) {
+        const pattern = r.PATH.replace(/:[^/]+/g, '[^/]+')
         const regex = new RegExp(`^${pattern}$`)
         return regex.test(currentPath)
       }
-      return r.path === currentPath
+      return r.PATH === currentPath
     })
 
     if (route) {
       breadcrumbs.push({
-        label: route.breadcrumb ?? route.label,
+        label: route.BREADCRUMB ?? route.LABEL,
         path: currentPath,
       })
     }
@@ -461,9 +461,9 @@ export const replaceRouteParams = (
 }
 
 export const getRoutesByPermission = (permission: string): RouteConfig[] => {
-  return getAllRoutes().filter((route) => route.permissions?.includes(permission))
+  return getAllRoutes().filter((route) => route.PERMISSIONS?.includes(permission))
 }
 
 export const getRoutesByRole = (role: string): RouteConfig[] => {
-  return getAllRoutes().filter((route) => route.roles?.includes(role))
+  return getAllRoutes().filter((route) => route.ROLES?.includes(role))
 }

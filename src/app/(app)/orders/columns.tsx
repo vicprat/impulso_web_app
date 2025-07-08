@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 import type { Order } from '@/src/modules/customer/types'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -125,7 +126,7 @@ export const columns: ColumnDef<Order>[] = [
       const orderId = order.id.split('/').pop()
 
       return (
-        <Link href={`/orders/${orderId}`}>
+        <Link href={replaceRouteParams(ROUTES.ORDERS.DETAIL.PATH, { orderId: orderId ?? '' })}>
           <Eye className='mr-2 size-4' />
         </Link>
       )

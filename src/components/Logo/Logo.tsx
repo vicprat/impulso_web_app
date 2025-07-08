@@ -1,12 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from 'next/link'
 
-interface LogoProps {
+import { ROUTES } from '@/src/config/routes'
+
+interface Props {
   asLink?: boolean
   className?: string
 }
 
-export const Logo = ({ asLink = true, className = 'flex items-center' }: LogoProps) => {
+export const Logo: React.FC<Props> = ({ asLink = true, className = 'flex items-center' }) => {
   const logoContent = (
     <>
       <img
@@ -27,7 +29,7 @@ export const Logo = ({ asLink = true, className = 'flex items-center' }: LogoPro
   }
 
   return (
-    <Link href='/' className={className}>
+    <Link href={ROUTES.PUBLIC.HOME.PATH} className={className}>
       {logoContent}
     </Link>
   )

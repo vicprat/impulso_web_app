@@ -22,6 +22,7 @@ import { useGetEventsPaginated, useUpdateEvent } from '@/services/event/hook'
 import { type UpdateEventPayload } from '@/services/event/types'
 import { Table } from '@/src/components/Table'
 import { TableSelectionToolbar } from '@/src/components/TableSelectionToolbar'
+import { ROUTES } from '@/src/config/routes'
 
 import { columns } from './columns'
 
@@ -182,7 +183,7 @@ export default function ManageEventsPage() {
             <RefreshCw className={`mr-2 size-4 ${isFetching ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
-          <Link href='/admin/events/create'>
+          <Link href={ROUTES.EVENTS.CREATE.PATH}>
             <Button variant='container-success'>
               <PlusCircle className='mr-2 size-4' />
               Crear Nuevo Evento

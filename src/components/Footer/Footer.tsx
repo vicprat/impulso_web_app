@@ -20,16 +20,17 @@ import {
   GradientBackground,
   GridOverlay,
 } from '@/components/Animations'
+import { ROUTES } from '@/src/config/routes'
 
 import { Button } from '../ui/button'
 
 const navigationLinks = [
-  { href: '/', name: 'Inicio' },
-  { href: '/tienda', name: 'Tienda' },
-  { href: '/colecciones', name: 'Colecciones' },
-  { href: '/artistas', name: 'Artistas' },
-  { href: '/nosotros', name: 'Nosotros' },
-  { href: '/contacto', name: 'Contacto' },
+  { href: ROUTES.PUBLIC.HOME.PATH, name: 'Inicio' },
+  { href: ROUTES.STORE.MAIN.PATH, name: 'Tienda' },
+  { href: ROUTES.COLLECTIONS.MAIN.PATH, name: 'Colecciones' },
+  { href: '/artistas', name: 'Artistas' }, // TODO: ROUTING - Add ROUTES.ARTISTS.MAIN.PATH
+  { href: '/nosotros', name: 'Nosotros' }, // TODO: ROUTING - Add ROUTES.ABOUT_US.MAIN.PATH
+  { href: '/contacto', name: 'Contacto' }, // TODO: ROUTING - Add ROUTES.CONTACT.MAIN.PATH
 ]
 
 const socialLinks = [
@@ -40,10 +41,10 @@ const socialLinks = [
 ]
 
 const legalLinks = [
-  { href: '/terminos', name: 'Términos y Condiciones' },
-  { href: '/privacidad', name: 'Política de Privacidad' },
-  { href: '/devoluciones', name: 'Política de Devoluciones' },
-  { href: '/envios', name: 'Envíos y Entregas' },
+  { href: '/terminos', name: 'Términos y Condiciones' }, // TODO: ROUTING - Add ROUTES.LEGAL.TERMS.PATH
+  { href: '/privacidad', name: 'Política de Privacidad' }, // TODO: ROUTING - Add ROUTES.LEGAL.PRIVACY.PATH
+  { href: '/devoluciones', name: 'Política de Devoluciones' }, // TODO: ROUTING - Add ROUTES.LEGAL.RETURNS.PATH
+  { href: '/envios', name: 'Envíos y Entregas' }, // TODO: ROUTING - Add ROUTES.LEGAL.SHIPPING.PATH
 ]
 
 export const Footer = () => {
