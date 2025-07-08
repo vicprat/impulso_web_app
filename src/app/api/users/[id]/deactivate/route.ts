@@ -1,13 +1,12 @@
-// src/app/api/users/[id]/deactivate/route.ts
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { requirePermission } from '@/modules/auth/server/server'
 import { deactivateUser } from '@/modules/user/user.service'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
-// ✅ CORREGIDO: Agregar request como primer parámetro
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await requirePermission('manage_users')
+    const session = await requirePermission(PERMISSIONS.MANAGE_USERS)
 
     const targetUserId = params.id
 

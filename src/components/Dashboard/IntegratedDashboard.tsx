@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Guard } from '@/components/Guards'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import { useCurrentUser } from '@/modules/user/hooks/management'
+import { PERMISSIONS } from '@/src/config/Permissions'
 import { ROUTES } from '@/src/config/routes'
 
 export default function IntegratedDashboard() {
@@ -32,8 +33,8 @@ export default function IntegratedDashboard() {
     },
   ]
 
-  // Agregar sección de administración si tiene permisos
-  const canManageUsers = hasPermission('manage_users') || hasRole('admin') || hasRole('super_admin')
+  const canManageUsers =
+    hasPermission(PERMISSIONS.MANAGE_USERS) || hasRole('admin') || hasRole('super_admin')
   if (canManageUsers) {
     navigationItems.push({
       description: 'Panel de administración',
@@ -140,7 +141,7 @@ export default function IntegratedDashboard() {
         {/* Admin Section - Condicionalmente visible */}
         {canManageUsers && (
           <Guard.Permission
-            permission='manage_users'
+            permission={PERMISSIONS.MANAGE_USERS}
             fallback={
               <div className='rounded-lg bg-surface-container-high p-6 shadow-md'>
                 <div className='py-8 text-center'>

@@ -25,6 +25,7 @@ import {
   useUsersManagement,
 } from '@/modules/user/hooks/management'
 import { type UserFilters, type UserProfile } from '@/modules/user/types'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 import { columns } from './columns'
 
@@ -107,7 +108,7 @@ export default function UserManagementPage() {
   const handleToggleUserStatus = async (user: UserProfile) => {
     const canManage = (() => {
       if (!currentUser) return false
-      if (!hasPermission('manage_users')) return false
+      if (!hasPermission(PERMISSIONS.MANAGE_USERS)) return false
       if (user.id === currentUser.id) return true
       if (hasRole('admin')) return true
       if (hasRole('manager')) {
@@ -141,7 +142,7 @@ export default function UserManagementPage() {
 
     const canManage = (() => {
       if (!currentUser) return false
-      if (!hasPermission('manage_users')) return false
+      if (!hasPermission(PERMISSIONS.MANAGE_USERS)) return false
       if (hasRole('admin')) return true
       if (hasRole('manager')) {
         return !user.roles.includes('manager') && !user.roles.includes('admin')

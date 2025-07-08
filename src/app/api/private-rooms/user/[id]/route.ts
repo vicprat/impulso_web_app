@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/modules/auth/server/server'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
-    const session = await requirePermission('view_private_rooms')
+    const session = await requirePermission(PERMISSIONS.VIEW_PRIVATE_ROOMS)
 
     const isOwner = session.user.id === id
     const isAdmin = session.user.roles.includes('admin') || session.user.roles.includes('manager')

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Table } from '@/src/components/Table'
+import { PERMISSIONS } from '@/src/config/Permissions'
 import { useAllOrders, useCustomerOrders } from '@/src/modules/customer/hooks'
 
 import { columns } from './columns'
@@ -165,7 +166,7 @@ export default function OrdersPage() {
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as OrdersTab)}>
         <TabsList>
           <TabsTrigger value='my-orders'>Mis Órdenes</TabsTrigger>
-          <Guard.Permission permission='view_all_orders'>
+          <Guard.Permission permission={PERMISSIONS.VIEW_ALL_ORDERS}>
             <TabsTrigger value='all-orders'>Todas las Órdenes</TabsTrigger>
           </Guard.Permission>
         </TabsList>
@@ -174,7 +175,7 @@ export default function OrdersPage() {
           <OrdersContent />
         </TabsContent>
 
-        <Guard.Permission permission='view_all_orders'>
+        <Guard.Permission permission={PERMISSIONS.VIEW_ALL_ORDERS}>
           <TabsContent value='all-orders' className='space-y-6'>
             <OrdersContent />
           </TabsContent>

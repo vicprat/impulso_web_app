@@ -27,6 +27,7 @@ import {
   type ShopifyProductData,
   type UpdateProductPayload,
 } from '@/services/product/types'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 type ValidatedSession = NonNullable<AuthSession>
 
@@ -72,7 +73,7 @@ async function getEvents(
   session: AuthSession
 ): Promise<PaginatedEventsResponse> {
   validateSession(session)
-  await requirePermission('manage_events')
+  await requirePermission(PERMISSIONS.MANAGE_EVENTS)
 
   let shopifyQuery = "product_type:'Evento'"
 
@@ -98,7 +99,7 @@ async function getEvents(
 
 async function getEventById(id: string, session: AuthSession): Promise<Event | null> {
   validateSession(session)
-  await requirePermission('manage_events')
+  await requirePermission(PERMISSIONS.MANAGE_EVENTS)
 
   const response = await makeAdminApiRequest<{ product: ShopifyEventData | null }>(
     GET_SINGLE_PRODUCT_QUERY,
@@ -112,7 +113,7 @@ async function getEventById(id: string, session: AuthSession): Promise<Event | n
 
 async function createEvent(payload: CreateEventPayload, session: AuthSession): Promise<Event> {
   validateSession(session)
-  await requirePermission('manage_events')
+  await requirePermission(PERMISSIONS.MANAGE_EVENTS)
 
   const { description, details, inventoryQuantity, price, ...rest } = payload
 
@@ -307,7 +308,7 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
 
 async function updateEvent(payload: UpdateEventPayload, session: AuthSession): Promise<Event> {
   validateSession(session)
-  await requirePermission('manage_events')
+  await requirePermission(PERMISSIONS.MANAGE_EVENTS)
 
   const existingEvent = await getEventById(payload.id, session)
   if (!existingEvent) throw new Error('Evento no encontrado.')
@@ -419,7 +420,7 @@ async function updateEvent(payload: UpdateEventPayload, session: AuthSession): P
 
 async function deleteEvent(id: string, session: AuthSession): Promise<string> {
   validateSession(session)
-  await requirePermission('manage_events')
+  await requirePermission(PERMISSIONS.MANAGE_EVENTS)
 
   const response = await makeAdminApiRequest<{
     productDelete: { deletedProductId: string; userErrors: any[] }

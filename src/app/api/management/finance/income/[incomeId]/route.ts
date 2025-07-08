@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
+import { PERMISSIONS } from '@/src/config/Permissions'
 import { requirePermission } from '@/src/modules/auth/server/server'
 
 export async function PUT(request: Request, { params }: { params: { incomeId: string } }) {
   try {
-    await requirePermission('manage_events')
+    await requirePermission(PERMISSIONS.MANAGE_EVENTS)
 
     const { incomeId } = params
     const { amount, category, description, notes, paymentMethod, relatedParty } =
@@ -48,7 +49,7 @@ export async function PUT(request: Request, { params }: { params: { incomeId: st
 
 export async function DELETE(request: Request, { params }: { params: { incomeId: string } }) {
   try {
-    await requirePermission('manage_events')
+    await requirePermission(PERMISSIONS.MANAGE_EVENTS)
 
     const { incomeId } = params
 

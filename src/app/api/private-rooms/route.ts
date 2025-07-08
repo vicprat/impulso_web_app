@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/modules/auth/server/server'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 export async function GET() {
-  await requirePermission('manage_private_rooms')
+  await requirePermission(PERMISSIONS.MANAGE_PRIVATE_ROOMS)
 
   const privateRooms = await prisma.privateRoom.findMany({
     include: { products: true, user: true },
@@ -14,7 +15,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  await requirePermission('manage_private_rooms')
+  await requirePermission(PERMISSIONS.MANAGE_PRIVATE_ROOMS)
 
   const { description, name, productIds, userId } = await req.json()
 

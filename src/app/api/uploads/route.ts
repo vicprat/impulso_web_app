@@ -3,6 +3,7 @@ import sharp from 'sharp'
 
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { requirePermission } from '@/modules/auth/server/server'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 const STAGED_UPLOADS_CREATE_MUTATION = `
   mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
@@ -46,7 +47,7 @@ interface StagedUploadsCreateResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    await requirePermission('manage_own_products')
+    await requirePermission(PERMISSIONS.MANAGE_OWN_PRODUCTS)
 
     const formData = await request.formData()
     const file = formData.get('file') as File | null

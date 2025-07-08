@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/modules/auth/server/server'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    await requirePermission('manage_private_rooms')
+    await requirePermission(PERMISSIONS.MANAGE_PRIVATE_ROOMS)
 
     const privateRoom = await prisma.privateRoom.findUnique({
       include: {
@@ -37,7 +38,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    await requirePermission('manage_private_rooms')
+    await requirePermission(PERMISSIONS.MANAGE_PRIVATE_ROOMS)
 
     const { description, name, productIds, userId } = await req.json()
 
@@ -90,7 +91,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    await requirePermission('manage_private_rooms')
+    await requirePermission(PERMISSIONS.MANAGE_PRIVATE_ROOMS)
 
     await prisma.privateRoom.delete({
       where: { id },
@@ -106,7 +107,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    await requirePermission('manage_private_rooms')
+    await requirePermission(PERMISSIONS.MANAGE_PRIVATE_ROOMS)
 
     const body = await req.json()
     const { description, name, productIds, userId, ...otherFields } = body

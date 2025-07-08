@@ -3,6 +3,7 @@ import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { Product } from '@/models/Product'
 import { requirePermission } from '@/modules/auth/server/server'
 import { type AuthSession } from '@/modules/auth/service'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 import {
   CREATE_PRODUCT_MUTATION,
@@ -164,7 +165,7 @@ async function createProduct(
   session: AuthSession
 ): Promise<Product> {
   validateSession(session)
-  await requirePermission('manage_own_products')
+  await requirePermission(PERMISSIONS.MANAGE_OWN_PRODUCTS)
 
   const user = await prisma.user.findUnique({
     include: { artist: true, role: true },
@@ -371,7 +372,7 @@ async function updateProduct(
   session: AuthSession
 ): Promise<Product> {
   validateSession(session)
-  await requirePermission('manage_own_products')
+  await requirePermission(PERMISSIONS.MANAGE_OWN_PRODUCTS)
 
   const existingProduct = await getProductById(payload.id, session)
   if (!existingProduct) throw new Error('Producto no encontrado o no tienes permiso para editarlo.')
@@ -467,7 +468,7 @@ async function updateProduct(
 
 async function deleteProduct(id: string, session: AuthSession): Promise<string> {
   validateSession(session)
-  await requirePermission('manage_own_products')
+  await requirePermission(PERMISSIONS.MANAGE_OWN_PRODUCTS)
 
   const productToDelete = await getProductById(id, session)
   if (!productToDelete) throw new Error('Producto no encontrado o no tienes permiso para borrarlo.')

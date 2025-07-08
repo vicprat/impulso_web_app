@@ -7,6 +7,7 @@ import {
   useCustomerProfile,
   useUpdateCustomerProfile,
 } from '@/modules/customer/hooks'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 import { postgresUserApi } from '../api'
 
@@ -87,13 +88,12 @@ export function useUpdateUserRoles() {
   const { hasPermission } = useAuth()
 
   return useMutation({
-    // ✅ CORREGIDO: Un solo rol, no array
     mutationFn: async ({ role, userId }: { userId: string; role: string }) => {
-      if (!hasPermission('manage_roles')) {
+      if (!hasPermission(PERMISSIONS.MANAGE_ROLES)) {
         throw new Error('No tienes permisos para gestionar roles')
       }
 
-      return postgresUserApi.updateUserRole(userId, role) // ✅ Un solo rol
+      return postgresUserApi.updateUserRole(userId, role)
     },
     onSuccess: (_, { userId }) => {
       void queryClient.invalidateQueries({ queryKey: ['user', userId] })
@@ -107,7 +107,7 @@ export function useDeactivateUser() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      if (!hasPermission('manage_users')) {
+      if (!hasPermission(PERMISSIONS.MANAGE_USERS)) {
         throw new Error('No tienes permisos para desactivar usuarios')
       }
 
@@ -123,7 +123,7 @@ export function useUsersManagement(filters?: UserFilters) {
   const { hasPermission } = useAuth()
 
   return useQuery({
-    enabled: hasPermission('manage_users'),
+    enabled: hasPermission(PERMISSIONS.MANAGE_USERS),
     queryFn: () => postgresUserApi.getAllUsers(filters),
     queryKey: ['users', filters],
     staleTime: 1 * 60 * 1000,
@@ -136,7 +136,7 @@ export function useReactivateUser() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      if (!hasPermission('manage_users')) {
+      if (!hasPermission(PERMISSIONS.MANAGE_USERS)) {
         throw new Error('No tienes permisos para reactivar usuarios')
       }
 
@@ -155,7 +155,7 @@ export function useToggleUserPublicStatus() {
 
   return useMutation({
     mutationFn: async ({ isPublic, userId }: { userId: string; isPublic: boolean }) => {
-      if (!hasPermission('manage_users')) {
+      if (!hasPermission(PERMISSIONS.MANAGE_USERS)) {
         throw new Error('No tienes permisos para gestionar la visibilidad pública de usuarios')
       }
 
@@ -169,7 +169,7 @@ export function useToggleUserPublicStatus() {
 
 export function useUserById(userId: string) {
   const { hasPermission, user } = useAuth()
-  const canView = hasPermission('manage_users') || user?.id === userId
+  const canView = hasPermission(PERMISSIONS.MANAGE_USERS) || user?.id === userId
 
   return useQuery({
     enabled: !!userId && canView,
@@ -185,7 +185,7 @@ export function useCanManageUser(targetUserId: string) {
 
   if (targetUserId === currentUser.id) return true
 
-  if (hasPermission('manage_users')) return true
+  if (hasPermission(PERMISSIONS.MANAGE_USERS)) return true
 
   return false
 }

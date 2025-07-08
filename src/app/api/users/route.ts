@@ -3,10 +3,11 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/modules/auth/server/server'
 import { type UserFilters } from '@/modules/user/types'
 import { getAllUsers } from '@/modules/user/user.service'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 export async function GET(request: NextRequest) {
   try {
-    await requirePermission('manage_users')
+    await requirePermission(PERMISSIONS.MANAGE_USERS)
 
     const searchParams = request.nextUrl.searchParams
     const page = parseInt(searchParams.get('page') ?? '1')

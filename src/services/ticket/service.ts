@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/modules/auth/server/server'
 import { type AuthSession } from '@/modules/auth/service'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 interface CreateTicketPayload {
   userId: string
@@ -55,7 +56,7 @@ async function getTicketsByUserId(userId: string, session: AuthSession) {
 
 async function updateTicket(payload: UpdateTicketPayload, session: AuthSession) {
   validateSession(session)
-  await requirePermission('manage_events')
+  await requirePermission(PERMISSIONS.MANAGE_EVENTS)
   const existingTicket = await prisma.ticket.findUnique({ where: { id: payload.id } })
   if (!existingTicket) {
     throw new Error('Boleto no encontrado.')

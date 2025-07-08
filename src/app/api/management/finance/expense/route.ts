@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
+import { PERMISSIONS } from '@/src/config/Permissions'
 import { requirePermission } from '@/src/modules/auth/server/server'
 
 export async function POST(request: Request) {
   try {
-    await requirePermission('manage_events')
+    await requirePermission(PERMISSIONS.MANAGE_EVENTS)
 
     const { amount, category, description, eventId, notes, paymentMethod, relatedParty } =
       await request.json()

@@ -2,10 +2,11 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/modules/auth/server/server'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requirePermission('manage_users')
+    const session = await requirePermission(PERMISSIONS.MANAGE_USERS)
 
     const body = await request.json()
     const { userId, vendorName } = body

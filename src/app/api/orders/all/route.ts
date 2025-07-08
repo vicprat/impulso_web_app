@@ -2,11 +2,12 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { requirePermission } from '@/modules/auth/server/server'
+import { PERMISSIONS } from '@/src/config/Permissions'
 import { GET_ALL_ORDERS_QUERY } from '@/src/modules/customer/queries'
 
 export async function GET(request: NextRequest) {
   try {
-    await requirePermission('view_all_orders')
+    await requirePermission(PERMISSIONS.VIEW_ALL_ORDERS)
 
     const { searchParams } = new URL(request.url)
     const firstParam = searchParams.get('first')

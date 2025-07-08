@@ -3,10 +3,11 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/modules/auth/server/server'
 import { updateUserRole } from '@/modules/user/user.service'
+import { PERMISSIONS } from '@/src/config/Permissions'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requirePermission('manage_roles')
+    const session = await requirePermission(PERMISSIONS.MANAGE_ROLES)
 
     const { id } = await params
     const targetUserId = id
