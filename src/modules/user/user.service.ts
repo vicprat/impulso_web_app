@@ -154,6 +154,7 @@ export const getUserById = async (userId: string) => {
           },
         },
       },
+      artist: true,
       links: true,
       profile: true,
     },

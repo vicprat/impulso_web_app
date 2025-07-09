@@ -15,9 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const { ...publicUser } = user
-
-    return NextResponse.json(publicUser)
+    return NextResponse.json(user)
   } catch (error) {
     console.error('Error fetching public user profile:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

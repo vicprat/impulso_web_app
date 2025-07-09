@@ -45,7 +45,7 @@ export async function requireAuth(): Promise<AuthSession> {
   return session
 }
 
-export async function requirePermission(permission: string): Promise<AuthSession> {
+export async function requirePermission(permissions: string | string[]): Promise<AuthSession> {
   const session = await requireAuth()
 
   const authConfig: AuthConfig = {
@@ -56,10 +56,19 @@ export async function requirePermission(permission: string): Promise<AuthSession
   }
 
   const authService = new AuthService(authConfig)
-  const hasPermission = await authService.hasPermission(session.user.id, permission)
 
-  if (!hasPermission) {
-    throw new Error(`Permission required: ${permission}`)
+  const permissionsToCheck = Array.isArray(permissions) ? permissions : [permissions];
+
+  let hasAnyPermission = false;
+  for (const perm of permissionsToCheck) {
+    if (await authService.hasPermission(session.user.id, perm)) {
+      hasAnyPermission = true;
+      break;
+    }
+  }
+
+  if (!hasAnyPermission) {
+    throw new Error(`Permission required: ${permissionsToCheck.join(' or ')}`)
   }
 
   return session

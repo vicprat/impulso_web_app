@@ -37,7 +37,7 @@ export const Route: React.FC<Props> = ({ children, fallback }) => {
     }
 
     if (routeMeta.requiredPermissions) {
-      const hasRequiredPermissions = routeMeta.requiredPermissions.every((permission) =>
+      const hasRequiredPermissions = routeMeta.requiredPermissions.some((permission) =>
         hasPermission(permission)
       )
       if (!hasRequiredPermissions) {

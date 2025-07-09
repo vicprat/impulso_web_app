@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
-import { requireAuth } from '@/modules/auth/server/server'
+import { PERMISSIONS } from '@/config/Permissions'
+import { requirePermission } from '@/modules/auth/server/server'
 import { productService } from '@/services/product/service'
 import { type UpdateProductPayload } from '@/services/product/types'
 
@@ -13,7 +14,7 @@ function getProductGid(id: string): string {
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requireAuth()
+    const session = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS)
     const { id } = await params
     const productGid = getProductGid(id)
 
@@ -29,14 +30,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json(product)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Error desconocido'
-    const status = message.includes('Permiso denegado') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requireAuth()
+    const session = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS)
     const { id } = await params
     const productGid = getProductGid(id)
     const body = await request.json()
@@ -48,18 +48,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json(updatedProduct)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Error desconocido'
-    const status = message.includes('Permiso denegado')
-      ? 403
-      : message.includes('no encontrado')
-        ? 404
-        : 400
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status: 400 })
   }
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requireAuth()
+    const session = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS)
     const { id } = await params
     const productGid = getProductGid(id)
 
@@ -68,11 +63,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return NextResponse.json({ deletedProductId, message: 'Producto eliminado exitosamente' })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Error desconocido'
-    const status = message.includes('Permiso denegado')
-      ? 403
-      : message.includes('no encontrado')
-        ? 404
-        : 500
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

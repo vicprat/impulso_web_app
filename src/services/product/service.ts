@@ -1,9 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { Product } from '@/models/Product'
-import { requirePermission } from '@/modules/auth/server/server'
 import { type AuthSession } from '@/modules/auth/service'
-import { PERMISSIONS } from '@/src/config/Permissions'
 
 import {
   CREATE_PRODUCT_MUTATION,
@@ -74,34 +72,64 @@ async function getProducts(
 ): Promise<PaginatedProductsResponse> {
   validateSession(session)
 
-  const user = await prisma.user.findUnique({
-    include: { artist: true, role: true },
-    where: { id: session.user.id },
-  })
-  if (!user) throw new Error('Usuario no encontrado.')
-
-  const userRoles = user.role?.name ? [user.role.name] : []
   let shopifyQuery = ''
 
-  if (userRoles.includes('admin') || userRoles.includes('manager')) {
-    if (params.search?.trim()) {
-      shopifyQuery = `(title:*${params.search}* OR product_type:*${params.search}* OR vendor:*${params.search}*)`
-    }
-  } else if (userRoles.includes('artist')) {
-    const vendorName = user.artist?.name
-    if (!vendorName) throw new Error('Perfil de artista incompleto.')
-    shopifyQuery = `vendor:'${vendorName}'`
-    if (params.search?.trim()) {
-      shopifyQuery += ` AND (title:*${params.search}* OR product_type:*${params.search}*)`
-    }
-  } else {
-    throw new Error('Permiso denegado para ver productos.')
+  if (params.search?.trim()) {
+    shopifyQuery = `(title:*${params.search}* OR product_type:*${params.search}* OR vendor:*${params.search}*)`
   }
 
+  if (params.vendor?.trim()) {
+    if (shopifyQuery) {
+      shopifyQuery += ` AND vendor:"${params.vendor}"`
+    } else {
+      shopifyQuery = `vendor:"${params.vendor}"`
+    }
+  }
+
+  if (params.status?.trim()) {
+    if (shopifyQuery) {
+      shopifyQuery += ` AND status:${params.status}`
+    } else {
+      shopifyQuery = `status:${params.status}`
+    }
+  }
+
+  let sortKey = 'TITLE' // Default sort key
+  let reverse = false // Default sort order
+
+  if (params.sortBy) {
+    switch (params.sortBy) {
+      case 'title':
+        sortKey = 'TITLE'
+        break
+      case 'price':
+        sortKey = 'PRICE'
+        break
+      case 'createdAt':
+        sortKey = 'CREATED_AT'
+        break
+      case 'updatedAt':
+        sortKey = 'UPDATED_AT'
+        break
+      case 'inventoryQuantity':
+        sortKey = 'INVENTORY_TOTAL'
+        break
+      default:
+        sortKey = 'TITLE'
+    }
+  }
+
+  if (params.sortOrder === 'desc') {
+    reverse = true
+  }
+
+  const limit = params.limit ? parseInt(String(params.limit), 10) : 10
   const variables = {
     after: params.cursor,
-    first: params.limit ? parseInt(String(params.limit), 10) : 10,
+    first: limit,
     query: shopifyQuery,
+    reverse,
+    sortKey,
   }
 
   const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
@@ -121,22 +149,6 @@ async function getProductById(id: string, session: AuthSession): Promise<Product
   )
   if (!response.product) return null
 
-  const user = await prisma.user.findUnique({
-    include: { artist: true, role: true },
-    where: { id: session.user.id },
-  })
-  const userRoles = user?.role?.name ? [user.role.name] : []
-
-  if (
-    !userRoles.includes('admin') &&
-    !userRoles.includes('manager') &&
-    userRoles.includes('artist')
-  ) {
-    if (response.product.vendor !== user?.artist?.name) {
-      throw new Error('Permiso denegado para ver este producto.')
-    }
-  }
-
   const locationId = await getPrimaryLocationId()
   return new Product(response.product, locationId)
 }
@@ -150,11 +162,20 @@ async function getProductsFromRequest(
   const params: GetProductsParams = {
     cursor: searchParams.get('cursor') ?? undefined,
     limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
+    page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : undefined,
     search: searchParams.get('search') ?? undefined,
+    sortBy: searchParams.get('sortBy') ?? undefined,
+    sortOrder: searchParams.get('sortOrder') as 'asc' | 'desc' | undefined,
+    status: searchParams.get('status') ?? undefined,
+    vendor: searchParams.get('vendor') ?? undefined,
   }
 
   if (params.limit && (params.limit < 1 || params.limit > 100)) {
     throw new Error('El límite debe estar entre 1 y 100')
+  }
+
+  if (params.page && params.page < 1) {
+    throw new Error('La página debe ser al menos 1')
   }
 
   return getProducts(params, session)
@@ -165,7 +186,6 @@ async function createProduct(
   session: AuthSession
 ): Promise<Product> {
   validateSession(session)
-  await requirePermission(PERMISSIONS.MANAGE_OWN_PRODUCTS)
 
   const user = await prisma.user.findUnique({
     include: { artist: true, role: true },
@@ -372,7 +392,6 @@ async function updateProduct(
   session: AuthSession
 ): Promise<Product> {
   validateSession(session)
-  await requirePermission(PERMISSIONS.MANAGE_OWN_PRODUCTS)
 
   const existingProduct = await getProductById(payload.id, session)
   if (!existingProduct) throw new Error('Producto no encontrado o no tienes permiso para editarlo.')
@@ -468,7 +487,6 @@ async function updateProduct(
 
 async function deleteProduct(id: string, session: AuthSession): Promise<string> {
   validateSession(session)
-  await requirePermission(PERMISSIONS.MANAGE_OWN_PRODUCTS)
 
   const productToDelete = await getProductById(id, session)
   if (!productToDelete) throw new Error('Producto no encontrado o no tienes permiso para borrarlo.')

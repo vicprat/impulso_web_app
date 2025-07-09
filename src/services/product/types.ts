@@ -4,6 +4,11 @@ export interface GetProductsParams {
   limit?: number
   cursor?: string
   search?: string
+  vendor?: string
+  page?: number
+  status?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
 export interface CreateProductPayload {

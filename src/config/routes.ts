@@ -67,6 +67,7 @@ export const ROUTES = {
       LABEL: 'Mi Perfil',
       PATH: '/profile',
       PERMISSIONS: [PERMISSIONS.VIEW_PROFILE, PERMISSIONS.UPDATE_PROFILE],
+      ROLES: [ROLES.ARTIST.NAME, ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
   },
 
@@ -107,21 +108,21 @@ export const ROUTES = {
       ICON: 'plus',
       LABEL: 'Crear Producto',
       PATH: '/manage-inventory/create',
-      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY],
+      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
     DETAIL: {
       ICON: 'edit',
       LABEL: 'Editar Producto',
       PATH: '/manage-inventory/:id',
-      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY],
+      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
     MAIN: {
       ICON: 'archive',
       LABEL: 'Inventario',
       PATH: '/manage-inventory',
-      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY],
+      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
   },
@@ -149,7 +150,7 @@ export const ROUTES = {
       LABEL: 'Acceder a Sala Privada',
       PATH: '/private-room',
       PERMISSIONS: [PERMISSIONS.VIEW_PRIVATE_ROOMS],
-      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.VIP_CUSTOMER.NAME],
     },
     CREATE: {
       ICON: 'plus',
@@ -233,10 +234,17 @@ export const ROUTES = {
   TICKETS: {
     MAIN: {
       ICON: 'ticket',
-      LABEL: 'Gestionar Tickets',
+      LABEL: 'Mis Tickets',
       PATH: '/manage-tickets',
-      PERMISSIONS: [PERMISSIONS.MANAGE_TICKETS],
-      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      PERMISSIONS: [PERMISSIONS.VIEW_ACQUIRED_TICKETS],
+      ROLES: [
+        ROLES.CUSTOMER.NAME,
+        ROLES.VIP_CUSTOMER.NAME,
+        ROLES.ARTIST.NAME,
+        ROLES.SUPPORT.NAME,
+        ROLES.MANAGER.NAME,
+        ROLES.ADMIN.NAME,
+      ],
     },
   },
 
@@ -316,7 +324,7 @@ export const filterRoutesByAccess = (
     const hasRequiredRole = !route.ROLES || route.ROLES.some((role) => userRoles.includes(role))
     const hasRequiredPermissions =
       !route.PERMISSIONS ||
-      route.PERMISSIONS.every((permission) => userPermissions.includes(permission))
+      route.PERMISSIONS.some((permission) => userPermissions.includes(permission))
 
     return hasRequiredRole && hasRequiredPermissions
   })
@@ -332,7 +340,7 @@ export const getDashboardNavRoutes = (
     ...Object.values(ROUTES.ADMIN),
     ROUTES.EVENTS.MAIN,
     ROUTES.USERS.MAIN,
-    ROUTES.PRIVATE_ROOMS.MAIN,
+    ROUTES.PRIVATE_ROOMS.ACCESS,
     ROUTES.INVENTORY.MAIN,
     ROUTES.TICKETS.MAIN,
   ]

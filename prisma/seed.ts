@@ -150,6 +150,12 @@ async function main() {
       name: 'view_private_rooms',
       resource: 'private_rooms',
     },
+    {
+      action: 'read',
+      description: 'Ver tickets adquiridos por el usuario',
+      name: 'view_acquired_tickets',
+      resource: 'tickets',
+    },
   ]
 
   console.log('📝 Creando permisos...')
@@ -176,6 +182,7 @@ async function main() {
         'manage_addresses',
         'manage_cart',
         'view_products',
+        'view_acquired_tickets',
       ],
     },
     {
@@ -193,6 +200,7 @@ async function main() {
         'view_products',
         'view_analytics',
         'view_private_rooms',
+        'view_acquired_tickets',
       ],
     },
     {
@@ -204,6 +212,8 @@ async function main() {
         'view_products',
         'manage_own_products',
         'manage_own_blog_posts',
+        'view_orders',
+        'view_acquired_tickets',
       ],
     },
     {
@@ -216,6 +226,7 @@ async function main() {
         'view_addresses',
         'view_products',
         'view_logs',
+        'view_acquired_tickets',
       ],
     },
     {
@@ -240,6 +251,7 @@ async function main() {
         'manage_private_rooms',
         'view_private_rooms',
         'manage_events',
+        'view_acquired_tickets',
       ],
     },
     {

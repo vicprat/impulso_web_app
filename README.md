@@ -46,17 +46,11 @@ Diseño base de la tienda y páginas de producto.
 🚧 Pendientes por Desarrollar
 A continuación, se presenta la lista de tareas prioritarias para completar el ecosistema.
 
-1. Herramientas de Contenido y Administración
-
-[ ] Blog: Crear un sistema de gestión de artículos y noticias para la galería.
-
-[ ] Perfiles Públicos: Desarrollar páginas de perfil públicas para Artistas, mostrando su biografía y obras. Considerar perfiles para Admin, Manager y Support si aplica.
-
-3. Módulos de Artista y Administración (En progreso)
+1. Módulos de Artista y Administración (En progreso)
 
 [ ] Dashboard Enriquecido: Mejorar los dashboards de los diferentes roles utilizando la Admin API para mostrar datos relevantes (ventas, vistas, etc.).
 
-4. Mejoras Generales y Refinamiento
+2. Mejoras Generales y Refinamiento
 
 [ ] Filtro por "Serie": Añadir la "Serie" de una obra como un tag inteligente y un filtro visible en la tienda.
 
@@ -67,3 +61,7 @@ A continuación, se presenta la lista de tareas prioritarias para completar el e
 [ ] UI/UX: Refinar el diseño de los dashboards y la experiencia del usuario en el proceso de filtrado y compra.
 
 [ ] CI/CD: Configurar un pipeline de integración y despliegue continuo para automatizar las actualizaciones.
+
+3. Herramientas de Contenido y Administración
+
+[ ] Blog: Crear un sistema de gestión de artículos y noticias para la galería.

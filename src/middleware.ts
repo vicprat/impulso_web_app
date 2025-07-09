@@ -235,7 +235,7 @@ async function checkUserAccess(
     }
 
     if (requiredPermissions.length > 0) {
-      const hasAllPermissions = requiredPermissions.every((permission) =>
+      const hasAllPermissions = requiredPermissions.some((permission) =>
         user.permissions.includes(permission)
       )
       if (!hasAllPermissions) {
