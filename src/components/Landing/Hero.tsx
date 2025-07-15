@@ -3,6 +3,7 @@
 
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
 import { ArrowDown, Pause, Play, Volume2, VolumeX } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -44,6 +45,9 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   const [showControls, setShowControls] = useState(false)
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
   const [isClient, setIsClient] = useState(false)
+
+  const { theme, setTheme } = useTheme()
+  const userPreferredThemeRef = useRef<string | undefined>(undefined)
 
   const particlePositions = useMemo(() => generateParticlePositions(20), [])
 
@@ -151,8 +155,25 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
             playerRef.current.pauseVideo()
           }
         }
+
+        if (entry.isIntersecting) {
+          if (entry.intersectionRatio > 0.5) {
+            if (theme !== 'dark') {
+              userPreferredThemeRef.current = theme
+              setTheme('dark')
+            }
+          } else {
+                 if (userPreferredThemeRef.current && theme !== userPreferredThemeRef.current) {
+              setTheme(userPreferredThemeRef.current)
+            }
+          }
+        } else {
+           if (userPreferredThemeRef.current && theme !== userPreferredThemeRef.current) {
+            setTheme(userPreferredThemeRef.current)
+          }
+        }
       },
-      { threshold: [0.1, 0.3, 0.7] }
+      { threshold: [0, 0.25, 0.5, 0.75, 1] }
     )
 
     const currentRef = containerRef.current
@@ -165,7 +186,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
         observer.unobserve(currentRef)
       }
     }
-  }, [isLoaded])
+  }, [isLoaded, theme, setTheme])
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -219,7 +240,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
     <motion.section
       ref={containerRef}
       style={{ opacity, y }}
-      className={`relative h-screen overflow-hidden bg-black ${className}`}
+      className={`relative min-h-screen pt-14 sm:pt-16 overflow-hidden bg-black ${className}`}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
     >
@@ -308,7 +329,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
       />
 
       <div
-        className={`absolute inset-0 flex flex-col ${
+        className={`absolute inset-0 flex flex-col pt-14 sm:pt-16 ${
           isTabletOrMobile
             ? 'items-center justify-center text-center'
             : 'items-start justify-center'
@@ -431,7 +452,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
         initial={{ opacity: 0, scale: 0.8 }}
         animate={showControls ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
         transition={{ duration: 0.3 }}
-        className='absolute right-4 top-4 z-20 flex items-center gap-2 sm:right-8 sm:top-6 sm:gap-3 md:right-12 md:top-8 lg:right-16 xl:right-24'
+        className='absolute right-4 top-20 z-20 flex items-center gap-2 sm:right-8 sm:top-20 sm:gap-3 md:right-12 md:top-20 lg:right-16 xl:right-24'
       >
         {[
           { icon: isPlaying ? Pause : Play, ml: !isPlaying, onClick: handlePlayPause },

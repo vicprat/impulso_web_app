@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 
+import { api as shopifyApi } from '@/modules/shopify/api'
 import { getPublicProfileByUserId } from '@/modules/user/user.service'
+
+import type { Product } from '@/src/modules/shopify/types'
 
 export async function GET(request: Request, { params }: { params: Promise<{ userId: string }> }) {
   try {
@@ -16,7 +19,25 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
       return NextResponse.json({ error: 'Public profile not found' }, { status: 404 })
     }
 
-    return NextResponse.json(userProfile)
+    let products: Product[] = []
+    if (userProfile.roles.includes('artist') && userProfile.artist?.name) {
+      try {
+        const productData = await shopifyApi.getProducts({
+          filters: { vendor: [userProfile.artist.name] },
+          first: 10,
+        })
+        products = productData.data.products
+      } catch (productError) {
+        console.error('[API/public-profiles/userId GET] Error fetching products:', productError)
+      }
+    }
+
+    const responseData = {
+      ...userProfile,
+      products,
+    }
+
+    return NextResponse.json(responseData)
   } catch (error) {
     console.error('[API/public-profiles/userId GET]', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

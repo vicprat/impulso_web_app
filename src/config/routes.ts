@@ -189,7 +189,14 @@ export const ROUTES = {
       ICON: 'user',
       IS_PUBLIC: true,
       LABEL: 'Perfil Público',
-      PATH: '/profile/:userId',
+      PATH: '/artists/:userId',
+    },
+    ARTISTS: {
+      DESCRIPTION: 'Lista de artistas públicos',
+      ICON: 'users',
+      IS_PUBLIC: true,
+      LABEL: 'Artistas',
+      PATH: '/artists',
     },
   },
 
@@ -351,9 +358,9 @@ export const getDashboardNavRoutes = (
 }
 
 export const getStoreNavRoutes = (): RouteConfig[] => {
-  const publicStoreRoutes = [ROUTES.PUBLIC.HOME, ROUTES.STORE.MAIN, ROUTES.COLLECTIONS.MAIN]
+  const publicStoreRoutes = [ROUTES.PUBLIC.HOME, ROUTES.STORE.MAIN, ROUTES.COLLECTIONS.MAIN, ROUTES.PUBLIC.ARTISTS]
 
-  return publicStoreRoutes.filter((route) => 'HIDE_IN_NAV' in route && !route.HIDE_IN_NAV)
+  return publicStoreRoutes.filter((route) => !route.HIDE_IN_NAV)
 }
 
 export const getSectionRoutes = (

@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { requireAuth } from '@/modules/auth/server/server'
-import { getUserById, upsertUserProfile } from '@/modules/user/user.service'
+import { getUserById, updateUserAndRelatedData } from '@/modules/user/user.service'
+
+const UserUpdateSchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+})
 
 const ProfileUpdateSchema = z.object({
   avatarUrl: z.string().optional(),
@@ -12,17 +17,27 @@ const ProfileUpdateSchema = z.object({
   occupation: z.string().optional(),
 })
 
+const CombinedUpdateSchema = UserUpdateSchema.merge(ProfileUpdateSchema)
+
 export async function PUT(request: Request) {
   try {
     const session = await requireAuth()
     const userId = session.user.id
 
     const json = await request.json()
-    const validatedData = ProfileUpdateSchema.parse(json)
+    const validatedData = CombinedUpdateSchema.parse(json)
 
-    const updatedProfile = await upsertUserProfile(userId, validatedData)
+    const { firstName, lastName, ...profileData } = validatedData
 
-    return NextResponse.json(updatedProfile, { status: 200 })
+    const updatedUser = await updateUserAndRelatedData(userId, {
+      profile: profileData,
+      user: {
+        firstName,
+        lastName,
+      },
+    })
+
+    return NextResponse.json(updatedUser, { status: 200 })
   } catch (error) {
     console.error('Error updating profile:', error)
 

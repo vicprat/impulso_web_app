@@ -2,7 +2,12 @@ import { type Links, type Profile } from '@prisma/client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-import { type LinkCreateInput, type LinkUpdateInput, type ProfileUpdateInput } from '@/types/user'
+import {
+  type LinkCreateInput,
+  type LinksOrderInput,
+  type LinkUpdateInput,
+  type UserAndProfileUpdateInput,
+} from '@/types/user'
 
 const PROFILE_QUERY_KEY = ['user', 'profile']
 const LINKS_QUERY_KEY = ['user', 'links']
@@ -33,7 +38,7 @@ export const useUserProfile = () => {
   })
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: ProfileUpdateInput) => {
+    mutationFn: async (data: UserAndProfileUpdateInput) => {
       const response = await fetch('/api/profile', {
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
@@ -111,6 +116,29 @@ export const useUserProfile = () => {
     },
   })
 
+  const updateLinksOrderMutation = useMutation({
+    mutationFn: async (data: LinksOrderInput) => {
+      const response = await fetch('/api/links/reorder', {
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      })
+      if (!response.ok) throw new Error('Failed to reorder links')
+      return response.json()
+    },
+    onError: (error) => {
+      toast.error('Error al reordenar los links', {
+        description: error instanceof Error ? error.message : 'Ocurrió un error inesperado',
+      })
+      // Optimistically revert
+      void queryClient.invalidateQueries({ queryKey: LINKS_QUERY_KEY })
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: LINKS_QUERY_KEY })
+      toast.success('Orden de los links actualizado')
+    },
+  })
+
   return {
     createLink: createLinkMutation.mutateAsync,
     deleteLink: deleteLinkMutation.mutateAsync,
@@ -119,10 +147,12 @@ export const useUserProfile = () => {
     isLinksLoading: linksQuery.isLoading,
     isProfileLoading: profileQuery.isLoading,
     isUpdatingLink: updateLinkMutation.isPending,
+    isUpdatingLinksOrder: updateLinksOrderMutation.isPending,
     isUpdatingProfile: updateProfileMutation.isPending,
     links: linksQuery.data,
     profile: profileQuery.data,
     updateLink: updateLinkMutation.mutateAsync,
+    updateLinksOrder: updateLinksOrderMutation.mutateAsync,
     updateProfile: updateProfileMutation.mutateAsync,
   }
 }

@@ -1,0 +1,7 @@
+<!-- public/placeholder-artist.jpg (simplified SVG placeholder) -->
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="200" height="200" fill="#E0E0E0"/>
+<circle cx="100" cy="70" r="40" fill="#BDBDBD"/>
+<rect x="50" y="130" width="100" height="20" fill="#BDBDBD"/>
+<rect x="75" y="160" width="50" height="10" fill="#BDBDBD"/>
+</svg>

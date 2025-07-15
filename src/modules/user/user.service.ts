@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 import type {
   LinkCreateInput,
+  LinksOrderInput,
   LinkUpdateInput,
   ProfileUpdateInput,
   UserFilters,
@@ -34,43 +35,41 @@ export const getLinksByUserId = async (userId: string) => {
 }
 
 export const createLink = async (userId: string, linkData: LinkCreateInput) => {
+  const currentLinks = await getLinksByUserId(userId)
+  const maxOrder = currentLinks.reduce((max, link) => (link.order > max ? link.order : max), -1)
+
   return await prisma.links.create({
     data: {
-      userId,
       ...linkData,
+      order: maxOrder + 1,
+      userId,
     },
   })
 }
 
 export const updateLink = async (linkId: string, userId: string, linkData: LinkUpdateInput) => {
-  const link = await prisma.links.findUnique({
-    where: { id: linkId },
-  })
-
-  if (!link || link.userId !== userId) {
-    throw new Error('Link not found or you do not have permission to update it.')
-  }
-
   return await prisma.links.update({
     data: linkData,
-    where: { id: linkId },
+    where: { id: linkId, userId },
   })
+}
+
+export const updateLinksOrder = async (userId: string, linksOrder: LinksOrderInput) => {
+  const transactions = linksOrder.map((link) =>
+    prisma.links.update({
+      data: { order: link.order },
+      where: { id: link.id, userId },
+    })
+  )
+
+  return await prisma.$transaction(transactions)
 }
 
 export const deleteLink = async (linkId: string, userId: string) => {
-  const link = await prisma.links.findUnique({
-    where: { id: linkId },
-  })
-
-  if (!link || link.userId !== userId) {
-    throw new Error('Link not found or you do not have permission to delete it.')
-  }
-
   return await prisma.links.delete({
-    where: { id: linkId },
+    where: { id: linkId, userId },
   })
 }
-
 export const getAllUsers = async (filters: UserFilters) => {
   const {
     isActive,
@@ -178,6 +177,7 @@ export const getPublicProfileByUserId = async (userId: string) => {
           role: true,
         },
       },
+      artist: true,
       links: true,
       profile: true,
     },

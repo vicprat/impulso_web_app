@@ -13,6 +13,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tiptap } from '../TipTap'
 
 interface ProfileFormData {
+  firstName: string
+  lastName: string
   bio: string
   description: string
   occupation: string
@@ -24,6 +26,8 @@ interface Props {
   isLoading?: boolean
   onSave: (data: ProfileFormData) => void
   profile?: {
+    firstName?: string | null
+    lastName?: string | null
     bio?: string | null
     description?: string | null
     occupation?: string | null
@@ -38,6 +42,8 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
     backgroundImageUrl: null,
     bio: '',
     description: '',
+    firstName: '',
+    lastName: '',
     occupation: '',
   })
 
@@ -48,6 +54,8 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
         backgroundImageUrl: profile.backgroundImageUrl ?? null,
         bio: profile.bio ?? '',
         description: profile.description ?? '',
+        firstName: profile.firstName ?? '',
+        lastName: profile.lastName ?? '',
         occupation: profile.occupation ?? '',
       })
     }
@@ -81,6 +89,37 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
 
   return (
     <form onSubmit={handleSubmit} className='space-y-6'>
+      <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+        {/* First Name Field */}
+        <div className='space-y-2'>
+          <Label htmlFor='firstName' className='font-medium text-foreground'>
+            Nombre
+          </Label>
+          <Input
+            type='text'
+            name='firstName'
+            id='firstName'
+            value={formData.firstName}
+            onChange={handleChange}
+            className='border-border bg-background focus:border-primary focus:ring-primary'
+          />
+        </div>
+
+        {/* Last Name Field */}
+        <div className='space-y-2'>
+          <Label htmlFor='lastName' className='font-medium text-foreground'>
+            Apellido
+          </Label>
+          <Input
+            type='text'
+            name='lastName'
+            id='lastName'
+            value={formData.lastName}
+            onChange={handleChange}
+            className='border-border bg-background focus:border-primary focus:ring-primary'
+          />
+        </div>
+      </div>
       {/* Avatar Field */}
       <div className='space-y-2'>
         <Label htmlFor='avatar' className='font-medium text-foreground'>

@@ -7,12 +7,15 @@ export interface UserProfile {
   email: string
   firstName?: string
   lastName?: string
+  name?: string 
   isActive: boolean
   createdAt: Date
   updatedAt: Date
   lastLoginAt?: Date
 
-  isPublic: boolean // ✅ NUEVO: Campo para visibilidad pública del perfil
+  isPublic: boolean
+  bio?: string | null
+  profileImage?: string | null
 
   // Estado de sincronización
   needsShopifySync?: boolean
