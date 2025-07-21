@@ -12,8 +12,10 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Landing } from '@/components/Landing'
 import { Button } from '@/components/ui/button'
 import { useEmblaParallax } from '@/hooks/useEmblaParallax'
+import { Card } from '@/src/components/Card'
 import { ROUTES } from '@/src/config/routes'
 import { usePublicArtists } from '@/src/modules/user/hooks/management'
+
 
 interface Slide {
   imageUrl: string
@@ -368,7 +370,32 @@ export default function Page() {
         <ParallaxHeroCarousel slides={heroSlides} />
       </section>
 
-      <pre>{JSON.stringify(artists, null, 2)}</pre>
+      <section className='py-20'>
+        <div className='container mx-auto px-6'>
+          <motion.h2
+            variants={slideUp}
+            initial='initial'
+            whileInView='animate'
+            viewport={{ once: true }}
+            className='mb-8 text-center text-3xl font-semibold text-gray-800 dark:text-gray-200'
+          >
+            Artistas Destacados
+          </motion.h2>
+          <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4'>
+            {artists?.map((artist) => (
+              <motion.div
+                key={artist.id}
+                variants={fadeIn}
+                initial='initial'
+                whileInView='animate'
+                viewport={{ amount: 0.4, once: true }}
+              >
+                <Card.Artist artist={artist} />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className='bg-gray-50 py-20 dark:bg-gray-900'>
         <div className='container mx-auto px-6'>

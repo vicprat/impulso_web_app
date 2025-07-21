@@ -222,3 +222,11 @@ export interface UserTransformer {
    */
   extractPermissions(userRoles: UserWithUserRole['UserRole']): string[]
 }
+
+export type PublicArtist = {
+  id: string
+  name: string
+  biography: string | null
+  profile_image_url: string | null
+  background_image_url: string | null
+}

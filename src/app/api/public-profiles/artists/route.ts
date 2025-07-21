@@ -13,6 +13,7 @@ export async function GET() {
         profile: {
           select: {
             avatarUrl: true,
+            backgroundImageUrl: true,
             bio: true,
             occupation: true,
           },
@@ -29,7 +30,6 @@ export async function GET() {
         isPublic: true,
       },
     })
-
     return NextResponse.json(artists)
   } catch (error) {
     console.error('[API/public-profiles/artists GET]', error)

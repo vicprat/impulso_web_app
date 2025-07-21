@@ -1,4 +1,4 @@
-import { type UserFilters } from './types'
+import { type PublicArtist, type UserFilters } from './types'
 
 export const postgresUserApi = {
   deactivateUser: async (userId: string) => {
@@ -41,7 +41,7 @@ export const postgresUserApi = {
     return response.json()
   },
 
-  getPublicArtists: async () => {
+  getPublicArtists: async (): Promise<PublicArtist[]> => {
     const response = await fetch(`/api/public-profiles/artists`, {
       headers: {
         'Content-Type': 'application/json',
@@ -53,8 +53,7 @@ export const postgresUserApi = {
       const error = await response.json()
       throw new Error(error.error ?? 'Error al obtener artistas públicos')
     }
-
-    return response.json()
+    return response.json() 
   },
 
   getPublicProfile: async (userId: string) => {

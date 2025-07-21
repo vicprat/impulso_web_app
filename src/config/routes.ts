@@ -219,7 +219,7 @@ export const ROUTES = {
       DESCRIPTION: 'Explorar todos los productos',
       ICON: 'shopping-bag',
       IS_PUBLIC: true,
-      LABEL: 'Tienda',
+      LABEL: 'Galería',
       PATH: '/store',
     },
     PRODUCT_DETAIL: {
@@ -360,7 +360,7 @@ export const getDashboardNavRoutes = (
 export const getStoreNavRoutes = (): RouteConfig[] => {
   const publicStoreRoutes = [ROUTES.PUBLIC.HOME, ROUTES.STORE.MAIN, ROUTES.COLLECTIONS.MAIN, ROUTES.PUBLIC.ARTISTS]
 
-  return publicStoreRoutes.filter((route) => !route.HIDE_IN_NAV)
+  return publicStoreRoutes.filter((route) => 'HIDE_IN_NAV' in route && !route.HIDE_IN_NAV)
 }
 
 export const getSectionRoutes = (
