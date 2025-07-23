@@ -3,11 +3,11 @@ import { type CustomerAddress } from '../auth/types'
 export interface UserProfile {
   // Datos básicos del usuario
   id: string
-  shopifyCustomerId: string
+  shopifyCustomerId?: string
   email: string
   firstName?: string
   lastName?: string
-  name?: string 
+  name?: string
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -54,7 +54,7 @@ export interface UserProfile {
 // ✅ NUEVO: Tipo para los datos crudos de la base de datos con UserRole
 export interface UserWithUserRole {
   id: string
-  shopifyCustomerId: string
+  shopifyCustomerId?: string
   email: string
   firstName?: string
   lastName?: string
@@ -156,7 +156,7 @@ export interface UserRoleInfo {
 
 // ✅ NUEVO: Tipo para crear/actualizar usuarios
 export interface UserCreateInput {
-  shopifyCustomerId: string
+  shopifyCustomerId?: string
   email: string
   firstName?: string
   lastName?: string
@@ -223,10 +223,11 @@ export interface UserTransformer {
   extractPermissions(userRoles: UserWithUserRole['UserRole']): string[]
 }
 
-export type PublicArtist = {
+export interface PublicArtist {
   id: string
   name: string
-  biography: string | null
-  profile_image_url: string | null
-  background_image_url: string | null
+  bio: string | null
+  profileImage: string | null
+  backgroundImageUrl: string | null
+  email: string
 }

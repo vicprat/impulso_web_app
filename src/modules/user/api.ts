@@ -53,7 +53,7 @@ export const postgresUserApi = {
       const error = await response.json()
       throw new Error(error.error ?? 'Error al obtener artistas públicos')
     }
-    return response.json() 
+    return response.json()
   },
 
   getPublicProfile: async (userId: string) => {

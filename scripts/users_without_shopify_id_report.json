@@ -1,0 +1,371 @@
+{
+  "generatedAt": "2025-07-23T17:31:23.799Z",
+  "statistics": {
+    "totalUsers": 45,
+    "usersWithShopifyId": 5,
+    "usersWithoutShopifyId": 40,
+    "percentageWithoutShopifyId": "88.89"
+  },
+  "usersWithoutShopifyId": [
+    {
+      "id": "cmddyjs4m0005cs2ctq90cm5f",
+      "email": "trnqiloartista2025@gmail.com",
+      "firstName": "Tranquilo",
+      "lastName": ".",
+      "createdAt": "2025-04-23T01:59:15.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjs66000ccs2c1m0pt60y",
+      "email": "t54898600@gmail.com",
+      "firstName": "TRANQUILO",
+      "lastName": ".",
+      "createdAt": "2025-03-06T04:33:58.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjs7t000lcs2cxmrnvtcp",
+      "email": "tzontligaleria@gmail.com",
+      "firstName": "TZONTLI",
+      "lastName": null,
+      "createdAt": "2024-10-19T06:30:52.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjs9a000scs2cn20m8xbs",
+      "email": "johnvazna@gmail.com",
+      "firstName": "John",
+      "lastName": "Vazquez",
+      "createdAt": "2024-08-27T23:18:08.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsag000xcs2ci5tr8khe",
+      "email": "arellano.jma@gmail.com",
+      "firstName": "Juan Manuel",
+      "lastName": "Arellano",
+      "createdAt": "2024-08-05T20:53:53.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsbj0012cs2ctcy73lpz",
+      "email": "5uzat3@gmail.com",
+      "firstName": "Lover",
+      "lastName": "Cryaz",
+      "createdAt": "2024-06-06T18:57:35.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjscn0017cs2c0jekjhxz",
+      "email": "042b8uq@gmail.com",
+      "firstName": "Lover",
+      "lastName": "Cryaz",
+      "createdAt": "2024-06-06T18:32:04.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsdo001ccs2cecw8k10j",
+      "email": "ojjm6bq6z@gmail.com",
+      "firstName": "Lover",
+      "lastName": "Cryaz",
+      "createdAt": "2024-06-06T12:19:51.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjses001hcs2c5m7yga1w",
+      "email": "pr0cod@gmail.com",
+      "firstName": "Lover",
+      "lastName": "Cryaz",
+      "createdAt": "2024-06-06T12:14:10.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsfv001mcs2cbetpbnjk",
+      "email": "kcexkx@gmail.com",
+      "firstName": "Lover",
+      "lastName": "Cryaz",
+      "createdAt": "2024-06-06T09:56:18.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsgy001rcs2cykyox2wi",
+      "email": "samwatson11@gmail.com",
+      "firstName": "Sam",
+      "lastName": "Watson",
+      "createdAt": "2024-04-19T14:31:35.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsi0001wcs2c5zb2vggb",
+      "email": "cmzaratec@gmail.com",
+      "firstName": "Christian Manuel",
+      "lastName": "Zárate Calvillo",
+      "createdAt": "2023-08-10T21:44:35.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsj30021cs2c9sy28pod",
+      "email": "bettygarcia410@icloud.com",
+      "firstName": "Beatriz",
+      "lastName": "Garcia",
+      "createdAt": "2023-05-22T02:18:08.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsk70026cs2cnwkpcmdz",
+      "email": "KarimEdgarAlan2023@gmail.com",
+      "firstName": "Edgar Alan",
+      "lastName": "Uribe",
+      "createdAt": "2023-03-21T04:20:44.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsls002hcs2ctz7lshzr",
+      "email": "valerio.perino@gmail.com",
+      "firstName": "Tempio",
+      "lastName": "Industriale",
+      "createdAt": "2022-02-20T10:23:57.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsne002scs2cfb910syh",
+      "email": "pyramyd.22@gmail.com",
+      "firstName": "Pyramyd",
+      "lastName": null,
+      "createdAt": "2022-01-29T03:43:15.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsou0031cs2clx2b7dfw",
+      "email": "samottt.22@gmail.com",
+      "firstName": "samot",
+      "lastName": null,
+      "createdAt": "2022-01-29T03:38:10.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsq8003acs2c4juwlvn2",
+      "email": "angellaholguin@hotmail.com",
+      "firstName": "Angella",
+      "lastName": "ZUNIGA HOLGUIN",
+      "createdAt": "2022-01-12T22:13:36.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsrf003fcs2c5q9z0let",
+      "email": "alixyolitzin@gmail.com",
+      "firstName": "Alix",
+      "lastName": "Yolitzin",
+      "createdAt": "2022-01-11T22:16:57.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjst3003scs2c1pj34bz1",
+      "email": "andres.globalnet@gmail.com",
+      "firstName": "Andrés",
+      "lastName": "Alcocer",
+      "createdAt": "2022-01-11T00:43:39.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsu9003xcs2c0tcwddzh",
+      "email": "paccontemporaneo@gmail.com",
+      "firstName": "Julia Martínez y",
+      "lastName": "Omar Jérez",
+      "createdAt": "2021-12-22T01:42:33.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsvh0044cs2cg9qymnh2",
+      "email": "antoniooconnell@gmail.com",
+      "firstName": "Antonio",
+      "lastName": "O'Conell",
+      "createdAt": "2021-12-22T01:37:06.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjswk0049cs2cetvmmk27",
+      "email": "dotinart@hotmail.com",
+      "firstName": "Domingo",
+      "lastName": "Martin",
+      "createdAt": "2021-12-22T01:33:21.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsxm004ecs2ctgjz02ye",
+      "email": "luzdelcarmenmagana@hotmail.com",
+      "firstName": "Lucy",
+      "lastName": "Magaña",
+      "createdAt": "2021-12-22T01:26:06.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjsyn004jcs2cjtlfxtqk",
+      "email": "liliana.galvez.heras@gmail.com",
+      "firstName": "Liliana",
+      "lastName": "Gálvez",
+      "createdAt": "2021-12-22T01:23:09.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjszy004qcs2cwxl1nd0x",
+      "email": "artefernandoguevara@hotmail.com",
+      "firstName": "Fernando",
+      "lastName": "Guevara",
+      "createdAt": "2021-12-22T01:18:56.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjt18004vcs2c2pjx4wbf",
+      "email": "giovana.g9@gmail.com",
+      "firstName": "Giovana",
+      "lastName": "Avalos",
+      "createdAt": "2021-12-21T22:02:30.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjt2t0052cs2cmi68oqsn",
+      "email": "xavi_qro@hotmail.com",
+      "firstName": "Xavier",
+      "lastName": "Elizarraras",
+      "createdAt": "2021-12-20T23:03:20.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjt4h005bcs2c2q3h74a4",
+      "email": "persa7es@hotmail.com",
+      "firstName": "Rafael",
+      "lastName": "Esquivel",
+      "createdAt": "2021-12-16T04:45:03.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjt5z005kcs2clqsbat78",
+      "email": "jmmferrer@gmail.com",
+      "firstName": "Artífice",
+      "lastName": "Ácrata",
+      "createdAt": "2021-12-15T06:08:46.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjt7h005vcs2com88ptaf",
+      "email": "nelius_2788alco@hotmail.com",
+      "firstName": "Andrés",
+      "lastName": "Alcocer",
+      "createdAt": "2021-12-09T01:53:39.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjt8x0064cs2crljqqk3v",
+      "email": "edgaralanuribe@gmail.com",
+      "firstName": "EDGAR ALAN",
+      "lastName": "URIBE RODRIGUEZ",
+      "createdAt": "2021-12-08T20:53:13.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjtaa006bcs2cfs9gge9d",
+      "email": "rbearm@hotmail.com",
+      "firstName": "Roberto",
+      "lastName": "Bear",
+      "createdAt": "2021-11-25T22:03:14.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjtbq006kcs2c12bctd5r",
+      "email": "macp.carbajal@gmail.com",
+      "firstName": "El Desaparecido",
+      "lastName": "Carbajal",
+      "createdAt": "2021-11-17T06:45:47.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjtdh006xcs2ceoljwsg1",
+      "email": "gestionpabloquerea@gmail.com",
+      "firstName": "Pablo",
+      "lastName": "Querea Gutierrez",
+      "createdAt": "2021-11-17T04:50:50.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjtez0078cs2cf807fxhe",
+      "email": "mauriciosuarez10@gmail.com",
+      "firstName": "mauricio",
+      "lastName": "suarez",
+      "createdAt": "2021-11-16T23:43:57.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjtg4007dcs2ce76sqls7",
+      "email": "osiel_guerrero@outlook.com",
+      "firstName": "Osiel",
+      "lastName": "Guerrero",
+      "createdAt": "2021-11-10T06:55:23.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjthr007ocs2cq3atbdz3",
+      "email": "danny_garciah@hotmail.com",
+      "firstName": "danny",
+      "lastName": null,
+      "createdAt": "2021-11-09T00:22:04.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjtit007tcs2cykzjlwqn",
+      "email": "isc.josue.nava@gmail.com",
+      "firstName": "Josue",
+      "lastName": "Nava",
+      "createdAt": "2021-08-10T23:13:50.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    },
+    {
+      "id": "cmddyjtjw007ycs2cl1pc6cb0",
+      "email": "impulsogaleria@gmail.com",
+      "firstName": "Alejandro",
+      "lastName": "Chavez",
+      "createdAt": "2021-08-03T22:51:08.000Z",
+      "lastLoginAt": null,
+      "isActive": true
+    }
+  ]
+}

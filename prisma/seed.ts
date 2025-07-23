@@ -110,7 +110,7 @@ async function main() {
       resource: 'inventory',
     },
 
-    // Permisos de artistas (si planeas permitir gestión)
+    // Permisos de colaboradores (antes artistas)
     {
       action: 'crud_own',
       description: 'Crear, editar y borrar sus propios productos',
@@ -128,6 +128,32 @@ async function main() {
       description: 'Gestionar todos los artículos de blog',
       name: 'manage_all_blog_posts',
       resource: 'blog_posts',
+    },
+
+    // Permisos financieros para colaboradores
+    {
+      action: 'read_own',
+      description: 'Ver sus propias entradas financieras',
+      name: 'view_own_financials',
+      resource: 'financials',
+    },
+    {
+      action: 'create',
+      description: 'Crear entradas financieras propias',
+      name: 'create_financial_entries',
+      resource: 'financials',
+    },
+    {
+      action: 'read_all',
+      description: 'Ver todas las entradas financieras',
+      name: 'view_all_financials',
+      resource: 'financials',
+    },
+    {
+      action: 'crud_all',
+      description: 'Gestionar todas las entradas financieras',
+      name: 'manage_all_financials',
+      resource: 'financials',
     },
 
     // Permisos especiales
@@ -155,6 +181,55 @@ async function main() {
       description: 'Ver tickets adquiridos por el usuario',
       name: 'view_acquired_tickets',
       resource: 'tickets',
+    },
+    // Permisos de finanzas
+    {
+      action: 'crud',
+      description: 'Gestionar finanzas',
+      name: 'manage_finance',
+      resource: 'finance',
+    },
+    {
+      action: 'read',
+      description: 'Ver reportes financieros',
+      name: 'view_finance_reports',
+      resource: 'finance',
+    },
+    {
+      action: 'crud',
+      description: 'Gestionar cuentas bancarias',
+      name: 'manage_bank_accounts',
+      resource: 'bank_accounts',
+    },
+    {
+      action: 'crud',
+      description: 'Gestionar movimientos financieros',
+      name: 'manage_financial_entries',
+      resource: 'financial_entries',
+    },
+    {
+      action: 'read',
+      description: 'Ver movimientos financieros',
+      name: 'view_financial_entries',
+      resource: 'financial_entries',
+    },
+    {
+      action: 'crud',
+      description: 'Gestionar catálogos de proveedores',
+      name: 'manage_providers',
+      resource: 'providers',
+    },
+    {
+      action: 'crud',
+      description: 'Gestionar catálogos de empleados',
+      name: 'manage_employees',
+      resource: 'employees',
+    },
+    {
+      action: 'crud',
+      description: 'Gestionar catálogos de socios',
+      name: 'manage_partners',
+      resource: 'partners',
     },
   ]
 
@@ -204,7 +279,7 @@ async function main() {
       ],
     },
     {
-      description: 'Colaborador que puede gestionar sus propias obras',
+      description: 'Artista que puede gestionar sus propias obras y finanzas',
       name: 'artist',
       permissions: [
         'view_profile',
@@ -214,6 +289,29 @@ async function main() {
         'manage_own_blog_posts',
         'view_orders',
         'view_acquired_tickets',
+        'manage_finance',
+        'view_financial_entries',
+      ],
+    },
+    {
+      description: 'Empleado de la empresa',
+      name: 'employee',
+      permissions: ['view_profile', 'update_profile', 'manage_employees', 'view_financial_entries'],
+    },
+    {
+      description: 'Proveedor de servicios o productos',
+      name: 'provider',
+      permissions: ['view_profile', 'update_profile', 'manage_providers', 'view_financial_entries'],
+    },
+    {
+      description: 'Socio de la empresa',
+      name: 'partner',
+      permissions: [
+        'view_profile',
+        'update_profile',
+        'manage_partners',
+        'view_financial_entries',
+        'view_finance_reports',
       ],
     },
     {
@@ -252,6 +350,14 @@ async function main() {
         'view_private_rooms',
         'manage_events',
         'view_acquired_tickets',
+        'manage_finance',
+        'manage_bank_accounts',
+        'manage_financial_entries',
+        'view_financial_entries',
+        'view_finance_reports',
+        'manage_providers',
+        'manage_employees',
+        'manage_partners',
       ],
     },
     {
@@ -326,7 +432,7 @@ async function main() {
   console.log(`
 📊 Resumen:
    - Permisos creados: ${totalPermissions}
-   - Roles creados: ${totalRoles}
+   - Roles creados: ${totalRoles}  
    - Configuraciones: ${totalConfigs}
 
 🚀 Tu sistema de autenticación está listo!

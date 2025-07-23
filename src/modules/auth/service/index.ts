@@ -13,7 +13,7 @@ import {
 export interface AuthSession {
   user: {
     id: string
-    shopifyCustomerId: string
+    shopifyCustomerId?: string
     email: string
     firstName?: string
     lastName?: string
@@ -85,7 +85,7 @@ export class AuthService {
           lastName: user.lastName ?? undefined,
           permissions: effectivePermissions,
           roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
-          shopifyCustomerId: user.shopifyCustomerId,
+          shopifyCustomerId: user.shopifyCustomerId ?? undefined,
         },
       }
     } catch (error) {
@@ -140,7 +140,7 @@ export class AuthService {
           lastName: existingSession.user.lastName ?? undefined,
           permissions: effectivePermissions,
           roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
-          shopifyCustomerId: existingSession.user.shopifyCustomerId,
+          shopifyCustomerId: existingSession.user.shopifyCustomerId ?? undefined,
         },
       }
     } catch (error) {
@@ -205,7 +205,7 @@ export class AuthService {
           lastName: session.user.lastName ?? undefined,
           permissions: effectivePermissions,
           roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
-          shopifyCustomerId: session.user.shopifyCustomerId,
+          shopifyCustomerId: session.user.shopifyCustomerId ?? undefined,
         },
       }
     } catch (error) {
@@ -308,19 +308,36 @@ export class AuthService {
   }
 
   private async upsertUser(customerInfo: CustomerInfo) {
-    const existingUser = await prisma.user.findUnique({
+    // Primero buscar por shopifyCustomerId
+    let existingUser = await prisma.user.findUnique({
       include: { UserRole: true },
       where: { shopifyCustomerId: customerInfo.id },
     })
 
+    // Si no se encuentra por shopifyCustomerId, buscar por email
+    if (!existingUser) {
+      existingUser = await prisma.user.findUnique({
+        include: { UserRole: true },
+        where: { email: customerInfo.email },
+      })
+    }
+
     if (existingUser) {
+      // Si el usuario existe pero no tiene shopifyCustomerId, actualizarlo
+      const updateData: any = {
+        email: customerInfo.email,
+        firstName: customerInfo.firstName,
+        lastLoginAt: new Date(),
+        lastName: customerInfo.lastName,
+      }
+
+      // Solo actualizar shopifyCustomerId si no lo tiene
+      if (!existingUser.shopifyCustomerId) {
+        updateData.shopifyCustomerId = customerInfo.id
+      }
+
       return prisma.user.update({
-        data: {
-          email: customerInfo.email,
-          firstName: customerInfo.firstName,
-          lastLoginAt: new Date(),
-          lastName: customerInfo.lastName,
-        },
+        data: updateData,
         where: { id: existingUser.id },
       })
     }

@@ -9,15 +9,15 @@ import { ROUTES, replaceRouteParams } from '@/src/config/routes'
 
 interface ArtistProps {
   artist: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    email: string;
+    id: string
+    firstName?: string
+    lastName?: string
+    email: string
     profile?: {
-      avatarUrl?: string;
-      bio?: string;
-    };
-  };
+      avatarUrl?: string
+      bio?: string
+    }
+  }
 }
 
 export const Artist: React.FC<ArtistProps> = ({ artist }) => {
@@ -59,7 +59,7 @@ export const Artist: React.FC<ArtistProps> = ({ artist }) => {
           )}
 
           <div className='absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-300 group-hover:translate-y-0'>
-            <div className='border-t border-border bg-card/90 p-3 backdrop-blur-sm'>
+            <div className='bg-card/90 border-t border-border p-3 backdrop-blur-sm'>
               <p className='text-center text-xs text-muted-foreground'>Ver perfil del artista</p>
             </div>
           </div>
@@ -79,8 +79,6 @@ export const Artist: React.FC<ArtistProps> = ({ artist }) => {
               </h3>
             </Link>
           </div>
-
-        
         </div>
       </CardContent>
     </Card>

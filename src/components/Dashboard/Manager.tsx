@@ -31,6 +31,7 @@ import {
 } from '@/src/modules/dashboard/hooks'
 
 import { Guard } from '../Guards'
+import { FinanceOverview } from './FinanceOverview'
 import { Badge } from '../ui/badge'
 
 interface TopProduct {
@@ -456,6 +457,11 @@ export const Manager = () => {
             Opciones para exportar datos aquí...
           </div>
         </ChartCard>
+      </Guard.Permission>
+
+      {/* Finance Overview */}
+      <Guard.Permission permission={PERMISSIONS.VIEW_FINANCE_REPORTS}>
+        <FinanceOverview role='manager' showDetails={true} />
       </Guard.Permission>
     </div>
   )

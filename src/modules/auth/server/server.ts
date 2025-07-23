@@ -57,13 +57,13 @@ export async function requirePermission(permissions: string | string[]): Promise
 
   const authService = new AuthService(authConfig)
 
-  const permissionsToCheck = Array.isArray(permissions) ? permissions : [permissions];
+  const permissionsToCheck = Array.isArray(permissions) ? permissions : [permissions]
 
-  let hasAnyPermission = false;
+  let hasAnyPermission = false
   for (const perm of permissionsToCheck) {
     if (await authService.hasPermission(session.user.id, perm)) {
-      hasAnyPermission = true;
-      break;
+      hasAnyPermission = true
+      break
     }
   }
 

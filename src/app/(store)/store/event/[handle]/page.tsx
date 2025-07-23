@@ -1,143 +1,91 @@
+'use client'
 import { notFound } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 import { type Event } from '@/models/Event'
-import { getServerSession } from '@/modules/auth/server/server'
-import { api } from '@/modules/shopify/api'
-import {
-  getPrivateProductIds,
-  getPrivateRoomByUserId,
-  shopifyService,
-} from '@/modules/shopify/service'
+import { getPrivateProductIds, shopifyService } from '@/modules/shopify/service'
+import { useAuth } from '@/src/modules/auth/context/useAuth'
+import { useGetEventByHandle } from '@/src/services/event/hook'
 
 import { EventClient } from './EventClient'
 
 import type { Product } from '@/src/modules/shopify/types'
 
-interface PrivateRoomProduct {
-  id: string
-  privateRoomId: string
-  productId: string
+interface EventPageProps {
+  params: Promise<{ handle: string }>
 }
 
-export default async function EventPage({ params }: { params: Promise<{ handle: string }> }) {
-  const { handle } = await params
+export default function EventPage({ params }: EventPageProps) {
+  const [handle, setHandle] = useState<string | null>(null)
+  const [privateProductIds, setPrivateProductIds] = useState<string[]>([])
+  const [relatedEvents, setRelatedEvents] = useState<Event[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
-  try {
-    const session = await getServerSession()
-    const privateProductIds = await getPrivateProductIds()
+  const { user } = useAuth()
+  const { data: event, isLoading: eventLoading } = useGetEventByHandle(handle || '')
 
-    let productResponse
-    let event: Event | null = null
+  useEffect(() => {
+    const initializePage = async () => {
+      try {
+        const { handle: eventHandle } = await params
+        setHandle(eventHandle)
 
-    try {
-      productResponse = await api.getProductByHandle(handle)
-      event = productResponse.data as Event
-    } catch (error) {
-      console.error('Error fetching product by handle:', error)
-      if (!session) {
-        notFound()
-      }
-      event = null
-    }
-
-    if (!event) {
-      notFound()
-    }
-
-    if (event.productType !== 'Evento') {
-      notFound()
-    }
-
-    if (privateProductIds.includes(event.id)) {
-      if (!session) {
-        notFound()
-      }
-
-      const userRoles = session.user.roles
-      const isAdminOrManager = userRoles.includes('admin') || userRoles.includes('manager')
-      const isVipCustomer = userRoles.includes('vip_customer')
-
-      if (isAdminOrManager) {
-        // Allow access
-      } else if (isVipCustomer) {
-        try {
-          const userPrivateRoom = await getPrivateRoomByUserId(session.user.id)
-
-          if (
-            !userPrivateRoom?.products.some((p: PrivateRoomProduct) => p.productId === event.id)
-          ) {
-            notFound()
-          }
-        } catch (privateRoomError) {
-          console.error('Error checking private room access:', privateRoomError)
-          notFound()
-        }
-      } else {
-        notFound()
+        // Obtener IDs de productos privados
+        const privateIds = await getPrivateProductIds()
+        setPrivateProductIds(privateIds)
+      } catch (err) {
+        setError(err as Error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    let relatedEvents: Event[] = []
-    try {
-      const relatedProducts = await shopifyService.getRelatedProducts(event as Product)
-      relatedEvents = relatedProducts.filter((p) => p.productType === 'Evento') as Event[]
-    } catch (relatedError) {
-      console.error('Error fetching related events:', relatedError)
-      relatedEvents = []
+    initializePage()
+  }, [params])
+
+  useEffect(() => {
+    const fetchRelatedEvents = async () => {
+      if (!event) return
+
+      try {
+        const relatedProducts = await shopifyService.getRelatedProducts(event as Product)
+        const filteredEvents = relatedProducts.filter((p) => p.productType === 'Evento') as Event[]
+        setRelatedEvents(filteredEvents)
+      } catch (relatedError) {
+        console.error('Error fetching related events:', relatedError)
+        setRelatedEvents([])
+      }
     }
 
-    return <EventClient event={event} relatedEvents={relatedEvents} session={session} />
-  } catch (error) {
+    if (event) {
+      fetchRelatedEvents()
+    }
+  }, [event])
+
+  // Mostrar loading mientras se inicializa
+  if (isLoading || eventLoading) {
+    return <div className='flex min-h-screen items-center justify-center'>Cargando...</div>
+  }
+
+  // Mostrar error si ocurrió alguno
+  if (error) {
     console.error('Error in EventPage:', error)
     notFound()
   }
-}
 
-export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }) {
-  const { handle } = await params
-
-  try {
-    const productResponse = await api.getProductByHandle(handle)
-    const event = productResponse.data as Event
-
-    if (event.productType !== 'Evento') {
-      return {
-        title: 'Evento no encontrado',
-      }
-    }
-
-    const eventDate = event.eventDetails?.date
-
-    const eventLocation = event.eventDetails?.location
-
-    const eventDetails = [
-      eventDate && `📅 ${new Date(eventDate).toLocaleDateString('es-MX')}`,
-      eventLocation && `📍 ${eventLocation}`,
-    ]
-      .filter(Boolean)
-      .join(' • ')
-
-    return {
-      description: eventDetails || event.descriptionHtml || `Evento: ${event.title}`,
-      openGraph: {
-        description:
-          eventDetails || event.descriptionHtml || `Únete a este evento especial: ${event.title}`,
-        images: event.images[0] ? [event.images[0].url] : [],
-        title: `🎫 ${event.title}`,
-        type: 'website',
-      },
-      title: `${event.title} - Evento`,
-      twitter: {
-        card: 'summary_large_image',
-        description: eventDetails || event.descriptionHtml,
-        images: event.images[0] ? [event.images[0].url] : [],
-        title: `🎫 ${event.title}`,
-      },
-    }
-  } catch (error) {
-    console.error('Error generating metadata:', error)
-    return {
-      title: 'Evento no encontrado',
-    }
+  // Validaciones del evento
+  if (!event) {
+    notFound()
   }
+
+  if (event.productType !== 'Evento') {
+    notFound()
+  }
+
+  if (privateProductIds.includes(event.id)) {
+    notFound()
+  }
+
+  return <EventClient event={event} relatedEvents={relatedEvents} session={user} />
 }

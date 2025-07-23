@@ -15,9 +15,12 @@ import {
   Users,
   X,
 } from 'lucide-react'
+import Image from 'next/image'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -30,6 +33,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -37,10 +41,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
 import { type Event } from '@/models/Event'
 import { type CreateEventPayload, type UpdateEventPayload } from '@/services/event/types'
 
 import { Tiptap } from '../TipTap'
+import { ImageUploader } from './ImageUploader'
+
+interface NewImage {
+  mediaContentType: 'IMAGE'
+  originalSource: string
+}
 
 interface EventFormProps<T extends 'create' | 'edit'> {
   mode: T
@@ -78,6 +89,8 @@ const eventFormSchema = z.object({
 type EventFormValues = z.infer<typeof eventFormSchema>
 
 export const EventForm: React.FC<Props> = ({ event, isLoading, mode, onCancel, onSave }) => {
+  const [newImages, setNewImages] = useState<NewImage[]>([])
+
   const defaultValues: Partial<EventFormValues> =
     mode === 'edit' && event
       ? {
@@ -117,6 +130,18 @@ export const EventForm: React.FC<Props> = ({ event, isLoading, mode, onCancel, o
     resolver: zodResolver(eventFormSchema),
   })
 
+  const handleUploadComplete = (resourceUrl: string | null) => {
+    if (!resourceUrl) return
+    const newImage: NewImage = {
+      mediaContentType: 'IMAGE',
+      originalSource: resourceUrl,
+    }
+    setNewImages((prev) => {
+      const updated = [...prev, newImage]
+      return updated
+    })
+  }
+
   async function onSubmit(data: EventFormValues) {
     const basePayload = {
       description: data.description ?? '',
@@ -127,6 +152,7 @@ export const EventForm: React.FC<Props> = ({ event, isLoading, mode, onCancel, o
         organizer: data.eventDetails.organizer ?? null,
         startTime: data.eventDetails.startTime ?? null,
       },
+      images: newImages,
       inventoryQuantity: data.inventoryQuantity,
       price: data.price,
       status: data.status,
@@ -137,7 +163,7 @@ export const EventForm: React.FC<Props> = ({ event, isLoading, mode, onCancel, o
             .filter(Boolean)
         : [],
       title: data.title,
-      vendor: 'Evento',
+      vendor: 'Evento', // Agregar las imágenes al payload
     }
 
     if (mode === 'edit' && event) {
@@ -506,6 +532,73 @@ export const EventForm: React.FC<Props> = ({ event, isLoading, mode, onCancel, o
                         </FormItem>
                       )}
                     />
+                  </CardContent>
+                </Card>
+
+                <Card className='border-outline-variant/20 shadow-elevation-1'>
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='flex items-center gap-2 text-on-surface'>
+                      <FileText className='size-5 text-primary' />
+                      Imágenes del Evento
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    {mode === 'edit' && event && event.images.length > 0 && (
+                      <>
+                        <div>
+                          <Label className='mb-3 block text-sm font-medium'>
+                            Imágenes Actuales
+                          </Label>
+                          <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+                            {event.images.map((img, index) => (
+                              <div key={index} className='space-y-2'>
+                                <div className='relative aspect-square'>
+                                  <Image
+                                    src={img.url}
+                                    alt={img.altText ?? event.title}
+                                    fill
+                                    className='rounded-md object-cover'
+                                  />
+                                  {index === 0 && (
+                                    <Badge className='absolute left-1 top-1' variant='default'>
+                                      Principal
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className='text-center text-xs text-muted-foreground'>
+                                  {img.altText ?? 'Sin texto alternativo'}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <Separator />
+                      </>
+                    )}
+
+                    <div>
+                      <Label className='mb-3 block text-sm font-medium'>
+                        {mode === 'edit' ? 'Agregar Nuevas Imágenes' : 'Imágenes del Evento'}
+                      </Label>
+                      <ImageUploader onChange={handleUploadComplete} />
+
+                      {mode === 'create' && newImages.length === 0 && (
+                        <p className='mt-2 text-sm text-muted-foreground'>
+                          Es recomendable agregar al menos una imagen del evento.
+                        </p>
+                      )}
+
+                      {newImages.length > 0 && (
+                        <div className='mt-4'>
+                          <Label className='text-sm font-medium text-green-600'>
+                            Nuevas imágenes que se agregarán ({newImages.length})
+                          </Label>
+                          <p className='mt-1 text-xs text-muted-foreground'>
+                            Estas imágenes se procesarán al guardar el evento
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               </div>

@@ -16,7 +16,6 @@ import { Card } from '@/src/components/Card'
 import { ROUTES } from '@/src/config/routes'
 import { usePublicArtists } from '@/src/modules/user/hooks/management'
 
-
 interface Slide {
   imageUrl: string
   alt: string
@@ -291,7 +290,7 @@ export default function Page() {
     <main className='overflow-hidden'>
       <Landing.Hero videoId='j5RAiTZ-w6E' />
 
-      <section className='bg-gray-50 py-20 dark:bg-gray-900'>
+      <section className=' py-20 '>
         <div className='container mx-auto px-6 text-center'>
           <motion.h2
             variants={slideUp}

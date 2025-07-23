@@ -74,44 +74,61 @@ export default function Page() {
     <>
       <style jsx global>{`
         @keyframes glow-pulse {
-          0%, 100% { 
-            box-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor;
+          0%,
+          100% {
+            box-shadow:
+              0 0 5px currentColor,
+              0 0 10px currentColor,
+              0 0 15px currentColor;
             opacity: 0.8;
           }
-          50% { 
-            box-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+          50% {
+            box-shadow:
+              0 0 10px currentColor,
+              0 0 20px currentColor,
+              0 0 30px currentColor;
             opacity: 1;
           }
         }
-        
+
         @keyframes glow-rotate {
-          0% { 
-            box-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+          0% {
+            box-shadow:
+              0 0 5px currentColor,
+              0 0 10px currentColor;
             transform: rotate(0deg);
           }
-          25% { 
-            box-shadow: 2px 2px 8px currentColor, 4px 4px 15px currentColor;
+          25% {
+            box-shadow:
+              2px 2px 8px currentColor,
+              4px 4px 15px currentColor;
             transform: rotate(90deg);
           }
-          50% { 
-            box-shadow: 0 4px 10px currentColor, 0 8px 20px currentColor;
+          50% {
+            box-shadow:
+              0 4px 10px currentColor,
+              0 8px 20px currentColor;
             transform: rotate(180deg);
           }
-          75% { 
-            box-shadow: -2px 2px 8px currentColor, -4px 4px 15px currentColor;
+          75% {
+            box-shadow:
+              -2px 2px 8px currentColor,
+              -4px 4px 15px currentColor;
             transform: rotate(270deg);
           }
-          100% { 
-            box-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+          100% {
+            box-shadow:
+              0 0 5px currentColor,
+              0 0 10px currentColor;
             transform: rotate(360deg);
           }
         }
-        
+
         .glow-border {
           position: relative;
           overflow: visible;
         }
-        
+
         .glow-border::before {
           content: '';
           position: absolute;
@@ -119,19 +136,23 @@ export default function Page() {
           border-radius: inherit;
           padding: 2px;
           background: linear-gradient(45deg, currentColor, transparent, currentColor);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
           -webkit-mask-composite: exclude;
-          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
           mask-composite: exclude;
           animation: glow-pulse 2s ease-in-out infinite;
           pointer-events: none;
         }
-        
+
         .glow-border.rotating::before {
           animation: glow-rotate 3s linear infinite;
         }
       `}</style>
-      
+
       <div className='container mx-auto min-h-screen bg-surface p-4 md:p-8'>
         <ShCard className='overflow-hidden border border-outline bg-card shadow-elevation-1'>
           <div className='relative h-64 w-full bg-gradient-to-r from-purple-500 to-indigo-600 md:h-80'>
@@ -213,11 +234,11 @@ export default function Page() {
                       const getPlatformStyles = (platformId: string) => {
                         const styles: Record<
                           string,
-                          { 
-                            linkClasses: string; 
-                            iconColorClass: string;
-                            iconBgClass: string;
-                            glowColor: string;
+                          {
+                            linkClasses: string
+                            iconColorClass: string
+                            iconBgClass: string
+                            glowColor: string
                           }
                         > = {
                           behance: {
@@ -264,7 +285,8 @@ export default function Page() {
                           },
                           instagram: {
                             glowColor: 'text-pink-500',
-                            iconBgClass: 'bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500',
+                            iconBgClass:
+                              'bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500',
                             iconColorClass: 'text-white',
                             linkClasses:
                               'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 shadow-md',
@@ -370,7 +392,8 @@ export default function Page() {
                       }
 
                       const platformData = getPlatformData(link.platform)
-                      const { glowColor, iconBgClass, iconColorClass, linkClasses } = getPlatformStyles(link.platform)
+                      const { glowColor, iconBgClass, iconColorClass, linkClasses } =
+                        getPlatformStyles(link.platform)
                       const focusRingColor = getFocusRingColor(link.platform)
 
                       return (
@@ -386,14 +409,12 @@ export default function Page() {
                           >
                             {platformData.icon}
                           </div>
-                          <span className="font-semibold text-gray-900 transition-transform duration-300 group-hover:translate-x-1 dark:text-gray-100 sm:text-lg">
+                          <span className='font-semibold text-gray-900 transition-transform duration-300 group-hover:translate-x-1 dark:text-gray-100 sm:text-lg'>
                             {platformData.name}
                           </span>
 
                           {/* Flecha indicadora */}
-                          <div
-                            className="text-gray-900 transition-all duration-300 group-hover:translate-x-1 dark:text-gray-100"
-                          >
+                          <div className='text-gray-900 transition-all duration-300 group-hover:translate-x-1 dark:text-gray-100'>
                             <svg
                               className='size-5'
                               fill='none'

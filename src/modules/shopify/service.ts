@@ -77,7 +77,7 @@ export const shopifyService = {
     ])
 
     const filteredProducts = allProductsResponse.data.products.filter(
-      (product: Product) => !privateProductIds.includes(product.id)
+      (product: Product) => !privateProductIds.includes(product.id) && product.vendor !== 'Evento' // Excluir eventos de la tienda general
     )
 
     return {

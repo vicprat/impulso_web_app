@@ -12,6 +12,7 @@ import {
   GET_PUBLICATIONS_QUERY,
   GET_SINGLE_PRODUCT_QUERY,
   INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
+  PRODUCT_CREATE_MEDIA_MUTATION,
   PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
   PUBLISH_PRODUCT_MUTATION,
   UPDATE_PRODUCT_MUTATION,
@@ -23,6 +24,7 @@ import {
   type GetPublicationsApiResponse,
   type InventorySetOnHandQuantitiesResponse,
   type PaginatedProductsResponse,
+  type ProductCreateMediaResponse,
   type ProductMutationResponse,
   type ShopifyProductData,
   type UpdateProductPayload,
@@ -66,6 +68,36 @@ async function getPrimaryLocationId(): Promise<string> {
 
   primaryLocationId = locationId
   return primaryLocationId
+}
+
+async function addImagesToEvent(
+  eventId: string,
+  images: { mediaContentType: 'IMAGE'; originalSource: string }[]
+) {
+  const mediaInput = images.map((img) => ({
+    mediaContentType: img.mediaContentType,
+    originalSource: img.originalSource,
+  }))
+
+  const response = await makeAdminApiRequest<ProductCreateMediaResponse>(
+    PRODUCT_CREATE_MEDIA_MUTATION,
+    {
+      media: mediaInput,
+      productId: eventId,
+    }
+  )
+
+  if (response.productCreateMedia.mediaUserErrors.length > 0) {
+    throw new Error(
+      response.productCreateMedia.mediaUserErrors.map((e: any) => e.message).join(', ')
+    )
+  }
+
+  if (response.productCreateMedia.userErrors.length > 0) {
+    throw new Error(response.productCreateMedia.userErrors.map((e: any) => e.message).join(', '))
+  }
+
+  return response.productCreateMedia.media
 }
 
 async function getEvents(
@@ -115,7 +147,7 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
   validateSession(session)
   await requirePermission(PERMISSIONS.MANAGE_EVENTS)
 
-  const { description, details, inventoryQuantity, price, ...rest } = payload
+  const { description, details, images, inventoryQuantity, price, ...rest } = payload
 
   const createInput = {
     ...rest,
@@ -142,6 +174,14 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
   }
 
   const newEventData = response.productCreate.product
+
+  if (images && images.length > 0) {
+    try {
+      await addImagesToEvent(newEventData.id, images)
+    } catch (imageError) {
+      console.error('Error al agregar imágenes al evento:', imageError)
+    }
+  }
 
   if (details && Object.keys(details).length > 0) {
     try {
@@ -313,7 +353,7 @@ async function updateEvent(payload: UpdateEventPayload, session: AuthSession): P
   const existingEvent = await getEventById(payload.id, session)
   if (!existingEvent) throw new Error('Evento no encontrado.')
 
-  const { description, details, id, inventoryQuantity, price, ...rest } = payload
+  const { description, details, id, images, inventoryQuantity, price, ...rest } = payload
 
   const updateInput: any = {
     id,
@@ -340,6 +380,14 @@ async function updateEvent(payload: UpdateEventPayload, session: AuthSession): P
 
   if (response.productUpdate.userErrors.length > 0) {
     throw new Error(response.productUpdate.userErrors.map((e) => e.message).join(', '))
+  }
+
+  if (images && images.length > 0) {
+    try {
+      await addImagesToEvent(payload.id, images)
+    } catch (imageError) {
+      console.error('Error al agregar imágenes al evento:', imageError)
+    }
   }
 
   if (price !== undefined) {

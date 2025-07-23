@@ -35,7 +35,7 @@ export interface ShopifyCustomerProfile {
 
 export interface UserProfile {
   id: string
-  shopifyCustomerId: string
+  shopifyCustomerId?: string
   email: string
   firstName?: string
   lastName?: string

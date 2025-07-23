@@ -17,6 +17,7 @@ import sortDestructureKeys from 'eslint-plugin-sort-destructure-keys'
 import sortKeysFix from 'eslint-plugin-sort-keys-fix'
 import tailwindcss from 'eslint-plugin-tailwindcss'
 import unusedImports from 'eslint-plugin-unused-imports'
+import prettier from 'eslint-config-prettier'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -30,6 +31,9 @@ const config = tseslint.config(
   // TanStack Query and Tailwind CSS recommended configs
   ...tanstackQuery.configs['flat/recommended'],
   ...tailwindcss.configs['flat/recommended'],
+
+  // Prettier config to disable conflicting rules
+  prettier,
 
   // Global ignores
   {

@@ -4,8 +4,8 @@ import { Loader } from './Loader'
 import { Product } from './Product'
 
 export const Card = {
+  Artist,
   Container,
   Loader,
   Product,
-  Artist,
 }

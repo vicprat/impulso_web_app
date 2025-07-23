@@ -18,29 +18,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils'
 import { useUpdateUserRoles } from '@/modules/user/hooks/management'
 import { type UserProfile } from '@/modules/user/types'
+import { availableRoles } from '@/src/config/Roles'
 
 interface ArtistFormProps {
   user: UserProfile
   onSuccess: () => void
   onCancel: () => void
 }
-
-const availableRoles = [
-  { description: 'Cliente básico del sistema', id: 'customer', name: 'Cliente' },
-  {
-    description: 'Cliente VIP con beneficios adicionales',
-    id: 'vip_customer',
-    name: 'Cliente VIP',
-  },
-  { description: 'Personal de soporte al cliente', id: 'support', name: 'Soporte' },
-  { description: 'Gerente con acceso amplio al sistema', id: 'manager', name: 'Gerente' },
-  { description: 'Administrador con acceso completo', id: 'admin', name: 'Administrador' },
-  {
-    description: 'Artista con acceso a herramientas de gestión de su perfil',
-    id: 'artist',
-    name: 'Artista',
-  },
-]
 
 export function ArtistForm({ onCancel, onSuccess, user }: ArtistFormProps) {
   const queryClient = useQueryClient()

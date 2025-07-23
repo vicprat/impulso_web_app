@@ -85,12 +85,14 @@ export async function GET() {
 
     // Métricas de crecimiento
     const revenueThisMonth = last30Days.reduce(
-      (sum: number, order: ShopifyOrderEdge) => sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
+      (sum: number, order: ShopifyOrderEdge) =>
+        sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
       0
     )
 
     const revenueThisWeek = last7Days.reduce(
-      (sum: number, order: ShopifyOrderEdge) => sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
+      (sum: number, order: ShopifyOrderEdge) =>
+        sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
       0
     )
 

@@ -23,12 +23,14 @@ import {
   YAxis,
 } from 'recharts'
 
+import { ROLES } from '@/src/config/Roles'
 import {
   useAdminDashboard,
   useAdvancedAnalytics,
   useProductMetrics,
 } from '@/src/modules/dashboard/hooks'
 
+import { FinanceOverview } from './FinanceOverview'
 import { Badge } from '../ui/badge'
 
 interface TopProduct {
@@ -431,6 +433,8 @@ export const Admin = () => {
           )}
         </ChartCard>
       </div>
+
+      <FinanceOverview role={ROLES.ADMIN.NAME} />
     </div>
   )
 }

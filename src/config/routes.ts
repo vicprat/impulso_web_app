@@ -81,9 +81,16 @@ export const ROUTES = {
     },
     DETAIL: {
       ICON: 'edit',
-      LABEL: 'Editar Evento',
-      PATH: '/admin/events/:id',
+      LABEL: 'Detalle del Evento',
+      PATH: '/admin/events/:eventId',
       PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    },
+    FINANCE: {
+      ICON: 'dollar-sign',
+      LABEL: 'Finanzas del Evento',
+      PATH: '/admin/events/:eventId/finance',
+      PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS, PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
     MAIN: {
@@ -94,12 +101,74 @@ export const ROUTES = {
       PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS],
       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
-    MANAGE: {
-      ICON: 'edit',
-      LABEL: 'Gestionar Evento',
-      PATH: '/admin/events/manage/:eventId',
-      PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS],
-      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    // Eliminamos MANAGE ya que se unifica con DETAIL
+  },
+
+  FINANCE: {
+    BANK_ACCOUNTS: {
+      CREATE: {
+        ICON: 'plus',
+        LABEL: 'Crear Cuenta Bancaria',
+        PATH: '/admin/finance/bank-accounts/new',
+        PERMISSIONS: [PERMISSIONS.MANAGE_BANK_ACCOUNTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Detalle de Cuenta Bancaria',
+        PATH: '/admin/finance/bank-accounts/:id',
+        PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      EDIT: {
+        ICON: 'edit',
+        LABEL: 'Editar Cuenta Bancaria',
+        PATH: '/admin/finance/bank-accounts/:id/edit',
+        PERMISSIONS: [PERMISSIONS.MANAGE_BANK_ACCOUNTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar Cuentas Bancarias',
+        ICON: 'credit-card',
+        LABEL: 'Cuentas Bancarias',
+        PATH: '/admin/finance/bank-accounts',
+        PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+    },
+    ENTRIES: {
+      CREATE: {
+        ICON: 'plus',
+        LABEL: 'Crear Movimiento',
+        PATH: '/admin/finance/entries/new',
+        PERMISSIONS: [PERMISSIONS.MANAGE_FINANCIAL_ENTRIES],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Detalle de Movimiento',
+        PATH: '/admin/finance/entries/:id',
+        PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES, PERMISSIONS.MANAGE_FINANCIAL_ENTRIES],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar Movimientos Financieros',
+        ICON: 'trending-up',
+        LABEL: 'Movimientos',
+        PATH: '/admin/finance/entries',
+        PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+    },
+    REPORTS: {
+      MAIN: {
+        DESCRIPTION: 'Reportes Financieros',
+        ICON: 'bar-chart-3',
+        LABEL: 'Reportes',
+        PATH: '/admin/finance/reports',
+        PERMISSIONS: [PERMISSIONS.VIEW_FINANCE_REPORTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.PARTNER.NAME],
+      },
     },
   },
 
@@ -177,6 +246,13 @@ export const ROUTES = {
   },
 
   PUBLIC: {
+    ARTISTS: {
+      DESCRIPTION: 'Lista de artistas públicos',
+      ICON: 'users',
+      IS_PUBLIC: true,
+      LABEL: 'Artistas',
+      PATH: '/artists',
+    },
     HOME: {
       DESCRIPTION: 'Página principal de la tienda',
       ICON: 'home',
@@ -191,13 +267,6 @@ export const ROUTES = {
       LABEL: 'Perfil Público',
       PATH: '/artists/:userId',
     },
-    ARTISTS: {
-      DESCRIPTION: 'Lista de artistas públicos',
-      ICON: 'users',
-      IS_PUBLIC: true,
-      LABEL: 'Artistas',
-      PATH: '/artists',
-    },
   },
 
   STORE: {
@@ -207,6 +276,13 @@ export const ROUTES = {
       IS_PUBLIC: true,
       LABEL: 'Carrito',
       PATH: '/store/cart',
+    },
+    EVENTS: {
+      DESCRIPTION: 'Lista de eventos públicos',
+      ICON: 'calendar',
+      IS_PUBLIC: true,
+      LABEL: 'Eventos',
+      PATH: '/events',
     },
     EVENT_DETAIL: {
       DESCRIPTION: 'Detalle del evento',
@@ -297,11 +373,20 @@ export const ROUTES = {
 
 export const getAllRoutes = (): RouteConfig[] => {
   const allRoutes: RouteConfig[] = []
-  Object.values(ROUTES).forEach((section) => {
-    Object.values(section).forEach((route) => {
-      allRoutes.push(route)
+
+  const traverse = (obj: object) => {
+    Object.values(obj).forEach((value) => {
+      if (typeof value === 'object' && value !== null) {
+        if ('PATH' in value && typeof (value as any).PATH === 'string') {
+          allRoutes.push(value as RouteConfig)
+        } else {
+          traverse(value)
+        }
+      }
     })
-  })
+  }
+
+  traverse(ROUTES)
   return allRoutes
 }
 
@@ -350,6 +435,10 @@ export const getDashboardNavRoutes = (
     ROUTES.PRIVATE_ROOMS.ACCESS,
     ROUTES.INVENTORY.MAIN,
     ROUTES.TICKETS.MAIN,
+    // Rutas financieras
+    ROUTES.FINANCE.BANK_ACCOUNTS.MAIN,
+    ROUTES.FINANCE.ENTRIES.MAIN,
+    ROUTES.FINANCE.REPORTS.MAIN,
   ]
 
   return filterRoutesByAccess(navigationRoutes, userRoles, userPermissions).filter(
@@ -358,9 +447,15 @@ export const getDashboardNavRoutes = (
 }
 
 export const getStoreNavRoutes = (): RouteConfig[] => {
-  const publicStoreRoutes = [ROUTES.PUBLIC.HOME, ROUTES.STORE.MAIN, ROUTES.COLLECTIONS.MAIN, ROUTES.PUBLIC.ARTISTS]
+  const publicStoreRoutes = [
+    ROUTES.PUBLIC.HOME,
+    ROUTES.STORE.MAIN,
+    ROUTES.STORE.EVENTS,
+    ROUTES.COLLECTIONS.MAIN,
+    ROUTES.PUBLIC.ARTISTS,
+  ]
 
-  return publicStoreRoutes.filter((route) => 'HIDE_IN_NAV' in route && !route.HIDE_IN_NAV)
+  return publicStoreRoutes.filter((route) => !('HIDE_IN_NAV' in route && route.HIDE_IN_NAV))
 }
 
 export const getSectionRoutes = (
@@ -456,7 +551,9 @@ export const buildBreadcrumbs = (
 }
 
 export const COMMON_ROUTE_PATTERNS = {
+  DYNAMIC_BANK_ACCOUNT_ID: ':id',
   DYNAMIC_COLLECTION: ':collection',
+  DYNAMIC_ENTRY_ID: ':id',
   DYNAMIC_EVENT_ID: ':eventId',
   DYNAMIC_HANDLE: ':handle',
   DYNAMIC_ID: ':id',

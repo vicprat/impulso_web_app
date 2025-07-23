@@ -55,6 +55,14 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
       shortLabel: 'Productos',
     },
     {
+      description: 'Descubre nuestros próximos eventos',
+      exact: true,
+      href: ROUTES.STORE.EVENTS.PATH,
+      icon: Home,
+      label: ROUTES.STORE.EVENTS.LABEL,
+      shortLabel: 'Eventos',
+    },
+    {
       description: 'Productos organizados por categorías',
       exact: false,
       href: ROUTES.COLLECTIONS.MAIN.PATH,

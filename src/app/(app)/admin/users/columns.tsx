@@ -44,7 +44,7 @@ export const columns: ColumnDef<UserProfile>[] = [
             )}
           </div>
           <div className='ml-4'>
-            <div className='text-sm font-medium text-gray-900'>
+            <div className='text-sm font-medium '>
               {user.firstName} {user.lastName}
             </div>
             <div className='text-sm text-gray-500'>ID: {user.id.slice(0, 8)}...</div>
@@ -70,8 +70,8 @@ export const columns: ColumnDef<UserProfile>[] = [
       const user = row.original
       return (
         <div>
-          <div className='text-sm text-gray-900'>{user.email}</div>
-          <div className='text-sm text-gray-500'>Shopify: {user.shopifyCustomerId.slice(-8)}</div>
+          <div>{user.email}</div>
+          <div>Shopify: {user.shopifyCustomerId?.slice(-8)}</div>
         </div>
       )
     },

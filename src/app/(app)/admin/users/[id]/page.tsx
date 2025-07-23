@@ -163,7 +163,7 @@ export default function UserDetailPage() {
             <CardContent className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <div>
                 <p className='font-medium text-muted-foreground'>ID de Cliente</p>
-                <p className='text-sm text-foreground'>{user.shopifyCustomerId}</p>
+                <p className='text-sm text-foreground'>{user.shopifyCustomerId ?? 'No asignado'}</p>
               </div>
               <div>
                 <p className='font-medium text-muted-foreground'>Pedidos Realizados</p>

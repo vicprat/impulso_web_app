@@ -13,7 +13,7 @@ export const makeStorefrontRequest = async (query: string, variables?: Record<st
     })
 
     if (response.errors) {
-      console.error('Storefront API errors:', response.errors)
+      console.error('Storefront API errors:', JSON.stringify(response.errors, null, 2))
       throw new Error(
         typeof response.errors === 'string'
           ? response.errors

@@ -1,8 +1,6 @@
+import { Dashboard } from '@/src/components/Dashboard'
 import { ROLES } from '@/src/config/Roles'
 import { getServerSession } from '@/src/modules/auth/server/server'
-
-// eslint-disable-next-line import/extensions
-import { Dashboard } from '@/src/components/Dashboard'
 
 export default async function Page() {
   const session = await getServerSession()

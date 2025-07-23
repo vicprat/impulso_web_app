@@ -3,10 +3,7 @@ import { NextResponse } from 'next/server'
 import { requireAuth } from '@/modules/auth/server/server'
 import { getUserById, updateUserAndRelatedData } from '@/modules/user/user.service'
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id: userId } = await Promise.resolve(params)
     const user = await getUserById(userId)
@@ -22,10 +19,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
     const session = await requireAuth()
     const targetUserId = params.id
@@ -44,4 +38,3 @@ export async function PATCH(
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
-

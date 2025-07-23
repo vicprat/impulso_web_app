@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { useAuth } from '@/modules/auth/context/useAuth'
 import {
-  useCustomerAddresses,
-  useCustomerOrders,
-  useCustomerProfile,
-  useUpdateCustomerProfile,
+    useCustomerAddresses,
+    useCustomerOrders,
+    useCustomerProfile,
+    useUpdateCustomerProfile,
 } from '@/modules/customer/hooks'
 import { PERMISSIONS } from '@/src/config/Permissions'
 
@@ -31,7 +31,7 @@ export function useCurrentUser() {
         lastName: authUser.lastName,
         permissions: authUser.permissions,
         roles: authUser.roles,
-        shopifyCustomerId: authUser.shopifyCustomerId,
+        shopifyCustomerId: authUser.shopifyCustomerId ?? undefined,
         shopifyData: profileData?.data?.customer
           ? {
               addresses:

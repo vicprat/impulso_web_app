@@ -3,8 +3,8 @@
 
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
 import { ArrowDown, Pause, Play, Volume2, VolumeX } from 'lucide-react'
-import { useTheme } from 'next-themes'
 import Link from 'next/link'
+import { useTheme } from 'next-themes'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { FloatingParticles } from '@/components/Animations'
@@ -46,7 +46,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
   const [isClient, setIsClient] = useState(false)
 
-  const { theme, setTheme } = useTheme()
+  const { setTheme, theme } = useTheme()
   const userPreferredThemeRef = useRef<string | undefined>(undefined)
 
   const particlePositions = useMemo(() => generateParticlePositions(20), [])
@@ -83,44 +83,67 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   const initializePlayer = useCallback(() => {
     if (playerRef.current || !document.getElementById('enhanced-youtube-player')) return
 
-    const YT = (window as any).YT
-    playerRef.current = new YT.Player('enhanced-youtube-player', {
-      events: {
-        onReady: (event: YTReadyEvent) => {
-          setIsLoaded(true)
-          event.target.mute()
+    try {
+      const YT = (window as any).YT
+      playerRef.current = new YT.Player('enhanced-youtube-player', {
+        events: {
+          onReady: (event: YTReadyEvent) => {
+            try {
+              setIsLoaded(true)
+              event.target.mute()
+              setIsMuted(true)
+              setTimeout(() => {
+                if (isInView && playerRef.current) {
+                  event.target.playVideo()
+                }
+              }, 1000)
+            } catch (error) {
+              console.warn('Error in onReady:', error)
+            }
+          },
+          onStateChange: (event: YTPlayerEvent) => {
+            try {
+              const YT = (window as any).YT
+              if (event.data === YT.PlayerState.PLAYING) {
+                setIsPlaying(true)
+              } else if (event.data === YT.PlayerState.PAUSED) {
+                setIsPlaying(false)
+              } else if (event.data === YT.PlayerState.ENDED) {
+                event.target.seekTo(VIDEO_START)
+                event.target.playVideo()
+              } else if (event.data === YT.PlayerState.BUFFERING) {
+                setIsPlaying(true)
+              }
+            } catch (error) {
+              console.warn('Error in onStateChange:', error)
+            }
+          },
         },
-        onStateChange: (event: YTPlayerEvent) => {
-          if (event.data === YT.PlayerState.PLAYING) {
-            setIsPlaying(true)
-          } else if (event.data === YT.PlayerState.PAUSED) {
-            setIsPlaying(false)
-          } else if (event.data === YT.PlayerState.ENDED) {
-            event.target.seekTo(VIDEO_START)
-            event.target.playVideo()
-          }
+        height: '100%',
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          disablekb: 1,
+          end: VIDEO_END,
+          enablejsapi: 1,
+          fs: 0,
+          iv_load_policy: 3,
+          loop: 1,
+          modestbranding: 1,
+          mute: 1,
+          playsinline: 1,
+          rel: 0,
+          showinfo: 0,
+          start: VIDEO_START,
+          wmode: 'opaque',
         },
-      },
-      height: '100%',
-      playerVars: {
-        autoplay: 0,
-        controls: 0,
-        disablekb: 1,
-        end: VIDEO_END,
-        fs: 0,
-        iv_load_policy: 3,
-        loop: 0,
-        modestbranding: 1,
-        mute: 1,
-        playsinline: 1,
-        rel: 0,
-        showinfo: 0,
-        start: VIDEO_START,
-      },
-      videoId,
-      width: '100%',
-    })
-  }, [videoId])
+        videoId,
+        width: '100%',
+      })
+    } catch (error) {
+      console.error('Error initializing YouTube player:', error)
+    }
+  }, [videoId, isInView])
 
   useEffect(() => {
     const YT = (window as any).YT
@@ -150,9 +173,33 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
         setIsInView(entry.isIntersecting)
         if (playerRef.current && isLoaded) {
           if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
-            playerRef.current.playVideo()
+            const playVideo = () => {
+              try {
+                if (
+                  playerRef.current &&
+                  typeof playerRef.current.playVideo === 'function' &&
+                  typeof playerRef.current.getCurrentTime === 'function'
+                ) {
+                  playerRef.current.playVideo()
+                  const currentTime = playerRef.current.getCurrentTime()
+                  if (currentTime < VIDEO_START || currentTime >= VIDEO_END - 2) {
+                    playerRef.current.seekTo(VIDEO_START)
+                  }
+                }
+              } catch (error) {
+                console.warn('Error playing video:', error)
+              }
+            }
+            playVideo()
+            setTimeout(playVideo, 500)
           } else {
-            playerRef.current.pauseVideo()
+            try {
+              if (playerRef.current && typeof playerRef.current.pauseVideo === 'function') {
+                playerRef.current.pauseVideo()
+              }
+            } catch (error) {
+              console.warn('Error pausing video:', error)
+            }
           }
         }
 
@@ -163,12 +210,12 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
               setTheme('dark')
             }
           } else {
-                 if (userPreferredThemeRef.current && theme !== userPreferredThemeRef.current) {
+            if (userPreferredThemeRef.current && theme !== userPreferredThemeRef.current) {
               setTheme(userPreferredThemeRef.current)
             }
           }
         } else {
-           if (userPreferredThemeRef.current && theme !== userPreferredThemeRef.current) {
+          if (userPreferredThemeRef.current && theme !== userPreferredThemeRef.current) {
             setTheme(userPreferredThemeRef.current)
           }
         }
@@ -191,41 +238,72 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   useEffect(() => {
     let interval: NodeJS.Timeout
 
-    if (playerRef.current && isPlaying) {
+    if (playerRef.current && isLoaded) {
       interval = setInterval(() => {
-        if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-          const current = playerRef.current.getCurrentTime()
-          if (current >= VIDEO_END - 1) {
-            playerRef.current.seekTo(VIDEO_START)
+        try {
+          if (
+            playerRef.current &&
+            typeof playerRef.current.getCurrentTime === 'function' &&
+            typeof playerRef.current.getPlayerState === 'function'
+          ) {
+            const current = playerRef.current.getCurrentTime()
+            const playerState = playerRef.current.getPlayerState()
+
+            if (current >= VIDEO_END - 2) {
+              playerRef.current.seekTo(VIDEO_START)
+              if (playerState !== 1) {
+                playerRef.current.playVideo()
+              }
+            }
+
+            if (isInView && playerState === 2) {
+              playerRef.current.playVideo()
+            }
           }
+        } catch (error) {
+          console.warn('YouTube player not ready yet:', error)
         }
-      }, 500)
+      }, 250)
     }
 
     return () => {
       clearInterval(interval)
     }
-  }, [isPlaying])
+  }, [isLoaded, isInView])
 
   const handlePlayPause = () => {
     if (!playerRef.current) return
 
-    if (isPlaying) {
-      playerRef.current.pauseVideo()
-    } else {
-      playerRef.current.playVideo()
+    try {
+      if (isPlaying) {
+        playerRef.current.pauseVideo()
+      } else {
+        if (typeof playerRef.current.getCurrentTime === 'function') {
+          const currentTime = playerRef.current.getCurrentTime()
+          if (currentTime < VIDEO_START || currentTime >= VIDEO_END - 2) {
+            playerRef.current.seekTo(VIDEO_START)
+          }
+        }
+        playerRef.current.playVideo()
+      }
+    } catch (error) {
+      console.warn('Error controlling video playback:', error)
     }
   }
 
   const handleMuteToggle = () => {
     if (!playerRef.current) return
 
-    if (isMuted) {
-      playerRef.current.unMute()
-      setIsMuted(false)
-    } else {
-      playerRef.current.mute()
-      setIsMuted(true)
+    try {
+      if (isMuted) {
+        playerRef.current.unMute()
+        setIsMuted(false)
+      } else {
+        playerRef.current.mute()
+        setIsMuted(true)
+      }
+    } catch (error) {
+      console.warn('Error toggling mute:', error)
     }
   }
 
@@ -240,7 +318,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
     <motion.section
       ref={containerRef}
       style={{ opacity, y }}
-      className={`relative min-h-screen pt-14 sm:pt-16 overflow-hidden bg-black ${className}`}
+      className={`relative ${isTabletOrMobile ? 'min-h-screen' : 'min-h-[95vh]'} overflow-hidden bg-black pt-14 sm:pt-16 ${className}`}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
     >
@@ -335,53 +413,11 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
             : 'items-start justify-center'
         } z-10 p-4 sm:p-8 md:p-12 lg:p-16 xl:p-24`}
       >
-        <div className={`${isTabletOrMobile ? 'w-full max-w-sm' : 'w-full max-w-5xl'}`}>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-            style={{
-              x: useTransform(mouseX, [-1, 1], [-5, 5]),
-            }}
-            className={`relative mb-4 inline-block sm:mb-6 md:mb-8 ${isTabletOrMobile ? 'mx-auto' : ''}`}
-          >
-            <div className='absolute inset-0 rounded-full bg-gradient-to-r from-orange-500/20 to-pink-500/20 blur-xl' />
-            <div className='relative rounded-full border border-white/20 bg-black/10 px-3 py-2 text-xs font-medium text-white backdrop-blur-lg sm:px-4 sm:py-2 sm:text-sm md:px-6 md:py-3'>
-              <span className='relative z-10'>✨ Descubre el Arte que Transforma</span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: isTabletOrMobile ? 0 : -100, y: isTabletOrMobile ? 30 : 0 }}
-            animate={{ opacity: 1, x: 0, y: 0 }}
-            transition={{ delay: 0.7, duration: 1, ease: 'easeOut' }}
-            style={{
-              x: useTransform(mouseX, [-1, 1], isTabletOrMobile ? [0, 0] : [-10, 10]),
-            }}
-            className={`relative mb-4 sm:mb-6 ${
-              isTabletOrMobile ? 'h-32 sm:h-40' : 'h-24 sm:h-32 md:h-40 lg:h-48 xl:h-56 2xl:h-64'
-            }`}
-          >
-            <div
-              className='h-full bg-gradient-to-br from-white from-30% via-blue-400 via-60% to-green-400'
-              style={{
-                WebkitMaskImage: 'url(/assets/logo2.svg)',
-                WebkitMaskPosition: 'left center',
-                WebkitMaskRepeat: 'no-repeat',
-                WebkitMaskSize: 'contain',
-                aspectRatio: 'auto',
-                maskImage: 'url(/assets/logo2.svg)',
-                maskPosition: 'left center',
-                maskRepeat: 'no-repeat',
-                maskSize: 'contain',
-              }}
-            />
-          </motion.div>
-
+        <div className={`${isTabletOrMobile ? 'w-full max-w-sm' : 'w-full max-w-6xl'}`}>
           <motion.p
             initial={{ opacity: 0, x: isTabletOrMobile ? 0 : -50, y: isTabletOrMobile ? 30 : 0 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
-            transition={{ delay: 1, duration: 0.8 }}
+            transition={{ delay: 0.8, duration: 0.8 }}
             style={{
               x: useTransform(mouseX, [-1, 1], isTabletOrMobile ? [0, 0] : [-5, 5]),
             }}
@@ -389,32 +425,46 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
               isTabletOrMobile
                 ? 'text-lg sm:text-xl'
                 : 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl'
-            } mb-6 text-white/90 sm:mb-8 md:mb-10 ${
-              isTabletOrMobile ? 'max-w-sm' : 'max-w-3xl'
-            } font-light leading-relaxed`}
+            } mb-6 text-white/90 sm:mb-8 md:mb-10 ${isTabletOrMobile ? 'max-w-sm' : 'max-w-4xl'}`}
           >
-            Una experiencia inmersiva donde cada obra cuenta una historia única.
-            <br className='hidden sm:block' />
-            <span className='text-orange-400'>Explora. Descubre. Transforma.</span>
+            Una experiencia inmersiva donde cada obra cuenta una{' '}
+            <span className='italic text-white/90'>historia única</span>
           </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.3, duration: 0.8 }}
+          <motion.p
+            initial={{ opacity: 0, x: isTabletOrMobile ? 0 : -30, y: isTabletOrMobile ? 20 : 0 }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
+            transition={{ delay: 1.1, duration: 0.8 }}
             style={{
               x: useTransform(mouseX, [-1, 1], isTabletOrMobile ? [0, 0] : [-3, 3]),
             }}
-            className={`flex ${isTabletOrMobile ? 'flex-col' : 'flex-col sm:flex-row'} gap-4 sm:gap-6`}
+            className={`${
+              isTabletOrMobile ? 'text-base sm:text-lg' : 'text-lg sm:text-xl md:text-xl'
+            } mb-8 text-white/80 sm:mb-12 ${
+              isTabletOrMobile ? 'max-w-sm' : 'max-w-2xl'
+            } font-light tracking-wide`}
+          >
+            Explora nuestra colección y descubre el arte que transforma espacios y emociones
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.4, duration: 0.8 }}
+            style={{
+              x: useTransform(mouseX, [-1, 1], isTabletOrMobile ? [0, 0] : [-3, 3]),
+            }}
+            className='flex gap-4'
           >
             <Link href={ROUTES.STORE.MAIN.PATH}>
               <Button
-                className={`hover:bg-primary/90 group relative bg-primary text-base text-primary-foreground sm:text-lg ${
-                  isTabletOrMobile ? 'px-8 py-5' : 'px-6 py-4 sm:px-8 sm:py-5 md:px-10 md:py-6'
-                } overflow-hidden rounded-full bg-white font-bold text-black transition-all duration-500`}
+                variant='outline'
+                size='lg'
+                className={`border-white/30 bg-white/10 text-white backdrop-blur-md transition-all duration-300 hover:bg-white hover:text-black ${
+                  isTabletOrMobile ? 'px-8 py-6 text-base' : 'px-10 py-6 text-lg'
+                }`}
               >
-                <span className='relative z-10'>Explorar Nuestra Galería</span>
-                <div className='absolute inset-0 translate-x-full bg-gradient-to-r from-blue-200 to-purple-300 transition-transform duration-500 group-hover:translate-x-0' />
+                Explorar Galería
               </Button>
             </Link>
           </motion.div>
@@ -430,19 +480,26 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
               : 'bottom-6 left-4 flex-col items-start gap-4 sm:bottom-8 sm:left-8 sm:flex-row sm:items-center sm:gap-6 md:bottom-12 md:left-12 md:gap-8 lg:left-16 xl:left-24'
           } flex text-white/80`}
         >
-          <div className='flex items-center gap-2 sm:gap-3'>
-            <div className='relative'>
-              <div className='size-2 animate-pulse rounded-full bg-red-500 sm:size-3' />
-              <div className='absolute inset-0 size-2 animate-ping rounded-full bg-red-500 sm:size-3' />
+          <div className='flex-col items-center gap-2 sm:gap-3'>
+            <div
+              className={`text-xs font-medium sm:text-sm ${isTabletOrMobile ? 'flex gap-6' : ''}`}
+            >
+              <div>
+                <span className='text-lg font-bold text-green-400 sm:text-xl md:text-2xl'>
+                  500+
+                </span>{' '}
+                Obras
+              </div>
             </div>
-            <span className='text-xs font-semibold tracking-wider sm:text-sm'>
-              EXPERIENCIAS EN VIVO
-            </span>
-          </div>
-          <div className={`text-xs font-medium sm:text-sm ${isTabletOrMobile ? 'flex gap-6' : ''}`}>
-            <div>
-              <span className='text-lg font-bold text-orange-400 sm:text-xl md:text-2xl'>500+</span>{' '}
-              Obras
+
+            <div className='mb-4 flex items-center gap-2 sm:gap-3'>
+              <div className='relative'>
+                <div className='size-2 animate-pulse rounded-full bg-red-500 sm:size-3' />
+                <div className='absolute inset-0 size-2 animate-ping rounded-full bg-red-500 sm:size-3' />
+              </div>
+              <span className='text-xs font-semibold tracking-wider sm:text-sm'>
+                EXPERIENCIAS EN VIVO
+              </span>
             </div>
           </div>
         </motion.div>
@@ -455,20 +512,24 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
         className='absolute right-4 top-20 z-20 flex items-center gap-2 sm:right-8 sm:top-20 sm:gap-3 md:right-12 md:top-20 lg:right-16 xl:right-24'
       >
         {[
-          { icon: isPlaying ? Pause : Play, ml: !isPlaying, onClick: handlePlayPause },
-          { icon: isMuted ? VolumeX : Volume2, onClick: handleMuteToggle },
+          {
+            icon: isPlaying ? Pause : Play,
+            ml: !isPlaying,
+            onClick: handlePlayPause,
+          },
+          {
+            icon: isMuted ? VolumeX : Volume2,
+            onClick: handleMuteToggle,
+          },
         ].map((control, index) => (
           <Button
             key={index}
             variant='ghost'
             size='sm'
             onClick={control.onClick}
-            className='group relative size-10 overflow-hidden rounded-full border border-white/10 bg-black/20 text-white backdrop-blur-xl transition-all duration-300 hover:bg-white/10 sm:size-12 md:size-14'
+            className='size-10 rounded-full border border-white/20 bg-black/20 text-white backdrop-blur-xl hover:bg-white/20 sm:size-12 md:size-14'
           >
-            <control.icon
-              className={`relative z-10 size-4 sm:size-5 md:size-6 ${control.ml ? 'ml-0.5' : ''}`}
-            />
-            <div className='absolute inset-0 translate-x-full bg-gradient-to-r from-orange-400/20 to-pink-500/20 transition-transform duration-300 group-hover:translate-x-0' />
+            <control.icon className={`size-4 sm:size-5 md:size-6 ${control.ml ? 'ml-0.5' : ''}`} />
           </Button>
         ))}
       </motion.div>
@@ -484,13 +545,13 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
         } z-10 text-white/60`}
       >
         <div className='flex flex-col items-center gap-2 sm:gap-3'>
-          <span className='text-[10px] font-bold uppercase tracking-[0.2em] sm:text-xs'>
-            Descubre Más
+          <span className='text-[10px] font-light uppercase tracking-[0.2em] sm:text-xs'>
+            Descubre más
           </span>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 2, ease: 'easeInOut', repeat: Infinity }}
-            className='rounded-full border border-white/20 bg-black/5 p-1.5 backdrop-blur-sm sm:p-2'
+            className='rounded-full border border-white/20 bg-white/5 p-1.5 backdrop-blur-sm sm:p-2'
           >
             <ArrowDown className='size-3 sm:size-4' />
           </motion.div>

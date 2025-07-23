@@ -9,8 +9,8 @@ import { useEffect, useState } from 'react'
 import { MiniCart } from '@/components/Cart/MiniCart'
 import { Logo } from '@/components/Logo'
 import { getStoreNavRoutes } from '@/config/routes'
-
 import { useAuth } from '@/src/modules/auth/context/useAuth'
+
 import { SearchTrigger } from './components/SearchTrigger'
 import { ThemeSwitch } from './components/ThemeSwitch'
 import { UserMenu } from './components/UserMenu'
@@ -97,7 +97,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
   return (
     <>
       <header
-        className={`${isHomePage ? 'fixed shadow-md' : 'sticky'} bg-background/95 supports-[backdrop-filter]:bg-background/60 top-0 z-50 w-full border-b backdrop-blur transition-transform duration-300 ease-in-out translate-y-0`}
+        className={`${isHomePage ? 'fixed shadow-md' : 'sticky'} bg-background/95 supports-[backdrop-filter]:bg-background/60 top-0 z-50 w-full translate-y-0 border-b backdrop-blur transition-transform duration-300 ease-in-out`}
       >
         <div className='container mx-auto px-3 sm:px-4 lg:px-6'>
           <div className='flex h-14 items-center justify-between gap-2 sm:h-16 sm:gap-4'>
@@ -109,59 +109,54 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
             </div>
 
             {/* SearchTrigger centrado en desktop */}
-            <div className='hidden lg:block lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-full lg:max-w-md'>
+            <div className='hidden lg:flex lg:max-w-md lg:flex-1 lg:justify-center'>
               <SearchTrigger />
             </div>
 
-            {/* SearchTrigger para tablet - centrado */}
-            <div className='hidden sm:block lg:hidden flex-1 max-w-md mx-auto'>
+            <div className='mx-auto hidden max-w-md flex-1 sm:block lg:hidden'>
               <SearchTrigger />
             </div>
 
-            {/* Lado derecho: Navegación + Elementos de usuario - empujados a la derecha */}
             <div className='flex items-center gap-1 sm:gap-2'>
-              {/* Navegación desktop - antes de los elementos de usuario */}
-              <nav className='hidden lg:flex lg:mr-4'>
+              <nav className='hidden lg:mr-4 lg:flex'>
                 <div className='flex items-center space-x-6'>
                   {getStoreNavRoutes().map((route) => {
                     const isActive = pathname === route.PATH
                     const isHovered = hoveredPath === route.PATH
-                    
+
                     return (
                       <div
                         key={route.PATH}
-                        className="relative"
+                        className='relative'
                         onMouseEnter={() => setHoveredPath(route.PATH)}
                         onMouseLeave={() => setHoveredPath('')}
                       >
                         <Link
                           href={route.PATH}
-                          className='text-sm font-medium text-foreground/80 transition-colors xl:text-base'
+                          className='text-foreground/80 text-sm font-medium transition-colors xl:text-base'
                         >
                           {route.LABEL}
                         </Link>
-                        
-                        {/* Underline para ruta activa */}
+
                         {isActive && (
                           <motion.div
-                            className="absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-current"
-                            layoutId="desktop-active-underline"
+                            className='absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-current'
+                            layoutId='desktop-active-underline'
                             initial={false}
                             animate={{ scaleX: 1 }}
-                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            transition={{ damping: 30, stiffness: 500, type: 'spring' }}
                           />
                         )}
-                        
-                        {/* Underline para hover (solo cuando no está activa) */}
+
                         {isHovered && !isActive && (
                           <motion.div
-                            className="absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-current opacity-60"
-                            layoutId="desktop-hover-underline"
+                            className='absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-current opacity-60'
+                            layoutId='desktop-hover-underline'
                             initial={{ scaleX: 0 }}
                             animate={{ scaleX: 1 }}
                             exit={{ scaleX: 0 }}
-                            style={{ transformOrigin: "left" }}
-                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            style={{ transformOrigin: 'left' }}
+                            transition={{ damping: 30, stiffness: 500, type: 'spring' }}
                           />
                         )}
                       </div>
@@ -169,21 +164,19 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
                   })}
                 </div>
               </nav>
-              
+
               {user && <MiniCart />}
-              
+
               <div className='hidden sm:block'>
                 <UserMenu />
               </div>
-              
+
               <ThemeSwitch />
 
-              {/* SearchTrigger para móvil */}
               <div className='sm:hidden'>
                 <SearchTrigger />
               </div>
 
-              {/* Botón de menú - solo visible en dispositivos menores a lg */}
               <button
                 onClick={toggleMobileMenu}
                 className='relative z-50 rounded-md p-2 transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring lg:hidden'
@@ -211,7 +204,6 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
         </div>
       </header>
 
-      {/* Menu desplegable - solo disponible en dispositivos menores a lg */}
       <div
         className={`fixed inset-0 z-40 transition-all duration-500 ease-in-out lg:hidden ${
           isMobileMenuOpen ? 'visible opacity-100' : 'invisible opacity-0'
@@ -221,7 +213,6 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
           <div className='absolute inset-0 bg-gradient-to-br from-background to-background'></div>
           <div className='absolute inset-0 bg-gradient-to-tl via-transparent'></div>
 
-          {/* Esferas animadas */}
           <div
             className='absolute size-64 rounded-full bg-gradient-to-br opacity-40 blur-3xl md:size-80'
             style={{
@@ -281,28 +272,26 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
                     >
                       {route.LABEL}
                     </Link>
-                    
-                    {/* Underline para ruta activa */}
+
                     {isActive && (
                       <motion.div
-                        className="absolute bottom-0 left-0 h-1 w-full rounded-full bg-current"
-                        layoutId="mobile-active-underline"
+                        className='absolute bottom-0 left-0 h-1 w-full rounded-full bg-current'
+                        layoutId='mobile-active-underline'
                         initial={false}
                         animate={{ scaleX: 1 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        transition={{ damping: 30, stiffness: 500, type: 'spring' }}
                       />
                     )}
-                    
-                    {/* Underline para hover (solo cuando no está activa) */}
+
                     {isHovered && !isActive && (
                       <motion.div
-                        className="absolute bottom-0 left-0 h-1 w-full rounded-full bg-current opacity-60"
-                        layoutId="mobile-hover-underline"
+                        className='absolute bottom-0 left-0 h-1 w-full rounded-full bg-current opacity-60'
+                        layoutId='mobile-hover-underline'
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: 1 }}
                         exit={{ scaleX: 0 }}
-                        style={{ transformOrigin: "left" }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        style={{ transformOrigin: 'left' }}
+                        transition={{ damping: 30, stiffness: 500, type: 'spring' }}
                       />
                     )}
                   </div>

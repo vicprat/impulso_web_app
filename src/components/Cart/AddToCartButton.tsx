@@ -17,6 +17,32 @@ interface AddToCartButtonProps {
   className?: string
   showQuantitySelector?: boolean
   disabled?: boolean
+  title?: {
+    primary: string // Texto principal del botón (ej: "Registrarse")
+    adding: string // Texto mientras se agrega (ej: "Registrando...")
+    addMore: string // Texto cuando ya hay items (ej: "Registrar más")
+    loginPrompt: string // Texto para login (ej: "Iniciar sesión para registrarse")
+    unavailable: string // Mensaje de no disponible (ej: "Evento no disponible")
+    alreadyInCart: string // Mensaje cuando ya está en carrito (ej: "Ya estás registrado")
+  }
+}
+
+const defaultTitles = {
+  addMore: 'Agregar más',
+  adding: 'Agregando...',
+  alreadyInCart: 'Ya tienes {quantity} en tu carrito',
+  loginPrompt: 'Iniciar sesión para comprar',
+  primary: 'Agregar al carrito',
+  unavailable: 'Este producto no está disponible para la venta',
+}
+
+const eventTitles = {
+  addMore: 'Registrar más entradas',
+  adding: 'Registrando...',
+  alreadyInCart: 'Ya tienes {quantity} entradas registradas',
+  loginPrompt: 'Iniciar sesión para registrarse',
+  primary: 'Registrarse al evento',
+  unavailable: 'Este evento no está disponible',
 }
 
 export function AddToCartButton({
@@ -26,23 +52,29 @@ export function AddToCartButton({
   selectedVariant,
   showQuantitySelector = false,
   size = 'default',
+  title,
 }: AddToCartButtonProps) {
   const { isAuthenticated, isLoading: authLoading, login } = useAuth()
   const { addProduct, cartSummary, isAdding } = useCartActions()
   const [quantity, setQuantity] = useState(initialQuantity)
 
-  const variantToAdd = selectedVariant ?? product.variants[0]
+  // Usar títulos personalizados o detectar si es evento para usar títulos apropiados
+  const isEvent = product.vendor === 'Evento' || product.title?.toLowerCase().includes('evento')
+  const titles = title || (isEvent ? eventTitles : defaultTitles)
 
+  const variantToAdd = selectedVariant ?? product.variants[0]
   const existingLine = cartSummary?.lines.find((line) => line.merchandise.id === variantToAdd.id)
 
   const handleAddToCart = async () => {
     if (!isAuthenticated && !authLoading) {
-      toast.error('Debes iniciar sesión para agregar productos al carrito')
+      toast.error(
+        `Debes iniciar sesión para ${isEvent ? 'registrarte al evento' : 'agregar productos al carrito'}`
+      )
       login()
       return
     }
     if (!variantToAdd.availableForSale) {
-      toast.error('Este producto no está disponible para la venta')
+      toast.error(titles.unavailable)
       return
     }
 
@@ -55,6 +87,11 @@ export function AddToCartButton({
 
   const decrementQuantity = () => {
     setQuantity((prev) => Math.max(1, prev - 1))
+  }
+
+  const getAlreadyInCartMessage = () => {
+    if (!existingLine) return ''
+    return titles.alreadyInCart.replace('{quantity}', existingLine.quantity.toString())
   }
 
   if (authLoading) {
@@ -70,7 +107,7 @@ export function AddToCartButton({
     return (
       <Button onClick={login} size={size} className={className} variant='outline'>
         <ShoppingCart className='mr-2 size-4' />
-        Iniciar sesión para comprar
+        {titles.loginPrompt}
       </Button>
     )
   }
@@ -79,24 +116,24 @@ export function AddToCartButton({
     <div className='flex flex-col gap-3'>
       {showQuantitySelector && (
         <div className='flex items-center gap-3'>
-          <span className='text-sm font-medium'>Cantidad:</span>
-          <div className='flex items-center rounded-md border'>
+          <span className='text-sm font-medium'>{isEvent ? 'Entradas:' : 'Cantidad:'}</span>
+          <div className='flex items-center rounded-md border border-border'>
             <Button
               variant='ghost'
               size='sm'
               onClick={decrementQuantity}
               disabled={quantity <= 1 || isAdding}
-              className='size-8 p-0'
+              className='size-8 p-0 hover:bg-muted'
             >
               <Minus className='size-4' />
             </Button>
-            <span className='min-w-12 px-3 py-1 text-center'>{quantity}</span>
+            <span className='min-w-12 px-3 py-1 text-center text-foreground'>{quantity}</span>
             <Button
               variant='ghost'
               size='sm'
               onClick={incrementQuantity}
               disabled={isAdding}
-              className='size-8 p-0'
+              className='size-8 p-0 hover:bg-muted'
             >
               <Plus className='size-4' />
             </Button>
@@ -113,25 +150,23 @@ export function AddToCartButton({
         {isAdding ? (
           <>
             <Loader2 className='mr-2 size-4 animate-spin' />
-            Agregando...
+            {titles.adding}
           </>
         ) : existingLine ? (
           <>
             <ShoppingCart className='mr-2 size-4' />
-            Agregar más
+            {titles.addMore}
           </>
         ) : (
           <>
             <ShoppingCart className='mr-2 size-4' />
-            Agregar al carrito
+            {titles.primary}
           </>
         )}
       </Button>
 
       {existingLine && (
-        <p className='text-center text-sm text-muted-foreground'>
-          Ya tienes {existingLine.quantity} en tu carrito
-        </p>
+        <p className='text-center text-sm text-muted-foreground'>{getAlreadyInCartMessage()}</p>
       )}
     </div>
   )

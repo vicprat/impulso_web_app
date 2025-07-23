@@ -55,7 +55,11 @@ export const Product: React.FC<Props> = ({ product }) => {
       </div>
 
       <Link
-        href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })}
+        href={
+          product.vendor === 'Evento'
+            ? replaceRouteParams(ROUTES.STORE.EVENT_DETAIL.PATH, { handle: product.handle })
+            : replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })
+        }
         className='block focus:outline-none'
         aria-label={`Ver detalles de ${product.title}`}
       >
@@ -93,9 +97,11 @@ export const Product: React.FC<Props> = ({ product }) => {
         <div className='space-y-2'>
           <div className='space-y-1'>
             <Link
-              href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, {
-                handle: product.handle,
-              })}
+              href={
+                product.vendor === 'Evento'
+                  ? replaceRouteParams(ROUTES.STORE.EVENT_DETAIL.PATH, { handle: product.handle })
+                  : replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })
+              }
             >
               <h3 className='line-clamp-2 font-medium leading-tight text-foreground transition-colors duration-200 hover:text-primary focus:text-primary focus:outline-none'>
                 {product.title}

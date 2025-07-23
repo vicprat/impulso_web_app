@@ -435,3 +435,78 @@ export const COLLECTION_BY_HANDLE_QUERY = `
     }
   }
 `
+
+export const EVENT_BY_HANDLE_QUERY = `
+  query EventByHandle($handle: String!) {
+    product(handle: $handle) {
+      id
+      title
+      handle
+      description
+      descriptionHtml
+      availableForSale
+      productType
+      vendor
+      createdAt
+      status
+      tags
+      priceRange {
+        minVariantPrice {
+          amount
+          currencyCode
+        }
+        maxVariantPrice {
+          amount
+          currencyCode
+        }
+      }
+      images(first: 10) {
+        edges {
+          node {
+            id
+            url
+            altText
+            width
+            height
+          }
+        }
+      }
+      variants(first: 20) {
+        edges {
+          node {
+            id
+            title
+            availableForSale
+            price {
+              amount
+              currencyCode
+            }
+            compareAtPrice {
+              amount
+              currencyCode
+            }
+            sku
+            inventoryQuantity
+            inventoryPolicy
+            inventoryItem {
+              tracked
+            }
+            selectedOptions {
+              name
+              value
+            }
+          }
+        }
+      }
+      metafields(first: 50, namespace: "event_details") {
+        edges {
+          node {
+            namespace
+            key
+            value
+          }
+        }
+      }
+    }
+  }
+`

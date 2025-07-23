@@ -1,7 +1,7 @@
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
-import { BarChart3, Edit, Eye, Trash2 } from 'lucide-react'
+import { BarChart3, Edit, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -25,17 +25,13 @@ const ActionsCell = ({ event }: { event: Event }) => {
     router.push(`/admin/events/${numericId}`)
   }
 
-  const handleView = () => {
-    router.push(`/store/event/${event.handle}`)
-  }
-
   const handleFinancialManagement = () => {
     const shopifyId = event.id.split('/').pop()
 
     const financialEvent = financialEvents?.find((fe) => fe.shopifyProductId === shopifyId)
 
     if (financialEvent) {
-      router.push(`/admin/events/manage/${financialEvent.id}`)
+      router.push(`/admin/events/${financialEvent.id}/finance`)
     }
   }
 
@@ -54,15 +50,6 @@ const ActionsCell = ({ event }: { event: Event }) => {
   return (
     <>
       <div className='flex items-center gap-2'>
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={handleView}
-          className='size-8 p-0'
-          title='Ver evento'
-        >
-          <Eye className='size-4' />
-        </Button>
         <Button
           variant='ghost'
           size='sm'

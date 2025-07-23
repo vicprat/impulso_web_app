@@ -5,6 +5,7 @@ import { transformCollectionData, transformProductData } from './helpers'
 import {
   COLLECTIONS_QUERY,
   COLLECTION_BY_HANDLE_QUERY,
+  EVENT_BY_HANDLE_QUERY,
   HOMEPAGE_QUERY,
   PRODUCTS_BY_IDS_QUERY,
   PRODUCTS_QUERY,
@@ -86,6 +87,32 @@ export const api = {
       throw error
     }
   },
+  getEventByHandle: async (handle: string): Promise<{ data: any; statusCode: number }> => {
+    try {
+      const { data, errors } = await storeClient.request(EVENT_BY_HANDLE_QUERY, {
+        variables: {
+          handle,
+        },
+      })
+
+      if (errors) {
+        handleGraphQLErrors(Array.isArray(errors) ? errors : [])
+      }
+
+      if (!data?.product) {
+        throw new Error(`Event with handle "${handle}" not found`)
+      }
+
+      return {
+        data: data.product,
+        statusCode: 200,
+      }
+    } catch (error) {
+      console.error(`Error fetching event with handle "${handle}":`, error)
+      throw error
+    }
+  },
+
   getHomepageData: async (): Promise<{
     data: {
       collections: Collection[]
@@ -194,8 +221,16 @@ export const api = {
         },
       })
 
+      console.log('GraphQL response structure:', Object.keys(data || {}))
+      console.log('GraphQL products structure:', Object.keys(data?.products || {}))
+
       if (errors) {
+        console.error('GraphQL errors:', errors)
         handleGraphQLErrors(Array.isArray(errors) ? errors : [])
+      }
+
+      if (!data?.products) {
+        throw new Error('No products data in GraphQL response')
       }
 
       return {

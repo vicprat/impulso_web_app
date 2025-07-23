@@ -42,7 +42,7 @@ export default function EventDetailPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  const eventId = params.id as string
+  const eventId = params.eventId as string
 
   const { data: event, error, isLoading, refetch } = useGetEvent(eventId)
 

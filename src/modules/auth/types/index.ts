@@ -4,7 +4,7 @@ import { type Cart } from '@/modules/cart/types'
 
 export interface User {
   id: string
-  shopifyCustomerId: string
+  shopifyCustomerId?: string
   email: string
   firstName?: string
   lastName?: string

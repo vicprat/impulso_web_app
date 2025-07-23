@@ -26,6 +26,7 @@ import {
 } from '@/modules/user/hooks/management'
 import { type UserFilters, type UserProfile } from '@/modules/user/types'
 import { PERMISSIONS } from '@/src/config/Permissions'
+import { availableRoles } from '@/src/config/Roles'
 
 import { columns } from './columns'
 
@@ -82,23 +83,6 @@ export default function UserManagementPage() {
       setFilters((prev) => ({ ...prev, sortBy: 'createdAt', sortOrder: 'desc' }))
     }
   }, [sorting])
-
-  const availableRoles = [
-    { description: 'Cliente básico del sistema', id: 'customer', name: 'Cliente' },
-    {
-      description: 'Cliente VIP con beneficios adicionales',
-      id: 'vip_customer',
-      name: 'Cliente VIP',
-    },
-    { description: 'Personal de soporte al cliente', id: 'support', name: 'Soporte' },
-    { description: 'Gerente con acceso amplio al sistema', id: 'manager', name: 'Gerente' },
-    { description: 'Administrador con acceso completo', id: 'admin', name: 'Administrador' },
-    {
-      description: 'Artista con acceso a herramientas de gestión de su perfil',
-      id: 'artist',
-      name: 'Artista',
-    },
-  ]
 
   const handleManageRoles = (user: UserProfile) => {
     setSelectedUser(user)
