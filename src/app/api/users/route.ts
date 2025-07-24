@@ -4,6 +4,7 @@ import { requirePermission } from '@/modules/auth/server/server'
 import { type UserFilters } from '@/modules/user/types'
 import { getAllUsers } from '@/modules/user/user.service'
 import { PERMISSIONS } from '@/src/config/Permissions'
+import { prisma } from '@/src/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,5 +42,94 @@ export async function GET(request: NextRequest) {
     })
   } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    await requirePermission(PERMISSIONS.MANAGE_USERS)
+
+    const body = await request.json()
+    const { email, firstName, lastName, role, isActive = true } = body
+
+    if (!email || !role) {
+      return NextResponse.json(
+        { error: 'Email y rol son requeridos' },
+        { status: 400 }
+      )
+    }
+
+    // Verificar si el usuario ya existe
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    })
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Ya existe un usuario con este email' },
+        { status: 409 }
+      )
+    }
+
+    // Obtener el rol
+    const roleRecord = await prisma.role.findFirst({
+      where: { 
+        name: role,
+        isActive: true 
+      },
+    })
+
+    if (!roleRecord) {
+      return NextResponse.json(
+        { error: `Rol '${role}' no válido o inactivo` },
+        { status: 400 }
+      )
+    }
+
+    // Crear el usuario
+    const user = await prisma.user.create({
+      data: {
+        email,
+        firstName,
+        lastName,
+        isActive,
+        UserRole: {
+          create: {
+            roleId: roleRecord.id,
+            assignedAt: new Date(),
+            assignedBy: null,
+          },
+        },
+      },
+    })
+
+    return NextResponse.json({ 
+      success: true, 
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isActive: user.isActive,
+        role: role
+      }
+    }, { status: 201 })
+  } catch (error) {
+    console.error('Error creating user:', error)
+    
+    // Manejar errores específicos de Prisma
+    if (error instanceof Error) {
+      if (error.message.includes('Unique constraint')) {
+        return NextResponse.json(
+          { error: 'Ya existe un usuario con este email' },
+          { status: 409 }
+        )
+      }
+    }
+    
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    )
   }
 }

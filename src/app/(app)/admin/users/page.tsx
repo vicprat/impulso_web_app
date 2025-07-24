@@ -9,12 +9,14 @@ import {
   useReactTable,
   type SortingState,
 } from '@tanstack/react-table'
+import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Dialog } from '@/components/Dialog'
 import { Form } from '@/components/Forms'
 import { Table } from '@/components/Table'
+import { Button } from '@/components/ui/button'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useDialog } from '@/hooks/useDialog'
 import { useAuth } from '@/modules/auth/context/useAuth'
@@ -51,6 +53,7 @@ export default function UserManagementPage() {
 
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
   const roleDialog = useDialog()
+  const createUserDialog = useDialog()
 
   // Hooks
   const { data: usersData, isLoading: usersLoading } = useUsersManagement(filters)
@@ -188,6 +191,10 @@ export default function UserManagementPage() {
             <span className='text-sm text-muted-foreground'>
               Total: {pagination.total} usuarios
             </span>
+            <Button onClick={createUserDialog.openDialog}>
+              <Plus className='mr-2 size-4' />
+              Nuevo Usuario
+            </Button>
           </div>
         </div>
 
@@ -265,6 +272,22 @@ export default function UserManagementPage() {
             onCancel={roleDialog.closeDialog}
           />
         )}
+      </Dialog.Form>
+
+      <Dialog.Form
+        open={createUserDialog.open}
+        onOpenChange={createUserDialog.onOpenChange}
+        title='Crear Nuevo Usuario'
+        description='Crea un nuevo usuario y asígnale un rol específico.'
+      >
+        <Form.Artist
+          mode='create'
+          onSuccess={() => {
+            createUserDialog.closeDialog()
+            void queryClient.invalidateQueries({ queryKey: ['users'] })
+          }}
+          onCancel={createUserDialog.closeDialog}
+        />
       </Dialog.Form>
     </div>
   )

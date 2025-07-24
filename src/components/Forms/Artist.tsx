@@ -14,23 +14,34 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useUpdateUserRoles } from '@/modules/user/hooks/management'
 import { type UserProfile } from '@/modules/user/types'
 import { availableRoles } from '@/src/config/Roles'
 
-interface ArtistFormProps {
-  user: UserProfile
+interface UserRoleFormProps {
+  user?: UserProfile // Opcional para crear nuevos usuarios
   onSuccess: () => void
   onCancel: () => void
+  mode?: 'create' | 'edit'
 }
 
-export function ArtistForm({ onCancel, onSuccess, user }: ArtistFormProps) {
+export function UserRoleForm({ onCancel, onSuccess, user, mode = 'edit' }: UserRoleFormProps) {
   const queryClient = useQueryClient()
-  const [selectedRole, setSelectedRole] = useState<string>(user.roles[0] || 'customer')
+  const [selectedRole, setSelectedRole] = useState<string>(user?.roles[0] || 'customer')
   const [vendorName, setVendorName] = useState('')
   const [popoverOpen, setPopoverOpen] = useState(false)
+  
+  // Campos para crear nuevo usuario
+  const [formData, setFormData] = useState({
+    email: user?.email || '',
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    isActive: user?.isActive ?? true,
+  })
 
   const updateRoles = useUpdateUserRoles()
 
@@ -61,6 +72,30 @@ export function ArtistForm({ onCancel, onSuccess, user }: ArtistFormProps) {
     },
   })
 
+  const createUserMutation = useMutation({
+    mutationFn: (data: { email: string; firstName?: string; lastName?: string; role: string; isActive: boolean }) => {
+      return fetch('/api/users', {
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      }).then(async (res) => {
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}))
+          throw new Error(errorData.error || 'Falló la creación del usuario')
+        }
+        return res.json()
+      })
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Error al crear el usuario')
+    },
+    onSuccess: () => {
+      toast.success('Usuario creado exitosamente')
+      void queryClient.invalidateQueries({ queryKey: ['users'] })
+      onSuccess()
+    },
+  })
+
   const handleRoleChange = (roleId: string) => {
     setSelectedRole(roleId)
     if (roleId !== 'artist') {
@@ -68,27 +103,59 @@ export function ArtistForm({ onCancel, onSuccess, user }: ArtistFormProps) {
     }
   }
 
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
   const handleSaveRoles = async () => {
     if (!selectedRole) return
 
     try {
-      const isBecomingArtist = selectedRole === 'artist' && !user.roles.includes('artist')
+      if (mode === 'create') {
+        // Crear nuevo usuario
+        if (!formData.email.trim()) {
+          toast.error('El email es requerido')
+          return
+        }
 
-      if (isBecomingArtist && !vendorName) {
-        toast.error('Debes seleccionar un vendor para promocionar a artista')
-        return
-      }
-
-      await updateRoles.mutateAsync({ role: selectedRole, userId: user.id })
-
-      if (isBecomingArtist) {
-        await createArtistMutation.mutateAsync({
-          userId: user.id,
-          vendorName,
+        await createUserMutation.mutateAsync({
+          email: formData.email,
+          firstName: formData.firstName || undefined,
+          lastName: formData.lastName || undefined,
+          role: selectedRole,
+          isActive: formData.isActive,
         })
+
+        // Si es artista, crear también el vendor
+        if (selectedRole === 'artist' && vendorName) {
+          // Aquí podrías crear el vendor si es necesario
+          toast.success('Usuario artista creado exitosamente')
+        }
       } else {
-        toast.success('Rol actualizado exitosamente')
-        onSuccess()
+        // Editar usuario existente
+        if (!user) return
+
+        const isBecomingArtist = selectedRole === 'artist' && !user.roles.includes('artist')
+
+        if (isBecomingArtist && !vendorName) {
+          toast.error('Debes seleccionar un vendor para promocionar a artista')
+          return
+        }
+
+        await updateRoles.mutateAsync({ role: selectedRole, userId: user.id })
+
+        if (isBecomingArtist) {
+          await createArtistMutation.mutateAsync({
+            userId: user.id,
+            vendorName,
+          })
+        } else {
+          toast.success('Rol actualizado exitosamente')
+          onSuccess()
+        }
       }
     } catch (error) {
       console.error('Error updating role:', error)
@@ -96,11 +163,68 @@ export function ArtistForm({ onCancel, onSuccess, user }: ArtistFormProps) {
     }
   }
 
-  const isBecomingArtist = selectedRole === 'artist' && !user.roles.includes('artist')
+  const isBecomingArtist = selectedRole === 'artist' && (!user || !user.roles.includes('artist'))
 
   return (
     <div className='space-y-6'>
+      {/* Campos para crear usuario */}
+      {mode === 'create' && (
+        <div className='space-y-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='email'>Email *</Label>
+            <Input
+              id='email'
+              type='email'
+              placeholder='usuario@ejemplo.com'
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              required
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='firstName'>Nombre</Label>
+            <Input
+              id='firstName'
+              type='text'
+              placeholder='Juan'
+              value={formData.firstName}
+              onChange={(e) => handleInputChange('firstName', e.target.value)}
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='lastName'>Apellido</Label>
+            <Input
+              id='lastName'
+              type='text'
+              placeholder='Pérez'
+              value={formData.lastName}
+              onChange={(e) => handleInputChange('lastName', e.target.value)}
+            />
+          </div>
+
+          <div className='space-y-2'>
+            <Label>Estado</Label>
+            <div className='flex items-center space-x-2'>
+              <input
+                type='checkbox'
+                id='isActive'
+                checked={formData.isActive}
+                onChange={(e) => handleInputChange('isActive', e.target.checked)}
+                className='rounded border-gray-300'
+              />
+              <Label htmlFor='isActive' className='text-sm font-normal'>
+                Usuario activo
+              </Label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Selección de rol */}
       <div className='space-y-3'>
+        <h3 className='text-lg font-medium'>Asignar Rol</h3>
         {availableRoles.map((role) => (
           <label key={role.id} className='flex cursor-pointer items-start space-x-3'>
             <input
@@ -190,9 +314,11 @@ export function ArtistForm({ onCancel, onSuccess, user }: ArtistFormProps) {
         </Button>
         <Button
           onClick={handleSaveRoles}
-          disabled={updateRoles.isPending || createArtistMutation.isPending}
+          disabled={updateRoles.isPending || createArtistMutation.isPending || createUserMutation.isPending}
         >
-          {updateRoles.isPending || createArtistMutation.isPending ? 'Guardando...' : 'Guardar'}
+          {updateRoles.isPending || createArtistMutation.isPending || createUserMutation.isPending 
+            ? 'Guardando...' 
+            : mode === 'create' ? 'Crear Usuario' : 'Guardar'}
         </Button>
       </div>
     </div>

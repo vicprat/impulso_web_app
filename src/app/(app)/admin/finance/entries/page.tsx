@@ -249,6 +249,19 @@ export default function FinancialEntriesPage() {
                       {entry.category && <p>Categoría: {entry.category}</p>}
                       {entry.relatedParty && <p>Parte relacionada: {entry.relatedParty}</p>}
                       {entry.paymentMethod && <p>Método de pago: {entry.paymentMethod}</p>}
+                      {entry.user && (
+                        <p>
+                          Usuario: {entry.user.firstName} {entry.user.lastName} ({entry.user.email})
+                          {entry.user.UserRole && entry.user.UserRole.length > 0 && (
+                            <span className='ml-2'>
+                              - {entry.user.UserRole.map(ur => ur.role.name).join(', ')}
+                            </span>
+                          )}
+                        </p>
+                      )}
+                      {entry.bankAccount && (
+                        <p>Cuenta: {entry.bankAccount.name} ({entry.bankAccount.bankName})</p>
+                      )}
                       {entry.amountPaid > 0 && (
                         <p>
                           Pagado: {formatCurrency(entry.amountPaid.toString(), 'MXN')} /{' '}

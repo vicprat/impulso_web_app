@@ -2,8 +2,8 @@
 
 import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -16,8 +16,12 @@ import { ROUTES } from '@/src/config/routes'
 
 export default function NewFinancialEntryPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const createEntry = useCreateFinancialEntry()
   const { data: bankAccounts } = useBankAccounts()
+
+  // Obtener userId de los parámetros de la URL
+  const userId = searchParams.get('userId')
 
   const [formData, setFormData] = useState({
     amount: '',
@@ -32,9 +36,17 @@ export default function NewFinancialEntryPage() {
     relatedParty: '',
     status: 'PENDING',
     type: 'EXPENSE',
+    userId: '', // Agregar campo userId
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Establecer userId cuando se carga la página
+  useEffect(() => {
+    if (userId) {
+      setFormData(prev => ({ ...prev, userId }))
+    }
+  }, [userId])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -82,7 +94,7 @@ export default function NewFinancialEntryPage() {
     }
 
     try {
-      await createEntry.mutateAsync({
+      const entryData = {
         amount: parseFloat(formData.amount),
         amountPaid: formData.amountPaid ? parseFloat(formData.amountPaid) : 0,
         bankAccountId: formData.bankAccountId || undefined,
@@ -95,10 +107,19 @@ export default function NewFinancialEntryPage() {
         relatedParty: formData.relatedParty.trim() || undefined,
         status: formData.status as 'PENDING' | 'PARTIALLY_PAID' | 'COMPLETED' | 'CANCELLED',
         type: formData.type as 'INCOME' | 'EXPENSE',
-      })
+        userId: formData.userId || undefined, // Incluir userId directamente
+      }
+
+      await createEntry.mutateAsync(entryData)
 
       toast.success('Movimiento financiero creado exitosamente')
-      router.push(ROUTES.FINANCE.ENTRIES.MAIN.PATH)
+      
+      // Redirigir de vuelta al usuario si se creó desde su página
+      if (userId) {
+        router.push(`${ROUTES.USERS.DETAIL.PATH.replace(':id', userId)}`)
+      } else {
+        router.push(ROUTES.FINANCE.ENTRIES.MAIN.PATH)
+      }
     } catch (error) {
       console.error('Error creating financial entry:', error)
       toast.error('Error al crear el movimiento financiero')
@@ -115,13 +136,16 @@ export default function NewFinancialEntryPage() {
   return (
     <div className='space-y-6 p-6'>
       <div className='flex items-center gap-4'>
-        <Link href={ROUTES.FINANCE.ENTRIES.MAIN.PATH}>
+        <Link href={userId ? `${ROUTES.USERS.DETAIL.PATH.replace(':id', userId)}` : ROUTES.FINANCE.ENTRIES.MAIN.PATH}>
           <Button variant='outline' size='sm'>
             <ArrowLeft className='mr-2 size-4' />
             Volver
           </Button>
         </Link>
-        <h1 className='text-2xl font-bold'>Nuevo Movimiento Financiero</h1>
+        <h1 className='text-2xl font-bold'>
+          Nuevo Movimiento Financiero
+          {userId && <span className='text-sm font-normal text-muted-foreground ml-2'>(para usuario específico)</span>}
+        </h1>
       </div>
 
       <Card className='max-w-4xl'>
@@ -201,7 +225,35 @@ export default function NewFinancialEntryPage() {
               </div>
             </div>
 
-            {/* Cuenta Bancaria y Categoría */}
+            {/* Categoría y Estado */}
+            <div className='grid gap-4 md:grid-cols-2'>
+              <div className='space-y-2'>
+                <Label htmlFor='category'>Categoría</Label>
+                <Input
+                  id='category'
+                  value={formData.category}
+                  onChange={(e) => handleInputChange('category', e.target.value)}
+                  placeholder='Categoría del movimiento'
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='status'>Estado</Label>
+                <select
+                  id='status'
+                  value={formData.status}
+                  onChange={(e) => handleInputChange('status', e.target.value)}
+                  className='w-full rounded-md border border-input bg-background px-3 py-2'
+                >
+                  <option value='PENDING'>Pendiente</option>
+                  <option value='PARTIALLY_PAID'>Parcialmente Pagado</option>
+                  <option value='COMPLETED'>Completado</option>
+                  <option value='CANCELLED'>Cancelado</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Cuenta Bancaria y Método de Pago */}
             <div className='grid gap-4 md:grid-cols-2'>
               <div className='space-y-2'>
                 <Label htmlFor='bankAccountId'>Cuenta Bancaria</Label>
@@ -221,54 +273,26 @@ export default function NewFinancialEntryPage() {
               </div>
 
               <div className='space-y-2'>
-                <Label htmlFor='category'>Categoría</Label>
-                <Input
-                  id='category'
-                  value={formData.category}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                  placeholder='Ej: Servicios, Materiales, etc.'
-                />
-              </div>
-            </div>
-
-            {/* Método de Pago y Parte Relacionada */}
-            <div className='grid gap-4 md:grid-cols-2'>
-              <div className='space-y-2'>
                 <Label htmlFor='paymentMethod'>Método de Pago</Label>
                 <Input
                   id='paymentMethod'
                   value={formData.paymentMethod}
                   onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
-                  placeholder='Ej: Transferencia, Efectivo, Tarjeta'
+                  placeholder='Efectivo, Transferencia, etc.'
                 />
               </div>
+            </div>
 
+            {/* Parte Relacionada y Fecha de Vencimiento */}
+            <div className='grid gap-4 md:grid-cols-2'>
               <div className='space-y-2'>
                 <Label htmlFor='relatedParty'>Parte Relacionada</Label>
                 <Input
                   id='relatedParty'
                   value={formData.relatedParty}
                   onChange={(e) => handleInputChange('relatedParty', e.target.value)}
-                  placeholder='Cliente, proveedor, empleado, etc.'
+                  placeholder='Proveedor, Cliente, etc.'
                 />
-              </div>
-            </div>
-
-            {/* Estado y Fecha de Vencimiento */}
-            <div className='grid gap-4 md:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label htmlFor='status'>Estado</Label>
-                <select
-                  id='status'
-                  value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value)}
-                  className='w-full rounded-md border border-input bg-background px-3 py-2'
-                >
-                  <option value='PENDING'>Pendiente</option>
-                  <option value='PARTIALLY_PAID'>Parcialmente Pagado</option>
-                  <option value='COMPLETED'>Completado</option>
-                  <option value='CANCELLED'>Cancelado</option>
-                </select>
               </div>
 
               <div className='space-y-2'>
@@ -296,13 +320,23 @@ export default function NewFinancialEntryPage() {
               />
             </div>
 
-            <div className='flex gap-4 pt-4'>
-              <Button type='submit' disabled={createEntry.isPending} className='flex-1'>
-                <Save className='mr-2 size-4' />
-                {createEntry.isPending ? 'Creando...' : 'Crear Movimiento'}
+            {/* Botones */}
+            <div className='flex gap-4'>
+              <Button type='submit' disabled={createEntry.isPending}>
+                {createEntry.isPending ? (
+                  <>
+                    <div className='mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+                    Creando...
+                  </>
+                ) : (
+                  <>
+                    <Save className='mr-2 size-4' />
+                    Crear Movimiento
+                  </>
+                )}
               </Button>
-              <Link href={ROUTES.FINANCE.ENTRIES.MAIN.PATH} className='flex-1'>
-                <Button type='button' variant='outline' className='w-full'>
+              <Link href={userId ? `${ROUTES.USERS.DETAIL.PATH.replace(':id', userId)}` : ROUTES.FINANCE.ENTRIES.MAIN.PATH}>
+                <Button type='button' variant='outline'>
                   Cancelar
                 </Button>
               </Link>

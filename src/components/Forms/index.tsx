@@ -1,4 +1,4 @@
-import { ArtistForm as Artist } from './Artist'
+import { UserRoleForm as Artist } from './Artist'
 import { EventForm as Event } from './Event'
 import { ExpenseForm as Expense } from './Expense'
 import { ImageUploader } from './ImageUploader'
