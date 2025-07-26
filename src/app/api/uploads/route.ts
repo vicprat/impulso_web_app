@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import sharp from 'sharp'
 
+import { processImageToWebP } from '@/lib/imageProcessing'
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { requirePermission } from '@/modules/auth/server/server'
 import { PERMISSIONS } from '@/src/config/Permissions'
@@ -58,12 +58,14 @@ export async function POST(request: NextRequest) {
 
     const fileBuffer = await file.arrayBuffer()
 
-    const webpBuffer = await sharp(Buffer.from(fileBuffer))
-      .webp({ quality: 80 })
-      .resize(2048, 2048, { fit: 'inside', withoutEnlargement: true })
-      .toBuffer()
+    // Procesar imagen a WebP usando la utilidad abstraída
+    const processedImage = await processImageToWebP(fileBuffer, file.name, {
+      quality: 80,
+      maxWidth: 2048,
+      maxHeight: 2048,
+    })
 
-    const filename = file.name.replace(/\.[^/.]+$/, '.webp')
+    const { buffer: webpBuffer, filename } = processedImage
 
     const stagedUploadsInput = {
       filename,

@@ -14,7 +14,10 @@ function getProductGid(id: string): string {
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS)
+    const session = await requirePermission([
+      PERMISSIONS.MANAGE_PRODUCTS,
+      PERMISSIONS.MANAGE_OWN_PRODUCTS,
+    ])
     const { id } = await params
     const productGid = getProductGid(id)
 
@@ -36,7 +39,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS)
+    const session = await requirePermission([
+      PERMISSIONS.MANAGE_PRODUCTS,
+      PERMISSIONS.MANAGE_OWN_PRODUCTS,
+    ])
     const { id } = await params
     const productGid = getProductGid(id)
     const body = await request.json()
@@ -54,7 +60,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS)
+    const session = await requirePermission([
+      PERMISSIONS.MANAGE_PRODUCTS,
+      PERMISSIONS.MANAGE_OWN_PRODUCTS,
+    ])
     const { id } = await params
     const productGid = getProductGid(id)
 

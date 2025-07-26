@@ -72,13 +72,28 @@ async function getProducts(
 ): Promise<PaginatedProductsResponse> {
   validateSession(session)
 
+  // Obtener información del usuario para verificar si es artista
+  const user = await prisma.user.findUnique({
+    include: { artist: true, role: true },
+    where: { id: session.user.id },
+  })
+
   let shopifyQuery = ''
 
   if (params.search?.trim()) {
     shopifyQuery = `(title:*${params.search}* OR product_type:*${params.search}* OR vendor:*${params.search}*)`
   }
 
-  if (params.vendor?.trim()) {
+  // Si el usuario es artista, filtrar solo sus productos
+  if (user?.role?.name === 'artist' && user?.artist?.name) {
+    const artistVendor = user.artist.name
+    if (shopifyQuery) {
+      shopifyQuery += ` AND vendor:"${artistVendor}"`
+    } else {
+      shopifyQuery = `vendor:"${artistVendor}"`
+    }
+  } else if (params.vendor?.trim()) {
+    // Si no es artista pero se especifica un vendor, usar el parámetro
     if (shopifyQuery) {
       shopifyQuery += ` AND vendor:"${params.vendor}"`
     } else {
@@ -150,7 +165,22 @@ async function getProductById(id: string, session: AuthSession): Promise<Product
   if (!response.product) return null
 
   const locationId = await getPrimaryLocationId()
-  return new Product(response.product, locationId)
+  const product = new Product(response.product, locationId)
+
+  // Verificar si el usuario es artista y si el producto le pertenece
+  const user = await prisma.user.findUnique({
+    include: { artist: true, role: true },
+    where: { id: session.user.id },
+  })
+
+  // Si el usuario es artista, verificar que el producto sea suyo
+  if (user?.role?.name === 'artist' && user?.artist?.name) {
+    if (product.vendor !== user.artist.name) {
+      throw new Error('No tienes permisos para acceder a este producto.')
+    }
+  }
+
+  return product
 }
 
 async function getProductsFromRequest(
