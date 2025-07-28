@@ -27,8 +27,11 @@ interface UserBankAccountsData {
 
 export function useUserBankAccounts(userId: string) {
   return useQuery({
-    queryKey: ['user-bank-accounts', userId],
-    queryFn: async (): Promise<UserBankAccountsData> => {
+    enabled: !!userId,
+    // 5 minutos
+gcTime: 10 * 60 * 1000,
+    
+queryFn: async (): Promise<UserBankAccountsData> => {
       const response = await fetch(`/api/users/${userId}/bank-accounts`)
       
       if (!response.ok) {
@@ -37,8 +40,8 @@ export function useUserBankAccounts(userId: string) {
       
       return response.json()
     },
-    enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
+    
+queryKey: ['user-bank-accounts', userId], 
+    staleTime: 5 * 60 * 1000, // 10 minutos
   })
 } 

@@ -24,10 +24,10 @@ export async function POST(request: NextRequest) {
     }
 
     const existingArtist = await prisma.artist.findUnique({
-      where: { name: vendorName },
       include: {
         user: true,
       },
+      where: { name: vendorName },
     })
 
     // Si el artista existe pero no está asignado a ningún usuario, podemos reutilizarlo

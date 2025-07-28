@@ -36,19 +36,19 @@ export async function POST(request: NextRequest) {
         result = await uploadImageToSupabase(fileBuffer, file.name, {
           bucket: 'images',
           folder: 'general',
-          quality: 85,
-          maxWidth: 2048,
-          maxHeight: 2048,
           format: 'webp',
+          maxHeight: 2048,
+          maxWidth: 2048,
+          quality: 85,
         })
     }
 
     return NextResponse.json(
       {
         filename: result.filename,
+        path: result.path,
         resourceUrl: result.url,
         size: result.size,
-        path: result.path,
         type,
       },
       { status: 201 }

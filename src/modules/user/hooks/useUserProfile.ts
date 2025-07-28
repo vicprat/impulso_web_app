@@ -54,6 +54,8 @@ export const useUserProfile = () => {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY })
+      // También invalidar la caché de artistas públicos para que se vean los cambios
+      void queryClient.invalidateQueries({ queryKey: ['publicArtists'] })
       toast.success('Perfil actualizado correctamente')
     },
   })

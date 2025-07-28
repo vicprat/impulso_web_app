@@ -1,15 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
-import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { processImage } from './imageProcessing'
+
 import type { ImageProcessingOptions } from './imageProcessing'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 let supabase: SupabaseClient
 
 function getSupabaseClient() {
   if (!supabase) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     supabase = createClient(supabaseUrl, supabaseServiceKey)
   }
   return supabase
@@ -27,14 +28,6 @@ export interface SupabaseUploadResult {
   size: number
   filename: string
 }
-
-/**
- * Sube una imagen procesada a Supabase Storage
- * @param fileBuffer - Buffer del archivo original
- * @param originalFilename - Nombre original del archivo
- * @param options - Opciones de procesamiento y upload
- * @returns URL pública de la imagen subida
- */
 export async function uploadImageToSupabase(
   fileBuffer: ArrayBuffer,
   originalFilename: string,
@@ -43,21 +36,21 @@ export async function uploadImageToSupabase(
   const {
     bucket = 'images',
     folder = 'general',
+    format = 'webp',
+    maxHeight = 2048,
+    maxWidth = 2048,
     public: isPublic = true,
     quality = 80,
-    maxWidth = 2048,
-    maxHeight = 2048,
-    format = 'webp',
   } = options
 
   try {
     const client = getSupabaseClient()
     // Procesar la imagen
     const processedImage = await processImage(fileBuffer, originalFilename, {
-      quality,
-      maxWidth,
-      maxHeight,
       format,
+      maxHeight,
+      maxWidth,
+      quality,
     })
 
     // Generar nombre único para el archivo
@@ -82,10 +75,10 @@ export async function uploadImageToSupabase(
       .getPublicUrl(filePath)
 
     return {
-      url: urlData.publicUrl,
+      filename: processedImage.filename,
       path: filePath,
       size: processedImage.size,
-      filename: processedImage.filename,
+      url: urlData.publicUrl,
     }
   } catch (error) {
     throw new Error(`Error en uploadImageToSupabase: ${error instanceof Error ? error.message : 'Error desconocido'}`)
@@ -105,10 +98,10 @@ export async function uploadProfileImage(
   return uploadImageToSupabase(fileBuffer, originalFilename, {
     bucket: 'images',
     folder: 'profile',
-    quality: 90,
-    maxWidth: 512,
-    maxHeight: 512,
     format: 'webp',
+    maxHeight: 512,
+    maxWidth: 512,
+    quality: 90,
   })
 }
 
@@ -125,10 +118,10 @@ export async function uploadBackgroundImage(
   return uploadImageToSupabase(fileBuffer, originalFilename, {
     bucket: 'images',
     folder: 'backgrounds',
-    quality: 85,
-    maxWidth: 1920,
-    maxHeight: 1080,
     format: 'webp',
+    maxHeight: 1080,
+    maxWidth: 1920,
+    quality: 85,
   })
 }
 
@@ -145,10 +138,10 @@ export async function uploadBlogImage(
   return uploadImageToSupabase(fileBuffer, originalFilename, {
     bucket: 'images',
     folder: 'blog',
-    quality: 85,
-    maxWidth: 1200,
-    maxHeight: 800,
     format: 'webp',
+    maxHeight: 800,
+    maxWidth: 1200,
+    quality: 85,
   })
 }
 

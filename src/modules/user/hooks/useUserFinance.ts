@@ -54,8 +54,11 @@ interface UserFinanceData {
 
 export function useUserFinance(userId: string, role?: string) {
   return useQuery({
-    queryKey: ['user-finance', userId, role],
-    queryFn: async (): Promise<UserFinanceData> => {
+    enabled: !!userId && !!role,
+    // 5 minutos
+gcTime: 10 * 60 * 1000,
+    
+queryFn: async (): Promise<UserFinanceData> => {
       const params = new URLSearchParams()
       if (role) {
         params.append('role', role)
@@ -69,8 +72,8 @@ export function useUserFinance(userId: string, role?: string) {
       
       return response.json()
     },
-    enabled: !!userId && !!role,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
+    
+queryKey: ['user-finance', userId, role], 
+    staleTime: 5 * 60 * 1000, // 10 minutos
   })
 } 

@@ -15,6 +15,7 @@ import { useEmblaParallax } from '@/hooks/useEmblaParallax'
 import { Card } from '@/src/components/Card'
 import { ROUTES } from '@/src/config/routes'
 import { usePublicArtists } from '@/src/modules/user/hooks/management'
+import { type PublicArtist } from '@/src/modules/user/types'
 
 interface Slide {
   imageUrl: string
@@ -284,6 +285,21 @@ const ParallaxHeroCarousel: React.FC<ParallaxCarouselProps> = ({ options, slides
   )
 }
 
+// Función para mapear PublicArtist al formato que espera el componente Artist
+const mapPublicArtistToArtist = (publicArtist: PublicArtist) => {
+  return {
+    email: publicArtist.email,
+    firstName: publicArtist.firstName,
+    id: publicArtist.id,
+    lastName: publicArtist.lastName,
+    profile: {
+      avatarUrl: publicArtist.profile?.avatarUrl || undefined,
+      backgroundImageUrl: publicArtist.profile?.backgroundImageUrl || undefined,
+      occupation: publicArtist.profile?.occupation || undefined,
+    }
+  }
+}
+
 export default function Page() {
   const { data: artists } = usePublicArtists()
   return (
@@ -389,7 +405,7 @@ export default function Page() {
                 whileInView='animate'
                 viewport={{ amount: 0.4, once: true }}
               >
-                <Card.Artist artist={artist} />
+                <Card.Artist artist={mapPublicArtistToArtist(artist)} />
               </motion.div>
             ))}
           </div>

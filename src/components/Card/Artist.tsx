@@ -15,72 +15,87 @@ interface ArtistProps {
     email: string
     profile?: {
       avatarUrl?: string
-      bio?: string
+      occupation?: string
+      backgroundImageUrl?: string
     }
   }
 }
 
 export const Artist: React.FC<ArtistProps> = ({ artist }) => {
-  console.log('Artist component rendered with artist:', artist)
+
   const artistName =
     artist.firstName || artist.lastName
       ? `${artist.firstName} ${artist.lastName}`.trim()
       : artist.email
+
   return (
-    <Card
-      className='focus-within:ring-primary/20 group relative overflow-hidden border bg-card shadow-elevation-1 transition-all duration-300 focus-within:shadow-elevation-4 focus-within:ring-2 hover:shadow-elevation-3'
-      style={{
-        viewTransitionName: `artist-image-${artist.id}`,
-      }}
-    >
+    <Card className='to-card/80 group relative overflow-hidden border-0 bg-gradient-to-br from-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl'>
       <Link
         href={replaceRouteParams(ROUTES.PUBLIC.PROFILE_DETAIL.PATH, { userId: artist.id })}
         className='block focus:outline-none'
-        aria-label={`Ver detalles de ${artistName}`}
+        aria-label={`Ver perfil de ${artistName}`}
       >
-        <div className='relative aspect-square overflow-hidden bg-muted'>
-          {artist.profile?.avatarUrl ? (
+        {/* Header con background image o gradiente */}
+        <div className='relative h-28 overflow-hidden'>
+          {artist.profile?.backgroundImageUrl ? (
             <>
               <img
-                src={artist.profile?.avatarUrl}
-                alt={artistName ?? 'artist-profile'}
-                className='size-full object-cover transition-all duration-500 group-focus-within:scale-105 group-hover:scale-110'
+                src={artist.profile.backgroundImageUrl}
+                alt="Background"
+                className='size-full object-cover transition-transform duration-700 group-hover:scale-110'
                 loading='lazy'
-                style={{
-                  viewTransitionName: `artist-image-${artist.id}`,
-                }}
               />
-              <div className='absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
+              <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent' />
             </>
           ) : (
-            <div className='group-hover:bg-muted/80 flex size-full items-center justify-center bg-muted transition-colors duration-300'>
-              <Logo />
-            </div>
+            <div className='from-primary/20 via-primary/10 to-accent/20 size-full bg-gradient-to-br' />
           )}
-
-          <div className='absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-300 group-hover:translate-y-0'>
-            <div className='bg-card/90 border-t border-border p-3 backdrop-blur-sm'>
-              <p className='text-center text-xs text-muted-foreground'>Ver perfil del artista</p>
+        </div>
+        
+        {/* Avatar flotante - fuera del header */}
+        <div className='relative -mt-12 flex justify-center'>
+          <div className='relative'>
+            <div className='size-24 overflow-hidden rounded-full border-4 border-background bg-background shadow-xl transition-transform duration-300 group-hover:scale-110'>
+              {artist.profile?.avatarUrl ? (
+                <img
+                  src={artist.profile.avatarUrl}
+                  alt={artistName}
+                  className='size-full object-cover'
+                  loading='lazy'
+                  style={{
+                    viewTransitionName: `artist-avatar-${artist.id}`,
+                  }}
+                />
+              ) : (
+                <div className='flex size-full items-center justify-center bg-muted'>
+                  <Logo className='size-8' />
+                </div>
+              )}
             </div>
+            
           </div>
         </div>
-      </Link>
 
-      <CardContent className='space-y-4 bg-card p-4'>
-        <div className='space-y-2'>
-          <div className='space-y-1'>
-            <Link
-              href={replaceRouteParams(ROUTES.PUBLIC.PROFILE_DETAIL.PATH, {
-                userId: artist.id,
-              })}
-            >
-              <h3 className='line-clamp-2 font-medium leading-tight text-foreground transition-colors duration-200 hover:text-primary focus:text-primary focus:outline-none'>
-                {artistName}
-              </h3>
-            </Link>
+        <CardContent className='px-6 pb-6 pt-4 text-center'>
+          {/* Nombre del artista */}
+          <div className='mb-3'>
+            <h3 className='text-lg font-semibold text-foreground transition-colors duration-200 group-hover:text-primary'>
+              {artistName}
+            </h3>
+            
+            {/* Ocupación */}
+            {artist.profile?.occupation && (
+              <p className='mt-1 text-sm text-muted-foreground'>
+                {artist.profile.occupation}
+              </p>
+            )}
           </div>
-        </div>
-      </CardContent>
+        </CardContent>
+
+        {/* Overlay de hover */}
+        <div className='from-primary/5 pointer-events-none absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
+        
+      </Link>
     </Card>
   )
 }

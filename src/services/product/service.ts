@@ -159,13 +159,13 @@ async function getProductById(id: string, session: AuthSession): Promise<Product
   // Verificar si el usuario es artista y si el producto le pertenece
   const user = await prisma.user.findUnique({
     include: { 
-      artist: true, 
-      role: true,
       UserRole: {
         include: {
           role: true,
         },
-      },
+      }, 
+      artist: true,
+      role: true,
     },
     where: { id: session.user.id },
   })
@@ -191,21 +191,21 @@ async function getProductsFromRequest(
   // Obtener información del usuario para verificar si es artista
   const user = await prisma.user.findUnique({
     include: { 
-      artist: true, 
-      role: true,
       UserRole: {
         include: {
           role: true,
         },
-      },
+      }, 
+      artist: true,
+      role: true,
     },
     where: { id: session.user.id },
   })
 
   console.log('🔍 Debug - Usuario:', {
+    artistName: user?.artist?.name,
     id: session.user.id,
     role: user?.role?.name,
-    artistName: user?.artist?.name,
     userRoles: user?.UserRole?.map(ur => ur.role.name),
   })
 

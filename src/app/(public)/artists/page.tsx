@@ -1,13 +1,10 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import Image from 'next/image'
-import Link from 'next/link'
+import { motion } from 'framer-motion';
 
-import { Button } from '@/components/ui/button'
-import { ROUTES } from '@/src/config/routes'
-import { usePublicArtists } from '@/src/modules/user/hooks/management'
-import { type PublicArtist } from '@/src/modules/user/types'
+import { Card } from '@/components/Card';
+import { usePublicArtists } from '@/src/modules/user/hooks/management';
+import { type PublicArtist } from '@/src/modules/user/types';
 
 const fadeIn = {
   animate: { opacity: 1 },
@@ -21,13 +18,31 @@ const slideUp = {
   transition: { duration: 0.7, ease: 'easeInOut' },
 }
 
+const mapPublicArtistToArtist = (publicArtist: PublicArtist) => {
+  return {
+    email: publicArtist.email,
+    firstName: publicArtist.firstName,
+    id: publicArtist.id,
+    lastName: publicArtist.lastName,
+    profile: {
+      avatarUrl: publicArtist.profile?.avatarUrl || undefined,
+      backgroundImageUrl: publicArtist.profile?.backgroundImageUrl || undefined,
+      occupation: publicArtist.profile?.occupation || undefined,
+    }
+  }
+}
+
 export default function Page() {
   const { data: artists, isError, isLoading } = usePublicArtists()
+
+  console.log(artists)
 
   if (isLoading) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
-        <p>Cargando artistas...</p>
+        <div className='text-center'>
+          <Card.Loader />
+        </div>
       </div>
     )
   }
@@ -35,7 +50,10 @@ export default function Page() {
   if (isError) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
-        <p>Error al cargar los artistas.</p>
+        <div className='text-center'>
+          <p className='mb-2 text-destructive'>Error al cargar los artistas</p>
+          <p className='text-sm text-muted-foreground'>Intenta recargar la página</p>
+        </div>
       </div>
     )
   }
@@ -47,45 +65,30 @@ export default function Page() {
         initial='initial'
         whileInView='animate'
         viewport={{ once: true }}
-        className='mb-8 text-center text-4xl font-bold text-gray-800 dark:text-gray-200'
+        className='mb-12 text-center text-4xl font-bold text-foreground'
       >
         Nuestros Artistas
       </motion.h1>
 
-      <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
-        {artists?.map((artist: PublicArtist) => (
+      <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'>
+        {artists?.map((publicArtist: PublicArtist) => (
           <motion.div
-            key={artist.id}
+            key={publicArtist.id}
             variants={fadeIn}
             initial='initial'
             whileInView='animate'
             viewport={{ amount: 0.3, once: true }}
-            className='overflow-hidden rounded-lg bg-white shadow-md transition-transform duration-300 hover:scale-105 dark:bg-gray-800'
           >
-            <div className='relative h-48 w-full'>
-              <Image
-                src={artist.profileImage || '/placeholder-artist.jpg'} 
-                alt={artist.name || 'Artista'}
-                fill
-                className='object-cover'
-              />
-            </div>
-            <div className='p-4'>
-              <h2 className='mb-2 text-xl font-semibold text-gray-800 dark:text-gray-200'>
-                {artist.name}
-              </h2>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>
-                {artist.bio?.substring(0, 100)}... 
-              </p>
-              <Button asChild className='mt-4 w-full'>
-                <Link href={ROUTES.PUBLIC.PROFILE_DETAIL.PATH.replace(':userId', artist.id)}>
-                  Ver Perfil
-                </Link>
-              </Button>
-            </div>
+            <Card.Artist artist={mapPublicArtistToArtist(publicArtist)} />
           </motion.div>
         ))}
       </div>
+
+      {artists && artists.length === 0 && (
+        <div className='py-12 text-center'>
+          <p className='text-muted-foreground'>No hay artistas disponibles en este momento.</p>
+        </div>
+      )}
     </main>
   )
 }

@@ -144,7 +144,7 @@ export default function NewFinancialEntryPage() {
         </Link>
         <h1 className='text-2xl font-bold'>
           Nuevo Movimiento Financiero
-          {userId && <span className='text-sm font-normal text-muted-foreground ml-2'>(para usuario específico)</span>}
+          {userId && <span className='ml-2 text-sm font-normal text-muted-foreground'>(para usuario específico)</span>}
         </h1>
       </div>
 

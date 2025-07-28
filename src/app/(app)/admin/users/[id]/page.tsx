@@ -327,7 +327,7 @@ export default function UserDetailPage() {
 }
 
 // Componentes específicos por rol
-function ProviderSection({ user, financeData, isLoading }: { user: any; financeData: any; isLoading: boolean }) {
+function ProviderSection({ financeData, isLoading, user }: { user: any; financeData: any; isLoading: boolean }) {
   const metrics = financeData?.financialMetrics
 
   return (
@@ -389,13 +389,13 @@ function ProviderSection({ user, financeData, isLoading }: { user: any; financeD
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={ROUTES.FINANCE.ENTRIES.MAIN.PATH + `?userId=${user.id}`}>
+          <Link href={`${ROUTES.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={ROUTES.FINANCE.ENTRIES.CREATE.PATH + `?userId=${user.id}`}>
+          <Link href={`${ROUTES.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
@@ -407,7 +407,7 @@ function ProviderSection({ user, financeData, isLoading }: { user: any; financeD
   )
 }
 
-function EmployeeSection({ user, financeData, isLoading }: { user: any; financeData: any; isLoading: boolean }) {
+function EmployeeSection({ financeData, isLoading, user }: { user: any; financeData: any; isLoading: boolean }) {
   const metrics = financeData?.financialMetrics
 
   return (
@@ -469,13 +469,13 @@ function EmployeeSection({ user, financeData, isLoading }: { user: any; financeD
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={ROUTES.FINANCE.ENTRIES.MAIN.PATH + `?userId=${user.id}`}>
+          <Link href={`${ROUTES.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={ROUTES.FINANCE.ENTRIES.CREATE.PATH + `?userId=${user.id}`}>
+          <Link href={`${ROUTES.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
@@ -487,7 +487,7 @@ function EmployeeSection({ user, financeData, isLoading }: { user: any; financeD
   )
 }
 
-function PartnerSection({ user, financeData, isLoading }: { user: any; financeData: any; isLoading: boolean }) {
+function PartnerSection({ financeData, isLoading, user }: { user: any; financeData: any; isLoading: boolean }) {
   const metrics = financeData?.financialMetrics
 
   return (
@@ -549,13 +549,13 @@ function PartnerSection({ user, financeData, isLoading }: { user: any; financeDa
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={ROUTES.FINANCE.ENTRIES.MAIN.PATH + `?userId=${user.id}`}>
+          <Link href={`${ROUTES.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={ROUTES.FINANCE.ENTRIES.CREATE.PATH + `?userId=${user.id}`}>
+          <Link href={`${ROUTES.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
@@ -567,7 +567,7 @@ function PartnerSection({ user, financeData, isLoading }: { user: any; financeDa
   )
 }
 
-function ArtistSection({ user, financeData, isLoading }: { user: any; financeData: any; isLoading: boolean }) {
+function ArtistSection({ financeData, isLoading, user }: { user: any; financeData: any; isLoading: boolean }) {
   const metrics = financeData?.financialMetrics
   const artistInfo = financeData?.artistInfo
 
@@ -630,13 +630,13 @@ function ArtistSection({ user, financeData, isLoading }: { user: any; financeDat
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={ROUTES.FINANCE.ENTRIES.MAIN.PATH + `?userId=${user.id}`}>
+          <Link href={`${ROUTES.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={ROUTES.FINANCE.ENTRIES.CREATE.PATH + `?userId=${user.id}`}>
+          <Link href={`${ROUTES.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
@@ -648,7 +648,7 @@ function ArtistSection({ user, financeData, isLoading }: { user: any; financeDat
   )
 }
 
-function CustomerSection({ user, financeData, isLoading }: { user: any; financeData: any; isLoading: boolean }) {
+function CustomerSection({ financeData, isLoading, user }: { user: any; financeData: any; isLoading: boolean }) {
   const customerInfo = financeData?.customerInfo
   const metrics = financeData?.financialMetrics
 
@@ -710,7 +710,7 @@ function CustomerSection({ user, financeData, isLoading }: { user: any; financeD
             </Button>
           </Link>
           {customerInfo?.orders && customerInfo.orders.length > 0 && (
-            <Link href={ROUTES.FINANCE.ENTRIES.MAIN.PATH + `?userId=${user.id}`}>
+            <Link href={`${ROUTES.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
               <Button variant='outline' size='sm'>
                 <FileText className='mr-2 size-4' />
                 Ver Movimientos

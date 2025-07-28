@@ -51,7 +51,7 @@ export const columns: ColumnDef<UserProfile>[] = [
             </div>
             <div className='text-sm text-gray-500'>ID: {user.id.slice(0, 8)}...</div>
             {isArtist && user.artist?.name && (
-              <div className='text-xs text-blue-600 font-medium'>
+              <div className='text-xs font-medium text-blue-600'>
                 Artista: {user.artist.name}
               </div>
             )}

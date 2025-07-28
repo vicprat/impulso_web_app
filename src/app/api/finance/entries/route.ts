@@ -50,30 +50,30 @@ export async function GET(request: NextRequest) {
   }
 
   const entries = await prisma.financialEntry.findMany({
-    where,
     include: {
+      bankAccount: {
+        select: {
+          bankName: true,
+          id: true,
+          name: true
+        }
+      },
       user: {
         select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
           UserRole: {
             include: {
               role: true
             }
-          }
-        }
-      },
-      bankAccount: {
-        select: {
+          },
+          email: true,
+          firstName: true,
           id: true,
-          name: true,
-          bankName: true
+          lastName: true
         }
       }
     },
-    orderBy: { date: 'desc' }
+    orderBy: { date: 'desc' },
+    where
   })
 
   return NextResponse.json(entries)
@@ -99,19 +99,19 @@ export async function POST(request: NextRequest) {
   const entry = await prisma.financialEntry.create({ 
     data,
     include: {
-      user: {
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true
-        }
-      },
       bankAccount: {
         select: {
+          bankName: true,
           id: true,
-          name: true,
-          bankName: true
+          name: true
+        }
+      },
+      user: {
+        select: {
+          email: true,
+          firstName: true,
+          id: true,
+          lastName: true
         }
       }
     }

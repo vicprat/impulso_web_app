@@ -1,9 +1,10 @@
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { PERMISSIONS } from '@/src/config/Permissions'
 import { prisma } from '@/src/lib/prisma'
 import { requirePermission } from '@/src/modules/auth/server/server'
+
+import type { NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
@@ -25,52 +26,52 @@ export async function GET(
 
     // Obtener cuentas bancarias que tienen movimientos relacionados con este usuario
     const bankAccounts = await prisma.bankAccount.findMany({
+      include: {
+        movements: {
+          orderBy: { date: 'desc' },
+          select: {
+            amount: true,
+            date: true,
+            id: true,
+            status: true,
+            type: true
+          },
+          take: 5,
+          where: {
+            userId
+          } // Últimos 5 movimientos
+        }
+      },
       where: {
         movements: {
           some: {
-            userId: userId
+            userId
           }
-        }
-      },
-      include: {
-        movements: {
-          where: {
-            userId: userId
-          },
-          select: {
-            id: true,
-            amount: true,
-            type: true,
-            status: true,
-            date: true
-          },
-          orderBy: { date: 'desc' },
-          take: 5 // Últimos 5 movimientos
         }
       }
     })
 
     return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName
-      },
       bankAccounts: bankAccounts.map(account => ({
-        id: account.id,
-        name: account.name,
         bankName: account.bankName,
         currentBalance: Number(account.currentBalance),
-        movementsCount: account.movements.length,
+        id: account.id,
         lastMovement: account.movements[0] ? {
-          id: account.movements[0].id,
           amount: Number(account.movements[0].amount),
-          type: account.movements[0].type,
+          date: account.movements[0].date,
+          id: account.movements[0].id,
           status: account.movements[0].status,
-          date: account.movements[0].date
-        } : null
-      }))
+          type: account.movements[0].type
+        } : null,
+        movementsCount: account.movements.length,
+        name: account.name
+      })),
+      user: {
+        email: user.email,
+        firstName: user.firstName,
+        id: user.id,
+        lastName: user.lastName
+      }
     })
 
   } catch (error) {

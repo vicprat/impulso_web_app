@@ -11,8 +11,8 @@ export async function GET() {
     const orphanedArtists = await getOrphanedArtists()
 
     return NextResponse.json({
-      orphanedArtists,
       count: orphanedArtists.length,
+      orphanedArtists,
     })
   } catch (error) {
     console.error('Error al obtener artistas huérfanos:', error)
@@ -27,9 +27,9 @@ export async function POST() {
     const cleanedCount = await cleanupOrphanedArtists()
 
     return NextResponse.json({
-      success: true,
-      message: `Se limpiaron ${cleanedCount} artistas huérfanos`,
       cleanedCount,
+      message: `Se limpiaron ${cleanedCount} artistas huérfanos`,
+      success: true,
     })
   } catch (error) {
     console.error('Error al limpiar artistas huérfanos:', error)

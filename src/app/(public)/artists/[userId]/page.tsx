@@ -182,7 +182,7 @@ export default function Page() {
             </h1>
             {userProfile.artist?.name && (
               <p className='sm:text-md mt-1 text-sm text-muted-foreground'>
-                Artista / Vendor: {userProfile.artist.name}
+                Artista: {userProfile.artist.name}
               </p>
             )}
             {userProfile.profile?.occupation && (

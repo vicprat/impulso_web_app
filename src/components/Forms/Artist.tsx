@@ -29,7 +29,7 @@ interface UserRoleFormProps {
   mode?: 'create' | 'edit'
 }
 
-export function UserRoleForm({ onCancel, onSuccess, user, mode = 'edit' }: UserRoleFormProps) {
+export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserRoleFormProps) {
   const queryClient = useQueryClient()
   const [selectedRole, setSelectedRole] = useState<string>(user?.roles[0] || 'customer')
   const [vendorName, setVendorName] = useState('')
@@ -39,8 +39,8 @@ export function UserRoleForm({ onCancel, onSuccess, user, mode = 'edit' }: UserR
   const [formData, setFormData] = useState({
     email: user?.email || '',
     firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
     isActive: user?.isActive ?? true,
+    lastName: user?.lastName || '',
   })
 
   const updateRoles = useUpdateUserRoles()
@@ -124,9 +124,9 @@ export function UserRoleForm({ onCancel, onSuccess, user, mode = 'edit' }: UserR
         await createUserMutation.mutateAsync({
           email: formData.email,
           firstName: formData.firstName || undefined,
+          isActive: formData.isActive,
           lastName: formData.lastName || undefined,
           role: selectedRole,
-          isActive: formData.isActive,
         })
 
         // Si es artista, crear también el vendor
@@ -163,7 +163,7 @@ export function UserRoleForm({ onCancel, onSuccess, user, mode = 'edit' }: UserR
     }
   }
 
-  const isBecomingArtist = selectedRole === 'artist' && (!user || !user.roles.includes('artist'))
+  const isBecomingArtist = selectedRole === 'artist' && (!user?.roles.includes('artist'))
 
   return (
     <div className='space-y-6'>

@@ -31,10 +31,10 @@ export async function processImageToWebP(
   options: ImageProcessingOptions = {}
 ): Promise<ProcessedImage> {
   const {
-    quality = 80,
-    maxWidth = 2048,
-    maxHeight = 2048,
     fit = 'inside',
+    maxHeight = 2048,
+    maxWidth = 2048,
+    quality = 80,
     withoutEnlargement = true,
   } = options
 
@@ -54,10 +54,10 @@ export async function processImageToWebP(
   return {
     buffer: processedBuffer,
     filename,
+    height: metadata.height,
     mimeType: 'image/webp',
     size: processedBuffer.length,
     width: metadata.width,
-    height: metadata.height,
   }
 }
 
@@ -74,12 +74,12 @@ export async function processImage(
   options: ImageProcessingOptions = {}
 ): Promise<ProcessedImage> {
   const {
-    quality = 80,
-    maxWidth = 2048,
-    maxHeight = 2048,
     fit = 'inside',
-    withoutEnlargement = true,
     format = 'webp',
+    maxHeight = 2048,
+    maxWidth = 2048,
+    quality = 80,
+    withoutEnlargement = true,
   } = options
 
   // Obtener información de la imagen original
@@ -126,10 +126,10 @@ export async function processImage(
   return {
     buffer: processedBuffer,
     filename,
+    height: metadata.height,
     mimeType,
     size: processedBuffer.length,
     width: metadata.width,
-    height: metadata.height,
   }
 }
 
@@ -175,42 +175,42 @@ export function generateUniqueFilename(originalFilename: string, folder?: string
  */
 export const imageProcessingPresets = {
   avatar: {
-    quality: 90,
-    maxWidth: 512,
-    maxHeight: 512,
     fit: 'inside' as const,
     format: 'webp' as const,
+    maxHeight: 512,
+    maxWidth: 512,
+    quality: 90,
   },
   
   background: {
-    quality: 85,
-    maxWidth: 1920,
-    maxHeight: 1080,
     fit: 'inside' as const,
     format: 'webp' as const,
+    maxHeight: 1080,
+    maxWidth: 1920,
+    quality: 85,
   },
   
   blog: {
-    quality: 85,
-    maxWidth: 1200,
-    maxHeight: 800,
     fit: 'inside' as const,
     format: 'webp' as const,
+    maxHeight: 800,
+    maxWidth: 1200,
+    quality: 85,
   },
   
   product: {
-    quality: 80,
-    maxWidth: 2048,
-    maxHeight: 2048,
     fit: 'inside' as const,
     format: 'webp' as const,
+    maxHeight: 2048,
+    maxWidth: 2048,
+    quality: 80,
   },
   
   thumbnail: {
-    quality: 90,
-    maxWidth: 400,
-    maxHeight: 400,
     fit: 'inside' as const,
     format: 'webp' as const,
+    maxHeight: 400,
+    maxWidth: 400,
+    quality: 90,
   },
 } 

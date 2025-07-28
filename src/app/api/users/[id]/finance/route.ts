@@ -1,10 +1,11 @@
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { PERMISSIONS } from '@/src/config/Permissions'
 import { prisma } from '@/src/lib/prisma'
 import { requirePermission } from '@/src/modules/auth/server/server'
 import { api as customerApi } from '@/src/modules/customer/api'
+
+import type { NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
@@ -19,14 +20,14 @@ export async function GET(
 
     // Verificar que el usuario existe
     const user = await prisma.user.findUnique({
-      where: { id: userId },
       include: {
         UserRole: {
           include: {
             role: true
           }
         }
-      }
+      },
+      where: { id: userId }
     })
 
     if (!user) {
@@ -35,12 +36,12 @@ export async function GET(
 
     // Obtener movimientos financieros relacionados con el usuario
     const financialEntries = await prisma.financialEntry.findMany({
-      where: {
-        userId: userId
-      },
-      orderBy: { date: 'desc' },
       include: {
         bankAccount: true
+      },
+      orderBy: { date: 'desc' },
+      where: {
+        userId
       }
     })
 
@@ -103,10 +104,10 @@ export async function GET(
     let artistInfo = null
     if (role === 'artist') {
       artistInfo = await prisma.artist.findFirst({
-        where: { user: { id: userId } },
         include: {
           user: true
-        }
+        },
+        where: { user: { id: userId } }
       })
     }
 
@@ -137,21 +138,21 @@ export async function GET(
         const recentOrders = userOrders
           .slice(0, 5) // Solo las últimas 5
           .map(edge => ({
+            createdAt: edge.node.createdAt,
             id: edge.node.id,
+            status: edge.node.displayFinancialStatus || 'UNKNOWN',
             totalPrice: parseFloat(
               edge.node.currentTotalPriceSet?.shopMoney?.amount || 
               edge.node.totalPriceSet?.shopMoney?.amount || 
               '0'
-            ),
-            createdAt: edge.node.createdAt,
-            status: edge.node.displayFinancialStatus || 'UNKNOWN'
+            )
           }))
 
         customerInfo = {
           id: user.id,
           orderCount,
-          totalSpent,
-          orders: recentOrders
+          orders: recentOrders,
+          totalSpent
         }
       } catch (error) {
         console.error('Error fetching Shopify orders for customer:', error)
@@ -159,38 +160,38 @@ export async function GET(
         customerInfo = {
           id: user.id,
           orderCount: 0,
-          totalSpent: 0,
-          orders: []
+          orders: [],
+          totalSpent: 0
         }
       }
     }
 
     return NextResponse.json({
+      artistInfo,
+      customerInfo,
+      financialMetrics: {
+        lastMovement: lastMovement ? {
+          amount: Number(lastMovement.amount),
+          id: lastMovement.id,
+          date: lastMovement.date,
+          description: lastMovement.description,
+          category: lastMovement.category,
+          status: lastMovement.status
+        } : null,
+        pendingAmount,
+        totalExpenses,
+        totalExpensesPaid,
+        totalIncome,
+        totalIncomePaid,
+        totalMovements
+      },
       user: {
-        id: user.id,
         email: user.email,
         firstName: user.firstName,
+        id: user.id,
         lastName: user.lastName,
         roles: user.UserRole.map(ur => ur.role.name)
-      },
-      financialMetrics: {
-        totalMovements,
-        pendingAmount,
-        totalIncome,
-        totalExpenses,
-        totalIncomePaid,
-        totalExpensesPaid,
-        lastMovement: lastMovement ? {
-          id: lastMovement.id,
-          amount: Number(lastMovement.amount),
-          description: lastMovement.description,
-          date: lastMovement.date,
-          status: lastMovement.status,
-          category: lastMovement.category
-        } : null
-      },
-      artistInfo,
-      customerInfo
+      }
     })
 
   } catch (error) {

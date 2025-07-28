@@ -4,7 +4,7 @@
 import { Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import { ImageUploader } from '@/components/Forms/ImageUploader'
+import { SupabaseImageUploader } from '@/components/Forms/SupabaseImageUploader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -136,7 +136,7 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
             />
           </div>
         )}
-        <ImageUploader value={formData.avatarUrl} onChange={handleAvatarUpload} hidePreview />
+        <SupabaseImageUploader value={formData.avatarUrl} onChange={handleAvatarUpload} hidePreview type="profile" />
       </div>
 
       {/* Background Image Field */}
@@ -155,10 +155,11 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
             />
           </div>
         )}
-        <ImageUploader
+        <SupabaseImageUploader
           value={formData.backgroundImageUrl}
           onChange={handleBackgroundUpload}
           hidePreview
+          type="background"
         />
       </div>
 

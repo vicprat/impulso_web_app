@@ -233,9 +233,13 @@ export interface UserTransformer {
 
 export interface PublicArtist {
   id: string
-  name: string
-  bio: string | null
-  profileImage: string | null
-  backgroundImageUrl: string | null
+  firstName: string
+  lastName: string
   email: string
+  profile: {
+    avatarUrl: string | null
+    backgroundImageUrl: string | null
+    bio: string | null
+    occupation: string | null
+  }
 }

@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     await requirePermission(PERMISSIONS.MANAGE_USERS)
 
     const body = await request.json()
-    const { email, firstName, lastName, role, isActive = true } = body
+    const { email, firstName, isActive = true, lastName, role } = body
 
     if (!email || !role) {
       return NextResponse.json(
@@ -74,8 +74,8 @@ export async function POST(request: NextRequest) {
     // Obtener el rol
     const roleRecord = await prisma.role.findFirst({
       where: { 
-        name: role,
-        isActive: true 
+        isActive: true,
+        name: role 
       },
     })
 
@@ -89,29 +89,29 @@ export async function POST(request: NextRequest) {
     // Crear el usuario
     const user = await prisma.user.create({
       data: {
-        email,
-        firstName,
-        lastName,
-        isActive,
         UserRole: {
           create: {
-            roleId: roleRecord.id,
             assignedAt: new Date(),
             assignedBy: null,
+            roleId: roleRecord.id,
           },
         },
+        email,
+        firstName,
+        isActive,
+        lastName,
       },
     })
 
     return NextResponse.json({ 
       success: true, 
       user: {
-        id: user.id,
         email: user.email,
         firstName: user.firstName,
-        lastName: user.lastName,
+        id: user.id,
         isActive: user.isActive,
-        role: role
+        lastName: user.lastName,
+        role
       }
     }, { status: 201 })
   } catch (error) {

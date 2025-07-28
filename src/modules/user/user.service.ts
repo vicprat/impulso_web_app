@@ -216,12 +216,12 @@ export const updateUserRole = async (userId: string, roleName: string) => {
   // Obtener el usuario actual para verificar si es artista
   const currentUser = await prisma.user.findUnique({
     include: {
-      artist: true,
       UserRole: {
         include: {
           role: true,
         },
       },
+      artist: true,
     },
     where: { id: userId },
   })
@@ -436,11 +436,11 @@ export const cleanupOrphanedArtists = async () => {
 
 export const getOrphanedArtists = async () => {
   return await prisma.artist.findMany({
-    where: {
-      user: null,
-    },
     include: {
       user: true,
+    },
+    where: {
+      user: null,
     },
   })
 }

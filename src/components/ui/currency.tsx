@@ -7,13 +7,13 @@ interface CurrencyProps {
   children?: ReactNode
 }
 
-export function Currency({ amount, currency = 'MXN', className = '', children }: CurrencyProps) {
+export function Currency({ amount, children, className = '', currency = 'MXN' }: CurrencyProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 2,
+      currency,
       maximumFractionDigits: 2,
+      minimumFractionDigits: 2,
+      style: 'currency',
     }).format(value)
   }
 
@@ -36,9 +36,9 @@ export function Currency({ amount, currency = 'MXN', className = '', children }:
 
 export function formatCurrency(amount: number, currency = 'MXN') {
   return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 2,
+    currency,
     maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+    style: 'currency',
   }).format(amount)
 } 
