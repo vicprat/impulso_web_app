@@ -72,33 +72,20 @@ async function getProducts(
 ): Promise<PaginatedProductsResponse> {
   validateSession(session)
 
-  // Obtener información del usuario para verificar si es artista
-  const user = await prisma.user.findUnique({
-    include: { artist: true, role: true },
-    where: { id: session.user.id },
-  })
-
   let shopifyQuery = ''
 
   if (params.search?.trim()) {
     shopifyQuery = `(title:*${params.search}* OR product_type:*${params.search}* OR vendor:*${params.search}*)`
   }
 
-  // Si el usuario es artista, filtrar solo sus productos
-  if (user?.role?.name === 'artist' && user?.artist?.name) {
-    const artistVendor = user.artist.name
-    if (shopifyQuery) {
-      shopifyQuery += ` AND vendor:"${artistVendor}"`
-    } else {
-      shopifyQuery = `vendor:"${artistVendor}"`
-    }
-  } else if (params.vendor?.trim()) {
-    // Si no es artista pero se especifica un vendor, usar el parámetro
+  // Usar el vendor del parámetro (ya establecido en getProductsFromRequest para artistas)
+  if (params.vendor?.trim()) {
     if (shopifyQuery) {
       shopifyQuery += ` AND vendor:"${params.vendor}"`
     } else {
       shopifyQuery = `vendor:"${params.vendor}"`
     }
+    console.log('🔍 Debug - Vendor agregado a query:', params.vendor)
   }
 
   if (params.status?.trim()) {
@@ -108,6 +95,8 @@ async function getProducts(
       shopifyQuery = `status:${params.status}`
     }
   }
+
+  console.log('🔍 Debug - Query final de Shopify:', shopifyQuery)
 
   let sortKey = 'TITLE' // Default sort key
   let reverse = false // Default sort order
@@ -169,12 +158,22 @@ async function getProductById(id: string, session: AuthSession): Promise<Product
 
   // Verificar si el usuario es artista y si el producto le pertenece
   const user = await prisma.user.findUnique({
-    include: { artist: true, role: true },
+    include: { 
+      artist: true, 
+      role: true,
+      UserRole: {
+        include: {
+          role: true,
+        },
+      },
+    },
     where: { id: session.user.id },
   })
 
   // Si el usuario es artista, verificar que el producto sea suyo
-  if (user?.role?.name === 'artist' && user?.artist?.name) {
+  const isArtist = user?.UserRole?.some(ur => ur.role.name === 'artist') || user?.role?.name === 'artist'
+  
+  if (isArtist && user?.artist?.name) {
     if (product.vendor !== user.artist.name) {
       throw new Error('No tienes permisos para acceder a este producto.')
     }
@@ -189,6 +188,27 @@ async function getProductsFromRequest(
 ): Promise<PaginatedProductsResponse> {
   const { searchParams } = new URL(request.url)
 
+  // Obtener información del usuario para verificar si es artista
+  const user = await prisma.user.findUnique({
+    include: { 
+      artist: true, 
+      role: true,
+      UserRole: {
+        include: {
+          role: true,
+        },
+      },
+    },
+    where: { id: session.user.id },
+  })
+
+  console.log('🔍 Debug - Usuario:', {
+    id: session.user.id,
+    role: user?.role?.name,
+    artistName: user?.artist?.name,
+    userRoles: user?.UserRole?.map(ur => ur.role.name),
+  })
+
   const params: GetProductsParams = {
     cursor: searchParams.get('cursor') ?? undefined,
     limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
@@ -200,6 +220,18 @@ async function getProductsFromRequest(
     vendor: searchParams.get('vendor') ?? undefined,
   }
 
+  console.log('🔍 Debug - Parámetros originales:', params)
+
+  // Si el usuario es artista, establecer automáticamente su vendor
+  const isArtist = user?.UserRole?.some(ur => ur.role.name === 'artist') || user?.role?.name === 'artist'
+  
+  if (isArtist && user?.artist?.name) {
+    params.vendor = user.artist.name
+    console.log('🔍 Debug - Vendor establecido para artista:', params.vendor)
+  } else {
+    console.log('🔍 Debug - Usuario no es artista o no tiene nombre de artista')
+  }
+
   if (params.limit && (params.limit < 1 || params.limit > 100)) {
     throw new Error('El límite debe estar entre 1 y 100')
   }
@@ -207,6 +239,8 @@ async function getProductsFromRequest(
   if (params.page && params.page < 1) {
     throw new Error('La página debe ser al menos 1')
   }
+
+  console.log('🔍 Debug - Parámetros finales:', params)
 
   return getProducts(params, session)
 }
