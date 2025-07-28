@@ -51,12 +51,16 @@ export const GET_PRODUCTS_QUERY = `
   query getProducts(
     $query: String!, 
     $first: Int = 10, 
-    $after: String
+    $after: String,
+    $sortKey: ProductSortKeys,
+    $reverse: Boolean
   ) {
     products(
       first: $first, 
       after: $after, 
-      query: $query
+      query: $query,
+      sortKey: $sortKey,
+      reverse: $reverse
     ) {
       edges {
         node {

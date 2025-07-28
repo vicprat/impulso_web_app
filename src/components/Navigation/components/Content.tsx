@@ -90,6 +90,84 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
 
   return (
     <div className='relative'>
+
+        {/* Breadcrumbs - Enhanced responsiveness */}
+        {(pathname.includes('/product/') || isCollectionPage) && (
+        <div >
+          <div className='container mx-auto px-3 py-2 sm:px-4 lg:px-6 lg:py-3'>
+            <div className='flex items-center space-x-1 overflow-x-auto text-xs sm:space-x-2 sm:text-sm'>
+              <Button
+                variant='ghost'
+                size='sm'
+                asChild
+                className='h-5 shrink-0 px-1 text-on-surface-variant hover:text-on-surface sm:h-6 sm:px-2'
+              >
+                <Link href='/' className='flex items-center gap-1'>
+                  <Home className='size-3' />
+                  <span className='hidden sm:inline'>Inicio</span>
+                </Link>
+              </Button>
+
+              <ChevronRight className='text-on-surface-variant/50 size-3 shrink-0' />
+
+              <Button
+                variant='ghost'
+                size='sm'
+                asChild
+                className='h-5 shrink-0 px-1 text-on-surface-variant hover:text-on-surface sm:h-6 sm:px-2'
+              >
+                <Link href={ROUTES.STORE.MAIN.PATH}>Tienda</Link>
+              </Button>
+
+              {isCollectionPage && (
+                <>
+                  <ChevronRight className='text-on-surface-variant/50 size-3 shrink-0' />
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    asChild
+                    className='h-5 shrink-0 px-1 text-on-surface-variant hover:text-on-surface sm:h-6 sm:px-2'
+                  >
+                    <Link href={ROUTES.COLLECTIONS.MAIN.PATH}>
+                      <span className='hidden sm:inline'>Colecciones</span>
+                      <span className='sm:hidden'>Col.</span>
+                    </Link>
+                  </Button>
+                  <ChevronRight className='text-on-surface-variant/50 size-3 shrink-0' />
+                  <span className='truncate px-1 font-medium capitalize text-on-surface sm:px-2'>
+                    {collectionHandle?.replace('-', ' ')}
+                  </span>
+                </>
+              )}
+
+              {pathname.includes('/product/') && (
+                <>
+                  <ChevronRight className='text-on-surface-variant/50 size-3 shrink-0' />
+                  <span className='shrink-0 px-1 font-medium text-on-surface sm:px-2'>
+                    Producto
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+            {/* Right section - Back button */}
+            <div className='hidden items-center space-x-4 md:flex'>
+            {(pathname.includes('/product/') || isCollectionPage) && (
+              <Button
+                variant='container-success'
+                asChild
+              >
+                <Link href={ROUTES.STORE.MAIN.PATH}>
+                  <ArrowLeft className='size-3.5 lg:size-4' />
+                  <span className='text-sm font-medium lg:text-base'>Volver a la Galería</span>
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+      
+        
       {/* Main navigation container */}
       <div className='mx-auto px-3 sm:px-4 lg:px-6'>
         <div className='flex min-h-[60px] items-center justify-between md:min-h-[70px]'>
@@ -237,22 +315,6 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
             </div>
           </div>
 
-          {/* Right section - Back button */}
-          <div className='hidden items-center space-x-4 md:flex'>
-            {(pathname.includes('/product/') || isCollectionPage) && (
-              <Button
-                variant='ghost'
-                size='sm'
-                asChild
-                className='hover:text-primary/80 h-8 gap-2 rounded-full px-3 text-primary hover:bg-primary-container lg:h-9 lg:px-4'
-              >
-                <Link href={ROUTES.STORE.MAIN.PATH}>
-                  <ArrowLeft className='size-3.5 lg:size-4' />
-                  <span className='text-sm font-medium lg:text-base'>Volver a la tienda</span>
-                </Link>
-              </Button>
-            )}
-          </div>
         </div>
       </div>
 
@@ -330,67 +392,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
         </div>
       )}
 
-      {/* Breadcrumbs - Enhanced responsiveness */}
-      {(pathname.includes('/product/') || isCollectionPage) && (
-        <div className='border-outline-variant/10 border-t bg-surface-container'>
-          <div className='container mx-auto px-3 py-2 sm:px-4 lg:px-6 lg:py-3'>
-            <div className='flex items-center space-x-1 overflow-x-auto text-xs sm:space-x-2 sm:text-sm'>
-              <Button
-                variant='ghost'
-                size='sm'
-                asChild
-                className='h-5 shrink-0 px-1 text-on-surface-variant hover:text-on-surface sm:h-6 sm:px-2'
-              >
-                <Link href='/' className='flex items-center gap-1'>
-                  <Home className='size-3' />
-                  <span className='hidden sm:inline'>Inicio</span>
-                </Link>
-              </Button>
-
-              <ChevronRight className='text-on-surface-variant/50 size-3 shrink-0' />
-
-              <Button
-                variant='ghost'
-                size='sm'
-                asChild
-                className='h-5 shrink-0 px-1 text-on-surface-variant hover:text-on-surface sm:h-6 sm:px-2'
-              >
-                <Link href={ROUTES.STORE.MAIN.PATH}>Tienda</Link>
-              </Button>
-
-              {isCollectionPage && (
-                <>
-                  <ChevronRight className='text-on-surface-variant/50 size-3 shrink-0' />
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    asChild
-                    className='h-5 shrink-0 px-1 text-on-surface-variant hover:text-on-surface sm:h-6 sm:px-2'
-                  >
-                    <Link href={ROUTES.COLLECTIONS.MAIN.PATH}>
-                      <span className='hidden sm:inline'>Colecciones</span>
-                      <span className='sm:hidden'>Col.</span>
-                    </Link>
-                  </Button>
-                  <ChevronRight className='text-on-surface-variant/50 size-3 shrink-0' />
-                  <span className='truncate px-1 font-medium capitalize text-on-surface sm:px-2'>
-                    {collectionHandle?.replace('-', ' ')}
-                  </span>
-                </>
-              )}
-
-              {pathname.includes('/product/') && (
-                <>
-                  <ChevronRight className='text-on-surface-variant/50 size-3 shrink-0' />
-                  <span className='shrink-0 px-1 font-medium text-on-surface sm:px-2'>
-                    Producto
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+    
     </div>
   )
 }

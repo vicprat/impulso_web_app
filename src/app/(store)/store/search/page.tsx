@@ -1,17 +1,16 @@
-import { Suspense } from 'react'
+import type { Metadata } from 'next'
 
-import { Client } from './Client'
+import { routeMetadata } from '@/lib/metadata'
 
-export default function Page() {
+export const metadata: Metadata = routeMetadata['/store/search']
+
+export default function SearchPage() {
   return (
-    <Suspense
-      fallback={
-        <div className='flex h-64 items-center justify-center'>
-          <div className='size-12 animate-spin rounded-full border-y-2 border-blue-600'></div>
-        </div>
-      }
-    >
-      <Client />
-    </Suspense>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold text-center mb-8">Buscar</h1>
+      <p className="text-center text-gray-600 dark:text-gray-400">
+        Encuentra las obras de arte perfectas para tu colección.
+      </p>
+    </div>
   )
 }

@@ -106,8 +106,11 @@ async function getProducts(
       case 'title':
         sortKey = 'TITLE'
         break
-      case 'price':
-        sortKey = 'PRICE'
+      case 'vendor':
+        sortKey = 'VENDOR'
+        break
+      case 'productType':
+        sortKey = 'PRODUCT_TYPE'
         break
       case 'createdAt':
         sortKey = 'CREATED_AT'
@@ -117,6 +120,11 @@ async function getProducts(
         break
       case 'inventoryQuantity':
         sortKey = 'INVENTORY_TOTAL'
+        break
+      case 'price':
+        // Shopify no soporta sorting por precio directamente
+        // Usaremos TITLE como fallback
+        sortKey = 'TITLE'
         break
       default:
         sortKey = 'TITLE'
@@ -142,6 +150,106 @@ async function getProducts(
   const products = response.products.edges.map((edge) => new Product(edge.node, locationId))
 
   return { pageInfo: response.products.pageInfo, products }
+}
+
+async function getProductStats(search?: string, session?: AuthSession) {
+  if (!session) {
+    throw new Error('Session is required')
+  }
+
+  let shopifyQuery = ''
+
+  if (search?.trim()) {
+    shopifyQuery = `(title:*${search}* OR product_type:*${search}* OR vendor:*${search}*)`
+  }
+
+  // Obtener información del usuario para verificar si es artista
+  const user = await prisma.user.findUnique({
+    include: { 
+      UserRole: {
+        include: {
+          role: true,
+        },
+      }, 
+      artist: true,
+      role: true,
+    },
+    where: { id: session.user.id },
+  })
+
+  // Si el usuario es artista, establecer automáticamente su vendor
+  const isArtist = user?.UserRole?.some(ur => ur.role.name === 'artist') || user?.role?.name === 'artist'
+  
+  if (isArtist && user?.artist?.name) {
+    if (shopifyQuery) {
+      shopifyQuery += ` AND vendor:"${user.artist.name}"`
+    } else {
+      shopifyQuery = `vendor:"${user.artist.name}"`
+    }
+  }
+
+  console.log('🔍 Debug - Obteniendo estadísticas completas del inventario...')
+  console.log('🔍 Debug - Query de búsqueda:', shopifyQuery)
+
+  const allProducts: any[] = []
+  let hasNextPage = true
+  let cursor: string | undefined = undefined
+  let pageCount = 0
+
+  // Obtener TODOS los productos usando paginación
+  while (hasNextPage) {
+    pageCount++
+    console.log(`🔍 Debug - Obteniendo página ${pageCount} de productos...`)
+
+    const variables: {
+      after?: string
+      first: number
+      query: string
+      reverse: boolean
+      sortKey: 'TITLE'
+    } = {
+      after: cursor,
+      first: 100, // Máximo permitido por Shopify
+      query: shopifyQuery,
+      reverse: false,
+      sortKey: 'TITLE',
+    }
+
+    const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
+    
+    const locationId = await getPrimaryLocationId()
+    const products = response.products.edges.map((edge: any) => new Product(edge.node, locationId))
+    
+    allProducts.push(...products)
+    
+    console.log(`🔍 Debug - Productos obtenidos hasta ahora: ${allProducts.length}`)
+    
+    // Verificar si hay más páginas
+    hasNextPage = response.products.pageInfo.hasNextPage
+    cursor = response.products.pageInfo.endCursor ?? undefined
+    
+    // Para inventarios muy grandes, limitamos a 5000 productos máximo
+    // Esto debería cubrir la mayoría de casos reales
+    if (allProducts.length >= 5000) {
+      console.warn('Stats limitado a 5000 productos para evitar timeouts')
+      break
+    }
+  }
+
+  console.log(`🔍 Debug - Total de productos obtenidos: ${allProducts.length}`)
+
+  const stats = {
+    active: allProducts.filter((p) => p.status === 'ACTIVE').length,
+    archived: allProducts.filter((p) => p.status === 'ARCHIVED').length,
+    draft: allProducts.filter((p) => p.status === 'DRAFT').length,
+    inStock: allProducts.filter((p) => p.isAvailable).length,
+    outOfStock: allProducts.filter((p) => !p.isAvailable).length,
+    total: allProducts.length,
+  }
+
+  console.log('🔍 Debug - Estadísticas calculadas:', stats)
+
+  return stats
 }
 
 async function getProductById(id: string, session: AuthSession): Promise<Product | null> {
@@ -572,5 +680,6 @@ export const productService = {
   getProductById,
   getProducts,
   getProductsFromRequest,
+  getProductStats,
   updateProduct,
 }

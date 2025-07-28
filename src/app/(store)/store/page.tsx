@@ -1,11 +1,11 @@
-import { Suspense } from 'react'
+import type { Metadata } from 'next'
 
-import { Client } from './Client'
 
-export default function StorePage() {
-  return (
-    <Suspense>
-      <Client />
-    </Suspense>
-  )
+import { routeMetadata } from '@/lib/metadata'
+import { StorePageContent } from '@/src/components/StorePageContent'
+
+export const metadata: Metadata = routeMetadata['/store']
+
+export default function Page() {
+  return <StorePageContent />
 }

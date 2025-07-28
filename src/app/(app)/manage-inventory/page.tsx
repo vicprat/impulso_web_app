@@ -1,7 +1,7 @@
 'use client'
 
-import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
-import { Download, Filter, PlusCircle, RefreshCw, Search } from 'lucide-react'
+import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { Filter, PlusCircle, RefreshCw, Search } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/use-debounce'
-import { useGetProductsPaginated, useUpdateProduct } from '@/services/product/hook'
+import { useGetProductsPaginated, useProductStats, useUpdateProduct } from '@/services/product/hook'
 import { type UpdateProductPayload } from '@/services/product/types'
 import { Table } from '@/src/components/Table'
 import { ROUTES } from '@/src/config/routes'
@@ -36,14 +36,19 @@ interface InventoryTableMeta {
     status?: 'ACTIVE' | 'DRAFT'
   }) => void
   isUpdating: boolean
+  handleSorting: (columnId: string) => void
+  currentSortBy: string
+  currentSortOrder: 'asc' | 'desc'
 }
 
 export default function ManageInventoryPage() {
   const [editingRowId, setEditingRowId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(50)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<string>('title')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   const [cursors, setCursors] = useState<Record<number, string | undefined>>({ 1: undefined })
 
@@ -59,6 +64,15 @@ export default function ManageInventoryPage() {
     cursor: cursors[currentPage],
     limit: pageSize,
     search: debouncedSearch,
+    sortBy,
+    sortOrder,
+  })
+
+  const {
+    data: statsData,
+    isLoading: isLoadingStats,
+  } = useProductStats({
+    search: debouncedSearch,
   })
 
   const updateMutation = useUpdateProduct()
@@ -72,10 +86,10 @@ export default function ManageInventoryPage() {
       : products.filter((product) => product.status === statusFilter)
 
   const stats = {
-    active: products.filter((p) => p.status === 'ACTIVE').length,
-    draft: products.filter((p) => p.status === 'DRAFT').length,
-    outOfStock: products.filter((p) => !p.isAvailable).length,
-    total: products.length,
+    active: statsData?.active ?? 0,
+    draft: statsData?.draft ?? 0,
+    outOfStock: statsData?.outOfStock ?? 0,
+    total: statsData?.total ?? 0,
   }
 
   useEffect(() => {
@@ -87,7 +101,7 @@ export default function ManageInventoryPage() {
   useEffect(() => {
     setCurrentPage(1)
     setCursors({ 1: undefined })
-  }, [debouncedSearch, pageSize])
+  }, [debouncedSearch, pageSize, sortBy, sortOrder])
 
   const handleUpdateProduct = useCallback(
     (payload: Partial<UpdateProductPayload> & { id: string }) => {
@@ -110,17 +124,36 @@ export default function ManageInventoryPage() {
     toast.info('Actualizando datos...')
   }, [refetch])
 
+  const handleSorting = useCallback((columnId: string) => {
+    const sortMapping: Record<string, string> = {
+      title: 'title',
+      vendor: 'vendor',
+      productType: 'productType',
+      inventory: 'inventoryQuantity',
+      status: 'status',
+    }
+
+    // Para precio, usamos title como fallback ya que Shopify no soporta sorting por precio
+    const newSortBy = columnId === 'price' ? 'title' : (sortMapping[columnId] || 'title')
+    const newSortOrder = sortBy === newSortBy && sortOrder === 'asc' ? 'desc' : 'asc'
+
+    setSortBy(newSortBy)
+    setSortOrder(newSortOrder)
+  }, [sortBy, sortOrder])
+
   const table = useReactTable({
     columns,
     data: filteredProducts,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     manualPagination: true,
     meta: {
       editingRowId,
       isUpdating: updateMutation.isPending,
       setEditingRowId,
       updateProduct: handleUpdateProduct,
+      handleSorting,
+      currentSortBy: sortBy,
+      currentSortOrder: sortOrder,
     } as InventoryTableMeta,
     state: {
       pagination: {
@@ -130,7 +163,7 @@ export default function ManageInventoryPage() {
     },
   })
 
-  if (isLoading && !products.length) {
+  if ((isLoading || isLoadingStats) && !products.length) {
     return (
       <div className='space-y-4 p-4 md:p-6'>
         <div className='flex items-center justify-between'>
@@ -231,16 +264,38 @@ export default function ManageInventoryPage() {
           </SelectContent>
         </Select>
 
-        <Button variant='outline' size='sm'>
-          <Download className='mr-2 size-4' />
-          Exportar
-        </Button>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className='w-40'>
+            <SelectValue placeholder='Ordenar por' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='title'>Título</SelectItem>
+            <SelectItem value='price'>Precio</SelectItem>
+            <SelectItem value='createdAt'>Fecha de creación</SelectItem>
+            <SelectItem value='updatedAt'>Fecha de actualización</SelectItem>
+            <SelectItem value='inventoryQuantity'>Cantidad en inventario</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}>
+          <SelectTrigger className='w-32'>
+            <SelectValue placeholder='Orden' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='asc'>Ascendente</SelectItem>
+            <SelectItem value='desc'>Descendente</SelectItem>
+          </SelectContent>
+        </Select>
+
+      
       </div>
 
-      {isFetching && (
+      {(isFetching || isLoadingStats) && (
         <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
           <RefreshCw className='size-4 animate-spin' />
-          <span>Actualizando datos...</span>
+          <span>
+            {isLoadingStats ? 'Cargando estadísticas completas del inventario...' : 'Actualizando datos...'}
+          </span>
         </div>
       )}
 

@@ -3,10 +3,10 @@ import axios from 'axios'
 
 import { type Product } from '@/models/Product'
 import {
-  type CreateProductPayload,
-  type GetProductsParams,
-  type PaginatedProductsResponse,
-  type UpdateProductPayload,
+    type CreateProductPayload,
+    type GetProductsParams,
+    type PaginatedProductsResponse,
+    type UpdateProductPayload,
 } from '@/services/product/types'
 
 const PRODUCTS_QUERY_KEY = 'managementProducts'
@@ -19,6 +19,8 @@ export const useGetProductsPaginated = (params: GetProductsParams = {}) => {
       if (params.search) searchParams.append('search', params.search)
       if (params.cursor) searchParams.append('cursor', params.cursor)
       if (params.limit) searchParams.append('limit', params.limit.toString())
+      if (params.sortBy) searchParams.append('sortBy', params.sortBy)
+      if (params.sortOrder) searchParams.append('sortOrder', params.sortOrder)
 
       const { data } = await axios.get(`/api/management/products?${searchParams.toString()}`)
       return data
@@ -113,23 +115,35 @@ export const useDeleteProduct = () => {
 export const useProductStats = (params: Omit<GetProductsParams, 'cursor' | 'limit'> = {}) => {
   return useQuery({
     queryFn: async () => {
-      const searchParams = new URLSearchParams()
-      if (params.search) searchParams.append('search', params.search)
-      searchParams.append('limit', '1000')
+      try {
+        const searchParams = new URLSearchParams()
+        if (params.search) searchParams.append('search', params.search)
 
-      const { data } = await axios.get(`/api/management/products?${searchParams.toString()}`)
-      const products: Product[] = data.products ?? []
-
-      return {
-        active: products.filter((p) => p.status === 'ACTIVE').length,
-        archived: products.filter((p) => p.status === 'ARCHIVED').length,
-        draft: products.filter((p) => p.status === 'DRAFT').length,
-        inStock: products.filter((p) => p.isAvailable).length,
-        outOfStock: products.filter((p) => !p.isAvailable).length,
-        total: products.length,
+        console.log('🔍 Debug - Solicitando estadísticas completas del inventario...')
+        
+        // Aumentar el timeout para inventarios grandes
+        const { data } = await axios.get(`/api/management/products/stats?${searchParams.toString()}`, {
+          timeout: 60000, // 60 segundos de timeout
+        })
+        
+        console.log('🔍 Debug - Estadísticas recibidas:', data)
+        return data
+      } catch (error) {
+        console.error('Error fetching product stats:', error)
+        // Retornar valores por defecto en caso de error
+        return {
+          active: 0,
+          archived: 0,
+          draft: 0,
+          inStock: 0,
+          outOfStock: 0,
+          total: 0,
+        }
       }
     },
     queryKey: [PRODUCTS_QUERY_KEY, 'stats', params],
     staleTime: 2 * 60 * 1000,
+    retry: 1, // Solo reintentar una vez
+    refetchOnWindowFocus: false, // Evitar refetch innecesario
   })
 }

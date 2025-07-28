@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 
 import { AnimatedSpheres, GradientBackground } from '@/components/Animations'
 import { Filter } from '@/components/Filter'

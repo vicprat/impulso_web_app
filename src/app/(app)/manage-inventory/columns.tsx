@@ -2,14 +2,14 @@
 
 import { type ColumnDef } from '@tanstack/react-table'
 import {
-  ArrowUpDown,
-  Check,
-  Edit,
-  ExternalLink,
-  Eye,
-  MoreHorizontal,
-  Trash2,
-  X,
+    ArrowUpDown,
+    Check,
+    Edit,
+    ExternalLink,
+    Eye,
+    MoreHorizontal,
+    Trash2,
+    X,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -18,20 +18,20 @@ import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select'
 import { type Product } from '@/models/Product'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
@@ -53,6 +53,9 @@ declare module '@tanstack/react-table' {
     handleToggleUserStatus?: (user: TData) => void
     reactivateUser?: (userId: string) => void
     toggleUserPublicStatus?: (userId: string, isPublic: boolean) => void
+    handleSorting?: (columnId: string) => void
+    currentSortBy?: string
+    currentSortOrder?: 'asc' | 'desc'
   }
 }
 
@@ -248,15 +251,19 @@ export const columns: ColumnDef<Product>[] = [
         />
       )
     },
-    header: ({ column }) => {
+    header: ({ column, table }) => {
+      const { handleSorting, currentSortBy, currentSortOrder } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'title'
+      const isAsc = currentSortOrder === 'asc'
+
       return (
         <Button
           variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => handleSorting?.('title')}
           className='h-auto p-0 font-semibold'
         >
           Título
-          <ArrowUpDown className='ml-2 size-4' />
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
         </Button>
       )
     },
@@ -267,15 +274,19 @@ export const columns: ColumnDef<Product>[] = [
       const product = row.original
       return <span className='font-medium'>{product.vendor}</span>
     },
-    header: ({ column }) => {
+    header: ({ column, table }) => {
+      const { handleSorting, currentSortBy, currentSortOrder } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'vendor'
+      const isAsc = currentSortOrder === 'asc'
+
       return (
         <Button
           variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => handleSorting?.('vendor')}
           className='h-auto p-0 font-semibold'
         >
           Artista
-          <ArrowUpDown className='ml-2 size-4' />
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
         </Button>
       )
     },
@@ -286,7 +297,22 @@ export const columns: ColumnDef<Product>[] = [
       const product = row.original
       return <Badge variant='outline'>{product.productType}</Badge>
     },
-    header: 'Tipo',
+    header: ({ column, table }) => {
+      const { handleSorting, currentSortBy, currentSortOrder } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'productType'
+      const isAsc = currentSortOrder === 'asc'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('productType')}
+          className='h-auto p-0 font-semibold'
+        >
+          Tipo
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
   },
   {
     accessorKey: 'artworkDetails.medium',
@@ -302,18 +328,7 @@ export const columns: ColumnDef<Product>[] = [
       const product = row.original
       return <span className='text-sm'>{product.artworkDetails.year ?? '-'}</span>
     },
-    header: ({ column }) => {
-      return (
-        <Button
-          variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className='h-auto p-0 font-semibold'
-        >
-          Año
-          <ArrowUpDown className='ml-2 size-4' />
-        </Button>
-      )
-    },
+    header: 'Año',
   },
   {
     cell: ({ row }) => {
@@ -362,15 +377,20 @@ export const columns: ColumnDef<Product>[] = [
         />
       )
     },
-    header: ({ column }) => {
+    header: ({ column, table }) => {
+      const { handleSorting, currentSortBy, currentSortOrder } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'price'
+      const isAsc = currentSortOrder === 'asc'
+
       return (
         <Button
           variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => handleSorting?.('price')}
           className='h-auto p-0 font-semibold'
+          title='Sorting por precio no disponible en Shopify'
         >
           Precio
-          <ArrowUpDown className='ml-2 size-4' />
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
         </Button>
       )
     },
@@ -394,7 +414,22 @@ export const columns: ColumnDef<Product>[] = [
         />
       )
     },
-    header: 'Inventario',
+    header: ({ column, table }) => {
+      const { handleSorting, currentSortBy, currentSortOrder } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'inventory'
+      const isAsc = currentSortOrder === 'asc'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('inventory')}
+          className='h-auto p-0 font-semibold'
+        >
+          Inventario
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
     id: 'inventory',
   },
   {
@@ -431,7 +466,22 @@ export const columns: ColumnDef<Product>[] = [
 
       return <Badge variant={statusColors[product.status]}>{product.statusLabel}</Badge>
     },
-    header: 'Estado',
+    header: ({ column, table }) => {
+      const { handleSorting, currentSortBy, currentSortOrder } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'status'
+      const isAsc = currentSortOrder === 'asc'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('status')}
+          className='h-auto p-0 font-semibold'
+        >
+          Estado
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
   },
   {
     accessorKey: 'tags',
