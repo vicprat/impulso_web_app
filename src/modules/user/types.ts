@@ -17,6 +17,14 @@ export interface UserProfile {
   bio?: string | null
   profileImage?: string | null
 
+  // Información del artista (si el usuario es artista)
+  artist?: {
+    id: string
+    name: string
+    bio?: string | null
+    portfolioUrl?: string | null
+  } | null
+
   // Estado de sincronización
   needsShopifySync?: boolean
 

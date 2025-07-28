@@ -5,7 +5,6 @@ import { type ReactNode } from 'react'
 
 import { AnimatedSpheres, FloatingParticles, GradientBackground } from '@/components/Animations'
 import { Header } from '@/components/Header'
-import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 
 interface AuthLayoutProps {
@@ -41,9 +40,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           <div className='mx-auto max-w-sm'>
             {/* Logo for mobile */}
             <div className='mb-8 text-center'>
-              <div className='mb-12 flex w-full justify-center'>
-                <Logo />
-              </div>
               <h1 className='mb-2 text-2xl font-bold'>Bienvenido</h1>
               <p className=' text-sm'>Accede a tu cuenta</p>
             </div>
@@ -80,9 +76,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               <h1 className='mb-6 text-5xl  font-black leading-tight'>Bienvenido</h1>
             </div>
 
-            <div className='mb-8 flex items-center'>
-              <Logo />
-            </div>
 
             <p className=' mb-8 text-lg leading-relaxed'>{companyDescription}</p>
 

@@ -113,7 +113,7 @@ export const getAllUsers = async (filters: UserFilters) => {
             },
           },
         },
-
+        artist: true,
         profile: true,
       },
       orderBy: {
@@ -213,11 +213,34 @@ export const updateUserRole = async (userId: string, roleName: string) => {
     throw new Error(`Role ${roleName} not found`)
   }
 
+  // Obtener el usuario actual para verificar si es artista
+  const currentUser = await prisma.user.findUnique({
+    include: {
+      artist: true,
+      UserRole: {
+        include: {
+          role: true,
+        },
+      },
+    },
+    where: { id: userId },
+  })
+
+  if (!currentUser) {
+    throw new Error(`User ${userId} not found`)
+  }
+
+  // Verificar si el usuario actual es artista
+  const isCurrentlyArtist = currentUser.UserRole.some((ur) => ur.role.name === 'artist')
+  const willBeArtist = roleName === 'artist'
+
   await prisma.$transaction(async (tx) => {
+    // Eliminar roles actuales
     await tx.userRole.deleteMany({
       where: { userId },
     })
 
+    // Crear nuevo rol
     await tx.userRole.create({
       data: {
         assignedBy: 'admin',
@@ -225,6 +248,64 @@ export const updateUserRole = async (userId: string, roleName: string) => {
         userId,
       },
     })
+
+    // Si el usuario era artista y ahora no lo será, eliminar el registro del artista
+    if (isCurrentlyArtist && !willBeArtist && currentUser.artist) {
+      await tx.artist.delete({
+        where: { id: currentUser.artist.id },
+      })
+
+      // También limpiar la referencia en el usuario
+      await tx.user.update({
+        data: { artistId: null },
+        where: { id: userId },
+      })
+    }
+
+    // Si el usuario no era artista y ahora será artista, crear el registro del artista
+    if (!isCurrentlyArtist && willBeArtist && !currentUser.artist) {
+      const artistName = `${currentUser.firstName || 'Usuario'} ${currentUser.lastName || ''}`.trim()
+      
+      // Verificar si ya existe un artista con ese nombre
+      const existingArtist = await tx.artist.findUnique({
+        where: { name: artistName },
+      })
+
+      if (existingArtist) {
+        // Si ya existe, usar un nombre único
+        const uniqueArtistName = `${artistName} (${Date.now()})`
+        
+        const newArtist = await tx.artist.create({
+          data: {
+            name: uniqueArtistName,
+            user: {
+              connect: { id: userId },
+            },
+          },
+        })
+
+        // Conectar el artista al usuario
+        await tx.user.update({
+          data: { artistId: newArtist.id },
+          where: { id: userId },
+        })
+      } else {
+        const newArtist = await tx.artist.create({
+          data: {
+            name: artistName,
+            user: {
+              connect: { id: userId },
+            },
+          },
+        })
+
+        // Conectar el artista al usuario
+        await tx.user.update({
+          data: { artistId: newArtist.id },
+          where: { id: userId },
+        })
+      }
+    }
   })
 
   return await getUserById(userId)
@@ -330,5 +411,36 @@ export const updateUserAndRelatedData = async (
       },
       where: { id: userId },
     })
+  })
+}
+
+export const cleanupOrphanedArtists = async () => {
+  // Encontrar artistas que no están asignados a ningún usuario
+  const orphanedArtists = await prisma.artist.findMany({
+    where: {
+      user: null,
+    },
+  })
+
+  if (orphanedArtists.length > 0) {
+     
+    await prisma.artist.deleteMany({
+      where: {
+        user: null,
+      },
+    })
+  }
+
+  return orphanedArtists.length
+}
+
+export const getOrphanedArtists = async () => {
+  return await prisma.artist.findMany({
+    where: {
+      user: null,
+    },
+    include: {
+      user: true,
+    },
   })
 }

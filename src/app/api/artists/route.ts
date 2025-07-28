@@ -25,18 +25,34 @@ export async function POST(request: NextRequest) {
 
     const existingArtist = await prisma.artist.findUnique({
       where: { name: vendorName },
+      include: {
+        user: true,
+      },
     })
 
-    if (existingArtist) {
-      return NextResponse.json({ error: 'El nombre del vendor ya existe.' }, { status: 409 })
+    // Si el artista existe pero no está asignado a ningún usuario, podemos reutilizarlo
+    if (existingArtist && !existingArtist.user) {
+      console.log(`Reutilizando artista existente: ${vendorName}`)
+    } else if (existingArtist && existingArtist.user) {
+      return NextResponse.json({ 
+        error: `El nombre del vendor '${vendorName}' ya está asignado al usuario ${existingArtist.user.email}` 
+      }, { status: 409 })
     }
 
     const updatedUser = await prisma.$transaction(async (tx) => {
-      const newArtist = await tx.artist.create({
-        data: {
-          name: vendorName,
-        },
-      })
+      let artistToUse
+
+      if (existingArtist && !existingArtist.user) {
+        // Reutilizar artista existente que no está asignado
+        artistToUse = existingArtist
+      } else {
+        // Crear nuevo artista
+        artistToUse = await tx.artist.create({
+          data: {
+            name: vendorName,
+          },
+        })
+      }
 
       const artistRole = await tx.role.findUnique({ where: { name: 'artist' } })
       if (!artistRole) {
@@ -45,7 +61,7 @@ export async function POST(request: NextRequest) {
 
       await tx.user.update({
         data: {
-          artistId: newArtist.id,
+          artistId: artistToUse.id,
         },
         where: { id: userId },
       })

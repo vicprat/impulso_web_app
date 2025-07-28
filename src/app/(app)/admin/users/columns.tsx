@@ -25,6 +25,8 @@ export const columns: ColumnDef<UserProfile>[] = [
     accessorKey: 'firstName',
     cell: ({ row }) => {
       const user = row.original
+      const isArtist = user.roles.includes('artist')
+      
       return (
         <div className='flex items-center'>
           <div className='size-10 shrink-0'>
@@ -48,6 +50,11 @@ export const columns: ColumnDef<UserProfile>[] = [
               {user.firstName} {user.lastName}
             </div>
             <div className='text-sm text-gray-500'>ID: {user.id.slice(0, 8)}...</div>
+            {isArtist && user.artist?.name && (
+              <div className='text-xs text-blue-600 font-medium'>
+                Artista: {user.artist.name}
+              </div>
+            )}
           </div>
         </div>
       )
@@ -111,6 +118,7 @@ export const columns: ColumnDef<UserProfile>[] = [
     },
     header: 'Estado',
   },
+
   {
     accessorKey: 'isPublic',
     cell: ({ row, table }) => {
