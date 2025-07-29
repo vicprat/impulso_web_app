@@ -138,7 +138,7 @@ export default function UserDetailPage() {
               </div>
             </div>
             <div className='flex flex-col gap-2'>
-              <Link href={ROUTES.USERS.MAIN.PATH}>
+              <Link href={ROUTES.ADMIN.USERS.MAIN.PATH}>
                 <Button variant='ghost' size='sm'>
                   <ArrowLeft className='mr-2 size-4' />
                   Volver
@@ -389,13 +389,13 @@ function ProviderSection({ financeData, isLoading, user }: { user: any; financeD
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={`${ROUTES.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={`${ROUTES.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
@@ -469,13 +469,13 @@ function EmployeeSection({ financeData, isLoading, user }: { user: any; financeD
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={`${ROUTES.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={`${ROUTES.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
@@ -549,13 +549,13 @@ function PartnerSection({ financeData, isLoading, user }: { user: any; financeDa
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={`${ROUTES.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={`${ROUTES.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
@@ -630,13 +630,13 @@ function ArtistSection({ financeData, isLoading, user }: { user: any; financeDat
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={`${ROUTES.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={`${ROUTES.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
@@ -710,7 +710,7 @@ function CustomerSection({ financeData, isLoading, user }: { user: any; financeD
             </Button>
           </Link>
           {customerInfo?.orders && customerInfo.orders.length > 0 && (
-            <Link href={`${ROUTES.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
+            <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
               <Button variant='outline' size='sm'>
                 <FileText className='mr-2 size-4' />
                 Ver Movimientos

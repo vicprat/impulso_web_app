@@ -118,7 +118,7 @@ export default function EventFinancePage() {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-4'>
-          <Link href={ROUTES.EVENTS.MAIN.PATH}>
+          <Link href={ROUTES.ADMIN.EVENTS.MAIN.PATH}>
             <Button variant='outline' size='sm'>
               <ArrowLeft className='mr-2 size-4' />
               Volver a eventos
@@ -515,7 +515,7 @@ export default function EventFinancePage() {
                           </Badge>
                         )}
                       </div>
-                      <Link href={ROUTES.FINANCE.ENTRIES.DETAIL.PATH.replace(':id', entry.id)}>
+                      <Link href={ROUTES.ADMIN.FINANCE.ENTRIES.DETAIL.PATH.replace(':id', entry.id)}>
                         <Button variant='outline' size='sm'>
                           Ver Detalle
                         </Button>

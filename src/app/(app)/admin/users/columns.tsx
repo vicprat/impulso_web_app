@@ -175,7 +175,7 @@ export const columns: ColumnDef<UserProfile>[] = [
 
       return (
         <div className='flex items-center space-x-2'>
-          <Link href={replaceRouteParams(ROUTES.USERS.DETAIL.PATH, { id: user.id })}>
+          <Link href={replaceRouteParams(ROUTES.ADMIN.USERS.DETAIL.PATH, { id: user.id })}>
             <Button variant='ghost' size='sm'>
               <Eye className='size-4' />
             </Button>

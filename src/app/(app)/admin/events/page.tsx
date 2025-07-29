@@ -183,7 +183,7 @@ export default function ManageEventsPage() {
             <RefreshCw className={`mr-2 size-4 ${isFetching ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
-          <Link href={ROUTES.EVENTS.CREATE.PATH}>
+          <Link href={ROUTES.ADMIN.EVENTS.CREATE.PATH}>
             <Button variant='container-success'>
               <PlusCircle className='mr-2 size-4' />
               Crear Nuevo Evento

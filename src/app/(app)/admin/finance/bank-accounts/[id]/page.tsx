@@ -28,7 +28,7 @@ export default function BankAccountDetailPage() {
       try {
         await deleteBankAccount.mutateAsync(accountId)
         toast.success('Cuenta bancaria eliminada exitosamente')
-        router.push(ROUTES.FINANCE.BANK_ACCOUNTS.MAIN.PATH)
+        router.push(ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN.PATH)
       } catch (error) {
         console.error('Error deleting bank account:', error)
         toast.error('Error al eliminar la cuenta bancaria')
@@ -106,7 +106,7 @@ export default function BankAccountDetailPage() {
     <div className='space-y-6 p-6'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-4'>
-          <Link href={ROUTES.FINANCE.BANK_ACCOUNTS.MAIN.PATH}>
+          <Link href={ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN.PATH}>
             <Button variant='outline' size='sm'>
               <ArrowLeft className='mr-2 size-4' />
               Volver
@@ -118,7 +118,7 @@ export default function BankAccountDetailPage() {
           </div>
         </div>
         <div className='flex gap-2'>
-          <Link href={ROUTES.FINANCE.BANK_ACCOUNTS.EDIT.PATH.replace(':id', accountId)}>
+          <Link href={ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.EDIT.PATH.replace(':id', accountId)}>
             <Button variant='outline'>
               <Edit className='mr-2 size-4' />
               Editar
@@ -253,7 +253,7 @@ export default function BankAccountDetailPage() {
 
           {movements && movements.length > 10 && (
             <div className='mt-4 text-center'>
-              <Link href={`${ROUTES.FINANCE.ENTRIES.MAIN.PATH}?bankAccountId=${accountId}`}>
+              <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?bankAccountId=${accountId}`}>
                 <Button variant='outline'>Ver todos los movimientos</Button>
               </Link>
             </div>

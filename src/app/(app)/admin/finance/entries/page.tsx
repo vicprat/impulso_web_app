@@ -109,7 +109,7 @@ export default function FinancialEntriesPage() {
     <div className='space-y-6 p-6'>
       <div className='flex items-center justify-between'>
         <h1 className='text-2xl font-bold'>Movimientos Financieros</h1>
-        <Link href={ROUTES.FINANCE.ENTRIES.CREATE.PATH}>
+        <Link href={ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH}>
           <Button>
             <Plus className='mr-2 size-4' />
             Nuevo Movimiento
@@ -282,12 +282,12 @@ export default function FinancialEntriesPage() {
                       <p className='text-sm text-muted-foreground'>{entry.currency}</p>
                     </div>
                     <div className='flex gap-2'>
-                      <Link href={ROUTES.FINANCE.ENTRIES.DETAIL.PATH.replace(':id', entry.id)}>
+                      <Link href={ROUTES.ADMIN.FINANCE.ENTRIES.DETAIL.PATH.replace(':id', entry.id)}>
                         <Button variant='outline' size='sm'>
                           Ver
                         </Button>
                       </Link>
-                      <Link href={ROUTES.FINANCE.ENTRIES.DETAIL.PATH.replace(':id', entry.id)}>
+                      <Link href={ROUTES.ADMIN.FINANCE.ENTRIES.DETAIL.PATH.replace(':id', entry.id)}>
                         <Button variant='outline' size='sm'>
                           Ver/Editar
                         </Button>

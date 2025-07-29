@@ -73,7 +73,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
     {
       description: 'Exclusive art for VIPs',
       exact: true,
-      href: ROUTES.PRIVATE_ROOMS.ACCESS.PATH,
+      href: ROUTES.ADMIN.PRIVATE_ROOMS.ACCESS.PATH,
       icon: Lock,
       label: 'Private Rooms',
       shortLabel: 'Private',

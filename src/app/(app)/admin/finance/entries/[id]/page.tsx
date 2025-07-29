@@ -168,7 +168,7 @@ export default function FinancialEntryDetailPage() {
       try {
         await deleteEntry.mutateAsync(entryId)
         toast.success('Movimiento eliminado exitosamente')
-        router.push(ROUTES.FINANCE.ENTRIES.MAIN.PATH)
+        router.push(ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH)
       } catch (error) {
         console.error('Error deleting entry:', error)
         toast.error('Error al eliminar el movimiento')
@@ -257,7 +257,7 @@ export default function FinancialEntryDetailPage() {
     <div className='space-y-6 p-6'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-4'>
-          <Link href={ROUTES.FINANCE.ENTRIES.MAIN.PATH}>
+          <Link href={ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}>
             <Button variant='outline' size='sm'>
               <ArrowLeft className='mr-2 size-4' />
               Volver

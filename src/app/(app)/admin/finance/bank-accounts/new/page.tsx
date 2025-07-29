@@ -76,7 +76,7 @@ export default function NewBankAccountPage() {
       })
 
       toast.success('Cuenta bancaria creada exitosamente')
-      router.push(ROUTES.FINANCE.BANK_ACCOUNTS.MAIN.PATH)
+      router.push(ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN.PATH)
     } catch (error) {
       console.error('Error creating bank account:', error)
       toast.error('Error al crear la cuenta bancaria')
@@ -93,7 +93,7 @@ export default function NewBankAccountPage() {
   return (
     <div className='space-y-6 p-6'>
       <div className='flex items-center gap-4'>
-        <Link href={ROUTES.FINANCE.BANK_ACCOUNTS.MAIN.PATH}>
+        <Link href={ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN.PATH}>
           <Button variant='outline' size='sm'>
             <ArrowLeft className='mr-2 size-4' />
             Volver
@@ -182,7 +182,7 @@ export default function NewBankAccountPage() {
                 <Save className='mr-2 size-4' />
                 {createBankAccount.isPending ? 'Creando...' : 'Crear Cuenta'}
               </Button>
-              <Link href={ROUTES.FINANCE.BANK_ACCOUNTS.MAIN.PATH} className='flex-1'>
+              <Link href={ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN.PATH} className='flex-1'>
                 <Button type='button' variant='outline' className='w-full'>
                   Cancelar
                 </Button>

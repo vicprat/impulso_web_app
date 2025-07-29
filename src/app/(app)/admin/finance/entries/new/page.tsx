@@ -3,7 +3,7 @@
 import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -116,9 +116,9 @@ export default function NewFinancialEntryPage() {
       
       // Redirigir de vuelta al usuario si se creó desde su página
       if (userId) {
-        router.push(`${ROUTES.USERS.DETAIL.PATH.replace(':id', userId)}`)
+        router.push(`${ROUTES.ADMIN.USERS.DETAIL.PATH.replace(':id', userId)}`)
       } else {
-        router.push(ROUTES.FINANCE.ENTRIES.MAIN.PATH)
+        router.push(ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH)
       }
     } catch (error) {
       console.error('Error creating financial entry:', error)
@@ -136,7 +136,7 @@ export default function NewFinancialEntryPage() {
   return (
     <div className='space-y-6 p-6'>
       <div className='flex items-center gap-4'>
-        <Link href={userId ? `${ROUTES.USERS.DETAIL.PATH.replace(':id', userId)}` : ROUTES.FINANCE.ENTRIES.MAIN.PATH}>
+        <Link href={userId ? `${ROUTES.ADMIN.USERS.DETAIL.PATH.replace(':id', userId)}` : ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}>
           <Button variant='outline' size='sm'>
             <ArrowLeft className='mr-2 size-4' />
             Volver
@@ -335,7 +335,7 @@ export default function NewFinancialEntryPage() {
                   </>
                 )}
               </Button>
-              <Link href={userId ? `${ROUTES.USERS.DETAIL.PATH.replace(':id', userId)}` : ROUTES.FINANCE.ENTRIES.MAIN.PATH}>
+              <Link href={userId ? `${ROUTES.ADMIN.USERS.DETAIL.PATH.replace(':id', userId)}` : ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}>
                 <Button type='button' variant='outline'>
                   Cancelar
                 </Button>

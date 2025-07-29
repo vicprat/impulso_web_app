@@ -129,7 +129,7 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
             Inicio
           </Link>
           <span className='mx-2'>/</span>
-          <Link href={ROUTES.EVENTS.MAIN.PATH} className='transition-colors hover:text-primary'>
+          <Link href={ROUTES.STORE.EVENTS.PATH} className='transition-colors hover:text-primary'>
             Eventos
           </Link>
           <span className='mx-2'>/</span>
