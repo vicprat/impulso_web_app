@@ -97,6 +97,7 @@ async function getProducts(
 
   let sortKey = 'TITLE' // Default sort key
   let reverse = false // Default sort order
+  let useManualPriceSorting = false // Flag para usar sorting manual por precio
 
   if (params.sortBy) {
     switch (params.sortBy) {
@@ -119,9 +120,9 @@ async function getProducts(
         sortKey = 'INVENTORY_TOTAL'
         break
       case 'price':
-        // Shopify no soporta sorting por precio directamente
-        // Usaremos TITLE como fallback
-        sortKey = 'TITLE'
+        // Para precio, usamos sorting manual ya que Shopify no soporta sorting por precio
+        useManualPriceSorting = true
+        sortKey = 'TITLE' // Usamos TITLE como base
         break
       default:
         sortKey = 'TITLE'
@@ -133,20 +134,94 @@ async function getProducts(
   }
 
   const limit = params.limit ? parseInt(String(params.limit), 10) : 10
-  const variables = {
-    after: params.cursor,
-    first: limit,
-    query: shopifyQuery,
-    reverse,
-    sortKey,
+
+  if (useManualPriceSorting) {
+    // Usar sorting manual por precio
+    return await getProductsWithManualPriceSorting(params, shopifyQuery, limit, reverse)
+  } else {
+    // Usar la API normal de productos
+    const variables = {
+      after: params.cursor,
+      first: limit,
+      query: shopifyQuery,
+      reverse,
+      sortKey,
+    }
+
+    const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
+    const locationId = await getPrimaryLocationId()
+    const products = response.products.edges.map((edge) => new Product(edge.node, locationId))
+
+    return { pageInfo: response.products.pageInfo, products }
+  }
+}
+
+async function getProductsWithManualPriceSorting(
+  params: GetProductsParams,
+  shopifyQuery: string,
+  limit: number,
+  reverse: boolean
+): Promise<PaginatedProductsResponse> {
+  // Obtener todos los productos sin paginación para poder ordenarlos por precio
+  const allProducts: Product[] = []
+  let hasNextPage = true
+  let cursor: string | undefined = undefined
+  let pageCount = 0
+  const maxPages = 50 // Límite para evitar bucles infinitos
+
+  while (hasNextPage && pageCount < maxPages) {
+    const variables: {
+      after?: string
+      first: number
+      query: string
+      reverse: boolean
+      sortKey: 'TITLE'
+    } = {
+      after: cursor,
+      first: 250, // Obtener más productos por página para reducir el número de requests
+      query: shopifyQuery,
+      reverse: false, // Siempre false para obtener todos los productos
+      sortKey: 'TITLE',
+    }
+
+    const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
+    const locationId = await getPrimaryLocationId()
+    const products = response.products.edges.map((edge: { node: ShopifyProductData; cursor: string }) => new Product(edge.node, locationId))
+    
+    allProducts.push(...products)
+    
+    hasNextPage = response.products.pageInfo.hasNextPage
+    cursor = response.products.pageInfo.endCursor || undefined
+    pageCount++
   }
 
-  const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
+  // Ordenar productos por precio
+  allProducts.sort((a, b) => {
+    const priceA = parseFloat(a.variants[0]?.price?.amount || '0')
+    const priceB = parseFloat(b.variants[0]?.price?.amount || '0')
+    
+    if (reverse) {
+      return priceB - priceA // Descendente
+    } else {
+      return priceA - priceB // Ascendente
+    }
+  })
 
-  const locationId = await getPrimaryLocationId()
-  const products = response.products.edges.map((edge) => new Product(edge.node, locationId))
+  // Implementar paginación manual
+  const startIndex = params.cursor ? parseInt(params.cursor, 10) : 0
+  const endIndex = startIndex + limit
+  const paginatedProducts = allProducts.slice(startIndex, endIndex)
+  
+  const hasNextPageResult = endIndex < allProducts.length
+  const endCursor = hasNextPageResult ? endIndex.toString() : null
 
-  return { pageInfo: response.products.pageInfo, products }
+  return {
+    products: paginatedProducts,
+    pageInfo: {
+      hasNextPage: hasNextPageResult,
+      endCursor,
+    },
+  }
 }
 
 async function getProductStats(search?: string, session?: AuthSession) {

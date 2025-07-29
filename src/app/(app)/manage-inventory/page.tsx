@@ -153,10 +153,10 @@ export default function ManageInventoryPage() {
       productType: 'productType',
       inventory: 'inventoryQuantity',
       status: 'status',
+      price: 'price',
     }
 
-    // Para precio, usamos title como fallback ya que Shopify no soporta sorting por precio
-    const newSortBy = columnId === 'price' ? 'title' : (sortMapping[columnId] || 'title')
+    const newSortBy = sortMapping[columnId] || 'title'
     const newSortOrder = sortBy === newSortBy && sortOrder === 'asc' ? 'desc' : 'asc'
 
     setSortBy(newSortBy)
@@ -308,31 +308,33 @@ export default function ManageInventoryPage() {
             <SelectItem value='desc'>Descendente</SelectItem>
           </SelectContent>
         </Select>
-
-      
       </div>
 
-      {(isFetching || isLoadingStats) && (
-        <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
-          <RefreshCw className='size-4 animate-spin' />
-          <span>
-            {isLoadingStats ? 'Cargando estadísticas completas del inventario...' : 'Actualizando datos...'}
-          </span>
-        </div>
+      {/* Mostrar loader cuando se están cargando datos inicialmente o cuando se están actualizando filtros */}
+      {isLoading ? (
+        <Table.Loader />
+      ) : (
+        <>
+          {isFetching && products.length > 0 && (
+            <div className='mb-4 flex items-center space-x-2 text-sm text-muted-foreground'>
+              <RefreshCw className='size-4 animate-spin' />
+              <span>Actualizando datos...</span>
+            </div>
+          )}
+          <div className='rounded-md border'>
+            <Table.Data
+              table={table}
+              emptyMessage={
+                debouncedSearch
+                  ? `No se encontraron productos que coincidan con "${debouncedSearch}"`
+                  : statusFilter !== 'all'
+                    ? `No hay productos con estado "${statusFilter}"`
+                    : 'No se encontraron productos.'
+              }
+            />
+          </div>
+        </>
       )}
-
-      <div className='rounded-md border'>
-        <Table.Data
-          table={table}
-          emptyMessage={
-            debouncedSearch
-              ? `No se encontraron productos que coincidan con "${debouncedSearch}"`
-              : statusFilter !== 'all'
-                ? `No hay productos con estado "${statusFilter}"`
-                : 'No se encontraron productos.'
-          }
-        />
-      </div>
 
       <Table.Pagination
         table={table}

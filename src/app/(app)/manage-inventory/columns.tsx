@@ -400,7 +400,7 @@ export const columns: ColumnDef<Product>[] = [
           variant='ghost'
           onClick={() => handleSorting?.('price')}
           className='h-auto p-0 font-semibold'
-          title='Sorting por precio no disponible en Shopify'
+          title='Ordenar por precio'
         >
           Precio
           <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
