@@ -49,6 +49,9 @@ export const privateRoomsApi = {
   getPrivateRoomByUserId: async (userId: string): Promise<PrivateRoom> => {
     const response = await fetch(`${BASE_URL}/user/${userId}`)
     if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('No tienes salas privadas asignadas')
+      }
       throw new Error("Failed to fetch user's private room")
     }
     return response.json()

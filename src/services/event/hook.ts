@@ -50,13 +50,7 @@ export const useGetEventByHandle = (handle: string) => {
     enabled: !!handle,
     queryFn: async () => {
       const { data } = await axios.get(`/api/store/events/${handle}`)
-      console.log('Raw event data from API:', data)
-      // Crear instancia del modelo Event desde los datos del servidor
       const event = new Event(data, 'gid://shopify/Location/123456789')
-      console.log('Event instance created:', event)
-      console.log('Event details:', event.eventDetails)
-      console.log('Primary variant:', event.primaryVariant)
-      console.log('Is available:', event.isAvailable)
       return event
     },
     queryKey: [EVENTS_QUERY_KEY, 'detail', handle],

@@ -221,9 +221,6 @@ export const api = {
         },
       })
 
-      console.log('GraphQL response structure:', Object.keys(data || {}))
-      console.log('GraphQL products structure:', Object.keys(data?.products || {}))
-
       if (errors) {
         console.error('GraphQL errors:', errors)
         handleGraphQLErrors(Array.isArray(errors) ? errors : [])

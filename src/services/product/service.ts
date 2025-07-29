@@ -85,7 +85,6 @@ async function getProducts(
     } else {
       shopifyQuery = `vendor:"${params.vendor}"`
     }
-    console.log('🔍 Debug - Vendor agregado a query:', params.vendor)
   }
 
   if (params.status?.trim()) {
@@ -95,8 +94,6 @@ async function getProducts(
       shopifyQuery = `status:${params.status}`
     }
   }
-
-  console.log('🔍 Debug - Query final de Shopify:', shopifyQuery)
 
   let sortKey = 'TITLE' // Default sort key
   let reverse = false // Default sort order
@@ -188,9 +185,6 @@ async function getProductStats(search?: string, session?: AuthSession) {
     }
   }
 
-  console.log('🔍 Debug - Obteniendo estadísticas completas del inventario...')
-  console.log('🔍 Debug - Query de búsqueda:', shopifyQuery)
-
   const allProducts: any[] = []
   let hasNextPage = true
   let cursor: string | undefined = undefined
@@ -199,7 +193,6 @@ async function getProductStats(search?: string, session?: AuthSession) {
   // Obtener TODOS los productos usando paginación
   while (hasNextPage) {
     pageCount++
-    console.log(`🔍 Debug - Obteniendo página ${pageCount} de productos...`)
 
     const variables: {
       after?: string
@@ -222,8 +215,6 @@ async function getProductStats(search?: string, session?: AuthSession) {
     
     allProducts.push(...products)
     
-    console.log(`🔍 Debug - Productos obtenidos hasta ahora: ${allProducts.length}`)
-    
     // Verificar si hay más páginas
     hasNextPage = response.products.pageInfo.hasNextPage
     cursor = response.products.pageInfo.endCursor ?? undefined
@@ -231,12 +222,9 @@ async function getProductStats(search?: string, session?: AuthSession) {
     // Para inventarios muy grandes, limitamos a 5000 productos máximo
     // Esto debería cubrir la mayoría de casos reales
     if (allProducts.length >= 5000) {
-      console.warn('Stats limitado a 5000 productos para evitar timeouts')
       break
     }
   }
-
-  console.log(`🔍 Debug - Total de productos obtenidos: ${allProducts.length}`)
 
   const stats = {
     active: allProducts.filter((p) => p.status === 'ACTIVE').length,
@@ -246,8 +234,6 @@ async function getProductStats(search?: string, session?: AuthSession) {
     outOfStock: allProducts.filter((p) => !p.isAvailable).length,
     total: allProducts.length,
   }
-
-  console.log('🔍 Debug - Estadísticas calculadas:', stats)
 
   return stats
 }
@@ -310,13 +296,6 @@ async function getProductsFromRequest(
     where: { id: session.user.id },
   })
 
-  console.log('🔍 Debug - Usuario:', {
-    artistName: user?.artist?.name,
-    id: session.user.id,
-    role: user?.role?.name,
-    userRoles: user?.UserRole?.map(ur => ur.role.name),
-  })
-
   const params: GetProductsParams = {
     cursor: searchParams.get('cursor') ?? undefined,
     limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
@@ -328,16 +307,11 @@ async function getProductsFromRequest(
     vendor: searchParams.get('vendor') ?? undefined,
   }
 
-  console.log('🔍 Debug - Parámetros originales:', params)
-
   // Si el usuario es artista, establecer automáticamente su vendor
   const isArtist = user?.UserRole?.some(ur => ur.role.name === 'artist') || user?.role?.name === 'artist'
   
   if (isArtist && user?.artist?.name) {
     params.vendor = user.artist.name
-    console.log('🔍 Debug - Vendor establecido para artista:', params.vendor)
-  } else {
-    console.log('🔍 Debug - Usuario no es artista o no tiene nombre de artista')
   }
 
   if (params.limit && (params.limit < 1 || params.limit > 100)) {
@@ -347,8 +321,6 @@ async function getProductsFromRequest(
   if (params.page && params.page < 1) {
     throw new Error('La página debe ser al menos 1')
   }
-
-  console.log('🔍 Debug - Parámetros finales:', params)
 
   return getProducts(params, session)
 }

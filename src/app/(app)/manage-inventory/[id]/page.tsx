@@ -1,7 +1,6 @@
 'use client'
 
 import { ArrowLeft, Edit2, Eye, Trash2 } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -262,10 +261,9 @@ export default function ProductDetailPage() {
                   <div className='grid grid-cols-2 gap-4 md:grid-cols-3'>
                     {product.images.map((image, index) => (
                       <div key={index} className='relative aspect-square'>
-                        <Image
+                        <img
                           src={image.url}
                           alt={image.altText ?? product.title}
-                          fill
                           className='rounded-md object-cover'
                         />
                         {index === 0 && <Badge className='absolute left-2 top-2'>Principal</Badge>}

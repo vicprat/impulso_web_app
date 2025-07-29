@@ -15,7 +15,6 @@ import {
   User,
   Users,
 } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -144,13 +143,11 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
             <div className='lg:col-span-8'>
               <div className='group relative aspect-[16/9] overflow-hidden rounded-2xl bg-muted shadow-elevation-2'>
                 {event.images.length > 0 ? (
-                  <Image
+                  <img
                     src={event.images[currentImageIndex]?.url}
                     alt={event.images[currentImageIndex]?.altText ?? event.title}
-                    fill
                     className='object-cover transition-transform duration-700 group-hover:scale-105'
                     onClick={() => openLightbox(currentImageIndex)}
-                    priority
                   />
                 ) : (
                   <div className='flex h-full items-center justify-center bg-surface-container'>
@@ -234,7 +231,7 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                           : 'border-border hover:border-muted-foreground'
                       }`}
                     >
-                      <Image
+                      <img
                         src={image.url}
                         alt={image.altText ?? `${event.title} ${index + 1}`}
                         width={120}
@@ -430,7 +427,7 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                     >
                       <div className='aspect-[4/3] overflow-hidden'>
                         {relatedEvent.images[0] ? (
-                          <Image
+                          <img
                             src={relatedEvent.images[0].url}
                             alt={relatedEvent.title}
                             width={400}
@@ -493,7 +490,7 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
         <DialogContent className='max-w-screen-xl border-none bg-black/95 p-0'>
           <div className='relative flex h-[90vh] items-center justify-center'>
             {event.images.length > 0 && (
-              <Image
+              <img
                 src={event.images[lightboxImageIndex]?.url}
                 alt={event.images[lightboxImageIndex]?.altText ?? event.title}
                 width={1200}

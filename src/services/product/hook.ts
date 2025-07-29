@@ -3,10 +3,10 @@ import axios from 'axios'
 
 import { type Product } from '@/models/Product'
 import {
-    type CreateProductPayload,
-    type GetProductsParams,
-    type PaginatedProductsResponse,
-    type UpdateProductPayload,
+  type CreateProductPayload,
+  type GetProductsParams,
+  type PaginatedProductsResponse,
+  type UpdateProductPayload,
 } from '@/services/product/types'
 
 const PRODUCTS_QUERY_KEY = 'managementProducts'
@@ -112,25 +112,21 @@ export const useDeleteProduct = () => {
     },
   })
 }
+
 export const useProductStats = (params: Omit<GetProductsParams, 'cursor' | 'limit'> = {}) => {
   return useQuery({
     queryFn: async () => {
       try {
         const searchParams = new URLSearchParams()
         if (params.search) searchParams.append('search', params.search)
-
-        console.log('🔍 Debug - Solicitando estadísticas completas del inventario...')
         
-        // Aumentar el timeout para inventarios grandes
         const { data } = await axios.get(`/api/management/products/stats?${searchParams.toString()}`, {
-          timeout: 60000, // 60 segundos de timeout
+          timeout: 60000,
         })
         
-        console.log('🔍 Debug - Estadísticas recibidas:', data)
         return data
       } catch (error) {
         console.error('Error fetching product stats:', error)
-        // Retornar valores por defecto en caso de error
         return {
           active: 0,
           archived: 0,
@@ -143,7 +139,7 @@ export const useProductStats = (params: Omit<GetProductsParams, 'cursor' | 'limi
     },
     queryKey: [PRODUCTS_QUERY_KEY, 'stats', params],
     staleTime: 2 * 60 * 1000,
-    retry: 1, // Solo reintentar una vez
-    refetchOnWindowFocus: false, // Evitar refetch innecesario
+    retry: 1,
+    refetchOnWindowFocus: false,
   })
 }

@@ -53,6 +53,31 @@ export default function PrivateRoomPage() {
 
   // Error State
   if (roomError || productsError) {
+    // Check if it's specifically a "no private rooms" error
+    const isNoPrivateRoomsError = roomError?.message === 'No tienes salas privadas asignadas'
+    
+    if (isNoPrivateRoomsError) {
+      return (
+        <div className='container mx-auto max-w-4xl p-6'>
+          <div className='space-y-6 py-12 text-center'>
+            <div className='mx-auto flex size-24 items-center justify-center rounded-full bg-muted'>
+              <ShoppingBag className='size-12 text-muted-foreground' />
+            </div>
+            <div className='space-y-2'>
+              <h1 className='text-2xl font-bold'>No tienes salas privadas asignadas</h1>
+              <p className='text-muted-foreground'>
+                Actualmente no tienes salas privadas asignadas. Contacta con soporte para obtener acceso a tu experiencia VIP personalizada.
+              </p>
+            </div>
+            {/* TODO: ROUTING - Add ROUTES.CONTACT.MAIN.PATH */}
+            <Button asChild>
+              <Link href='/contact'>Contactar Soporte</Link>
+            </Button>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className='container mx-auto max-w-4xl p-6'>
         <Alert variant='destructive'>

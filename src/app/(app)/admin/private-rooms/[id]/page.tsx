@@ -62,14 +62,14 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
 
       const response = await fetch(`/api/private-rooms/${id}`)
       if (!response.ok) {
-        throw new Error('Failed to load private room')
+        throw new Error('Error al cargar la sala privada')
       }
 
       const privateRoom = await response.json()
       setRoomData(privateRoom)
     } catch (error) {
       console.error('Error loading room data:', error)
-      setError(error instanceof Error ? error.message : 'Failed to load private room')
+      setError(error instanceof Error ? error.message : 'Error al cargar la sala privada')
     } finally {
       setIsLoadingRoom(false)
     }
@@ -85,13 +85,13 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
         userId: data.userId,
       })
 
-      toast.success('Private room updated successfully!')
+      toast.success('¡Sala privada actualizada exitosamente!')
       setCurrentMode('view')
       router.replace(`/admin/private-rooms/${id}?mode=view`)
       await loadRoomData()
     } catch (error) {
       console.error('Error updating private room:', error)
-      toast.error('Failed to update private room.')
+      toast.error('Error al actualizar la sala privada.')
     } finally {
       setIsLoading(false)
     }
@@ -100,7 +100,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
   const handleDelete = async () => {
     if (
       !window.confirm(
-        'Are you sure you want to delete this private room? This action cannot be undone.'
+        '¿Estás seguro de que quieres eliminar esta sala privada? Esta acción no se puede deshacer.'
       )
     ) {
       return
@@ -110,11 +110,11 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
     try {
       await privateRoomsApi.deletePrivateRoom(id)
 
-      toast.success('Private room deleted successfully!')
+      toast.success('¡Sala privada eliminada exitosamente!')
       router.push('/admin/private-rooms')
     } catch (error) {
       console.error('Error deleting private room:', error)
-      toast.error('Failed to delete private room.')
+      toast.error('Error al eliminar la sala privada.')
     } finally {
       setIsLoading(false)
     }
@@ -154,15 +154,15 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
       <div className='container mx-auto max-w-4xl p-6'>
         <div className='space-y-4'>
           <Button variant='ghost' asChild>
-            <Link href={ROUTES.PRIVATE_ROOMS.CREATE.PATH}>
+            <Link href={ROUTES.ADMIN.PRIVATE_ROOMS.CREATE.PATH}>
               <ArrowLeft className='mr-2 size-4' />
-              Back to Private Rooms
+              Volver a Salas Privadas
             </Link>
           </Button>
 
           <Alert variant='destructive'>
             <AlertDescription>
-              {error ?? productsError?.message ?? 'Private room not found'}
+              {error ?? productsError?.message ?? 'Sala privada no encontrada'}
             </AlertDescription>
           </Alert>
         </div>
@@ -186,28 +186,28 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
           headerColor: 'bg-blue-50 border-blue-200',
           headerIcon: <Eye className='size-5 text-blue-600' />,
           showActions: true,
-          title: 'Private Room Details',
+          title: 'Detalles de la Sala Privada',
         }
       case 'edit':
         return {
           headerColor: 'bg-orange-50 border-orange-200',
           headerIcon: <Edit3 className='size-5 text-orange-600' />,
           showActions: false,
-          title: 'Edit Private Room',
+          title: 'Editar Sala Privada',
         }
       case 'delete':
         return {
           headerColor: 'bg-red-50 border-red-200',
           headerIcon: <Trash2 className='size-5 text-red-600' />,
           showActions: false,
-          title: 'Delete Private Room',
+          title: 'Eliminar Sala Privada',
         }
       default:
         return {
           headerColor: 'bg-gray-50 border-gray-200',
           headerIcon: <Eye className='size-5' />,
           showActions: true,
-          title: 'Private Room',
+          title: 'Sala Privada',
         }
     }
   }
@@ -219,9 +219,9 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
       <div className='space-y-6'>
         <div className='space-y-4'>
           <Button variant='ghost' asChild>
-            <Link href={ROUTES.PRIVATE_ROOMS.CREATE.PATH}>
+            <Link href={ROUTES.ADMIN.PRIVATE_ROOMS.CREATE.PATH}>
               <ArrowLeft className='mr-2 size-4' />
-              Back to Private Rooms
+              Volver a Salas Privadas
             </Link>
           </Button>
 
@@ -230,12 +230,12 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
               <div className='flex gap-2'>
                 <Button onClick={() => changeMode('edit')} variant='outline'>
                   <Edit3 className='mr-2 size-4' />
-                  Edit Room
+                  Editar Sala
                 </Button>
 
                 <Button onClick={() => changeMode('delete')} variant='destructive'>
                   <Trash2 className='mr-2 size-4' />
-                  Delete Room
+                  Eliminar Sala
                 </Button>
               </div>
             )}
@@ -244,7 +244,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
               <div className='flex gap-2'>
                 <Button onClick={cancelEdit} variant='outline'>
                   <X className='mr-2 size-4' />
-                  Cancel Edit
+                  Cancelar Edición
                 </Button>
               </div>
             )}
@@ -253,7 +253,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
               <div className='flex gap-2'>
                 <Button onClick={() => changeMode('view')} variant='outline'>
                   <X className='mr-2 size-4' />
-                  Cancel Delete
+                  Cancelar Eliminación
                 </Button>
               </div>
             )}
@@ -269,9 +269,9 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
           showUserSelection={currentMode !== 'view'}
           submitButtonText={
             currentMode === 'edit'
-              ? 'Save Changes'
+              ? 'Guardar Cambios'
               : currentMode === 'delete'
-                ? 'Delete Private Room'
+                ? 'Eliminar Sala Privada'
                 : undefined
           }
         />

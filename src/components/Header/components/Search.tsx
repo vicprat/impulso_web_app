@@ -1,7 +1,6 @@
 'use client'
 
 import { Search as SearchIcon } from 'lucide-react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -93,10 +92,9 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
                 className='my-2 flex cursor-pointer items-center gap-4'
               >
                 <div className='relative size-10 overflow-hidden rounded-md'>
-                  <Image
+                  <img
                     src={product.images[0]?.url ?? '/placeholder.svg'}
                     alt={product.title}
-                    fill
                     sizes='40px'
                     className='object-cover'
                   />

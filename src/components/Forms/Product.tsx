@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Save, X } from 'lucide-react'
-import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -606,10 +605,9 @@ export function ProductForm({
                       {product.images.map((img, index) => (
                         <div key={index} className='space-y-2'>
                           <div className='relative aspect-square'>
-                            <Image
+                            <img
                               src={img.url}
                               alt={img.altText ?? product.title}
-                              fill
                               className='rounded-md object-cover'
                             />
                             {index === 0 && (

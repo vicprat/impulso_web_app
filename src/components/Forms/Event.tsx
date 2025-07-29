@@ -15,7 +15,6 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import Image from 'next/image'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -553,10 +552,9 @@ export const EventForm: React.FC<Props> = ({ event, isLoading, mode, onCancel, o
                             {event.images.map((img, index) => (
                               <div key={index} className='space-y-2'>
                                 <div className='relative aspect-square'>
-                                  <Image
+                                  <img
                                     src={img.url}
                                     alt={img.altText ?? event.title}
-                                    fill
                                     className='rounded-md object-cover'
                                   />
                                   {index === 0 && (

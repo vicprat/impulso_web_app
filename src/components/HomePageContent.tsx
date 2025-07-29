@@ -5,7 +5,6 @@ import Autoplay from 'embla-carousel-autoplay'
 import useEmblaCarousel from 'embla-carousel-react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useState } from 'react'
 
@@ -221,12 +220,10 @@ const ParallaxHeroCarousel: React.FC<ParallaxCarouselProps> = ({ options, slides
             >
               <motion.div className='relative size-full overflow-hidden rounded-2xl'>
                 <div className=' absolute inset-0 h-full w-[120%]'>
-                  <Image
+                  <img
                     src={slide.imageUrl}
                     alt={slide.alt}
-                    fill
                     className='object-cover'
-                    priority={index === 0}
                   />
                 </div>
 
@@ -435,7 +432,7 @@ export function HomePageContent() {
                 className='overflow-hidden rounded-md bg-white shadow-md dark:bg-gray-800'
               >
                 <div className='relative aspect-video'>
-                  <Image src={article.imageUrl} alt={article.title} fill className='object-cover' />
+                  <img src={article.imageUrl} alt={article.title} className='object-cover' />
                 </div>
                 <div className='p-6'>
                   <h3 className='mb-2 text-lg font-medium text-gray-800 dark:text-gray-200'>

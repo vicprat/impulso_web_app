@@ -25,7 +25,7 @@ export const MenuGroup: React.FC<Props> = ({ children = [], route }) => {
   const isGroupActive = children.some((child) => pathname.startsWith(child.PATH))
 
   return (
-    <Accordion type='single' collapsible defaultValue={isGroupActive ? route.PATH : undefined}>
+    <Accordion type='single' collapsible defaultValue={route.PATH}>
       <AccordionItem value={route.PATH} className='border-b-0'>
         <AccordionTrigger
           className={`flex items-center rounded-md p-2 text-sm hover:bg-accent hover:text-accent-foreground ${isGroupActive ? 'bg-accent text-accent-foreground' : ''}`}

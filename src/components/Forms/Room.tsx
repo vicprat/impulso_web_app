@@ -1,7 +1,6 @@
 'use client'
 
 import { Edit3, Eye, Plus, Search, Trash2, X } from 'lucide-react'
-import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -340,10 +339,9 @@ export const Room: React.FC<Props> = ({
                                 className='border-border/50 hover:bg-muted/50 flex w-full items-center gap-4 border-b p-3 text-left transition-colors last:border-b-0'
                               >
                                 <div className='relative size-12 shrink-0 overflow-hidden rounded-md bg-muted'>
-                                  <Image
+                                  <img
                                     src={product.images[0]?.url ?? '/placeholder.svg'}
                                     alt={product.title}
-                                    fill
                                     sizes='48px'
                                     className='object-cover'
                                   />
@@ -411,10 +409,9 @@ export const Room: React.FC<Props> = ({
                         >
                           <div className='flex min-w-0 flex-1 items-center gap-3'>
                             <div className='relative size-10 shrink-0 overflow-hidden rounded-md bg-muted'>
-                              <Image
+                              <img
                                 src={product.images[0]?.url || '/placeholder.svg'}
                                 alt={product.title}
-                                fill
                                 sizes='40px'
                                 className='object-cover'
                               />

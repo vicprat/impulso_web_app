@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url'
 // Importación de plugins (solo los esenciales sin conflictos)
 import nextPlugin from '@next/eslint-plugin-next'
 import tanstackQuery from '@tanstack/eslint-plugin-query'
+import prettier from 'eslint-config-prettier'
 import checkFile from 'eslint-plugin-check-file'
 import importPlugin from 'eslint-plugin-import'
 import jsxA11y from 'eslint-plugin-jsx-a11y'
@@ -17,7 +18,6 @@ import sortDestructureKeys from 'eslint-plugin-sort-destructure-keys'
 import sortKeysFix from 'eslint-plugin-sort-keys-fix'
 import tailwindcss from 'eslint-plugin-tailwindcss'
 import unusedImports from 'eslint-plugin-unused-imports'
-import prettier from 'eslint-config-prettier'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)

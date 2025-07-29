@@ -1,7 +1,6 @@
 'use client'
 
 import { Calendar, Eye, MapPin, QrCode, Ticket, User } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { QRCodeSVG } from 'qrcode.react'
 import { useState } from 'react'
@@ -157,10 +156,9 @@ export default function ManageTicketsPage() {
                 <CardContent className='space-y-4'>
                   {ticket.event?.primaryImage && (
                     <div className='relative aspect-video w-full overflow-hidden rounded-md'>
-                      <Image
+                      <img
                         src={ticket.event.primaryImage.url}
                         alt={ticket.event.primaryImage.altText ?? ticket.event.title}
-                        fill
                         className='object-cover'
                       />
                     </div>

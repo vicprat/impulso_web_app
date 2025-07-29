@@ -18,7 +18,6 @@ import {
   User,
   Users,
 } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -420,10 +419,9 @@ export default function EventDetailPage() {
                   <div className='grid grid-cols-2 gap-4 md:grid-cols-3'>
                     {event.images.map((image, index) => (
                       <div key={index} className='group relative aspect-square'>
-                        <Image
+                        <img 
                           src={image.url}
                           alt={image.altText ?? event.title}
-                          fill
                           className='rounded-lg object-cover shadow-elevation-2 transition-shadow group-hover:shadow-elevation-3'
                         />
                         {index === 0 && (

@@ -2,7 +2,9 @@ import {
   Activity,
   Archive,
   BarChart,
+  BarChart3,
   Calendar,
+  CreditCard,
   Download,
   Edit,
   Edit3,
@@ -29,7 +31,7 @@ import {
   TrendingUp,
   User,
   Users,
-  X,
+  X
 } from 'lucide-react'
 
 export const Icons = {
@@ -37,6 +39,8 @@ export const Icons = {
   archive: Archive,
   'bar-chart': BarChart,
   calendar: Calendar,
+  'credit-card': CreditCard,
+  'bar-chart-3': BarChart3,
   download: Download,
   edit: Edit,
   'edit-3': Edit3,

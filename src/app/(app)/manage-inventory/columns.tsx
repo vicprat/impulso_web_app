@@ -2,36 +2,35 @@
 
 import { type ColumnDef } from '@tanstack/react-table'
 import {
-    ArrowUpDown,
-    Check,
-    Edit,
-    ExternalLink,
-    Eye,
-    MoreHorizontal,
-    Trash2,
-    X,
+  ArrowUpDown,
+  Check,
+  Edit,
+  ExternalLink,
+  Eye,
+  MoreHorizontal,
+  Trash2,
+  X,
 } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select'
 import { type Product } from '@/models/Product'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
@@ -221,10 +220,9 @@ export const columns: ColumnDef<Product>[] = [
 
       return (
         <div className='relative size-16 overflow-hidden rounded-md'>
-          <Image
+          <img
             src={image.url}
             alt={image.altText ?? product.title}
-            fill
             className='object-cover'
             sizes='64px'
           />

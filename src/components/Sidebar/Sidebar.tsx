@@ -8,9 +8,10 @@ import React, { useEffect, useState } from 'react'
 import { Logo } from '@/components/Logo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarMenu } from '@/components/ui/sidebar'
-import { getDashboardNavRoutes, ROUTES, type RouteConfig } from '@/config/routes'
+import { getGroupedDashboardNavRoutes, ROUTES, type RouteConfig } from '@/config/routes'
 import { useAuth } from '@/modules/auth/context/useAuth'
 
+import { MenuGroup } from './MenuGroup'
 import { MenuItem } from './MenuItem'
 
 interface Props {
@@ -24,19 +25,32 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
   const { isLoading, logout, user } = useAuth()
 
   const [visibleRoutes, setVisibleRoutes] = useState<RouteConfig[]>([])
+  const [groupedRoutes, setGroupedRoutes] = useState<RouteConfig[]>([])
+  const [individualRoutes, setIndividualRoutes] = useState<RouteConfig[]>([])
 
   useEffect(() => {
     if (isLoading || !user) return
 
     const userRoles = user.roles
     const userPermissions = user.permissions
-    const accessibleRoutes = getDashboardNavRoutes(userRoles, userPermissions)
-    setVisibleRoutes(accessibleRoutes)
+    const { groupedRoutes, individualRoutes } = getGroupedDashboardNavRoutes(userRoles, userPermissions)
+    
+    setGroupedRoutes(groupedRoutes)
+    setIndividualRoutes(individualRoutes)
+    setVisibleRoutes([...groupedRoutes, ...individualRoutes])
   }, [user, isLoading, routes])
 
   const handleLogout = () => {
     void logout()
     router.push(ROUTES.AUTH.LOGIN.PATH)
+  }
+
+  const renderRoute = (route: RouteConfig) => {
+    if (route.HIDE_IN_NAV) return null
+
+    const isActive = pathname === route.PATH || pathname.startsWith(`${route.PATH}/`)
+
+    return <MenuItem key={route.PATH} route={route} isActive={isActive} />
   }
 
   return (
@@ -47,13 +61,16 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
 
       <SidebarContent className='mt-4'>
         <SidebarMenu>
-          {visibleRoutes.map((route) => {
-            if (route.HIDE_IN_NAV) return null
-
-            const isActive = pathname === route.PATH || pathname.startsWith(`${route.PATH}/`)
-
-            return <MenuItem key={route.PATH} route={route} isActive={isActive} />
-          })}
+          {/* Rutas individuales */}
+          {individualRoutes.map(renderRoute)}
+          
+          {/* Grupo de Administración */}
+          {groupedRoutes.length > 0 && (
+            <MenuGroup 
+              route={ROUTES.ADMIN.GROUP} 
+              children={groupedRoutes}
+            />
+          )}
         </SidebarMenu>
       </SidebarContent>
 
