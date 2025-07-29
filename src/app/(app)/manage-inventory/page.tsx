@@ -1,5 +1,6 @@
 'use client'
 
+import { useQueryClient } from '@tanstack/react-query'
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { Filter, PlusCircle, RefreshCw, Search } from 'lucide-react'
 import Link from 'next/link'
@@ -24,6 +25,9 @@ import { Table } from '@/src/components/Table'
 import { ROUTES } from '@/src/config/routes'
 
 import { columns } from './columns'
+
+// Forzar que la página sea dinámica
+export const dynamic = 'force-dynamic'
 
 interface InventoryTableMeta {
   editingRowId: string | null
@@ -53,6 +57,18 @@ export default function ManageInventoryPage() {
   const [cursors, setCursors] = useState<Record<number, string | undefined>>({ 1: undefined })
 
   const debouncedSearch = useDebounce(searchTerm, 500)
+  const queryClient = useQueryClient()
+
+  // Limpiar caché al montar el componente
+  useEffect(() => {
+    // Invalidar caché de productos al cargar la página
+    void queryClient.invalidateQueries({ queryKey: ['managementProducts'] })
+  }, [queryClient])
+
+  // Limpiar estado de edición cuando cambian los filtros
+  useEffect(() => {
+    setEditingRowId(null)
+  }, [debouncedSearch, statusFilter, sortBy, sortOrder, currentPage])
 
   const {
     data: paginatedData,
@@ -113,16 +129,22 @@ export default function ManageInventoryPage() {
         onSuccess: () => {
           toast.success('Producto actualizado con éxito.')
           setEditingRowId(null)
+          // Forzar un refresh de los datos para asegurar que estén actualizados
+          void refetch()
         },
       })
     },
-    [updateMutation]
+    [updateMutation, refetch]
   )
 
   const handleRefresh = useCallback(() => {
+    // Limpiar caché y forzar actualización
+    void queryClient.invalidateQueries({ queryKey: ['managementProducts'] })
+    void queryClient.invalidateQueries({ queryKey: ['productStats'] })
+    setEditingRowId(null)
     void refetch()
     toast.info('Actualizando datos...')
-  }, [refetch])
+  }, [refetch, queryClient])
 
   const handleSorting = useCallback((columnId: string) => {
     const sortMapping: Record<string, string> = {

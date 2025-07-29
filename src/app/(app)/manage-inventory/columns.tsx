@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -71,6 +71,11 @@ const EditableTitle = ({
 }) => {
   const [value, setValue] = useState(product.title)
 
+  // Resetear el valor cuando cambia el producto o cuando se inicia la edición
+  useEffect(() => {
+    setValue(product.title)
+  }, [product.title, isEditing])
+
   if (!isEditing) {
     return (
       <div className='flex flex-col'>
@@ -121,6 +126,11 @@ const EditablePrice = ({
   const currencyCode = variant.price.currencyCode || 'MXN'
   const [value, setValue] = useState(priceAmount)
 
+  // Resetear el valor cuando cambia el producto o cuando se inicia la edición
+  useEffect(() => {
+    setValue(priceAmount)
+  }, [priceAmount, isEditing])
+
   const formatPrice = (amount: string, currency: string) => {
     const numericAmount = parseFloat(amount)
     return `$${numericAmount.toLocaleString('es-MX')} ${currency}`
@@ -169,6 +179,11 @@ const EditableInventory = ({
   const variant = product.variants[0]
   const currentQuantity = variant.inventoryQuantity ?? 0
   const [value, setValue] = useState(currentQuantity.toString())
+
+  // Resetear el valor cuando cambia el producto o cuando se inicia la edición
+  useEffect(() => {
+    setValue(currentQuantity.toString())
+  }, [currentQuantity, isEditing])
 
   if (!isEditing) {
     return (

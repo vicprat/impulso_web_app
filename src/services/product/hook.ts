@@ -3,17 +3,17 @@ import axios from 'axios'
 
 import { type Product } from '@/models/Product'
 import {
-  type CreateProductPayload,
-  type GetProductsParams,
-  type PaginatedProductsResponse,
-  type UpdateProductPayload,
+    type CreateProductPayload,
+    type GetProductsParams,
+    type PaginatedProductsResponse,
+    type UpdateProductPayload,
 } from '@/services/product/types'
 
 const PRODUCTS_QUERY_KEY = 'managementProducts'
 
 export const useGetProductsPaginated = (params: GetProductsParams = {}) => {
   return useQuery<PaginatedProductsResponse>({
-    gcTime: 10 * 60 * 1000,
+    gcTime: 5 * 60 * 1000, // Reducido de 10 a 5 minutos
     queryFn: async () => {
       const searchParams = new URLSearchParams()
       if (params.search) searchParams.append('search', params.search)
@@ -26,7 +26,7 @@ export const useGetProductsPaginated = (params: GetProductsParams = {}) => {
       return data
     },
     queryKey: [PRODUCTS_QUERY_KEY, 'paginated', params],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000, // Reducido de 5 a 2 minutos para que se considere obsoleto más rápido
   })
 }
 
@@ -70,11 +70,15 @@ export const useUpdateProduct = () => {
     onSuccess: (updatedProduct) => {
       const productId = updatedProduct.id.split('/').pop()
 
+      // Invalidar todas las consultas relacionadas con productos
       void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'paginated'] })
       void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'infinite'] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'stats'] })
 
+      // Actualizar el producto específico en el caché
       queryClient.setQueryData([PRODUCTS_QUERY_KEY, 'detail', productId], updatedProduct)
 
+      // Actualizar el producto en las listas paginadas
       queryClient.setQueriesData(
         { queryKey: [PRODUCTS_QUERY_KEY, 'paginated'] },
         (oldData: PaginatedProductsResponse | undefined) => {
@@ -88,6 +92,9 @@ export const useUpdateProduct = () => {
           }
         }
       )
+
+      // Limpiar cualquier caché de estadísticas que pueda estar afectado
+      void queryClient.invalidateQueries({ queryKey: ['productStats'] })
     },
   })
 }
