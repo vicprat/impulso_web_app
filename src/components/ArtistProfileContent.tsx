@@ -47,9 +47,9 @@ export function ArtistProfileContent({ userProfile }: Props) {
     isLoading,
   } = useQuery({
     enabled: !!userId,
+    initialData: userProfile,
     queryFn: () => postgresUserApi.getPublicProfile(userId),
     queryKey: ['publicProfile', userId],
-    initialData: userProfile,
   })
 
   if (isLoading) {
@@ -124,7 +124,7 @@ export function ArtistProfileContent({ userProfile }: Props) {
             <div className='absolute inset-0'>
               <img
                 alt='Background'
-                className='h-full w-full object-cover'
+                className='size-full object-cover'
                 src={profileData.profile.backgroundImageUrl}
               />
               <div className='absolute inset-0 bg-black/40' />
@@ -242,7 +242,7 @@ export function ArtistProfileContent({ userProfile }: Props) {
                         <div className='relative aspect-square'>
                           <img
                             alt={product.title}
-                            className='h-full w-full object-cover'
+                            className='size-full object-cover'
                             src={product.featuredImage?.url || '/placeholder-product.jpg'}
                           />
                         </div>

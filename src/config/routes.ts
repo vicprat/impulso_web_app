@@ -17,14 +17,6 @@ export interface RouteConfig {
 
 export const ROUTES = {
   ADMIN: {
-    GROUP: {
-      ICON: 'settings',
-      LABEL: 'Administración',
-      PATH: '/admin',
-      PERMISSIONS: [PERMISSIONS.ACCESS_ADMIN],
-      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      HIDE_IN_NAV: true, // Esta ruta no debe aparecer individualmente
-    },
     EVENTS: {
       CREATE: {
         ICON: 'plus',
@@ -53,54 +45,6 @@ export const ROUTES = {
         LABEL: 'Eventos',
         PATH: '/admin/events',
         PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-    },
-    USERS: {
-      DETAIL: {
-        ICON: 'edit',
-        LABEL: 'Editar Usuario',
-        PATH: '/admin/users/:id',
-        PERMISSIONS: [PERMISSIONS.MANAGE_USERS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-      MAIN: {
-        DESCRIPTION: 'Gestionar Usuarios',
-        ICON: 'users',
-        LABEL: 'Usuarios',
-        PATH: '/admin/users',
-        PERMISSIONS: [PERMISSIONS.MANAGE_USERS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-    },
-    PRIVATE_ROOMS: {
-      ACCESS: {
-        ICON: 'lock',
-        LABEL: 'Acceder a Sala Privada',
-        PATH: '/private-room',
-        PERMISSIONS: [PERMISSIONS.VIEW_PRIVATE_ROOMS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.VIP_CUSTOMER.NAME],
-      },
-      CREATE: {
-        ICON: 'plus',
-        LABEL: 'Crear Sala Privada',
-        PATH: '/admin/private-rooms/create',
-        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-      DETAIL: {
-        ICON: 'edit',
-        LABEL: 'Editar Sala Privada',
-        PATH: '/admin/private-rooms/:id',
-        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-      MAIN: {
-        DESCRIPTION: 'Gestionar Salas Privadas',
-        ICON: 'lock',
-        LABEL: 'Salas Privadas',
-        PATH: '/admin/private-rooms',
-        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
         ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
@@ -169,6 +113,62 @@ export const ROUTES = {
           PERMISSIONS: [PERMISSIONS.VIEW_FINANCE_REPORTS],
           ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.PARTNER.NAME],
         },
+      },
+    },
+    GROUP: {
+      HIDE_IN_NAV: true,
+      ICON: 'settings',
+      LABEL: 'Administración',
+      PATH: '/admin',
+      PERMISSIONS: [PERMISSIONS.ACCESS_ADMIN],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME], // Esta ruta no debe aparecer individualmente
+    },
+    PRIVATE_ROOMS: {
+      ACCESS: {
+        ICON: 'lock',
+        LABEL: 'Acceder a Sala Privada',
+        PATH: '/private-room',
+        PERMISSIONS: [PERMISSIONS.VIEW_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.VIP_CUSTOMER.NAME],
+      },
+      CREATE: {
+        ICON: 'plus',
+        LABEL: 'Crear Sala Privada',
+        PATH: '/admin/private-rooms/create',
+        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Editar Sala Privada',
+        PATH: '/admin/private-rooms/:id',
+        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar Salas Privadas',
+        ICON: 'lock',
+        LABEL: 'Salas Privadas',
+        PATH: '/admin/private-rooms',
+        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+    },
+    USERS: {
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Editar Usuario',
+        PATH: '/admin/users/:id',
+        PERMISSIONS: [PERMISSIONS.MANAGE_USERS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar Usuarios',
+        ICON: 'users',
+        LABEL: 'Usuarios',
+        PATH: '/admin/users',
+        PERMISSIONS: [PERMISSIONS.MANAGE_USERS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
   },

@@ -172,10 +172,10 @@ export async function GET(
       financialMetrics: {
         lastMovement: lastMovement ? {
           amount: Number(lastMovement.amount),
-          id: lastMovement.id,
+          category: lastMovement.category,
           date: lastMovement.date,
           description: lastMovement.description,
-          category: lastMovement.category,
+          id: lastMovement.id,
           status: lastMovement.status
         } : null,
         pendingAmount,

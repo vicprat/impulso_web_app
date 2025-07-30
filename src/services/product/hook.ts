@@ -93,8 +93,18 @@ export const useUpdateProduct = () => {
         }
       )
 
-      // Limpiar cualquier caché de estadísticas que pueda estar afectado
-      void queryClient.invalidateQueries({ queryKey: ['productStats'] })
+      // Solo invalidar stats si cambió algo que realmente afecte las estadísticas
+      // como el status del producto o la cantidad de inventario
+      const oldProduct = queryClient.getQueryData([PRODUCTS_QUERY_KEY, 'detail', productId])
+      if (oldProduct) {
+        const oldStatus = (oldProduct as Product).status
+        const oldInventoryQuantity = (oldProduct as Product).variants[0]?.inventoryQuantity ?? 0
+        const newInventoryQuantity = updatedProduct.variants[0]?.inventoryQuantity ?? 0
+        
+        if (oldStatus !== updatedProduct.status || oldInventoryQuantity !== newInventoryQuantity) {
+          void queryClient.invalidateQueries({ queryKey: ['productStats'] })
+        }
+      }
     },
   })
 }
@@ -145,8 +155,73 @@ export const useProductStats = (params: Omit<GetProductsParams, 'cursor' | 'limi
       }
     },
     queryKey: [PRODUCTS_QUERY_KEY, 'stats', params],
-    staleTime: 2 * 60 * 1000,
-    retry: 1,
     refetchOnWindowFocus: false,
+    retry: 1,
+    staleTime: 2 * 60 * 1000,
+  })
+}
+
+export const useGetVendors = () => {
+  return useQuery({
+    queryFn: async () => {
+      const { data } = await axios.get('/api/vendors')
+      return data
+    },
+    queryKey: ['vendors'],
+    // 10 minutos
+retry: 1, 
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export const useGetTechniques = () => {
+  return useQuery({
+    queryFn: async () => {
+      const { data } = await axios.get('/api/options/techniques')
+      return data
+    },
+    queryKey: ['techniques'],
+    // 10 minutos
+retry: 1, 
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export const useGetArtworkTypes = () => {
+  return useQuery({
+    queryFn: async () => {
+      const { data } = await axios.get('/api/options/artwork_types')
+      return data
+    },
+    queryKey: ['artwork_types'],
+    // 10 minutos
+retry: 1, 
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export const useGetLocations = () => {
+  return useQuery({
+    queryFn: async () => {
+      const { data } = await axios.get('/api/options/locations')
+      return data
+    },
+    queryKey: ['locations'],
+    // 10 minutos
+retry: 1, 
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export const useGetCurrentUser = () => {
+  return useQuery({
+    queryFn: async () => {
+      const { data } = await axios.get('/api/auth/me')
+      return data
+    },
+    queryKey: ['currentUser'],
+    // 5 minutos
+retry: 1, 
+    staleTime: 5 * 60 * 1000,
   })
 }

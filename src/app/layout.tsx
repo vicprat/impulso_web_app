@@ -1,8 +1,8 @@
 import { Providers } from '@/components/Providers'
+import { baseMetadata } from '@/lib/metadata'
 
 import type { Metadata } from 'next'
 
-import { baseMetadata } from '@/lib/metadata'
 
 import './globals.css'
 

@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/use-debounce'
+import { useAuth } from '@/modules/auth/context/useAuth'
 import { useGetProductsPaginated, useProductStats, useUpdateProduct } from '@/services/product/hook'
 import { type UpdateProductPayload } from '@/services/product/types'
 import { Table } from '@/src/components/Table'
@@ -35,40 +36,66 @@ interface InventoryTableMeta {
   updateProduct: (payload: {
     id: string
     title?: string
+    vendor?: string
+    productType?: string
     price?: string
     inventoryQuantity?: number
     status?: 'ACTIVE' | 'DRAFT'
+    artworkDetails?: {
+      medium?: string
+      year?: string
+      serie?: string
+      location?: string
+      height?: string
+      width?: string
+      depth?: string
+    }
   }) => void
   isUpdating: boolean
   handleSorting: (columnId: string) => void
   currentSortBy: string
   currentSortOrder: 'asc' | 'desc'
+  // Nuevos campos para manejo de cambios acumulados
+  editingChanges?: Record<string, any>
+  updateEditingChanges?: (changes: Record<string, any>) => void
+  saveAllChanges?: () => void
+  // Información del usuario para las columnas
+  user?: any
+  isAdmin?: boolean
+  isArtist?: boolean
 }
 
 export default function ManageInventoryPage() {
-  const [editingRowId, setEditingRowId] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [sortBy, setSortBy] = useState<string>('title')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [ editingRowId, setEditingRowId ] = useState<string | null>(null)
+  const [ editingChanges, setEditingChanges ] = useState<Record<string, any>>({})
+  const [ searchTerm, setSearchTerm ] = useState('')
+  const [ currentPage, setCurrentPage ] = useState(1)
+  const [ pageSize, setPageSize ] = useState(50)
+  const [ statusFilter, setStatusFilter ] = useState<string>('all')
+  const [ sortBy, setSortBy ] = useState<string>('title')
+  const [ sortOrder, setSortOrder ] = useState<'asc' | 'desc'>('asc')
 
-  const [cursors, setCursors] = useState<Record<number, string | undefined>>({ 1: undefined })
+  const [ cursors, setCursors ] = useState<Record<number, string | undefined>>({ 1: undefined })
 
   const debouncedSearch = useDebounce(searchTerm, 500)
-  const queryClient = useQueryClient()
 
-  // Limpiar caché al montar el componente
+  const queryClient = useQueryClient()
+  const { hasPermission, user } = useAuth()
+
+  // Determinar si el usuario es administrador o artista
+  const isAdmin = hasPermission('manage_products')
+  const isArtist = hasPermission('manage_own_products') && !isAdmin
+
   useEffect(() => {
     // Invalidar caché de productos al cargar la página
-    void queryClient.invalidateQueries({ queryKey: ['managementProducts'] })
-  }, [queryClient])
+    void queryClient.invalidateQueries({ queryKey: [ 'managementProducts' ] })
+  }, [ queryClient ])
 
   // Limpiar estado de edición cuando cambian los filtros
   useEffect(() => {
     setEditingRowId(null)
-  }, [debouncedSearch, statusFilter, sortBy, sortOrder, currentPage])
+    setEditingChanges({})
+  }, [ debouncedSearch, statusFilter, sortBy, sortOrder, currentPage ])
 
   const {
     data: paginatedData,
@@ -77,7 +104,7 @@ export default function ManageInventoryPage() {
     isLoading,
     refetch,
   } = useGetProductsPaginated({
-    cursor: cursors[currentPage],
+    cursor: cursors[ currentPage ],
     limit: pageSize,
     search: debouncedSearch,
     sortBy,
@@ -92,6 +119,16 @@ export default function ManageInventoryPage() {
   })
 
   const updateMutation = useUpdateProduct()
+
+  // Forzar actualización cuando se actualiza un producto
+  useEffect(() => {
+    if (updateMutation.isSuccess) {
+      // El hook useUpdateProduct ya maneja toda la invalidación necesaria
+      // Solo necesitamos limpiar el estado de edición
+      setEditingRowId(null)
+      setEditingChanges({})
+    }
+  }, [ updateMutation.isSuccess ])
 
   const products = paginatedData?.products ?? []
   const pageInfo = paginatedData?.pageInfo
@@ -110,79 +147,195 @@ export default function ManageInventoryPage() {
 
   useEffect(() => {
     if (pageInfo?.hasNextPage && pageInfo.endCursor) {
-      setCursors((prev) => ({ ...prev, [currentPage + 1]: pageInfo.endCursor! }))
+      setCursors((prev) => ({ ...prev, [ currentPage + 1 ]: pageInfo.endCursor! }))
     }
-  }, [pageInfo, currentPage])
+  }, [ pageInfo, currentPage ])
 
   useEffect(() => {
     setCurrentPage(1)
     setCursors({ 1: undefined })
-  }, [debouncedSearch, pageSize, sortBy, sortOrder])
+  }, [ debouncedSearch, pageSize, sortBy, sortOrder ])
+
+  const updateEditingChanges = useCallback((changes: Record<string, any>) => {
+    console.log('Updating editing changes:', changes) // Debug
+    setEditingChanges(prev => {
+      let newChanges = { ...prev }
+
+      // Si hay cambios en artworkDetails, fusionarlos correctamente
+      if (changes.artworkDetails) {
+        newChanges = {
+          ...newChanges,
+          artworkDetails: {
+            ...(newChanges.artworkDetails || {}),
+            ...changes.artworkDetails
+          }
+        }
+      } else {
+        // Para otros campos, simplemente fusionar
+        newChanges = { ...newChanges, ...changes }
+      }
+
+      console.log('New editing changes:', newChanges) // Debug
+      return newChanges
+    })
+  }, [])
+
+  const saveAllChanges = useCallback(() => {
+    if (!editingRowId || Object.keys(editingChanges).length === 0) return
+
+    toast.info('Guardando cambios...')
+
+    // Preparar el payload completo para la actualización usando el mismo patrón que Form.Product
+    const updatePayload: UpdateProductPayload = {
+      details: editingChanges.artworkDetails ? {
+        artist: editingChanges.vendor ?? editingChanges.artworkDetails.artist,
+        medium: editingChanges.artworkDetails.medium,
+        height: editingChanges.artworkDetails.height,
+        serie: editingChanges.artworkDetails.serie,
+        depth: editingChanges.artworkDetails.depth,
+        year: editingChanges.artworkDetails.year,
+        location: editingChanges.artworkDetails.location,
+        width: editingChanges.artworkDetails.width,
+      } : undefined,
+      id: editingRowId,
+      inventoryQuantity: editingChanges.inventoryQuantity,
+      price: editingChanges.price,
+      productType: editingChanges.productType,
+      status: editingChanges.status,
+      title: editingChanges.title,
+      vendor: editingChanges.vendor,
+    }
+
+    console.log('Saving changes:', updatePayload) // Debug
+
+    updateMutation.mutate(updatePayload, {
+      onError: (err) => {
+        console.error('Error updating product:', err) // Debug
+        toast.error(`Error al actualizar: ${err.message}`)
+      },
+      onSuccess: (updatedProduct) => {
+        console.log('Product updated successfully:', updatedProduct) // Debug
+        toast.success('Producto actualizado con éxito.')
+        setEditingRowId(null)
+        setEditingChanges({})
+
+        // El hook useUpdateProduct ya maneja toda la invalidación necesaria
+        // No necesitamos invalidar manualmente aquí
+      },
+    })
+  }, [ editingRowId, editingChanges, updateMutation ])
 
   const handleUpdateProduct = useCallback(
-    (payload: Partial<UpdateProductPayload> & { id: string }) => {
+    (payload: {
+      id: string
+      title?: string
+      vendor?: string
+      productType?: string
+      price?: string
+      inventoryQuantity?: number
+      status?: 'ACTIVE' | 'DRAFT'
+      artworkDetails?: {
+        medium?: string
+        year?: string
+        serie?: string
+        location?: string
+        height?: string
+        width?: string
+        depth?: string
+      }
+    }) => {
       toast.info('Guardando cambios...')
-      updateMutation.mutate(payload, {
+
+      // Preparar el payload completo para la actualización
+      const updatePayload: UpdateProductPayload = {
+        details: payload.artworkDetails ? {
+          artist: payload.vendor ?? undefined,
+          medium: payload.artworkDetails.medium,
+          height: payload.artworkDetails.height,
+          serie: payload.artworkDetails.serie,
+          depth: payload.artworkDetails.depth,
+          year: payload.artworkDetails.year,
+          location: payload.artworkDetails.location,
+          width: payload.artworkDetails.width,
+        } : undefined,
+        id: payload.id,
+        inventoryQuantity: payload.inventoryQuantity,
+        price: payload.price,
+        productType: payload.productType,
+        status: payload.status,
+        title: payload.title,
+        vendor: payload.vendor,
+      }
+
+      updateMutation.mutate(updatePayload, {
         onError: (err) => {
           toast.error(`Error al actualizar: ${err.message}`)
         },
         onSuccess: () => {
           toast.success('Producto actualizado con éxito.')
           setEditingRowId(null)
+
+          // Invalidar todos los cachés relacionados con productos
+          void queryClient.invalidateQueries({ queryKey: [ 'managementProducts' ] })
+          void queryClient.invalidateQueries({ queryKey: [ 'productStats' ] })
+          void queryClient.invalidateQueries({ queryKey: [ 'product' ] })
+
           // Forzar un refresh de los datos para asegurar que estén actualizados
           void refetch()
         },
       })
     },
-    [updateMutation, refetch]
+    [ updateMutation, refetch, queryClient ]
   )
 
   const handleRefresh = useCallback(() => {
     // Limpiar caché y forzar actualización
-    void queryClient.invalidateQueries({ queryKey: ['managementProducts'] })
-    void queryClient.invalidateQueries({ queryKey: ['productStats'] })
+    void queryClient.invalidateQueries({ queryKey: [ 'managementProducts' ] })
+    void queryClient.invalidateQueries({ queryKey: [ 'productStats' ] })
     setEditingRowId(null)
     void refetch()
     toast.info('Actualizando datos...')
-  }, [refetch, queryClient])
+  }, [ refetch, queryClient ])
 
   const handleSorting = useCallback((columnId: string) => {
     const sortMapping: Record<string, string> = {
+      inventory: 'inventoryQuantity',
+      price: 'price',
+      productType: 'productType',
+      status: 'status',
       title: 'title',
       vendor: 'vendor',
-      productType: 'productType',
-      inventory: 'inventoryQuantity',
-      status: 'status',
-      price: 'price',
     }
 
-    const newSortBy = sortMapping[columnId] || 'title'
+    const newSortBy = sortMapping[ columnId ] || 'title'
     const newSortOrder = sortBy === newSortBy && sortOrder === 'asc' ? 'desc' : 'asc'
 
     setSortBy(newSortBy)
     setSortOrder(newSortOrder)
-  }, [sortBy, sortOrder])
+  }, [ sortBy, sortOrder ])
 
   const table = useReactTable({
     columns,
-    data: filteredProducts,
+    data: products,
     getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
     meta: {
-      editingRowId,
-      isUpdating: updateMutation.isPending,
-      setEditingRowId,
-      updateProduct: handleUpdateProduct,
-      handleSorting,
       currentSortBy: sortBy,
       currentSortOrder: sortOrder,
+      editingChanges,
+      editingRowId,
+      handleSorting,
+      isAdmin,
+      isArtist,
+      isUpdating: updateMutation.isPending,
+      setEditingRowId,
+      saveAllChanges,
+      
+      updateEditingChanges,
+      
+updateProduct: handleUpdateProduct,
+      // Información del usuario para las columnas
+user,
     } as InventoryTableMeta,
-    state: {
-      pagination: {
-        pageIndex: currentPage - 1,
-        pageSize,
-      },
-    },
   })
 
   if ((isLoading || isLoadingStats) && !products.length) {
@@ -292,6 +445,7 @@ export default function ManageInventoryPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value='title'>Título</SelectItem>
+            <SelectItem value='vendor'>Artista</SelectItem>
             <SelectItem value='price'>Precio</SelectItem>
             <SelectItem value='createdAt'>Fecha de creación</SelectItem>
             <SelectItem value='updatedAt'>Fecha de actualización</SelectItem>

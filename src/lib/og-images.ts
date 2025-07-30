@@ -1,15 +1,15 @@
 // Configuración de imágenes para Open Graph
 export const OG_IMAGES = {
-  HOME: '/og-home.jpg',
-  ARTISTS: '/og-artists.jpg',
-  GALLERY: '/og-gallery.jpg',
-  EVENTS: '/og-events.jpg',
-  CART: '/og-cart.jpg',
-  SEARCH: '/og-search.jpg',
   ARTIST: '/og-artist.jpg',
-  PRODUCT: '/og-product.jpg',
-  EVENT: '/og-event.jpg',
+  ARTISTS: '/og-artists.jpg',
+  CART: '/og-cart.jpg',
   DEFAULT: '/og-image.jpg',
+  EVENT: '/og-event.jpg',
+  EVENTS: '/og-events.jpg',
+  GALLERY: '/og-gallery.jpg',
+  HOME: '/og-home.jpg',
+  PRODUCT: '/og-product.jpg',
+  SEARCH: '/og-search.jpg',
 } as const
 
 // Función para generar URLs de imágenes OG

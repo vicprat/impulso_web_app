@@ -1,10 +1,11 @@
-import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 
 import { generateArtistMetadata } from '@/lib/metadata'
 import { postgresUserApi } from '@/modules/user/api'
 import { ArtistProfileContent } from '@/src/components/ArtistProfileContent'
+
+import type { Metadata } from 'next'
 
 interface Props {
   params: Promise<{ userId: string }>
@@ -18,8 +19,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     
     if (!userProfile) {
       return {
-        title: 'Artista no encontrado | Impulso Galería',
         description: 'El perfil del artista solicitado no está disponible.',
+        title: 'Artista no encontrado | Impulso Galería',
       }
     }
 
@@ -27,14 +28,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       firstName: userProfile.firstName,
       lastName: userProfile.lastName,
       profile: {
-        occupation: userProfile.profile?.occupation,
         avatarUrl: userProfile.profile?.avatarUrl,
+        occupation: userProfile.profile?.occupation,
       }
     })
   } catch (error) {
     return {
-      title: 'Artista no encontrado | Impulso Galería',
       description: 'El perfil del artista solicitado no está disponible.',
+      title: 'Artista no encontrado | Impulso Galería',
     }
   }
 }

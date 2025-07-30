@@ -304,6 +304,37 @@ model FinancialEntry {
   @@map("financial_entries")
 }
 
+// Nuevas tablas para opciones dinámicas
+model Technique {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("techniques")
+}
+
+model ArtworkType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("artwork_types")
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("locations")
+}
+
 model Event {
   id               String @id @default(cuid())
   shopifyProductId String @unique

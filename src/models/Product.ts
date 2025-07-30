@@ -246,12 +246,22 @@ export class Product {
   private _parseDetailsFromMetafields(
     metafieldEdges: { node: ShopifyMetafieldNode }[]
   ): ArtworkDetails {
-    const details: Partial<ArtworkDetails> = { artist: this.vendor }
+    const details: Partial<ArtworkDetails> = {}
+    
     for (const { node } of metafieldEdges) {
-      if (node.namespace === ARTWORK_METAFIELD_NAMESPACE && node.key in details) {
-        ;(details as Record<string, string | null>)[node.key] = node.value
+      if (node.namespace === ARTWORK_METAFIELD_NAMESPACE) {
+        // Verificar si la clave es una propiedad válida de ArtworkDetails
+        if (node.key in details || ['medium', 'year', 'height', 'width', 'depth', 'serie', 'location'].includes(node.key)) {
+          ;(details as Record<string, string | null>)[node.key] = node.value
+        }
       }
     }
+    
+    // Solo usar vendor como artist si no hay artist en los metafields
+    if (!details.artist) {
+      details.artist = this.vendor
+    }
+    
     return details as ArtworkDetails
   }
 
@@ -365,6 +375,7 @@ export class Product {
 
   public update(updates: {
     title?: string
+    vendor?: string
     productType?: string
     inventoryQuantity?: number
     price?: string
@@ -394,6 +405,13 @@ export class Product {
       },
       title: () => {
         if (updates.title) this.title = updates.title
+      },
+      vendor: () => {
+        if (updates.vendor) {
+          this.vendor = updates.vendor
+          // También actualizar el artist en artworkDetails
+          this.artworkDetails = { ...this.artworkDetails, artist: updates.vendor }
+        }
       },
     }
 
@@ -442,6 +460,7 @@ export class Product {
     const input: ShopifyProductInput = {
       descriptionHtml: this.descriptionHtml,
       id: this.id,
+      metafields: metafields.length > 0 ? metafields : undefined,
       productType: this.productType,
       status: this.status,
       tags: this.tags,

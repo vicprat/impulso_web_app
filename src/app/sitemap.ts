@@ -1,6 +1,7 @@
+import { getAllPublicRoutes } from '@/config/routes'
+
 import type { MetadataRoute } from 'next'
 
-import { getAllPublicRoutes } from '@/config/routes'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXTAUTH_URL ?? 'https://impulsogaleria.com'
@@ -8,40 +9,40 @@ export default function sitemap(): MetadataRoute.Sitemap {
   
   const staticPages = [
     {
-      url: baseUrl,
-      lastModified: new Date(),
       changeFrequency: 'daily' as const,
+      lastModified: new Date(),
       priority: 1,
+      url: baseUrl,
     },
     {
-      url: `${baseUrl}/artists`,
-      lastModified: new Date(),
       changeFrequency: 'weekly' as const,
+      lastModified: new Date(),
       priority: 0.8,
+      url: `${baseUrl}/artists`,
     },
     {
-      url: `${baseUrl}/store`,
-      lastModified: new Date(),
       changeFrequency: 'daily' as const,
+      lastModified: new Date(),
       priority: 0.9,
+      url: `${baseUrl}/store`,
     },
     {
-      url: `${baseUrl}/events`,
-      lastModified: new Date(),
       changeFrequency: 'weekly' as const,
+      lastModified: new Date(),
       priority: 0.7,
+      url: `${baseUrl}/events`,
     },
     {
-      url: `${baseUrl}/store/cart`,
-      lastModified: new Date(),
       changeFrequency: 'monthly' as const,
+      lastModified: new Date(),
       priority: 0.5,
+      url: `${baseUrl}/store/cart`,
     },
     {
-      url: `${baseUrl}/store/search`,
-      lastModified: new Date(),
       changeFrequency: 'monthly' as const,
+      lastModified: new Date(),
       priority: 0.6,
+      url: `${baseUrl}/store/search`,
     },
   ]
 

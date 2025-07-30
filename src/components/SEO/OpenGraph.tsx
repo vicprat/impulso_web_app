@@ -11,13 +11,13 @@ interface OpenGraphProps {
 }
 
 export function OpenGraph({
-  title,
   description,
-  url,
   image = '/og-image.jpg',
-  type = 'website',
-  siteName = 'Impulso Galería',
   locale = 'es_MX',
+  siteName = 'Impulso Galería',
+  title,
+  type = 'website',
+  url,
 }: OpenGraphProps) {
   const fullUrl = `https://impulsogaleria.com${url}`
 

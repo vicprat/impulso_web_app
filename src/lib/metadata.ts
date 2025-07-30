@@ -2,11 +2,17 @@ import type { Metadata } from 'next'
 
 // Configuración base de metadata
 export const baseMetadata: Metadata = {
-  title: {
-    default: 'Impulso Galería - Arte Contemporáneo y Exposiciones',
-    template: '%s'
+  alternates: {
+    canonical: '/',
   },
+  authors: [{ name: 'Impulso Galería' }],
+  creator: 'Impulso Galería',
   description: 'Descubre arte contemporáneo único en Impulso Galería. Explora exposiciones, conoce artistas y encuentra piezas exclusivas que transformarán tu espacio.',
+  formatDetection: {
+    address: false,
+    email: false,
+    telephone: false,
+  },
   keywords: [
     'arte contemporáneo',
     'galería de arte',
@@ -19,63 +25,56 @@ export const baseMetadata: Metadata = {
     'arte mexicano',
     'colección de arte'
   ],
-  authors: [{ name: 'Impulso Galería' }],
-  creator: 'Impulso Galería',
-  publisher: 'Impulso Galería',
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
   metadataBase: new URL('https://impulsogaleria.com'),
-  alternates: {
-    canonical: '/',
-  },
   openGraph: {
-    type: 'website',
-    locale: 'es_MX',
-    url: 'https://impulsogaleria.com',
-    siteName: 'Impulso Galería',
-    title: 'Impulso Galería - Arte Contemporáneo y Exposiciones',
     description: 'Descubre arte contemporáneo único en Impulso Galería. Explora exposiciones, conoce artistas y encuentra piezas exclusivas.',
     images: [
       {
-        url: '/og-image.jpg',
-        width: 1200,
         height: 630,
         alt: 'Impulso Galería - Arte Contemporáneo',
+        url: '/og-image.jpg',
+        width: 1200,
       },
     ],
+    locale: 'es_MX',
+    siteName: 'Impulso Galería',
+    title: 'Impulso Galería - Arte Contemporáneo y Exposiciones',
+    type: 'website',
+    url: 'https://impulsogaleria.com',
+  },
+  publisher: 'Impulso Galería',
+  robots: {
+    follow: true,
+    googleBot: {
+      follow: true,
+      index: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+    index: true,
+  },
+  title: {
+    default: 'Impulso Galería - Arte Contemporáneo y Exposiciones',
+    template: '%s'
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Impulso Galería - Arte Contemporáneo y Exposiciones',
+    creator: '@impulsogaleria',
     description: 'Descubre arte contemporáneo único en Impulso Galería. Explora exposiciones, conoce artistas y encuentra piezas exclusivas.',
     images: ['/og-image.jpg'],
-    creator: '@impulsogaleria',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
+    title: 'Impulso Galería - Arte Contemporáneo y Exposiciones',
   },
   verification: {
     google: 'tu-codigo-de-verificacion-google',
-    yandex: 'tu-codigo-de-verificacion-yandex',
     yahoo: 'tu-codigo-de-verificacion-yahoo',
+    yandex: 'tu-codigo-de-verificacion-yandex',
   },
 }
 
 // Metadata específica para cada ruta
 export const routeMetadata: Record<string, Metadata> = {
   '/': {
-    title: 'Inicio - Impulso Galería',
     description: 'Bienvenido a Impulso Galería. Descubre arte contemporáneo único, explora exposiciones exclusivas y conoce artistas emergentes que transformarán tu perspectiva del arte.',
     keywords: [
       'arte contemporáneo',
@@ -87,20 +86,20 @@ export const routeMetadata: Record<string, Metadata> = {
       'impulso galería'
     ],
     openGraph: {
-      title: 'Inicio - Impulso Galería',
       description: 'Bienvenido a Impulso Galería. Descubre arte contemporáneo único, explora exposiciones exclusivas y conoce artistas emergentes.',
       images: [
         {
+          alt: 'Impulso Galería - Página de inicio',
+          height: 630,
           url: '/og-home.jpg',
           width: 1200,
-          height: 630,
-          alt: 'Impulso Galería - Página de inicio',
         },
       ],
+      title: 'Inicio - Impulso Galería',
     },
+    title: 'Inicio - Impulso Galería',
   },
   '/artists': {
-    title: 'Artistas - Impulso Galería',
     description: 'Explora nuestra colección de artistas talentosos en Impulso Galería. Descubre sus obras únicas, técnicas innovadoras y visiones artísticas que definen el arte contemporáneo.',
     keywords: [
       'artistas',
@@ -112,45 +111,20 @@ export const routeMetadata: Record<string, Metadata> = {
       'galería de artistas'
     ],
     openGraph: {
-      title: 'Artistas - Impulso Galería',
       description: 'Explora nuestra colección de artistas talentosos. Descubre sus obras únicas y visiones artísticas que definen el arte contemporáneo.',
       images: [
         {
+          alt: 'Artistas - Impulso Galería',
+          height: 630,
           url: '/og-artists.jpg',
           width: 1200,
-          height: 630,
-          alt: 'Artistas - Impulso Galería',
         },
       ],
+      title: 'Artistas - Impulso Galería',
     },
-  },
-  '/store': {
-    title: 'Galería - Impulso Galería',
-    description: 'Explora nuestra galería de arte contemporáneo. Encuentra piezas únicas, pinturas originales, esculturas y obras de arte que transformarán cualquier espacio.',
-    keywords: [
-      'galería de arte',
-      'pinturas',
-      'esculturas',
-      'arte contemporáneo',
-      'obras de arte',
-      'colección',
-      'arte para comprar'
-    ],
-    openGraph: {
-      title: 'Galería - Impulso Galería',
-      description: 'Explora nuestra galería de arte contemporáneo. Encuentra piezas únicas que transformarán cualquier espacio.',
-      images: [
-        {
-          url: '/og-gallery.jpg',
-          width: 1200,
-          height: 630,
-          alt: 'Galería - Impulso Galería',
-        },
-      ],
-    },
+    title: 'Artistas - Impulso Galería',
   },
   '/events': {
-    title: 'Eventos - Impulso Galería',
     description: 'Descubre los próximos eventos y exposiciones en Impulso Galería. Inauguraciones, charlas con artistas, talleres y experiencias únicas en el mundo del arte.',
     keywords: [
       'eventos de arte',
@@ -162,20 +136,45 @@ export const routeMetadata: Record<string, Metadata> = {
       'arte contemporáneo'
     ],
     openGraph: {
-      title: 'Eventos - Impulso Galería',
       description: 'Descubre los próximos eventos y exposiciones. Inauguraciones, charlas con artistas y experiencias únicas en el mundo del arte.',
       images: [
         {
+          alt: 'Eventos - Impulso Galería',
+          height: 630,
           url: '/og-events.jpg',
           width: 1200,
-          height: 630,
-          alt: 'Eventos - Impulso Galería',
         },
       ],
+      title: 'Eventos - Impulso Galería',
     },
+    title: 'Eventos - Impulso Galería',
+  },
+  '/store': {
+    description: 'Explora nuestra galería de arte contemporáneo. Encuentra piezas únicas, pinturas originales, esculturas y obras de arte que transformarán cualquier espacio.',
+    keywords: [
+      'galería de arte',
+      'pinturas',
+      'esculturas',
+      'arte contemporáneo',
+      'obras de arte',
+      'colección',
+      'arte para comprar'
+    ],
+    openGraph: {
+      description: 'Explora nuestra galería de arte contemporáneo. Encuentra piezas únicas que transformarán cualquier espacio.',
+      images: [
+        {
+          alt: 'Galería - Impulso Galería',
+          height: 630,
+          url: '/og-gallery.jpg',
+          width: 1200,
+        },
+      ],
+      title: 'Galería - Impulso Galería',
+    },
+    title: 'Galería - Impulso Galería',
   },
   '/store/cart': {
-    title: 'Carrito de Compras - Impulso Galería',
     description: 'Tu carrito de compras en Impulso Galería. Revisa las obras de arte seleccionadas y completa tu compra de manera segura.',
     keywords: [
       'carrito de compras',
@@ -186,20 +185,20 @@ export const routeMetadata: Record<string, Metadata> = {
       'arte contemporáneo'
     ],
     openGraph: {
-      title: 'Carrito de Compras - Impulso Galería',
       description: 'Revisa las obras de arte seleccionadas y completa tu compra de manera segura.',
       images: [
         {
+          alt: 'Carrito de Compras - Impulso Galería',
+          height: 630,
           url: '/og-cart.jpg',
           width: 1200,
-          height: 630,
-          alt: 'Carrito de Compras - Impulso Galería',
         },
       ],
+      title: 'Carrito de Compras - Impulso Galería',
     },
+    title: 'Carrito de Compras - Impulso Galería',
   },
   '/store/search': {
-    title: 'Buscar - Impulso Galería',
     description: 'Busca en nuestra colección de arte contemporáneo. Encuentra obras específicas, artistas o estilos que se adapten a tu gusto y espacio.',
     keywords: [
       'buscar arte',
@@ -210,17 +209,18 @@ export const routeMetadata: Record<string, Metadata> = {
       'arte contemporáneo'
     ],
     openGraph: {
-      title: 'Buscar - Impulso Galería',
       description: 'Busca en nuestra colección de arte contemporáneo. Encuentra obras específicas que se adapten a tu gusto.',
       images: [
         {
+          alt: 'Buscar - Impulso Galería',
+          height: 630,
           url: '/og-search.jpg',
           width: 1200,
-          height: 630,
-          alt: 'Buscar - Impulso Galería',
         },
       ],
+      title: 'Buscar - Impulso Galería',
     },
+    title: 'Buscar - Impulso Galería',
   },
 }
 
@@ -237,7 +237,6 @@ export const generateArtistMetadata = (artist: {
   const occupation = artist.profile?.occupation || 'Artista'
   
   return {
-    title: `${fullName} - ${occupation}`,
     description: `Descubre las obras únicas de ${fullName}, ${occupation.toLowerCase()} en Impulso Galería. Explora su portafolio, técnica y visión artística que define el arte contemporáneo.`,
     keywords: [
       fullName,
@@ -249,28 +248,29 @@ export const generateArtistMetadata = (artist: {
       'impulso galería'
     ].filter(Boolean) as string[],
     openGraph: {
-      title: `${fullName} - ${occupation}`,
       description: `Descubre las obras únicas de ${fullName}, ${occupation.toLowerCase()}. Explora su portafolio y visión artística.`,
       images: artist.profile?.avatarUrl ? [
         {
+          alt: `${fullName} - ${occupation}`,
+          height: 400,
           url: artist.profile.avatarUrl,
           width: 400,
-          height: 400,
-          alt: `${fullName} - ${occupation}`,
         },
       ] : [
         {
+          alt: `${fullName} - ${occupation}`,
+          height: 630,
           url: '/og-artist.jpg',
           width: 1200,
-          height: 630,
-          alt: `${fullName} - ${occupation}`,
         },
       ],
-    },
-    twitter: {
       title: `${fullName} - ${occupation}`,
+    },
+    title: `${fullName} - ${occupation}`,
+    twitter: {
       description: `Descubre las obras únicas de ${fullName}, ${occupation.toLowerCase()}.`,
       images: artist.profile?.avatarUrl ? [artist.profile.avatarUrl] : ['/og-artist.jpg'],
+      title: `${fullName} - ${occupation}`,
     },
   }
 }
@@ -283,7 +283,6 @@ export const generateProductMetadata = (product: {
   artist?: string
 }): Metadata => {
   return {
-    title: `${product.title}`,
     description: product.description || `Descubre "${product.title}"${product.artist ? ` por ${product.artist}` : ''}. Una obra única de arte contemporáneo disponible en Impulso Galería.`,
     keywords: [
       product.title,
@@ -295,28 +294,29 @@ export const generateProductMetadata = (product: {
       'impulso galería'
     ].filter(Boolean) as string[],
     openGraph: {
-      title: `${product.title}`,
       description: product.description || `Descubre "${product.title}"${product.artist ? ` por ${product.artist}` : ''}. Una obra única de arte contemporáneo.`,
       images: product.images && product.images.length > 0 ? [
         {
+          alt: product.title,
+          height: 630,
           url: product.images[0],
           width: 1200,
-          height: 630,
-          alt: product.title,
         },
       ] : [
         {
+          alt: product.title,
+          height: 630,
           url: '/og-product.jpg',
           width: 1200,
-          height: 630,
-          alt: product.title,
         },
       ],
-    },
-    twitter: {
       title: `${product.title}`,
+    },
+    title: `${product.title}`,
+    twitter: {
       description: product.description || `Descubre "${product.title}"${product.artist ? ` por ${product.artist}` : ''}.`,
       images: product.images && product.images.length > 0 ? product.images : ['/og-product.jpg'],
+      title: `${product.title}`,
     },
   }
 }
@@ -329,7 +329,6 @@ export const generateEventMetadata = (event: {
   images?: string[]
 }): Metadata => {
   return {
-    title: `${event.title} | Evento`,
     description: event.description || `Descubre "${event.title}", un evento único en Impulso Galería. ${event.date ? `Fecha: ${event.date}` : ''} Una experiencia inmersiva en el mundo del arte contemporáneo.`,
     keywords: [
       event.title,
@@ -340,28 +339,29 @@ export const generateEventMetadata = (event: {
       'impulso galería'
     ],
     openGraph: {
-      title: `${event.title} | Evento`,
       description: event.description || `Descubre "${event.title}", un evento único en Impulso Galería. Una experiencia inmersiva en el mundo del arte.`,
       images: event.images && event.images.length > 0 ? [
         {
+          alt: event.title,
+          height: 630,
           url: event.images[0],
           width: 1200,
-          height: 630,
-          alt: event.title,
         },
       ] : [
         {
+          alt: event.title,
+          height: 630,
           url: '/og-event.jpg',
           width: 1200,
-          height: 630,
-          alt: event.title,
         },
       ],
-    },
-    twitter: {
       title: `${event.title} | Evento`,
+    },
+    title: `${event.title} | Evento`,
+    twitter: {
       description: event.description || `Descubre "${event.title}", un evento único en Impulso Galería.`,
       images: event.images && event.images.length > 0 ? event.images : ['/og-event.jpg'],
+      title: `${event.title} | Evento`,
     },
   }
 } 

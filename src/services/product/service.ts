@@ -216,11 +216,11 @@ async function getProductsWithManualPriceSorting(
   const endCursor = hasNextPageResult ? endIndex.toString() : null
 
   return {
-    products: paginatedProducts,
     pageInfo: {
-      hasNextPage: hasNextPageResult,
       endCursor,
+      hasNextPage: hasNextPageResult,
     },
+    products: paginatedProducts,
   }
 }
 
@@ -725,8 +725,8 @@ export const productService = {
   createProductFromRequest,
   deleteProduct,
   getProductById,
+  getProductStats,
   getProducts,
   getProductsFromRequest,
-  getProductStats,
   updateProduct,
 }
