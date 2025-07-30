@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Save, X } from 'lucide-react'
+import { Plus, Save, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -30,9 +30,119 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { type Product } from '@/models/Product'
 import { type CreateProductPayload, type UpdateProductPayload } from '@/services/product/types'
+import { useGetTechniques, useGetArtworkTypes, useGetLocations } from '@/services/product/hook'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { Tiptap } from '../TipTap'
 import { ImageUploader } from './ImageUploader'
+
+// Componente para dropdown con opción de agregar nueva
+const AddOptionSelect = ({
+  options,
+  isLoading,
+  onAddNew,
+  placeholder,
+  label,
+  value,
+  onValueChange,
+}: {
+  options: { id: string; name: string }[]
+  isLoading: boolean
+  onAddNew: (name: string) => Promise<void>
+  placeholder: string
+  label: string
+  value?: string
+  onValueChange: (value: string) => void
+}) => {
+  const [ isAdding, setIsAdding ] = useState(false)
+  const [ newValue, setNewValue ] = useState('')
+
+  const handleAddNew = async () => {
+    if (!newValue.trim()) return
+
+    try {
+      setIsAdding(true)
+      await onAddNew(newValue.trim())
+      setNewValue('')
+      // Establecer el nuevo valor como seleccionado
+      onValueChange(newValue.trim())
+    } catch (error) {
+      console.error('Error al agregar opción:', error)
+    } finally {
+      setIsAdding(false)
+    }
+  }
+
+  return (
+    <div className='space-y-2'>
+      <Label>{label}</Label>
+      <div className='flex gap-2'>
+        <Select value={value} onValueChange={onValueChange} disabled={isLoading}>
+          <SelectTrigger className='flex-1'>
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((option) => (
+              <SelectItem key={option.id} value={option.name}>
+                {option.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={() => setIsAdding(true)}
+          disabled={isLoading}
+          className='px-3'
+        >
+          <Plus className='size-4' />
+        </Button>
+      </div>
+
+      {isAdding && (
+        <div className='flex gap-2 mt-2'>
+          <Input
+            placeholder={`Nuevo ${label.toLowerCase()}`}
+            value={newValue}
+            onChange={(e) => setNewValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                void handleAddNew()
+              }
+              if (e.key === 'Escape') {
+                setIsAdding(false)
+                setNewValue('')
+              }
+            }}
+            autoFocus
+            className='flex-1'
+          />
+          <Button
+            type='button'
+            size='sm'
+            onClick={handleAddNew}
+            disabled={!newValue.trim()}
+          >
+            Agregar
+          </Button>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => {
+              setIsAdding(false)
+              setNewValue('')
+            }}
+          >
+            Cancelar
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const productFormSchema = z.object({
   depth: z.string().optional(),
@@ -49,7 +159,7 @@ const productFormSchema = z.object({
   }),
   productType: z.string().optional(),
   serie: z.string().optional(),
-  status: z.enum(['ACTIVE', 'DRAFT', 'ARCHIVED']),
+  status: z.enum([ 'ACTIVE', 'DRAFT', 'ARCHIVED' ]),
   tags: z.string(),
   title: z.string().min(3, 'El título debe tener al menos 3 caracteres'),
   vendor: z.string().optional(),
@@ -90,11 +200,38 @@ export function ProductForm({
   onSave,
   product,
 }: ProductFormProps) {
-  const [newImages, setNewImages] = useState<NewImage[]>([])
-  const [tagsArray, setTagsArray] = useState<string[]>([])
+  const [ newImages, setNewImages ] = useState<NewImage[]>([])
+  const [ tagsArray, setTagsArray ] = useState<string[]>([])
+  const queryClient = useQueryClient()
 
   const isEditing = mode === 'edit'
   const variant = product?.primaryVariant
+
+  // Hooks para obtener las opciones
+  const { data: techniques = [], isLoading: isLoadingTechniques } = useGetTechniques()
+  const { data: artworkTypes = [], isLoading: isLoadingArtworkTypes } = useGetArtworkTypes()
+  const { data: locations = [], isLoading: isLoadingLocations } = useGetLocations()
+
+  // Función para agregar nuevas opciones
+  const handleAddNewOption = async (optionType: string, name: string) => {
+    const response = await fetch(`/api/options/${optionType}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Error al agregar la opción')
+    }
+
+    // Invalidar las queries para refrescar las opciones
+    await queryClient.invalidateQueries({ queryKey: [ 'techniques' ] })
+    await queryClient.invalidateQueries({ queryKey: [ 'artwork_types' ] })
+    await queryClient.invalidateQueries({ queryKey: [ 'locations' ] })
+  }
 
   const generateHandle = (title: string) => {
     return title
@@ -110,7 +247,7 @@ export function ProductForm({
     const tempDiv = document.createElement('div')
     tempDiv.innerHTML = html
     const paragraphs = tempDiv.getElementsByTagName('p')
-    return paragraphs.length > 0 ? (paragraphs[0].textContent ?? '') : ''
+    return paragraphs.length > 0 ? (paragraphs[ 0 ].textContent ?? '') : ''
   }
 
   const form = useForm<ProductFormData>({
@@ -139,7 +276,7 @@ export function ProductForm({
     if (product?.tags) {
       setTagsArray(product.tags)
     }
-  }, [product])
+  }, [ product ])
 
   const onSubmit = async (data: ProductFormData) => {
     if (isEditing) {
@@ -238,7 +375,7 @@ export function ProductForm({
       originalSource: resourceUrl,
     }
     setNewImages((prev) => {
-      const updated = [...prev, newImage]
+      const updated = [ ...prev, newImage ]
       return updated
     })
   }
@@ -315,13 +452,15 @@ export function ProductForm({
                   control={form.control}
                   name='productType'
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Producto</FormLabel>
-                      <FormControl>
-                        <Input placeholder='ej: Pintura, Escultura, etc.' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <AddOptionSelect
+                      options={artworkTypes}
+                      isLoading={isLoadingArtworkTypes}
+                      onAddNew={(name) => handleAddNewOption('artwork_types', name)}
+                      placeholder='Seleccionar tipo de obra'
+                      label='Tipo de Producto'
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
                   )}
                 />
 
@@ -379,13 +518,15 @@ export function ProductForm({
                   control={form.control}
                   name='medium'
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Técnica</FormLabel>
-                      <FormControl>
-                        <Input placeholder='ej: Óleo sobre tela, Acrílico, etc.' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <AddOptionSelect
+                      options={techniques}
+                      isLoading={isLoadingTechniques}
+                      onAddNew={(name) => handleAddNewOption('techniques', name)}
+                      placeholder='Seleccionar técnica'
+                      label='Técnica'
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
                   )}
                 />
 
@@ -421,13 +562,15 @@ export function ProductForm({
                   control={form.control}
                   name='location'
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Localización</FormLabel>
-                      <FormControl>
-                        <Input placeholder='ej: Ciudad de México' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <AddOptionSelect
+                      options={locations}
+                      isLoading={isLoadingLocations}
+                      onAddNew={(name) => handleAddNewOption('locations', name)}
+                      placeholder='Seleccionar ubicación'
+                      label='Localización'
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
                   )}
                 />
               </div>

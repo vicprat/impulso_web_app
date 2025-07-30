@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Edit2, Eye, Trash2 } from 'lucide-react'
+import { ArrowLeft, Edit2, Eye, Plus, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -10,20 +10,137 @@ import { Form } from '@/components/Forms'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDeleteProduct, useGetProduct, useUpdateProduct } from '@/services/product/hook'
+import { useGetTechniques, useGetArtworkTypes, useGetLocations } from '@/services/product/hook'
 import { type UpdateProductPayload } from '@/services/product/types'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
+import { useQueryClient } from '@tanstack/react-query'
+
+// Componente para agregar nuevas opciones
+const AddOptionDropdown = ({
+  options,
+  isLoading,
+  onAddNew,
+  placeholder,
+  label,
+}: {
+  options: { id: string; name: string }[]
+  isLoading: boolean
+  onAddNew: (name: string) => Promise<void>
+  placeholder: string
+  label: string
+}) => {
+  const [ isAdding, setIsAdding ] = useState(false)
+  const [ newValue, setNewValue ] = useState('')
+
+  const handleAddNew = async () => {
+    if (!newValue.trim()) return
+
+    try {
+      setIsAdding(true)
+      await onAddNew(newValue.trim())
+      setNewValue('')
+      toast.success(`${label} agregado exitosamente`)
+    } catch (error) {
+      toast.error(`Error al agregar ${label}: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+    } finally {
+      setIsAdding(false)
+    }
+  }
+
+  return (
+    <div className='space-y-2'>
+      <Label>{label}</Label>
+      <div className='flex gap-2'>
+        <Select disabled={isLoading}>
+          <SelectTrigger className='flex-1'>
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((option) => (
+              <SelectItem key={option.id} value={option.name}>
+                {option.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => setIsAdding(true)}
+          disabled={isLoading}
+        >
+          <Plus className='size-4' />
+        </Button>
+      </div>
+
+      {isAdding && (
+        <div className='flex gap-2'>
+          <Input
+            placeholder={`Nuevo ${label.toLowerCase()}`}
+            value={newValue}
+            onChange={(e) => setNewValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                void handleAddNew()
+              }
+              if (e.key === 'Escape') {
+                setIsAdding(false)
+                setNewValue('')
+              }
+            }}
+            autoFocus
+          />
+          <Button
+            size='sm'
+            onClick={handleAddNew}
+            disabled={!newValue.trim()}
+          >
+            Agregar
+          </Button>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => {
+              setIsAdding(false)
+              setNewValue('')
+            }}
+          >
+            Cancelar
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Forzar que la página sea dinámica
+export const dynamic = 'force-dynamic'
 
 export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [isEditing, setIsEditing] = useState(false)
+  const [ isEditing, setIsEditing ] = useState(false)
+  const queryClient = useQueryClient()
 
   const productId = params.id as string
 
   const { data: product, error, isLoading, refetch } = useGetProduct(productId)
+
+  // Hooks para obtener las opciones
+  const { data: techniques = [], isLoading: isLoadingTechniques } = useGetTechniques()
+  const { data: artworkTypes = [], isLoading: isLoadingArtworkTypes } = useGetArtworkTypes()
+  const { data: locations = [], isLoading: isLoadingLocations } = useGetLocations()
 
   const updateMutation = useUpdateProduct()
   const deleteMutation = useDeleteProduct()
@@ -66,6 +183,27 @@ export default function ProductDetailPage() {
         `Error al eliminar: ${error instanceof Error ? error.message : 'Error desconocido'}`
       )
     }
+  }
+
+  // Función para agregar nuevas opciones
+  const handleAddNewOption = async (optionType: string, name: string) => {
+    const response = await fetch(`/api/options/${optionType}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Error al agregar la opción')
+    }
+
+    // Invalidar las queries para refrescar las opciones
+    await queryClient.invalidateQueries({ queryKey: [ 'techniques' ] })
+    await queryClient.invalidateQueries({ queryKey: [ 'artwork_types' ] })
+    await queryClient.invalidateQueries({ queryKey: [ 'locations' ] })
   }
 
   if (isLoading) {
@@ -315,6 +453,37 @@ export default function ProductDetailPage() {
                     </span>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Opciones Disponibles</CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <AddOptionDropdown
+                  options={techniques}
+                  isLoading={isLoadingTechniques}
+                  onAddNew={(name) => handleAddNewOption('techniques', name)}
+                  placeholder='Seleccionar técnica'
+                  label='Técnicas'
+                />
+
+                <AddOptionDropdown
+                  options={artworkTypes}
+                  isLoading={isLoadingArtworkTypes}
+                  onAddNew={(name) => handleAddNewOption('artwork_types', name)}
+                  placeholder='Seleccionar tipo de obra'
+                  label='Tipos de Obra'
+                />
+
+                <AddOptionDropdown
+                  options={locations}
+                  isLoading={isLoadingLocations}
+                  onAddNew={(name) => handleAddNewOption('locations', name)}
+                  placeholder='Seleccionar ubicación'
+                  label='Ubicaciones'
+                />
               </CardContent>
             </Card>
 
