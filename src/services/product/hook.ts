@@ -168,9 +168,8 @@ export const useGetVendors = () => {
       return data
     },
     queryKey: ['vendors'],
-    // 10 minutos
-retry: 1, 
-    staleTime: 10 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // 10 minutos
+    retry: 1,
   })
 }
 
