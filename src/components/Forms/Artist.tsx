@@ -1,8 +1,8 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronsUpDown } from 'lucide-react'
-import { useState } from 'react'
+import { Check, ChevronsUpDown, Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -31,12 +31,13 @@ interface UserRoleFormProps {
 
 export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserRoleFormProps) {
   const queryClient = useQueryClient()
-  const [selectedRole, setSelectedRole] = useState<string>(user?.roles[0] || 'customer')
-  const [vendorName, setVendorName] = useState('')
-  const [popoverOpen, setPopoverOpen] = useState(false)
-  
+  const [ selectedRole, setSelectedRole ] = useState<string>(user?.roles[ 0 ] || 'customer')
+  const [ vendorName, setVendorName ] = useState('')
+  const [ popoverOpen, setPopoverOpen ] = useState(false)
+  const [ isNewVendor, setIsNewVendor ] = useState(false)
+
   // Campos para crear nuevo usuario
-  const [formData, setFormData] = useState({
+  const [ formData, setFormData ] = useState({
     email: user?.email || '',
     firstName: user?.firstName || '',
     isActive: user?.isActive ?? true,
@@ -48,8 +49,26 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
   const { data: vendors, isLoading: vendorsLoading } = useQuery<string[]>({
     enabled: selectedRole === 'artist',
     queryFn: () => fetch('/api/vendors').then((res) => res.json()),
-    queryKey: ['vendors'],
+    queryKey: [ 'vendors' ],
   })
+
+  // Si el usuario ya es artista, obtener el nombre del vendor
+  useEffect(() => {
+    if (user?.artist?.name) {
+      setVendorName(user.artist.name)
+      setIsNewVendor(false)
+    }
+  }, [ user ])
+
+  // Actualizar el estado isNewVendor cuando cambie vendorName
+  useEffect(() => {
+    if (vendorName.trim() && vendors) {
+      const isExisting = vendors.some(v => v.toLowerCase() === vendorName.toLowerCase())
+      setIsNewVendor(!isExisting)
+    } else {
+      setIsNewVendor(false)
+    }
+  }, [ vendorName, vendors ])
 
   const createArtistMutation = useMutation({
     mutationFn: (data: { userId: string; vendorName: string }) => {
@@ -57,17 +76,20 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
-      }).then((res) => {
-        if (!res.ok) throw new Error('Falló la creación del artista')
+      }).then(async (res) => {
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}))
+          throw new Error(errorData.error || 'Falló la creación del artista')
+        }
         return res.json()
       })
     },
-    onError: () => {
-      toast.error('Error al crear el artista')
+    onError: (error) => {
+      toast.error(error.message || 'Error al crear el artista')
     },
     onSuccess: () => {
       toast.success('Artista creado exitosamente')
-      void queryClient.invalidateQueries({ queryKey: ['users'] })
+      void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
       onSuccess()
     },
   })
@@ -91,7 +113,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
     },
     onSuccess: () => {
       toast.success('Usuario creado exitosamente')
-      void queryClient.invalidateQueries({ queryKey: ['users'] })
+      void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
       onSuccess()
     },
   })
@@ -100,13 +122,14 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
     setSelectedRole(roleId)
     if (roleId !== 'artist') {
       setVendorName('')
+      setIsNewVendor(false)
     }
   }
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [ field ]: value
     }))
   }
 
@@ -121,7 +144,13 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
           return
         }
 
-        await createUserMutation.mutateAsync({
+        // Si es artista, validar que se seleccione un vendor
+        if (selectedRole === 'artist' && !vendorName.trim()) {
+          toast.error('Debes seleccionar un vendor para crear un usuario artista')
+          return
+        }
+
+        const userResponse = await createUserMutation.mutateAsync({
           email: formData.email,
           firstName: formData.firstName || undefined,
           isActive: formData.isActive,
@@ -129,10 +158,15 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
           role: selectedRole,
         })
 
-        // Si es artista, crear también el vendor
-        if (selectedRole === 'artist' && vendorName) {
-          // Aquí podrías crear el vendor si es necesario
-          toast.success('Usuario artista creado exitosamente')
+        // Si es artista, crear también la relación con el vendor
+        if (selectedRole === 'artist' && vendorName.trim() && userResponse.user?.id) {
+          await createArtistMutation.mutateAsync({
+            userId: userResponse.user.id,
+            vendorName: vendorName.trim(),
+          })
+        } else {
+          toast.success('Usuario creado exitosamente')
+          onSuccess()
         }
       } else {
         // Editar usuario existente
@@ -140,7 +174,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
 
         const isBecomingArtist = selectedRole === 'artist' && !user.roles.includes('artist')
 
-        if (isBecomingArtist && !vendorName) {
+        if (isBecomingArtist && !vendorName.trim()) {
           toast.error('Debes seleccionar un vendor para promocionar a artista')
           return
         }
@@ -150,7 +184,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
         if (isBecomingArtist) {
           await createArtistMutation.mutateAsync({
             userId: user.id,
-            vendorName,
+            vendorName: vendorName.trim(),
           })
         } else {
           toast.success('Rol actualizado exitosamente')
@@ -159,7 +193,11 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
       }
     } catch (error) {
       console.error('Error updating role:', error)
-      toast.error('Error al actualizar rol')
+      if (error instanceof Error) {
+        toast.error(error.message || 'Error al actualizar rol')
+      } else {
+        toast.error('Error al actualizar rol')
+      }
     }
   }
 
@@ -243,30 +281,42 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
         ))}
       </div>
 
-      {isBecomingArtist && (
+      {(isBecomingArtist || (mode === 'create' && selectedRole === 'artist')) && (
         <div className='mt-6 rounded-lg bg-primary-container p-4'>
           <h4 className='mb-2 text-sm font-medium text-on-primary-container'>
             Asignar Vendor para Artista
           </h4>
           <p className='text-on-primary-container/80 mb-3 text-xs'>
-            Selecciona un vendor existente o escribe un nombre para crear uno nuevo.
+            Escribe el nombre de un vendor existente para seleccionarlo, o escribe un nuevo nombre para crear un vendor nuevo.
           </p>
 
-          <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <Popover open={popoverOpen} onOpenChange={(open) => {
+            setPopoverOpen(open)
+            if (!open && !vendorName.trim()) {
+              setIsNewVendor(false)
+            }
+          }}>
             <PopoverTrigger asChild>
               <Button
                 variant='outline'
                 role='combobox'
                 aria-expanded={popoverOpen}
-                className='w-full justify-between'
+                className={`w-full justify-between ${isNewVendor ? 'border-primary text-primary' : ''}`}
               >
                 {vendorName
-                  ? (vendors?.find((v) => v.toLowerCase() === vendorName.toLowerCase()) ??
-                    `Crear nuevo: "${vendorName}"`)
-                  : 'Selecciona o escribe un vendor...'}
+                  ? (isNewVendor
+                    ? `Crear nuevo artista: "${vendorName}"`
+                    : vendorName)
+                  : 'Selecciona un artista existente o escribe para crear uno nuevo...'}
                 <ChevronsUpDown className='ml-2 size-4 shrink-0 opacity-50' />
               </Button>
             </PopoverTrigger>
+            {isNewVendor && vendorName.trim() && (
+              <div className="mt-2 text-xs text-primary">
+                <Plus className="inline mr-1 size-3" />
+                Se creará un nuevo vendor llamado "{vendorName}"
+              </div>
+            )}
             <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
               <Command shouldFilter={false}>
                 <CommandInput
@@ -278,6 +328,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
                     {vendorsLoading ? 'Cargando...' : 'No se encontraron vendors.'}
                   </CommandEmpty>
                   <CommandGroup>
+                    {/* Mostrar vendors existentes que coincidan */}
                     {vendors
                       ?.filter((v) => v.toLowerCase().includes(vendorName.toLowerCase()))
                       .map((v) => (
@@ -300,6 +351,25 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
                           {v}
                         </CommandItem>
                       ))}
+
+                    {/* Opción para crear nuevo vendor si el texto no coincide exactamente con ningún vendor existente */}
+                    {vendorName.trim() &&
+                      !vendors?.some(v => v.toLowerCase() === vendorName.toLowerCase()) && (
+                        <CommandItem
+                          value={`create:${vendorName}`}
+                          onSelect={() => {
+                            // Mantener el vendorName actual para crear el nuevo vendor
+                            setPopoverOpen(false)
+                          }}
+                          className="text-primary border-t bg-primary/5"
+                        >
+                          <Check className="mr-2 size-4 opacity-0" />
+                          <span className="flex items-center font-medium">
+                            <Plus className="mr-2 size-4" />
+                            Crear nuevo artista: "{vendorName}"
+                          </span>
+                        </CommandItem>
+                      )}
                   </CommandGroup>
                 </CommandList>
               </Command>
@@ -316,8 +386,8 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
           onClick={handleSaveRoles}
           disabled={updateRoles.isPending || createArtistMutation.isPending || createUserMutation.isPending}
         >
-          {updateRoles.isPending || createArtistMutation.isPending || createUserMutation.isPending 
-            ? 'Guardando...' 
+          {updateRoles.isPending || createArtistMutation.isPending || createUserMutation.isPending
+            ? 'Guardando...'
             : mode === 'create' ? 'Crear Usuario' : 'Guardar'}
         </Button>
       </div>

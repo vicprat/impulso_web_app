@@ -101,6 +101,13 @@ export async function POST(request: NextRequest) {
         isActive,
         lastName,
       },
+      include: {
+        UserRole: {
+          include: {
+            role: true
+          }
+        }
+      }
     })
 
     return NextResponse.json({ 
@@ -123,6 +130,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: 'Ya existe un usuario con este email' },
           { status: 409 }
+        )
+      }
+      if (error.message.includes('Foreign key constraint')) {
+        return NextResponse.json(
+          { error: 'El rol especificado no existe o no está activo' },
+          { status: 400 }
         )
       }
     }

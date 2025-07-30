@@ -34,11 +34,13 @@ import { columns } from './columns'
 
 import type { User } from '@/src/types/user'
 
+export const dynamic = 'force-dynamic'
+
 export default function UserManagementPage() {
   const { hasPermission, hasRole, user: currentUser } = useAuth()
   const queryClient = useQueryClient()
 
-  const [filters, setFilters] = useState<UserFilters>({
+  const [ filters, setFilters ] = useState<UserFilters>({
     isActive: undefined,
     limit: 10,
     page: 1,
@@ -47,11 +49,11 @@ export default function UserManagementPage() {
     sortBy: 'createdAt',
     sortOrder: 'desc',
   })
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [searchTerm, setSearchTerm] = useState(filters.search ?? '')
+  const [ sorting, setSorting ] = useState<SortingState>([])
+  const [ searchTerm, setSearchTerm ] = useState(filters.search ?? '')
   const debouncedSearch = useDebounce(searchTerm, 500)
 
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+  const [ selectedUser, setSelectedUser ] = useState<UserProfile | null>(null)
   const roleDialog = useDialog()
   const createUserDialog = useDialog()
 
@@ -72,20 +74,20 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     setFilters((prev) => ({ ...prev, page: 1, search: debouncedSearch }))
-  }, [debouncedSearch])
+  }, [ debouncedSearch ])
 
   useEffect(() => {
     if (sorting.length > 0) {
-      const { desc, id } = sorting[0]
+      const { desc, id } = sorting[ 0 ]
       setFilters((prev) => ({
         ...prev,
-        sortBy: id as UserFilters['sortBy'],
+        sortBy: id as UserFilters[ 'sortBy' ],
         sortOrder: desc ? 'desc' : 'asc',
       }))
     } else {
       setFilters((prev) => ({ ...prev, sortBy: 'createdAt', sortOrder: 'desc' }))
     }
-  }, [sorting])
+  }, [ sorting ])
 
   const handleManageRoles = (user: UserProfile) => {
     setSelectedUser(user)
@@ -145,7 +147,7 @@ export default function UserManagementPage() {
     try {
       await toggleUserPublicStatus.mutateAsync({ isPublic, userId })
       toast.success('Estado público del usuario actualizado')
-      void queryClient.invalidateQueries({ queryKey: ['users'] })
+      void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
     } catch (error) {
       console.error('Error toggling user public status:', error)
       toast.error('Error al cambiar el estado público del usuario')
@@ -267,7 +269,7 @@ export default function UserManagementPage() {
             user={selectedUser}
             onSuccess={() => {
               roleDialog.closeDialog()
-              void queryClient.invalidateQueries({ queryKey: ['users'] })
+              void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
             }}
             onCancel={roleDialog.closeDialog}
           />
@@ -284,7 +286,7 @@ export default function UserManagementPage() {
           mode='create'
           onSuccess={() => {
             createUserDialog.closeDialog()
-            void queryClient.invalidateQueries({ queryKey: ['users'] })
+            void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
           }}
           onCancel={createUserDialog.closeDialog}
         />

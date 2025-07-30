@@ -17,10 +17,24 @@ export async function POST(request: NextRequest) {
 
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
+      include: {
+        UserRole: {
+          include: {
+            role: true
+          }
+        },
+        artist: true
+      }
     })
 
     if (!existingUser) {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
+    }
+
+    // Verificar si el usuario ya es artista
+    const isAlreadyArtist = existingUser.UserRole.some(ur => ur.role.name === 'artist')
+    if (isAlreadyArtist && existingUser.artist) {
+      return NextResponse.json({ error: 'El usuario ya es artista y tiene un vendor asignado' }, { status: 409 })
     }
 
     const existingArtist = await prisma.artist.findUnique({
@@ -59,6 +73,7 @@ export async function POST(request: NextRequest) {
         throw new Error("El rol 'artist' no se encuentra en la base de datos.")
       }
 
+      // Actualizar el usuario con la relación al artista
       await tx.user.update({
         data: {
           artistId: artistToUse.id,
@@ -66,6 +81,7 @@ export async function POST(request: NextRequest) {
         where: { id: userId },
       })
 
+      // Eliminar roles existentes y asignar el rol de artista
       await tx.userRole.deleteMany({
         where: { userId },
       })
@@ -93,7 +109,6 @@ export async function POST(request: NextRequest) {
               },
             },
           },
-
           artist: true,
         },
         where: { id: userId },
@@ -114,9 +129,17 @@ export async function POST(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Error al crear el perfil de artista:', error)
-    if (error.message.includes("El rol 'artist' no se encuentra")) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    
+    // Manejar errores específicos de Prisma
+    if (error instanceof Error) {
+      if (error.message.includes("El rol 'artist' no se encuentra")) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+      if (error.message.includes('Unique constraint')) {
+        return NextResponse.json({ error: 'El vendor ya existe y está asignado a otro usuario' }, { status: 409 })
+      }
     }
+    
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
