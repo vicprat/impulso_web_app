@@ -169,7 +169,7 @@ export default function MembershipPage() {
               initial='initial'
               animate='animate'
               transition={{ delay: 0.2 }}
-              className='rounded-2xl p-8 shadow-2xl'
+              className='rounded-2xl p-8 shadow-2xl bg-white'
             >
               <div className='text-center mb-6'>
                 <h2 className='text-2xl font-bold text-gray-900 mb-2'>
