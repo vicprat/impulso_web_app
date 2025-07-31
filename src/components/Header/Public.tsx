@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+import { RegistrationBanner } from '@/components/Banner'
 import { MiniCart } from '@/components/Cart/MiniCart'
 import { Logo } from '@/components/Logo'
 import { getStoreNavRoutes } from '@/config/routes'
@@ -20,14 +21,14 @@ interface PublicHeaderProps {
 }
 
 export function Public({ isHomePage = false }: PublicHeaderProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [sphere1Pos, setSphere1Pos] = useState({ x: 15, y: 20 })
-  const [sphere2Pos, setSphere2Pos] = useState({ x: 85, y: 70 })
-  const [sphere3Pos, setSphere3Pos] = useState({ x: 60, y: 15 })
+  const [ isMobileMenuOpen, setIsMobileMenuOpen ] = useState(false)
+  const [ isScrolled, setIsScrolled ] = useState(false)
+  const [ sphere1Pos, setSphere1Pos ] = useState({ x: 15, y: 20 })
+  const [ sphere2Pos, setSphere2Pos ] = useState({ x: 85, y: 70 })
+  const [ sphere3Pos, setSphere3Pos ] = useState({ x: 60, y: 15 })
   const { user } = useAuth()
   const pathname = usePathname()
-  const [hoveredPath, setHoveredPath] = useState('')
+  const [ hoveredPath, setHoveredPath ] = useState('')
 
   useEffect(() => {
     if (!isHomePage) return
@@ -39,7 +40,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [isHomePage])
+  }, [ isHomePage ])
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -78,7 +79,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
       clearInterval(interval2)
       clearInterval(interval3)
     }
-  }, [isMobileMenuOpen])
+  }, [ isMobileMenuOpen ])
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -90,7 +91,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
     return () => {
       document.body.style.overflow = 'unset'
     }
-  }, [isMobileMenuOpen])
+  }, [ isMobileMenuOpen ])
 
   const shouldShowHeader = !isHomePage || isScrolled
 
@@ -99,6 +100,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
       <header
         className={`${isHomePage ? 'fixed shadow-md' : 'sticky'} bg-background/95 supports-[backdrop-filter]:bg-background/60 top-0 z-50 w-full translate-y-0 border-b backdrop-blur transition-transform duration-300 ease-in-out`}
       >
+        <RegistrationBanner />
         <div className='container mx-auto px-3 sm:px-4 lg:px-6'>
           <div className='flex h-14 items-center justify-between gap-2 sm:h-16 sm:gap-4'>
             {/* Logo - empujado a la izquierda */}
@@ -162,6 +164,18 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
                       </div>
                     )
                   })}
+
+                  {/* Enlace Experiencias */}
+                  <div className='relative'>
+                    <Link
+                      href='https://collectiveart.mx/'
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='text-foreground/80 text-sm font-medium transition-colors xl:text-base'
+                    >
+                      Experiencias
+                    </Link>
+                  </div>
                 </div>
               </nav>
 
@@ -184,18 +198,16 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
               >
                 <div className='relative size-5'>
                   <Menu
-                    className={`absolute inset-0 size-5 transition-all duration-300 ${
-                      isMobileMenuOpen
-                        ? 'rotate-180 scale-0 opacity-0'
-                        : 'rotate-0 scale-100 opacity-100'
-                    }`}
+                    className={`absolute inset-0 size-5 transition-all duration-300 ${isMobileMenuOpen
+                      ? 'rotate-180 scale-0 opacity-0'
+                      : 'rotate-0 scale-100 opacity-100'
+                      }`}
                   />
                   <X
-                    className={`absolute inset-0 size-5 transition-all duration-300 ${
-                      isMobileMenuOpen
-                        ? 'rotate-0 scale-100 opacity-100'
-                        : 'rotate-180 scale-0 opacity-0'
-                    }`}
+                    className={`absolute inset-0 size-5 transition-all duration-300 ${isMobileMenuOpen
+                      ? 'rotate-0 scale-100 opacity-100'
+                      : 'rotate-180 scale-0 opacity-0'
+                      }`}
                   />
                 </div>
               </button>
@@ -205,9 +217,8 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
       </header>
 
       <div
-        className={`fixed inset-0 z-40 transition-all duration-500 ease-in-out lg:hidden ${
-          isMobileMenuOpen ? 'visible opacity-100' : 'invisible opacity-0'
-        }`}
+        className={`fixed inset-0 z-40 transition-all duration-500 ease-in-out lg:hidden ${isMobileMenuOpen ? 'visible opacity-100' : 'invisible opacity-0'
+          }`}
       >
         <div className='absolute inset-0 bg-background backdrop-blur-xl'>
           <div className='absolute inset-0 bg-gradient-to-br from-background to-background'></div>
@@ -256,9 +267,8 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
                 return (
                   <div
                     key={route.PATH}
-                    className={`relative transition-all duration-700 ease-out ${
-                      isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
-                    }`}
+                    className={`relative transition-all duration-700 ease-out ${isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
+                      }`}
                     style={{
                       transitionDelay: `${isMobileMenuOpen ? index * 100 + 200 : 0}ms`,
                     }}
@@ -297,15 +307,33 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
                   </div>
                 )
               })}
+
+              {/* Enlace Experiencias - Móvil */}
+              <div
+                className={`relative transition-all duration-700 ease-out ${isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
+                  }`}
+                style={{
+                  transitionDelay: `${isMobileMenuOpen ? getStoreNavRoutes().length * 100 + 200 : 0}ms`,
+                }}
+              >
+                <Link
+                  href='https://collectiveart.mx/'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className='block py-3 text-4xl font-bold tracking-tight text-foreground transition-all duration-300 hover:translate-x-4 hover:scale-105 sm:text-5xl md:text-6xl'
+                >
+                  Experiencias
+                </Link>
+              </div>
             </nav>
           </div>
 
           <div
-            className={`px-8 pb-12 transition-all duration-700 ease-out md:px-16 ${
-              isMobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-            }`}
+            className={`px-8 pb-12 transition-all duration-700 ease-out md:px-16 ${isMobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+              }`}
             style={{
-              transitionDelay: `${isMobileMenuOpen ? getStoreNavRoutes().length * 100 + 400 : 0}ms`,
+              transitionDelay: `${isMobileMenuOpen ? (getStoreNavRoutes().length + 1) * 100 + 400 : 0}ms`,
             }}
           >
             <div className='mb-8 h-px w-full bg-gradient-to-r from-transparent via-border to-transparent'></div>

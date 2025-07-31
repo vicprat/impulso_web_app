@@ -47,7 +47,6 @@ export default function EventsPage() {
     <div className='container mx-auto px-6 py-8'>
       <div className='mb-8'>
         <h1 className='mb-2 text-3xl font-bold'>{ROUTES.STORE.EVENTS.LABEL}</h1>
-        <p>{ROUTES.STORE.EVENTS.DESCRIPTION}</p>
       </div>
 
       {events.length === 0 ? (

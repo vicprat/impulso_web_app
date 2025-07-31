@@ -62,6 +62,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "dnd-kit-sortable-tree": "^0.1.73",
+    "embla-carousel-auto-scroll": "^8.6.0",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "graphql": "^16.11.0",

@@ -3,14 +3,13 @@
 
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
 import { ArrowDown, Pause, Play, Volume2, VolumeX } from 'lucide-react'
-import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { FloatingParticles } from '@/components/Animations'
 import { Button } from '@/components/ui/button'
+import { useHeaderHeight } from '@/hooks/useHeaderHeight'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
-import { ROUTES } from '@/src/config/routes'
 
 interface YTPlayerEvent {
   target: any
@@ -38,16 +37,17 @@ const generateParticlePositions = (count: number) => {
 export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' }) => {
   const playerRef = useRef<any>(null)
   const containerRef = useRef<HTMLElement | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isMuted, setIsMuted] = useState(true)
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [isInView, setIsInView] = useState(false)
-  const [showControls, setShowControls] = useState(false)
-  const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
-  const [isClient, setIsClient] = useState(false)
+  const [ isPlaying, setIsPlaying ] = useState(false)
+  const [ isMuted, setIsMuted ] = useState(true)
+  const [ isLoaded, setIsLoaded ] = useState(false)
+  const [ isInView, setIsInView ] = useState(false)
+  const [ showControls, setShowControls ] = useState(false)
+  const [ isTabletOrMobile, setIsTabletOrMobile ] = useState(false)
+  const [ isClient, setIsClient ] = useState(false)
 
   const { setTheme, theme } = useTheme()
   const userPreferredThemeRef = useRef<string | undefined>(undefined)
+  const headerHeight = useHeaderHeight()
 
   const particlePositions = useMemo(() => generateParticlePositions(20), [])
 
@@ -57,9 +57,9 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   const VIDEO_END = 48
 
   const { scrollY } = useScroll()
-  const y = useTransform(scrollY, [0, 1000], [0, -300])
-  const opacity = useTransform(scrollY, [0, 500], [1, 0])
-  const scale = useTransform(scrollY, [0, 500], [1, 1.1])
+  const y = useTransform(scrollY, [ 0, 1000 ], [ 0, -300 ])
+  const opacity = useTransform(scrollY, [ 0, 500 ], [ 1, 0 ])
+  const scale = useTransform(scrollY, [ 0, 500 ], [ 1, 1.1 ])
 
   const springConfig = { damping: 30, restDelta: 0.001, stiffness: 100 }
   const mouseX = useSpring(mousePosition.x, springConfig)
@@ -143,7 +143,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
     } catch (error) {
       console.error('Error initializing YouTube player:', error)
     }
-  }, [videoId, isInView])
+  }, [ videoId, isInView ])
 
   useEffect(() => {
     const YT = (window as any).YT
@@ -152,9 +152,9 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
       script.src = 'https://www.youtube.com/iframe_api'
       script.async = true
       document.body.appendChild(script)
-      ;(window as any).onYouTubeIframeAPIReady = () => {
-        initializePlayer()
-      }
+        ; (window as any).onYouTubeIframeAPIReady = () => {
+          initializePlayer()
+        }
     } else {
       initializePlayer()
     }
@@ -165,11 +165,11 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
         playerRef.current = null
       }
     }
-  }, [initializePlayer])
+  }, [ initializePlayer ])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
+      ([ entry ]) => {
         setIsInView(entry.isIntersecting)
         if (playerRef.current && isLoaded) {
           if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
@@ -220,7 +220,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
           }
         }
       },
-      { threshold: [0, 0.25, 0.5, 0.75, 1] }
+      { threshold: [ 0, 0.25, 0.5, 0.75, 1 ] }
     )
 
     const currentRef = containerRef.current
@@ -233,7 +233,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
         observer.unobserve(currentRef)
       }
     }
-  }, [isLoaded, theme, setTheme])
+  }, [ isLoaded, theme, setTheme ])
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -269,7 +269,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
     return () => {
       clearInterval(interval)
     }
-  }, [isLoaded, isInView])
+  }, [ isLoaded, isInView ])
 
   const handlePlayPause = () => {
     if (!playerRef.current) return
@@ -317,16 +317,16 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   return (
     <motion.section
       ref={containerRef}
-      style={{ opacity, y }}
-      className={`relative ${isTabletOrMobile ? 'min-h-screen' : 'min-h-[95vh]'} overflow-hidden bg-black pt-14 sm:pt-16 ${className}`}
+      style={{ opacity, y, paddingTop: headerHeight }}
+      className={`relative ${isTabletOrMobile ? 'min-h-screen' : 'min-h-[95vh]'} overflow-hidden bg-black ${className}`}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
     >
       <motion.div style={{ scale }} className='absolute inset-0 size-full'>
         <motion.div
           style={{
-            x: useTransform(mouseX, [-1, 1], [-20, 20]),
-            y: useTransform(mouseY, [-1, 1], [-10, 10]),
+            x: useTransform(mouseX, [ -1, 1 ], [ -20, 20 ]),
+            y: useTransform(mouseY, [ -1, 1 ], [ -10, 10 ]),
           }}
           className='size-full'
         >
@@ -352,25 +352,22 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
       </motion.div>
 
       <div
-        className={`absolute inset-0 ${
-          isTabletOrMobile
-            ? 'bg-gradient-to-b from-black/90 via-black/20 to-black/90'
-            : 'bg-gradient-to-br from-black/80 via-transparent to-purple-900/30'
-        }`}
+        className={`absolute inset-0 ${isTabletOrMobile
+          ? 'bg-gradient-to-b from-black/90 via-black/20 to-black/90'
+          : 'bg-gradient-to-br from-black/80 via-transparent to-purple-900/30'
+          }`}
       />
       <div
-        className={`absolute inset-0 ${
-          isTabletOrMobile
-            ? 'bg-gradient-to-t from-black/95 via-transparent to-black/60'
-            : 'bg-gradient-to-t from-black/90 via-transparent to-transparent'
-        }`}
+        className={`absolute inset-0 ${isTabletOrMobile
+          ? 'bg-gradient-to-t from-black/95 via-transparent to-black/60'
+          : 'bg-gradient-to-t from-black/90 via-transparent to-transparent'
+          }`}
       />
       <div
-        className={`absolute inset-0 ${
-          isTabletOrMobile
-            ? 'bg-gradient-to-r from-black/50 via-transparent to-black/50'
-            : 'bg-gradient-to-r from-black/60 via-transparent to-transparent'
-        }`}
+        className={`absolute inset-0 ${isTabletOrMobile
+          ? 'bg-gradient-to-r from-black/50 via-transparent to-black/50'
+          : 'bg-gradient-to-r from-black/60 via-transparent to-transparent'
+          }`}
       />
 
       <div className='pointer-events-none absolute inset-0 overflow-hidden'>
@@ -384,8 +381,8 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
                 top: `${particle.top}%`,
               }}
               animate={{
-                opacity: [0.2, 0.8, 0.2],
-                y: [0, -20, 0],
+                opacity: [ 0.2, 0.8, 0.2 ],
+                y: [ 0, -20, 0 ],
               }}
               transition={{
                 delay: particle.delay,
@@ -407,78 +404,54 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
       />
 
       <div
-        className={`absolute inset-0 flex flex-col pt-14 sm:pt-16 ${
-          isTabletOrMobile
-            ? 'items-center justify-center text-center'
-            : 'items-start justify-center'
-        } z-10 p-4 sm:p-8 md:p-12 lg:p-16 xl:p-24`}
+        style={{ paddingTop: headerHeight }}
+        className={`absolute inset-0 flex flex-col ${isTabletOrMobile
+          ? 'items-center justify-center text-center'
+          : 'items-start justify-center'
+          } z-10 p-4 sm:p-8 md:p-12 lg:p-16 xl:p-24`}
       >
         <div className={`${isTabletOrMobile ? 'w-full max-w-sm' : 'w-full max-w-6xl'}`}>
-          <motion.p
+          <motion.h1
             initial={{ opacity: 0, x: isTabletOrMobile ? 0 : -50, y: isTabletOrMobile ? 30 : 0 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
             transition={{ delay: 0.8, duration: 0.8 }}
             style={{
-              x: useTransform(mouseX, [-1, 1], isTabletOrMobile ? [0, 0] : [-5, 5]),
+              x: useTransform(mouseX, [ -1, 1 ], isTabletOrMobile ? [ 0, 0 ] : [ -5, 5 ]),
             }}
-            className={`${
-              isTabletOrMobile
-                ? 'text-lg sm:text-xl'
-                : 'text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl'
-            } mb-6 text-white/90 sm:mb-8 md:mb-10 ${isTabletOrMobile ? 'max-w-sm' : 'max-w-4xl'}`}
+            className={`${isTabletOrMobile
+              ? 'text-2xl sm:text-3xl'
+              : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl'
+              } mb-6 text-white font-bold leading-tight tracking-wide sm:mb-8 md:mb-10 ${isTabletOrMobile ? 'max-w-sm' : 'max-w-4xl'} 
+    bg-gradient-to-r from-white via-white/95 to-white/90 bg-clip-text text-transparent
+    drop-shadow-lg shadow-black/50`}
           >
-            Una experiencia inmersiva donde cada obra cuenta una{' '}
-            <span className='italic text-white/90'>historia única</span>
-          </motion.p>
+            Bienvenido a Impulso Galería
+          </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, x: isTabletOrMobile ? 0 : -30, y: isTabletOrMobile ? 20 : 0 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
             transition={{ delay: 1.1, duration: 0.8 }}
             style={{
-              x: useTransform(mouseX, [-1, 1], isTabletOrMobile ? [0, 0] : [-3, 3]),
+              x: useTransform(mouseX, [ -1, 1 ], isTabletOrMobile ? [ 0, 0 ] : [ -3, 3 ]),
             }}
-            className={`${
-              isTabletOrMobile ? 'text-base sm:text-lg' : 'text-lg sm:text-xl md:text-xl'
-            } mb-8 text-white/80 sm:mb-12 ${
-              isTabletOrMobile ? 'max-w-sm' : 'max-w-2xl'
-            } font-light tracking-wide`}
+            className={`${isTabletOrMobile ? 'text-base sm:text-lg' : 'text-lg sm:text-xl md:text-xl'
+              } mb-8 text-white/80 sm:mb-12 ${isTabletOrMobile ? 'max-w-sm' : 'max-w-2xl'
+              } font-medium italic tracking-wide`}
           >
-            Explora nuestra colección y descubre el arte que transforma espacios y emociones
+            Impulso Galería tiene como objetivo crear un espacio que fomente el arte como plataforma cultural; impulsando el desarrollo de artistas emergentes, y de artistas consolidados, para así brindar calidad a nuestros clientes.
           </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.4, duration: 0.8 }}
-            style={{
-              x: useTransform(mouseX, [-1, 1], isTabletOrMobile ? [0, 0] : [-3, 3]),
-            }}
-            className='flex gap-4'
-          >
-            <Link href={ROUTES.STORE.MAIN.PATH}>
-              <Button
-                variant='outline'
-                size='lg'
-                className={`border-white/30 bg-white/10 text-white backdrop-blur-md transition-all duration-300 hover:bg-white hover:text-black ${
-                  isTabletOrMobile ? 'px-8 py-6 text-base' : 'px-10 py-6 text-lg'
-                }`}
-              >
-                Explorar Galería
-              </Button>
-            </Link>
-          </motion.div>
         </div>
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.6, duration: 0.8 }}
-          className={`absolute ${
-            isTabletOrMobile
-              ? 'bottom-20 left-1/2 -translate-x-1/2 flex-col items-center gap-3'
-              : 'bottom-6 left-4 flex-col items-start gap-4 sm:bottom-8 sm:left-8 sm:flex-row sm:items-center sm:gap-6 md:bottom-12 md:left-12 md:gap-8 lg:left-16 xl:left-24'
-          } flex text-white/80`}
+          className={`absolute ${isTabletOrMobile
+            ? 'bottom-20 left-1/2 -translate-x-1/2 flex-col items-center gap-3'
+            : 'bottom-6 left-4 flex-col items-start gap-4 sm:bottom-8 sm:left-8 sm:flex-row sm:items-center sm:gap-6 md:bottom-12 md:left-12 md:gap-8 lg:left-16 xl:left-24'
+            } flex text-white/80`}
         >
           <div className='flex-col items-center gap-2 sm:gap-3'>
             <div
@@ -509,7 +482,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
         initial={{ opacity: 0, scale: 0.8 }}
         animate={showControls ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
         transition={{ duration: 0.3 }}
-        className='absolute right-4 top-20 z-20 flex items-center gap-2 sm:right-8 sm:top-20 sm:gap-3 md:right-12 md:top-20 lg:right-16 xl:right-24'
+        className='absolute right-4 top-24 z-20 flex items-center gap-2 sm:right-8 sm:top-28 sm:gap-3 md:right-12 md:top-32 lg:right-16 xl:right-24'
       >
         {[
           {
@@ -538,18 +511,17 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 2, duration: 0.8 }}
-        className={`absolute ${
-          isTabletOrMobile
-            ? 'bottom-4 left-1/2 -translate-x-1/2'
-            : 'bottom-4 left-1/2 -translate-x-1/2 sm:bottom-6 md:bottom-8'
-        } z-10 text-white/60`}
+        className={`absolute ${isTabletOrMobile
+          ? 'bottom-4 left-1/2 -translate-x-1/2'
+          : 'bottom-4 left-1/2 -translate-x-1/2 sm:bottom-6 md:bottom-8'
+          } z-10 text-white/60`}
       >
         <div className='flex flex-col items-center gap-2 sm:gap-3'>
           <span className='text-[10px] font-light uppercase tracking-[0.2em] sm:text-xs'>
             Descubre más
           </span>
           <motion.div
-            animate={{ y: [0, 8, 0] }}
+            animate={{ y: [ 0, 8, 0 ] }}
             transition={{ duration: 2, ease: 'easeInOut', repeat: Infinity }}
             className='rounded-full border border-white/20 bg-white/5 p-1.5 backdrop-blur-sm sm:p-2'
           >

@@ -312,6 +312,13 @@ export const ROUTES = {
       LABEL: 'Galería',
       PATH: '/store',
     },
+    MEMBERSHIP: {
+      DESCRIPTION: 'Plan de membresía para artistas',
+      ICON: 'users',
+      IS_PUBLIC: true,
+      LABEL: 'Membresía',
+      PATH: '/membership',
+    },
     PRODUCT_DETAIL: {
       DESCRIPTION: 'Detalle del producto',
       ICON: 'package',
@@ -325,6 +332,20 @@ export const ROUTES = {
       IS_PUBLIC: true,
       LABEL: 'Buscar',
       PATH: '/store/search',
+    },
+    SERVICES: {
+      DESCRIPTION: 'Servicios especializados en arte',
+      ICON: 'settings',
+      IS_PUBLIC: true,
+      LABEL: 'Servicios',
+      PATH: '/services',
+    },
+    TERMS: {
+      DESCRIPTION: 'Términos y condiciones',
+      ICON: 'file-text',
+      IS_PUBLIC: true,
+      LABEL: 'Términos',
+      PATH: '/terms',
     },
   },
 
@@ -483,7 +504,7 @@ export const getStoreNavRoutes = (): RouteConfig[] => {
     ROUTES.PUBLIC.HOME,
     ROUTES.STORE.MAIN,
     ROUTES.STORE.EVENTS,
-    ROUTES.COLLECTIONS.MAIN,
+    // ROUTES.COLLECTIONS.MAIN,
     ROUTES.PUBLIC.ARTISTS,
   ]
 

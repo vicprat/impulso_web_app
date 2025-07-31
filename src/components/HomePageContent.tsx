@@ -8,9 +8,15 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useState } from 'react'
 
+import { EventCarousel } from '@/components/EventCarousel'
 import { Landing } from '@/components/Landing'
+import { MembershipSection } from '@/components/MembershipSection'
+import { ProductCarousel } from '@/components/ProductCarousel'
+import { ServicesSection } from '@/components/ServicesSection'
 import { Button } from '@/components/ui/button'
 import { useEmblaParallax } from '@/hooks/useEmblaParallax'
+import { usePublicEvents } from '@/hooks/usePublicEvents'
+import { usePublicProducts } from '@/hooks/usePublicProducts'
 import { Card } from '@/src/components/Card'
 import { ROUTES } from '@/src/config/routes'
 import { usePublicArtists } from '@/src/modules/user/hooks/management'
@@ -22,6 +28,8 @@ interface Slide {
   title: string
   subtitle: string
   parallaxFactor?: number
+  actionUrl: string
+  actionText: string
 }
 
 interface NewsArticle {
@@ -57,26 +65,25 @@ interface DotButtonProps {
 
 const DotButton: React.FC<DotButtonProps> = ({ isSelected, onClick }) => (
   <button
-    className={`size-3 rounded-full transition-all duration-300 ${
-      isSelected ? 'bg-white' : 'bg-white/50 hover:bg-white/70'
-    }`}
+    className={`size-3 rounded-full transition-all duration-300 ${isSelected ? 'bg-white' : 'bg-white/50 hover:bg-white/70'
+      }`}
     onClick={onClick}
   />
 )
 
 const usePrevNextButtons = (emblaApi: EmblaCarouselType | undefined) => {
-  const [prevBtnDisabled, setPrevBtnDisabled] = useState(true)
-  const [nextBtnDisabled, setNextBtnDisabled] = useState(true)
+  const [ prevBtnDisabled, setPrevBtnDisabled ] = useState(true)
+  const [ nextBtnDisabled, setNextBtnDisabled ] = useState(true)
 
   const onPrevButtonClick = useCallback(() => {
     if (!emblaApi) return
     emblaApi.scrollPrev()
-  }, [emblaApi])
+  }, [ emblaApi ])
 
   const onNextButtonClick = useCallback(() => {
     if (!emblaApi) return
     emblaApi.scrollNext()
-  }, [emblaApi])
+  }, [ emblaApi ])
 
   const onSelect = useCallback((emblaApi: EmblaCarouselType) => {
     setPrevBtnDisabled(!emblaApi.canScrollPrev())
@@ -89,7 +96,7 @@ const usePrevNextButtons = (emblaApi: EmblaCarouselType | undefined) => {
     onSelect(emblaApi)
     emblaApi.on('reInit', onSelect)
     emblaApi.on('select', onSelect)
-  }, [emblaApi, onSelect])
+  }, [ emblaApi, onSelect ])
 
   return {
     nextBtnDisabled,
@@ -100,15 +107,15 @@ const usePrevNextButtons = (emblaApi: EmblaCarouselType | undefined) => {
 }
 
 const useDotButton = (emblaApi: EmblaCarouselType | undefined) => {
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [scrollSnaps, setScrollSnaps] = useState<number[]>([])
+  const [ selectedIndex, setSelectedIndex ] = useState(0)
+  const [ scrollSnaps, setScrollSnaps ] = useState<number[]>([])
 
   const onDotButtonClick = useCallback(
     (index: number) => {
       if (!emblaApi) return
       emblaApi.scrollTo(index)
     },
-    [emblaApi]
+    [ emblaApi ]
   )
 
   const onInit = useCallback((emblaApi: EmblaCarouselType) => {
@@ -127,7 +134,7 @@ const useDotButton = (emblaApi: EmblaCarouselType | undefined) => {
     emblaApi.on('reInit', onInit)
     emblaApi.on('reInit', onSelect)
     emblaApi.on('select', onSelect)
-  }, [emblaApi, onInit, onSelect])
+  }, [ emblaApi, onInit, onSelect ])
 
   return {
     onDotButtonClick,
@@ -143,6 +150,8 @@ const heroSlides: Slide[] = [
     parallaxFactor: 1.2,
     subtitle: 'Descubre obras únicas de artistas emergentes y consagrados.',
     title: 'Explora un Mundo de Arte',
+    actionUrl: ROUTES.STORE.MAIN.PATH,
+    actionText: 'Explorar la Galería'
   },
   {
     alt: 'Exposición de arte contemporáneo',
@@ -150,6 +159,8 @@ const heroSlides: Slide[] = [
     parallaxFactor: 1.1,
     subtitle: 'Sumérgete en experiencias artísticas inolvidables.',
     title: 'Eventos y Exposiciones Exclusivas',
+    actionUrl: ROUTES.STORE.EVENTS.PATH,
+    actionText: 'Ver Eventos'
   },
   {
     alt: 'Detalle de una obra de arte',
@@ -157,21 +168,11 @@ const heroSlides: Slide[] = [
     parallaxFactor: 1.5,
     subtitle: 'Nuestra colección curada tiene algo especial para cada amante del arte.',
     title: 'Encuentra la Pieza Perfecta',
+    actionUrl: ROUTES.STORE.SERVICES.PATH,
+    actionText: 'Conocer Servicios'
   },
 ]
 
-const news: NewsArticle[] = [
-  {
-    excerpt: 'Descubre las corrientes artísticas que están marcando la pauta este año.',
-    imageUrl: 'https://impulsogaleria.com/wp-content/uploads/2021/11/CrutityStudio-3378.jpg',
-    title: 'Tendencias del Arte Contemporáneo 2024',
-  },
-  {
-    excerpt: 'Una guía práctica para iniciarte en el apasionante mundo del coleccionismo.',
-    imageUrl: 'https://impulsogaleria.com/wp-content/uploads/2021/11/CrutityStudio-3381.jpg',
-    title: 'Consejos para Coleccionar Arte por Primera Vez',
-  },
-]
 
 const fadeIn = {
   animate: { opacity: 1 },
@@ -191,7 +192,7 @@ interface ParallaxCarouselProps {
 }
 
 const ParallaxHeroCarousel: React.FC<ParallaxCarouselProps> = ({ options, slides }) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel(
+  const [ emblaRef, emblaApi ] = useEmblaCarousel(
     {
       ...options,
       align: 'center',
@@ -199,7 +200,7 @@ const ParallaxHeroCarousel: React.FC<ParallaxCarouselProps> = ({ options, slides
       loop: true,
       skipSnaps: false,
     },
-    [Autoplay({ delay: 8000, stopOnInteraction: true })]
+    [ Autoplay({ delay: 8000, stopOnInteraction: true }) ]
   )
 
   useEmblaParallax(emblaApi)
@@ -256,7 +257,7 @@ const ParallaxHeroCarousel: React.FC<ParallaxCarouselProps> = ({ options, slides
                       size='lg'
                       className='hover:bg-accent/80 bg-accent text-accent-foreground transition-colors duration-200'
                     >
-                      <Link href={ROUTES.STORE.MAIN.PATH}>Explorar la Galería</Link>
+                      <Link href={slide.actionUrl}>{slide.actionText}</Link>
                     </Button>
                   </motion.div>
                 </div>
@@ -299,101 +300,85 @@ const mapPublicArtistToArtist = (publicArtist: PublicArtist) => {
 
 export function HomePageContent() {
   const { data: artists } = usePublicArtists()
-  
+  const { products: publicProducts, loading: productsLoading } = usePublicProducts(8)
+  const { events: publicEvents, loading: eventsLoading } = usePublicEvents(6)
+
   return (
     <main className='overflow-hidden'>
       <Landing.Hero videoId='j5RAiTZ-w6E' />
-
-      <section className=' py-20 '>
-        <div className='container mx-auto px-6 text-center'>
-          <motion.h2
-            variants={slideUp}
-            initial='initial'
-            whileInView='animate'
-            viewport={{ once: true }}
-            className='mb-8 text-4xl text-gray-800 dark:text-gray-200'
-          >
-            Descubre Impulso Galería
-          </motion.h2>
-          <motion.p
-            variants={fadeIn}
-            initial='initial'
-            whileInView='animate'
-            viewport={{ amount: 0.5, once: true }}
-            className='mx-auto mb-12 max-w-3xl text-lg text-gray-600 dark:text-gray-400'
-          >
-            En Impulso Galería, nuestro objetivo es ser un faro para el arte y la cultura.
-            Impulsamos el talento de artistas emergentes y celebramos la trayectoria de creadores
-            consolidados, ofreciendo a nuestros clientes obras de la más alta calidad y experiencias
-            artísticas enriquecedoras.
-          </motion.p>
-          <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
-            <motion.div
-              variants={slideUp}
-              initial='initial'
-              whileInView='animate'
-              viewport={{ amount: 0.3, once: true }}
-              className='rounded-md bg-white p-6 shadow-md transition duration-300 hover:shadow-lg dark:bg-gray-800'
-            >
-              <h3 className='mb-2 text-xl font-semibold text-gray-800 dark:text-gray-200'>
-                Nuestra Misión
-              </h3>
-              <p className='text-gray-600 dark:text-gray-400'>
-                Fomentar el arte como un lenguaje universal, creando un espacio inclusivo y dinámico
-                para artistas y amantes del arte.
-              </p>
-            </motion.div>
-            <motion.div
-              variants={slideUp}
-              initial='initial'
-              whileInView='animate'
-              viewport={{ amount: 0.3, once: true }}
-              transition={{ delay: 0.2 }}
-              className='rounded-md bg-white p-6 shadow-md transition duration-300 hover:shadow-lg dark:bg-gray-800'
-            >
-              <h3 className='mb-2 text-xl font-semibold text-gray-800 dark:text-gray-200'>
-                Nuestra Visión
-              </h3>
-              <p className='text-gray-600 dark:text-gray-400'>
-                Ser una galería referente en la promoción y difusión del arte contemporáneo, tanto a
-                nivel nacional como internacional.
-              </p>
-            </motion.div>
-            <motion.div
-              variants={slideUp}
-              initial='initial'
-              whileInView='animate'
-              viewport={{ amount: 0.3, once: true }}
-              transition={{ delay: 0.4 }}
-              className='rounded-md bg-white p-6 shadow-md transition duration-300 hover:shadow-lg dark:bg-gray-800'
-            >
-              <h3 className='mb-2 text-xl font-semibold text-gray-800 dark:text-gray-200'>
-                Nuestros Valores
-              </h3>
-              <p className='text-gray-600 dark:text-gray-400'>
-                Calidad, innovación, compromiso con los artistas, y una profunda pasión por el arte
-                en todas sus formas.
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
 
       <section>
         <ParallaxHeroCarousel slides={heroSlides} />
       </section>
 
+
+      {/* Sección de Servicios */}
+      <ServicesSection />
+
+
+      {/* Sección de Eventos Publicados */}
+      <section >
+        <div className=' px-6'>
+
+
+          {!eventsLoading && publicEvents.length > 0 && (
+            <motion.div
+              variants={fadeIn}
+              initial='initial'
+              whileInView='animate'
+              viewport={{ once: true }}
+            >
+              <EventCarousel
+                events={publicEvents.slice(0, 4)}
+                title='Próximos Eventos'
+                subtitle='No te pierdas nuestras experiencias artísticas únicas'
+              />
+
+              {/* Botón "Ver todos los eventos" */}
+              <motion.div
+                variants={slideUp}
+                initial='initial'
+                whileInView='animate'
+                viewport={{ once: true }}
+                className='mt-12 text-center'
+              >
+                <Button
+                  asChild
+                  size='lg'
+                  variant='outline-success'
+                >
+                  <Link href={ROUTES.STORE.EVENTS.PATH}>
+                    Ver Todos los Eventos
+                  </Link>
+                </Button>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {eventsLoading && (
+            <div className='flex justify-center py-12'>
+              <div className='text-muted-foreground'>Cargando eventos...</div>
+            </div>
+          )}
+        </div>
+      </section>
+
+
+      {/* Sección de Membresía */}
+      <MembershipSection />
+
       <section className='py-20'>
-        <div className='container mx-auto px-6'>
-          <motion.h2
-            variants={slideUp}
-            initial='initial'
-            whileInView='animate'
-            viewport={{ once: true }}
-            className='mb-8 text-center text-3xl font-semibold text-gray-800 dark:text-gray-200'
-          >
-            Artistas Destacados
-          </motion.h2>
+        <div className=' px-6'>
+          <div className='mb-8 flex items-center justify-between'>
+            <div>
+              <h2 className='text-2xl font-bold text-foreground sm:text-3xl'>
+                Artistas Destacados
+              </h2>
+              <p className='mt-2 text-muted-foreground'>
+                Descubre el talento de nuestros artistas consagrados y emergentes
+              </p>
+            </div>
+          </div>
           <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4'>
             {artists?.map((artist) => (
               <motion.div
@@ -410,51 +395,52 @@ export function HomePageContent() {
         </div>
       </section>
 
-      <section className='bg-gray-50 py-20 dark:bg-gray-900'>
-        <div className='container mx-auto px-6'>
-          <motion.h2
-            variants={slideUp}
-            initial='initial'
-            whileInView='animate'
-            viewport={{ once: true }}
-            className='mb-8 text-center text-3xl font-semibold text-gray-800 dark:text-gray-200'
-          >
-            Últimas Noticias
-          </motion.h2>
-          <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
-            {news.map((article) => (
+      {/* Sección de Productos Publicados */}
+      <section className='py-20'>
+        <div className=' px-6'>
+
+
+          {!productsLoading && publicProducts.length > 0 && (
+            <motion.div
+              variants={fadeIn}
+              initial='initial'
+              whileInView='animate'
+              viewport={{ once: true }}
+            >
+              <ProductCarousel
+                products={publicProducts.slice(0, 5)}
+                title='Obras Seleccionadas'
+                subtitle='Descubre nuestras piezas más destacadas'
+              />
+
+              {/* Botón "Explora la galería" */}
               <motion.div
-                key={article.title}
-                variants={fadeIn}
+                variants={slideUp}
                 initial='initial'
                 whileInView='animate'
-                viewport={{ amount: 0.4, once: true }}
-                className='overflow-hidden rounded-md bg-white shadow-md dark:bg-gray-800'
+                viewport={{ once: true }}
+                className='mt-12 text-center'
               >
-                <div className='relative aspect-video'>
-                  <img src={article.imageUrl} alt={article.title} className='object-cover' />
-                </div>
-                <div className='p-6'>
-                  <h3 className='mb-2 text-lg font-medium text-gray-800 dark:text-gray-200'>
-                    {article.title}
-                  </h3>
-                  <p className='text-sm text-gray-600 dark:text-gray-400'>{article.excerpt}...</p>
-                  {/* TODO: ROUTING - AddROUTES.NEWS.DETAIL.PATH */}
-                  <Button asChild variant='secondary' size='sm' className='mt-4'>
-                    <Link href='/noticias'>Leer Más</Link>
-                  </Button>
-                </div>
+                <Button
+                  asChild
+                  size='lg'
+                  variant='outline-success'             >
+                  <Link href={ROUTES.STORE.MAIN.PATH}>
+                    Explora la Galería
+                  </Link>
+                </Button>
               </motion.div>
-            ))}
-          </div>
-          <div className='mt-8 text-center'>
-            {/* TODO: ROUTING - AddROUTES.NEWS.MAIN.PATH */}
-            <Button asChild variant='outline' size='lg'>
-              <Link href='/noticias'>Ver Todas las Noticias</Link>
-            </Button>
-          </div>
+            </motion.div>
+          )}
+
+          {productsLoading && (
+            <div className='flex justify-center py-12'>
+              <div className='text-muted-foreground'>Cargando productos...</div>
+            </div>
+          )}
         </div>
       </section>
+
     </main>
   )
 } 
