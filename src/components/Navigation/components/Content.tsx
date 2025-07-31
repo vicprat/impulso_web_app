@@ -5,11 +5,10 @@ import {
   ChevronRight,
   FolderOpen,
   Home,
-  Lock,
   Menu,
   SlidersHorizontal,
   Store,
-  X,
+  X
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
@@ -28,8 +27,8 @@ interface Props {
 export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters }) => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const [ mobileMenuOpen, setMobileMenuOpen ] = useState(false)
+  const [ isMobile, setIsMobile ] = useState(false)
 
   useEffect(() => {
     const checkIsMobile = () => {
@@ -61,23 +60,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
       icon: Home,
       label: ROUTES.STORE.EVENTS.LABEL,
       shortLabel: 'Eventos',
-    },
-    {
-      description: 'Productos organizados por categorías',
-      exact: false,
-      href: ROUTES.COLLECTIONS.MAIN.PATH,
-      icon: FolderOpen,
-      label: 'Colecciones',
-      shortLabel: 'Colecciones',
-    },
-    {
-      description: 'Exclusive art for VIPs',
-      exact: true,
-      href: ROUTES.ADMIN.PRIVATE_ROOMS.ACCESS.PATH,
-      icon: Lock,
-      label: 'Private Rooms',
-      shortLabel: 'Private',
-    },
+    }
   ]
 
   const isSearchPage = pathname.includes('/search')
@@ -91,10 +74,10 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
   return (
     <div className='relative'>
 
-        {/* Breadcrumbs - Enhanced responsiveness */}
-        {(pathname.includes('/product/') || isCollectionPage) && (
+      {/* Breadcrumbs - Enhanced responsiveness */}
+      {(pathname.includes('/product/') || isCollectionPage) && (
         <div >
-          <div className='container mx-auto px-3 py-2 sm:px-4 lg:px-6 lg:py-3'>
+          <div className='w-full px-3 py-2 sm:px-4 lg:px-6 lg:py-3'>
             <div className='flex items-center space-x-1 overflow-x-auto text-xs sm:space-x-2 sm:text-sm'>
               <Button
                 variant='ghost'
@@ -150,8 +133,8 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
               )}
             </div>
           </div>
-            {/* Right section - Back button */}
-            <div className='hidden items-center space-x-4 md:flex'>
+          {/* Right section - Back button */}
+          <div className='hidden items-center space-x-4 md:flex'>
             {(pathname.includes('/product/') || isCollectionPage) && (
               <Button
                 variant='container-success'
@@ -166,10 +149,10 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
           </div>
         </div>
       )}
-      
-        
+
+
       {/* Main navigation container */}
-      <div className='mx-auto px-3 sm:px-4 lg:px-6'>
+      <div className='w-full px-3 sm:px-4 lg:px-6'>
         <div className='flex min-h-[60px] items-center justify-between md:min-h-[70px]'>
           {/* Left section - Filters and Navigation */}
           <div className='flex flex-1 items-center space-x-2 sm:space-x-4 lg:space-x-6'>
@@ -392,7 +375,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
         </div>
       )}
 
-    
+
     </div>
   )
 }

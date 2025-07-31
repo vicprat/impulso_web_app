@@ -10,36 +10,36 @@ import { Header } from '@/components/Header'
 import { Navigation } from '@/components/Navigation'
 
 export function StoreLayoutContent({ children }: { children: React.ReactNode }) {
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
+  const [ isFilterOpen, setIsFilterOpen ] = useState(false)
   const searchParams = useSearchParams()
 
   const activeFiltersCount = useMemo(() => {
     let count = 0
 
-    const collections = searchParams.get('collections')
     const productTypes = searchParams.get('product_types')
-    const vendors = searchParams.get('vendors')
+    const vendors = searchParams.get('vendor')
     const tags = searchParams.get('tags')
     const priceMin = searchParams.get('price_min')
     const priceMax = searchParams.get('price_max')
-    const availability = searchParams.get('availability')
+    const sort = searchParams.get('sort')
+    const order = searchParams.get('order')
 
-    if (collections && collections.split(',').filter(Boolean).length > 0) count++
     if (productTypes && productTypes.split(',').filter(Boolean).length > 0) count++
     if (vendors && vendors.split(',').filter(Boolean).length > 0) count++
     if (tags && tags.split(',').filter(Boolean).length > 0) count++
     if (priceMin || priceMax) count++
-    if (availability && availability !== 'all') count++
+    if (sort && sort !== 'TITLE') count++
+    if (order && order !== 'asc') count++
 
     return count
-  }, [searchParams])
+  }, [ searchParams ])
 
   const handleOpenFilters = () => {
-    setIsFilterDialogOpen(true)
+    setIsFilterOpen(true)
   }
 
   const handleCloseFilters = () => {
-    setIsFilterDialogOpen(false)
+    setIsFilterOpen(false)
   }
 
   return (
@@ -67,7 +67,7 @@ export function StoreLayoutContent({ children }: { children: React.ReactNode }) 
 
         <Footer />
 
-        <Filter isOpen={isFilterDialogOpen} onClose={handleCloseFilters} />
+        <Filter isOpen={isFilterOpen} onClose={handleCloseFilters} />
       </div>
     </div>
   )

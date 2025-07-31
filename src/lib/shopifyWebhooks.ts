@@ -44,17 +44,17 @@ interface WebhookSubscriptionDeleteResponse {
 export class ShopifyWebhookService {
   private static readonly WEBHOOKS: WebhookConfig[] = [
     {
-      topic: 'products/update',
+      topic: 'PRODUCTS_UPDATE',
       address: `${process.env.NEXTAUTH_URL}/api/webhooks/shopify/products`,
       format: 'JSON',
     },
     {
-      topic: 'inventory_levels/update',
+      topic: 'INVENTORY_LEVELS_UPDATE',
       address: `${process.env.NEXTAUTH_URL}/api/webhooks/shopify/inventory`,
       format: 'JSON',
     },
     {
-      topic: 'orders/create',
+      topic: 'ORDERS_CREATE',
       address: `${process.env.NEXTAUTH_URL}/api/webhooks/shopify`,
       format: 'JSON',
     },
