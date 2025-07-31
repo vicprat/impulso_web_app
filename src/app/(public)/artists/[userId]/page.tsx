@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 
-
 import { generateArtistMetadata } from '@/lib/metadata'
 import { postgresUserApi } from '@/modules/user/api'
 import { ArtistProfileContent } from '@/src/components/ArtistProfileContent'
@@ -11,12 +10,15 @@ interface Props {
   params: Promise<{ userId: string }>
 }
 
+// Página dinámica - se actualiza en cada request
+export const dynamic = 'force-dynamic'
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { userId } = await params
-  
+
   try {
     const userProfile = await postgresUserApi.getPublicProfile(userId)
-    
+
     if (!userProfile) {
       return {
         description: 'El perfil del artista solicitado no está disponible.',
@@ -42,10 +44,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { userId } = await params
-  
+
   try {
     const userProfile = await postgresUserApi.getPublicProfile(userId)
-    
+
     if (!userProfile) {
       notFound()
     }

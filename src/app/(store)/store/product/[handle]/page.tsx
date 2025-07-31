@@ -17,6 +17,9 @@ interface PrivateRoomProduct {
   productId: string
 }
 
+// Página dinámica - se actualiza en cada request
+export const dynamic = 'force-dynamic'
+
 export default async function Page({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params
 

@@ -2,8 +2,10 @@ import { routeMetadata } from '@/lib/metadata'
 
 import type { Metadata } from 'next'
 
+export const metadata: Metadata = routeMetadata[ '/events' ]
 
-export const metadata: Metadata = routeMetadata['/events']
+// Hacer la página dinámica para que se actualice cuando cambien los eventos
+export const dynamic = 'force-dynamic'
 
 export default function EventsPage() {
   return (

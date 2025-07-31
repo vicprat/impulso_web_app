@@ -20,8 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useDeleteProduct, useGetProduct, useUpdateProduct } from '@/services/product/hook'
-import { useGetTechniques, useGetArtworkTypes, useGetLocations } from '@/services/product/hook'
+import { useDeleteProduct, useGetArtworkTypes, useGetLocations, useGetProduct, useGetTechniques, useUpdateProduct } from '@/services/product/hook'
 import { type UpdateProductPayload } from '@/services/product/types'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 import { useQueryClient } from '@tanstack/react-query'
@@ -307,7 +306,7 @@ export default function ProductDetailPage() {
               Editar
             </Button>
             <Link
-              href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { id: product.id })}
+              href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })}
               target='_blank'
               className='flex items-center'
             >

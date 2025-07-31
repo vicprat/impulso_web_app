@@ -4,32 +4,32 @@ import { Product } from '@/models/Product'
 import { type AuthSession } from '@/modules/auth/service'
 
 import {
-  CREATE_PRODUCT_MUTATION,
-  DELETE_PRODUCT_MUTATION,
-  GET_INVENTORY_ITEM_QUERY,
-  GET_PRODUCTS_QUERY,
-  GET_PUBLICATIONS_QUERY,
-  GET_SINGLE_PRODUCT_QUERY,
-  INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
-  PRODUCT_CREATE_MEDIA_MUTATION,
-  PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
-  PUBLISH_PRODUCT_MUTATION,
-  UPDATE_PRODUCT_MUTATION,
+    CREATE_PRODUCT_MUTATION,
+    DELETE_PRODUCT_MUTATION,
+    GET_INVENTORY_ITEM_QUERY,
+    GET_PRODUCTS_QUERY,
+    GET_PUBLICATIONS_QUERY,
+    GET_SINGLE_PRODUCT_QUERY,
+    INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
+    PRODUCT_CREATE_MEDIA_MUTATION,
+    PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
+    PUBLISH_PRODUCT_MUTATION,
+    UPDATE_PRODUCT_MUTATION,
 } from './queries'
 import {
-  type CreateProductPayload,
-  type DeleteMutationResponse,
-  type GetInventoryItemResponse,
-  type GetProductsApiResponse,
-  type GetProductsParams,
-  type GetPublicationsApiResponse,
-  type InventorySetOnHandQuantitiesResponse,
-  type PaginatedProductsResponse,
-  type ProductCreateMediaResponse,
-  type ProductMutationResponse,
-  type ShopifyProductData,
-  type ShopifyUserError,
-  type UpdateProductPayload,
+    type CreateProductPayload,
+    type DeleteMutationResponse,
+    type GetInventoryItemResponse,
+    type GetProductsApiResponse,
+    type GetProductsParams,
+    type GetPublicationsApiResponse,
+    type InventorySetOnHandQuantitiesResponse,
+    type PaginatedProductsResponse,
+    type ProductCreateMediaResponse,
+    type ProductMutationResponse,
+    type ShopifyProductData,
+    type ShopifyUserError,
+    type UpdateProductPayload,
 } from './types'
 
 type ValidatedSession = NonNullable<AuthSession>
@@ -472,6 +472,23 @@ async function createProduct(
   if (payload.inventoryQuantity && payload.inventoryQuantity > 0) {
     const defaultVariant = newProductData.variants.edges[0]?.node
     try {
+      // Primero, activar el tracking de inventario para la variante
+      const variantUpdatePayload = {
+        productId: newProductData.id,
+        variants: [
+          {
+            id: defaultVariant.id,
+            inventoryItem: { tracked: true },
+            inventoryPolicy: 'DENY', // No permitir venta cuando no hay stock
+          },
+        ],
+      }
+
+      await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
+        PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
+        variantUpdatePayload
+      )
+
       const locationId = await getPrimaryLocationId()
 
       const inventoryItemResponse = await makeAdminApiRequest<GetInventoryItemResponse>(
@@ -499,6 +516,29 @@ async function createProduct(
           INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
           inventoryUpdatePayload
         )
+
+        // Revalidar cache manualmente después de crear producto con inventario
+        try {
+          const revalidationResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+            },
+            body: JSON.stringify({
+              type: 'inventory',
+              productId: newProductData.id,
+            }),
+          })
+
+          if (revalidationResponse.ok) {
+            // Cache revalidado automáticamente
+          } else {
+            console.log('⚠️ Error revalidando cache:', revalidationResponse.status)
+          }
+        } catch (revalidationError) {
+          console.log('⚠️ Error en revalidación manual:', revalidationError)
+        }
       }
     } catch (inventoryError) {
       console.error('Error al actualizar la cantidad de inventario del producto:', inventoryError)
@@ -659,6 +699,23 @@ async function updateProduct(
 
     if (payload.inventoryQuantity !== undefined) {
       try {
+        // Primero, activar el tracking de inventario para la variante
+        const variantUpdatePayload = {
+          productId: existingProduct.id,
+          variants: [
+            {
+              id: variant.id,
+              inventoryItem: { tracked: true },
+              inventoryPolicy: 'DENY', // No permitir venta cuando no hay stock
+            },
+          ],
+        }
+
+        await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
+          PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
+          variantUpdatePayload
+        )
+
         const inventoryItemResponse = await makeAdminApiRequest<GetInventoryItemResponse>(
           GET_INVENTORY_ITEM_QUERY,
           { variantId: variant.id }
@@ -692,6 +749,23 @@ async function updateProduct(
                 .map((e) => e.message)
                 .join(', ')
             )
+          }
+
+          // Revalidar cache manualmente después de actualizar inventario
+          try {
+            await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+              },
+              body: JSON.stringify({
+                type: 'inventory',
+                productId: existingProduct.id,
+              }),
+            })
+          } catch (revalidationError) {
+            // Silenciar errores de revalidación
           }
         }
       } catch (inventoryError) {

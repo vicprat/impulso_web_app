@@ -260,14 +260,14 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
   if (inventoryQuantity && inventoryQuantity > 0) {
     const defaultVariant = newEventData.variants.edges[0]?.node
     try {
-      const locationId = await getPrimaryLocationId()
-
+      // Primero, activar el tracking de inventario para la variante
       const variantUpdatePayload = {
         productId: newEventData.id,
         variants: [
           {
             id: defaultVariant.id,
             inventoryItem: { tracked: true },
+            inventoryPolicy: 'DENY', // No permitir venta cuando no hay stock
           },
         ],
       }
@@ -276,6 +276,8 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
         PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
         variantUpdatePayload
       )
+
+      const locationId = await getPrimaryLocationId()
 
       const inventoryItemResponse = await makeAdminApiRequest<GetInventoryItemResponse>(
         GET_INVENTORY_ITEM_QUERY,
@@ -302,9 +304,33 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
           INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
           inventoryUpdatePayload
         )
+
+        // Revalidar cache manualmente después de crear evento con inventario
+        try {
+          const revalidationResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+            },
+            body: JSON.stringify({
+              type: 'inventory',
+              productId: newEventData.id,
+            }),
+          })
+
+          if (revalidationResponse.ok) {
+            // Cache revalidado automáticamente
+          } else {
+            console.log('⚠️ Error revalidando cache:', revalidationResponse.status)
+          }
+        } catch (revalidationError) {
+          console.log('⚠️ Error en revalidación manual:', revalidationError)
+        }
       }
     } catch (inventoryError) {
       console.error('Error al actualizar la cantidad de inventario del evento:', inventoryError)
+      throw new Error('Error al actualizar la cantidad de inventario del evento.')
     }
   }
 
@@ -415,12 +441,14 @@ async function updateEvent(payload: UpdateEventPayload, session: AuthSession): P
   if (inventoryQuantity !== undefined) {
     const defaultVariant = existingEvent.variants[0]
     try {
+      // Primero, activar el tracking de inventario para la variante
       const variantUpdatePayload = {
         productId: payload.id,
         variants: [
           {
             id: defaultVariant.id,
             inventoryItem: { tracked: true },
+            inventoryPolicy: 'DENY', // No permitir venta cuando no hay stock
           },
         ],
       }
@@ -456,6 +484,29 @@ async function updateEvent(payload: UpdateEventPayload, session: AuthSession): P
           INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
           inventoryUpdatePayload
         )
+
+        // Revalidar cache manualmente después de actualizar inventario del evento
+        try {
+          const revalidationResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+            },
+            body: JSON.stringify({
+              type: 'inventory',
+              productId: payload.id,
+            }),
+          })
+
+          if (revalidationResponse.ok) {
+            // Cache revalidado automáticamente
+          } else {
+            console.log('⚠️ Error revalidando cache:', revalidationResponse.status)
+          }
+        } catch (revalidationError) {
+          console.log('⚠️ Error en revalidación manual:', revalidationError)
+        }
       }
     } catch (inventoryError) {
       console.error('Error al actualizar la cantidad de inventario del evento:', inventoryError)
