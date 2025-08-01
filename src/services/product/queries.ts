@@ -1,12 +1,12 @@
 export const PRODUCT_FRAGMENT = `
   fragment ProductFragment on Product {
     id
-    title
     handle
+    title
     descriptionHtml
     vendor
-    status
     productType
+    status
     tags
     images(first: 10) {
       edges {
@@ -19,14 +19,30 @@ export const PRODUCT_FRAGMENT = `
         }
       }
     }
-    variants(first: 10) {
+    media(first: 10) {
+      nodes {
+        id
+        mediaContentType
+        status
+        ... on MediaImage {
+          image {
+            id
+            url
+            altText
+            width
+            height
+          }
+        }
+      }
+    }
+    variants(first: 1) {
       edges {
         node {
           id
-          price
-          sku
           title
           availableForSale
+          price
+          sku
           inventoryQuantity
           inventoryPolicy
           inventoryItem {
@@ -270,3 +286,40 @@ export const PRODUCT_CREATE_MEDIA_MUTATION = `
             }
         }
     `
+
+export const PRODUCT_DELETE_IMAGES_MUTATION = `
+  mutation productDeleteImages($productId: ID!, $imageIds: [ID!]!) {
+    productDeleteImages(productId: $productId, imageIds: $imageIds) {
+      deletedImageIds
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`
+
+export const PRODUCT_DELETE_MEDIA_MUTATION = `
+  mutation productDeleteMedia($productId: ID!, $mediaIds: [ID!]!) {
+    productDeleteMedia(productId: $productId, mediaIds: $mediaIds) {
+      deletedMediaIds
+      deletedProductImageIds
+      mediaUserErrors {
+        field
+        message
+      }
+      product {
+        id
+        title
+        media(first: 10) {
+          nodes {
+            id
+            alt
+            mediaContentType
+            status
+          }
+        }
+      }
+    }
+  }
+`

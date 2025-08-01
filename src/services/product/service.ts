@@ -4,32 +4,33 @@ import { Product } from '@/models/Product'
 import { type AuthSession } from '@/modules/auth/service'
 
 import {
-    CREATE_PRODUCT_MUTATION,
-    DELETE_PRODUCT_MUTATION,
-    GET_INVENTORY_ITEM_QUERY,
-    GET_PRODUCTS_QUERY,
-    GET_PUBLICATIONS_QUERY,
-    GET_SINGLE_PRODUCT_QUERY,
-    INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
-    PRODUCT_CREATE_MEDIA_MUTATION,
-    PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
-    PUBLISH_PRODUCT_MUTATION,
-    UPDATE_PRODUCT_MUTATION,
+  CREATE_PRODUCT_MUTATION,
+  DELETE_PRODUCT_MUTATION,
+  GET_INVENTORY_ITEM_QUERY,
+  GET_PRODUCTS_QUERY,
+  GET_PUBLICATIONS_QUERY,
+  GET_SINGLE_PRODUCT_QUERY,
+  INVENTORY_SET_ON_HAND_QUANTITIES_MUTATION,
+  PRODUCT_CREATE_MEDIA_MUTATION,
+  PRODUCT_DELETE_MEDIA_MUTATION,
+  PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
+  PUBLISH_PRODUCT_MUTATION,
+  UPDATE_PRODUCT_MUTATION
 } from './queries'
 import {
-    type CreateProductPayload,
-    type DeleteMutationResponse,
-    type GetInventoryItemResponse,
-    type GetProductsApiResponse,
-    type GetProductsParams,
-    type GetPublicationsApiResponse,
-    type InventorySetOnHandQuantitiesResponse,
-    type PaginatedProductsResponse,
-    type ProductCreateMediaResponse,
-    type ProductMutationResponse,
-    type ShopifyProductData,
-    type ShopifyUserError,
-    type UpdateProductPayload,
+  type CreateProductPayload,
+  type DeleteMutationResponse,
+  type GetInventoryItemResponse,
+  type GetProductsApiResponse,
+  type GetProductsParams,
+  type GetPublicationsApiResponse,
+  type InventorySetOnHandQuantitiesResponse,
+  type PaginatedProductsResponse,
+  type ProductCreateMediaResponse,
+  type ProductMutationResponse,
+  type ShopifyProductData,
+  type ShopifyUserError,
+  type UpdateProductPayload,
 } from './types'
 
 type ValidatedSession = NonNullable<AuthSession>
@@ -351,6 +352,33 @@ async function getProductById(id: string, session: AuthSession): Promise<Product
   return product
 }
 
+async function getProductByHandle(handle: string, session: AuthSession): Promise<Product | null> {
+  validateSession(session)
+
+  const shopifyQuery = `handle:"${handle}"`
+  
+  const variables = {
+    first: 1,
+    query: shopifyQuery,
+    sortKey: 'TITLE' as const,
+    reverse: false,
+  }
+
+  try {
+    const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
+    const locationId = await getPrimaryLocationId()
+    
+    if (response.products.edges.length > 0) {
+      return new Product(response.products.edges[0].node, locationId)
+    }
+    
+    return null
+  } catch (error) {
+    console.error('Error getting product by handle:', error)
+    return null
+  }
+}
+
 async function getProductsFromRequest(
   request: Request,
   session: AuthSession
@@ -438,6 +466,27 @@ async function createProduct(
   }
 
   const newProductData = response.productCreate.product
+
+  // Crear metafields para los detalles de la obra si se proporcionan
+  if (payload.details) {
+    try {
+      const metafields = Object.entries(payload.details)
+        .filter(([, value]) => value != null && value !== undefined && value !== '')
+        .map(([key, value]) => ({
+          namespace: 'art_details',
+          key,
+          value: String(value),
+          type: 'single_line_text_field',
+        }))
+
+      if (metafields.length > 0) {
+        await createMetafields(newProductData.id, metafields)
+      }
+    } catch (metafieldError) {
+      console.error('Error al crear metafields para detalles de la obra:', metafieldError)
+      // No lanzar error aquí para no interrumpir la creación del producto
+    }
+  }
 
   if (payload.images && payload.images.length > 0) {
     try {
@@ -572,6 +621,62 @@ async function createProduct(
   return finalProduct
 }
 
+async function createMetafields(
+  productId: string,
+  metafields: {
+    namespace: string
+    key: string
+    value: string
+    type: string
+  }[]
+) {
+  if (metafields.length === 0) return
+
+  try {
+    const metafieldsInput = metafields.map(mf => ({
+      key: mf.key,
+      namespace: mf.namespace,
+      ownerId: productId,
+      type: mf.type,
+      value: mf.value,
+    }))
+
+    const METAFIELDS_SET_MUTATION = `
+      mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields {
+            id
+            namespace
+            key
+            value
+          }
+          userErrors {
+            field
+            message
+            code
+          }
+        }
+      }
+    `
+
+    const response = await makeAdminApiRequest<{
+      metafieldsSet: {
+        metafields: any[]
+        userErrors: { field: string; message: string; code: string }[]
+      }
+    }>(METAFIELDS_SET_MUTATION, { metafields: metafieldsInput })
+
+    if (response.metafieldsSet.userErrors.length > 0) {
+      console.error('Error al crear metafields:', response.metafieldsSet.userErrors)
+      throw new Error(response.metafieldsSet.userErrors.map(e => e.message).join(', '))
+    }
+
+  } catch (error) {
+    console.error('Error al crear metafields:', error)
+    throw error
+  }
+}
+
 async function addImagesToProduct(
   productId: string,
   images: { mediaContentType: 'IMAGE'; originalSource: string }[]
@@ -602,6 +707,68 @@ async function addImagesToProduct(
   }
 
   return response.productCreateMedia.media
+}
+
+async function deleteImagesFromProduct(
+  productId: string,
+  imageIds: string[]
+) {
+  if (imageIds.length === 0) return
+
+  // Eliminar imágenes una por una para manejar errores individuales
+  const results = []
+  for (const imageId of imageIds) {
+    try {
+      const response = await makeAdminApiRequest<{
+        productDeleteMedia: {
+          deletedMediaIds: string[] | null
+          deletedProductImageIds: string[] | null
+          mediaUserErrors: ShopifyUserError[]
+          product: {
+            id: string
+            title: string
+            media: {
+              nodes: {
+                id: string
+                alt: string | null
+                mediaContentType: string
+                status: string
+              }[]
+            }
+          }
+        }
+      }>(
+        PRODUCT_DELETE_MEDIA_MUTATION,
+        {
+          productId,
+          mediaIds: [imageId], // Solo una imagen a la vez
+        }
+      )
+
+      if (response.productDeleteMedia.mediaUserErrors.length > 0) {
+        console.warn(`Error al eliminar imagen ${imageId}:`, response.productDeleteMedia.mediaUserErrors)
+        results.push({ imageId, success: false, error: response.productDeleteMedia.mediaUserErrors })
+      } else {
+        results.push({ imageId, success: true })
+      }
+    } catch (error) {
+      console.warn(`Error al eliminar imagen ${imageId}:`, error)
+      results.push({ imageId, success: false, error: error instanceof Error ? error.message : 'Error desconocido' })
+    }
+  }
+
+  // Log de resultados
+  const successful = results.filter(r => r.success)
+  const failed = results.filter(r => !r.success)
+
+  if (failed.length > 0) {
+    console.warn(`${failed.length} imágenes no pudieron ser eliminadas:`, failed.map(f => f.imageId))
+  }
+
+  // No lanzar error si al menos algunas imágenes se eliminaron
+  if (successful.length === 0 && failed.length > 0) {
+    throw new Error(`No se pudo eliminar ninguna imagen. Errores: ${failed.map(f => f.error).join(', ')}`)
+  }
 }
 
 async function createProductFromRequest(request: Request, session: AuthSession): Promise<Product> {
@@ -635,14 +802,6 @@ async function createProductFromRequest(request: Request, session: AuthSession):
     vendor: body.vendor?.trim() ?? undefined,
   }
 
-  if (!['ACTIVE', 'DRAFT', 'ARCHIVED'].includes(payload.status)) {
-    throw new Error('El status debe ser ACTIVE, DRAFT o ARCHIVED')
-  }
-
-  if (payload.images?.some((img) => !img.originalSource)) {
-    throw new Error('Las imágenes deben tener originalSource válidos')
-  }
-
   return createProduct(payload, session)
 }
 
@@ -659,6 +818,9 @@ async function updateProduct(
 
   const { updatePayload } = existingProduct.toShopifyInput()
   const { variants, ...productUpdateInput } = updatePayload.input
+
+  // Remover la lógica de imágenes del productUpdate ya que no es un campo válido
+  // Las imágenes se manejarán por separado después de la actualización del producto
 
   const productUpdateResponse = await makeAdminApiRequest<ProductMutationResponse<'productUpdate'>>(
     UPDATE_PRODUCT_MUTATION,
@@ -678,7 +840,7 @@ async function updateProduct(
         variants: [
           {
             id: variant.id,
-            price: variant.price,
+            price: String(variant.price),
           },
         ],
       }
@@ -775,6 +937,27 @@ async function updateProduct(
   }
 
   const locationId = await getPrimaryLocationId()
+
+  // Manejar la adición de nuevas imágenes si se proporcionan
+  if (payload.images && payload.images.length > 0) {
+    try {
+      await addImagesToProduct(existingProduct.id, payload.images)
+    } catch (imageError) {
+      console.error('Error al agregar imágenes al producto:', imageError)
+      // No lanzar error aquí para no interrumpir la actualización del producto
+    }
+  }
+
+  // Manejar la eliminación de imágenes si se proporcionan
+  if (payload.imagesToDelete && payload.imagesToDelete.length > 0) {
+    try {
+      await deleteImagesFromProduct(existingProduct.id, payload.imagesToDelete)
+    } catch (imageError) {
+      console.error('Error al eliminar imágenes del producto:', imageError)
+      // No lanzar error aquí para no interrumpir la actualización del producto
+    }
+  }
+
   return new Product(productUpdateResponse.productUpdate.product, locationId)
 }
 
@@ -799,6 +982,7 @@ export const productService = {
   createProductFromRequest,
   deleteProduct,
   getProductById,
+  getProductByHandle,
   getProductStats,
   getProducts,
   getProductsFromRequest,

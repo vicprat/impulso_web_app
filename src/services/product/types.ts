@@ -27,7 +27,10 @@ export interface CreateProductPayload {
   }[]
 }
 
-export type UpdateProductPayload = Partial<CreateProductPayload> & { id: string }
+export interface UpdateProductPayload extends Partial<CreateProductPayload> {
+  id: string
+  imagesToDelete?: string[] // IDs de las imágenes a eliminar
+}
 
 export interface PaginatedProductsResponse {
   products: Product[]
@@ -79,6 +82,20 @@ export interface ShopifyProductData {
   status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED'
   tags: string[]
   images: { edges: { node: ImageNode }[] }
+  media: {
+    nodes: {
+      id: string
+      mediaContentType: string
+      status: string
+      image?: {
+        id: string
+        url: string
+        altText: string | null
+        width?: number
+        height?: number
+      }
+    }[]
+  }
   variants: { edges: { node: VariantNode }[] }
   metafields: { edges: { node: ShopifyMetafieldNode }[] }
 }

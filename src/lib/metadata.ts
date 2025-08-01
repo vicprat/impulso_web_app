@@ -222,6 +222,82 @@ export const routeMetadata: Record<string, Metadata> = {
     },
     title: 'Buscar - Impulso Galería',
   },
+  '/services': {
+    description: 'Servicios especializados en arte contemporáneo: venta de obra original, enmarcado, impresión digital, inversión en arte, sistemas de colgaje y fabricación de catálogos.',
+    keywords: [
+      'servicios de arte',
+      'venta de obra original',
+      'enmarcado',
+      'impresión digital',
+      'inversión en arte',
+      'sistemas de colgaje',
+      'catálogos de arte',
+      'arte contemporáneo'
+    ],
+    openGraph: {
+      description: 'Servicios especializados en arte contemporáneo: venta de obra original, enmarcado, impresión digital y más.',
+      images: [
+        {
+          alt: 'Servicios - Impulso Galería',
+          height: 630,
+          url: '/og-services.jpg',
+          width: 1200,
+        },
+      ],
+      title: 'Servicios - Impulso Galería',
+    },
+    title: 'Servicios - Impulso Galería',
+  },
+  '/membership': {
+    description: 'Únete a Impulso Galería como artista. Beneficios exclusivos: venta de obras, impresión digital, exposición internacional, publicidad y pagos seguros.',
+    keywords: [
+      'membership artista',
+      'beneficios artista',
+      'venta de obras',
+      'impresión digital',
+      'exposición internacional',
+      'publicidad artista',
+      'pagos seguros',
+      'arte contemporáneo'
+    ],
+    openGraph: {
+      description: 'Únete a Impulso Galería como artista. Beneficios exclusivos: venta de obras, impresión digital y exposición internacional.',
+      images: [
+        {
+          alt: 'Membership - Impulso Galería',
+          height: 630,
+          url: '/og-membership.jpg',
+          width: 1200,
+        },
+      ],
+      title: 'Membership - Impulso Galería',
+    },
+    title: 'Membership - Impulso Galería',
+  },
+  '/terms': {
+    description: 'Términos y condiciones de Impulso Galería. Política de privacidad, cookies, derechos de usuario y información legal sobre el uso de nuestra plataforma.',
+    keywords: [
+      'términos y condiciones',
+      'política de privacidad',
+      'cookies',
+      'derechos de usuario',
+      'información legal',
+      'impulso galería'
+    ],
+    openGraph: {
+      description: 'Términos y condiciones de Impulso Galería. Política de privacidad y información legal.',
+      images: [
+        {
+          alt: 'Términos y Condiciones - Impulso Galería',
+          height: 630,
+          url: '/og-terms.jpg',
+          width: 1200,
+        },
+      ],
+      title: 'Términos y Condiciones - Impulso Galería',
+    },
+    title: 'Términos y Condiciones - Impulso Galería',
+  },
 }
 
 // Función para generar metadata dinámica para perfiles de artistas

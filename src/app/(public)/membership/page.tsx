@@ -69,7 +69,7 @@ const slideUp = {
 export default function MembershipPage() {
   return (
     <div className='min-h-screen '>
-   
+
 
       {/* Features Section */}
       <section className='py-20'>
@@ -136,7 +136,7 @@ export default function MembershipPage() {
           </motion.div>
         </div>
       </section>
-   {/* Hero Section */}
+      {/* Hero Section */}
       <section className='relative py-20'>
         <div className='absolute ' />
         <div className='container mx-auto px-6 relative z-10'>

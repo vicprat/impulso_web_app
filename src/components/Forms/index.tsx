@@ -4,7 +4,7 @@ import { ExpenseForm as Expense } from './Expense'
 import { ImageUploader } from './ImageUploader'
 import { Income } from './Income'
 import { Links } from './Links'
-import { ProductForm as Product } from './Product'
+import { ProductForm } from './Product'
 import { Profile } from './Profile'
 import { Room } from './Room'
 
@@ -15,7 +15,7 @@ export const Form = {
   ImageUploader,
   Income,
   Links,
-  Product,
+  Product: ProductForm,
   Profile,
   Room,
 }

@@ -19,7 +19,7 @@ export const Editor: React.FC<Props> = ({ content, onChange }) => {
     editorProps: {
       attributes: {
         class:
-          'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl max-w-none border border-border rounded-md p-4 min-h-[300px] focus:outline-none dark:prose-invert bg-background',
+          'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl prose-slate dark:prose-invert max-w-none w-full h-full p-4 focus:outline-none bg-transparent resize-none border-none outline-none',
       },
     },
     extensions: [
@@ -27,10 +27,10 @@ export const Editor: React.FC<Props> = ({ content, onChange }) => {
         heading: false,
       }),
       Heading.configure({
-        levels: [1, 2, 3],
+        levels: [ 1, 2, 3 ],
       }),
       TextAlign.configure({
-        types: ['heading', 'paragraph'],
+        types: [ 'heading', 'paragraph' ],
       }),
     ],
     immediatelyRender: false,
@@ -43,11 +43,17 @@ export const Editor: React.FC<Props> = ({ content, onChange }) => {
     if (editor && content !== editor.getHTML()) {
       editor.commands.setContent(content)
     }
-  }, [editor, content])
+  }, [ editor, content ])
+
   return (
-    <div className='flex flex-col justify-stretch gap-4'>
+    <div className='flex flex-col h-full w-full'>
       <Toolbar editor={editor} />
-      <EditorContent editor={editor} />
+      <div className='flex-1 overflow-auto'>
+        <EditorContent
+          editor={editor}
+          className='h-full w-full [&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full [&_.ProseMirror]:outline-none [&_.ProseMirror]:border-none'
+        />
+      </div>
     </div>
   )
 }

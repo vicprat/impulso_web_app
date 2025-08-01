@@ -90,10 +90,14 @@ type EventFormValues = z.infer<typeof eventFormSchema>
 export const EventForm: React.FC<Props> = ({ event, isLoading, mode, onCancel, onSave }) => {
   const [newImages, setNewImages] = useState<NewImage[]>([])
 
+  console.log('Event', event)
+
+  const variant = event?.variants && event.variants.length > 0 ? event.variants[0] : undefined
+
   const defaultValues: Partial<EventFormValues> =
     mode === 'edit' && event
       ? {
-          description: event.descriptionHtml.replace(/<p>|<\/p>/g, ''),
+          description: event.descriptionHtml,
           eventDetails: {
             date: event.eventDetails.date ?? '',
             endTime: event.eventDetails.endTime ?? '',
@@ -101,8 +105,8 @@ export const EventForm: React.FC<Props> = ({ event, isLoading, mode, onCancel, o
             organizer: event.eventDetails.organizer ?? '',
             startTime: event.eventDetails.startTime ?? '',
           },
-          inventoryQuantity: event.primaryVariant?.inventoryQuantity ?? 0,
-          price: event.primaryVariant?.price.amount ?? '0',
+          inventoryQuantity: variant?.inventoryQuantity ?? 0,
+          price: variant?.price.amount ?? '0',
           status: event.status === 'ARCHIVED' ? 'DRAFT' : event.status,
           tags: event.tags.join(', '),
           title: event.title,

@@ -4,20 +4,148 @@
 
 import Autoplay from 'embla-carousel-autoplay'
 import useEmblaCarousel from 'embla-carousel-react'
-import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Image as ImageIcon,
+  Package,
+  Palette,
+  Ruler,
+  User,
+  Warehouse,
+  ZoomIn
+} from 'lucide-react'
+import Link from 'next/link'
 import { useCallback, useEffect, useState, unstable_ViewTransition as ViewTransition } from 'react'
 
-import { Card } from '@/components/Card'
 import { AddToCartButton } from '@/components/Cart/AddToCartButton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { type Product, type Variant } from '@/modules/shopify/types'
+import { type IProductForCart, type Variant } from '@/modules/shopify/types'
+import { replaceRouteParams, ROUTES } from '@/src/config/routes'
+
+// Tipo para producto plano (sin métodos de clase)
+interface ProductData {
+  id: string
+  handle: string
+  title: string
+  descriptionHtml: string
+  productType: string
+  vendor: string
+  status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED'
+  images: {
+    id?: string
+    url: string
+    altText: string | null
+    width?: number
+    height?: number
+  }[]
+  media: {
+    id: string
+    mediaContentType: string
+    status: string
+    image?: {
+      id: string
+      url: string
+      altText: string | null
+      width?: number
+      height?: number
+    }
+  }[]
+  variants: {
+    id: string
+    title: string
+    availableForSale: boolean
+    price: {
+      amount: string
+      currencyCode: string
+    }
+    compareAtPrice: {
+      amount: string
+      currencyCode: string
+    } | null
+    sku: string | null
+    selectedOptions: {
+      name: string
+      value: string
+    }[]
+    inventoryQuantity: number | null
+    inventoryManagement: 'SHOPIFY' | 'NOT_MANAGED' | null
+    inventoryPolicy: 'DENY' | 'CONTINUE'
+  }[]
+  tags: string[]
+  manualTags: string[]
+  autoTags: string[]
+  artworkDetails: {
+    artist: string | null
+    medium: string | null
+    year: string | null
+    height: string | null
+    width: string | null
+    depth: string | null
+    serie: string | null
+    location: string | null
+  }
+  // Getters
+  primaryImage: {
+    id?: string
+    url: string
+    altText: string | null
+    width?: number
+    height?: number
+  } | null
+  primaryVariant: {
+    id: string
+    title: string
+    availableForSale: boolean
+    price: {
+      amount: string
+      currencyCode: string
+    }
+    compareAtPrice: {
+      amount: string
+      currencyCode: string
+    } | null
+    sku: string | null
+    selectedOptions: {
+      name: string
+      value: string
+    }[]
+    inventoryQuantity: number | null
+    inventoryManagement: 'SHOPIFY' | 'NOT_MANAGED' | null
+    inventoryPolicy: 'DENY' | 'CONTINUE'
+  } | null
+  formattedPrice: string
+  isAvailable: boolean
+  statusLabel: string
+}
 
 interface Props {
-  product: Product
-  relatedProducts: Product[]
+  product: ProductData
+  relatedProducts: ProductData[]
 }
+
+// Adaptador para convertir Product a IProductForCart
+const adaptProductForCart = (product: ProductData): IProductForCart => ({
+  id: product.id,
+  title: product.title,
+  handle: product.handle,
+  descriptionHtml: product.descriptionHtml,
+  vendor: product.vendor,
+  images: product.images,
+  variants: product.variants,
+  availableForSale: product.isAvailable,
+  description: product.descriptionHtml,
+  createdAt: new Date().toISOString(), // No tenemos esta info en el modelo Product
+  priceRange: {
+    minVariantPrice: product.primaryVariant?.price || { amount: '0', currencyCode: 'MXN' },
+    maxVariantPrice: product.primaryVariant?.price || { amount: '0', currencyCode: 'MXN' },
+  },
+})
 
 interface State {
   variant: Variant | null
@@ -54,12 +182,12 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
     if (emblaApi) emblaApi.scrollNext()
   }, [ emblaApi ])
 
-  const currentPrice = state.variant?.price ?? product.priceRange.minVariantPrice
+  const currentPrice = state.variant?.price ?? product.primaryVariant?.price
   const comparePrice = state.variant?.compareAtPrice
   const discount =
-    comparePrice && comparePrice.amount !== currentPrice.amount
+    comparePrice && comparePrice.amount !== currentPrice?.amount
       ? Math.round(
-        ((parseFloat(comparePrice.amount) - parseFloat(currentPrice.amount)) /
+        ((parseFloat(comparePrice.amount) - parseFloat(currentPrice?.amount || '0')) /
           parseFloat(comparePrice.amount)) *
         100
       )
@@ -129,52 +257,11 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
   }, [ state.lightboxOpen ])
 
   return (
-    <div className='min-h-screen '>
+    <div className='min-h-screen'>
       <div className='mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8'>
         <div className='lg:grid lg:auto-rows-min lg:grid-cols-12 lg:gap-x-8'>
-          <div className='lg:col-span-5 lg:col-start-8'>
-            <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-              <div className='flex-1'>
-                <h1 className='text-2xl font-bold leading-tight text-foreground sm:text-3xl lg:text-4xl'>
-                  {product.title}
-                </h1>
-                {product.vendor && (
-                  <p className='mt-2 text-sm font-medium uppercase tracking-wide text-muted-foreground sm:text-base'>
-                    {product.vendor}
-                  </p>
-                )}
-              </div>
-              <div className='text-right sm:text-left lg:text-right'>
-                <div className='flex flex-row items-center justify-end gap-2 sm:flex-col sm:items-end lg:flex-row lg:items-center'>
-                  <span className='text-2xl font-bold text-foreground sm:text-3xl lg:text-4xl'>
-                    ${currentPrice.amount}
-                  </span>
-                  {comparePrice && comparePrice.amount !== currentPrice.amount && (
-                    <span className='text-lg text-muted-foreground line-through sm:text-xl'>
-                      ${comparePrice.amount}
-                    </span>
-                  )}
-                </div>
-                <p className='mt-1 text-sm text-muted-foreground'>{currentPrice.currencyCode}</p>
-                {discount && (
-                  <Badge className='mt-2 bg-green-500 text-xs hover:bg-green-600'>
-                    -{discount}% OFF
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            <div className='mt-6'>
-              <Badge
-                variant={product.availableForSale ? 'default' : 'destructive'}
-                className='px-3 py-1 text-sm'
-              >
-                {product.availableForSale ? 'En stock' : 'Agotado'}
-              </Badge>
-            </div>
-          </div>
-
-          <div className='mt-8 lg:col-span-7 lg:col-start-1 lg:row-span-3 lg:row-start-1 lg:mt-0'>
+          {/* Galería de Imágenes */}
+          <div className='lg:col-span-7 lg:col-start-1 lg:row-span-3 lg:row-start-1'>
             <h2 className='sr-only'>Imágenes del producto</h2>
 
             {product.images.length > 0 ? (
@@ -238,133 +325,262 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
             )}
           </div>
 
-          <div className='mt-8 space-y-8 lg:col-span-5'>
-            <form className='space-y-6'>
-              {product.variants.length > 1 && (
-                <div className='space-y-4'>
-                  {(() => {
-                    const optionGroups = product.variants.reduce(
-                      (acc: Record<string, Set<string>>, variant) => {
-                        variant.selectedOptions.forEach((option) => {
-                          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                          if (!acc[ option.name ]) {
-                            acc[ option.name ] = new Set()
-                          }
-                          acc[ option.name ].add(option.value)
-                        })
-                        return acc
-                      },
-                      {} as Record<string, Set<string>>
-                    )
+          {/* Información del Producto */}
+          <div className='lg:col-span-5 lg:col-start-8'>
+            <div className='space-y-6'>
+              {/* Header con Título y Precio */}
+              <div className='space-y-4'>
+                <div>
+                  <h1 className='text-2xl font-bold leading-tight text-foreground sm:text-3xl lg:text-4xl'>
+                    {product.title}
+                  </h1>
+                  {product.vendor && (
+                    <div className='mt-2 flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-muted-foreground sm:text-base'>
+                      <User className='size-4' />
+                      {product.vendor}
+                    </div>
+                  )}
+                </div>
 
-                    return Object.entries(optionGroups).map(([ optionName, values ]) => (
-                      <div key={optionName} className='space-y-3'>
-                        <h3 className='text-sm font-semibold uppercase tracking-wide text-foreground'>
-                          {optionName}
-                        </h3>
-                        <div className='grid grid-cols-3 gap-2 sm:grid-cols-4'>
-                          {Array.from(values).map((value) => {
-                            const variantWithThisOption = product.variants.find((v) =>
-                              v.selectedOptions.some(
+                <div className='flex items-center justify-between'>
+                  <div className='flex flex-col gap-1'>
+                    <div className='flex items-center gap-2'>
+                      <span className='text-2xl font-bold text-foreground sm:text-3xl lg:text-4xl'>
+                        ${currentPrice?.amount || '0'}
+                      </span>
+                      {comparePrice && comparePrice.amount !== currentPrice?.amount && (
+                        <span className='text-lg text-muted-foreground line-through sm:text-xl'>
+                          ${comparePrice.amount}
+                        </span>
+                      )}
+                    </div>
+                    <p className='text-sm text-muted-foreground'>{currentPrice?.currencyCode || 'MXN'}</p>
+                  </div>
+                  {discount && (
+                    <Badge className='bg-green-500 text-xs hover:bg-green-600'>
+                      -{discount}% OFF
+                    </Badge>
+                  )}
+                </div>
+
+                <div className='flex items-center gap-2'>
+                  <Badge
+                    variant={product.isAvailable ? 'default' : 'destructive'}
+                    className='px-3 py-1 text-sm'
+                  >
+                    {product.isAvailable ? 'En stock' : 'Agotado'}
+                  </Badge>
+                  {product.status === 'DRAFT' && (
+                    <Badge variant='secondary' className='px-3 py-1 text-sm'>
+                      Borrador
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Formulario de Compra */}
+              <form className='space-y-6'>
+                {product.variants.length > 1 && (
+                  <div className='space-y-4'>
+                    {(() => {
+                      const optionGroups = product.variants.reduce(
+                        (acc: Record<string, Set<string>>, variant) => {
+                          variant.selectedOptions.forEach((option) => {
+                            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                            if (!acc[ option.name ]) {
+                              acc[ option.name ] = new Set()
+                            }
+                            acc[ option.name ].add(option.value)
+                          })
+                          return acc
+                        },
+                        {} as Record<string, Set<string>>
+                      )
+
+                      return Object.entries(optionGroups).map(([ optionName, values ]) => (
+                        <div key={optionName} className='space-y-3'>
+                          <h3 className='text-sm font-semibold uppercase tracking-wide text-foreground'>
+                            {optionName}
+                          </h3>
+                          <div className='grid grid-cols-3 gap-2 sm:grid-cols-4'>
+                            {Array.from(values).map((value) => {
+                              const variantWithThisOption = product.variants.find((v) =>
+                                v.selectedOptions.some(
+                                  (opt) => opt.name === optionName && opt.value === value
+                                )
+                              )
+
+                              const isSelected = state.variant?.selectedOptions.some(
                                 (opt) => opt.name === optionName && opt.value === value
                               )
-                            )
 
-                            const isSelected = state.variant?.selectedOptions.some(
-                              (opt) => opt.name === optionName && opt.value === value
-                            )
+                              return (
+                                <Button
+                                  key={value}
+                                  type='button'
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  size='sm'
+                                  onClick={() =>
+                                    variantWithThisOption &&
+                                    setState((previous) => ({
+                                      ...previous,
+                                      variant: variantWithThisOption,
+                                    }))
+                                  }
+                                  disabled={!variantWithThisOption?.availableForSale}
+                                  className={classNames(
+                                    'justify-center text-sm font-medium uppercase transition-all duration-200',
+                                    !variantWithThisOption?.availableForSale
+                                      ? 'opacity-50 cursor-not-allowed'
+                                      : '',
+                                    isSelected ? 'shadow-md scale-105' : 'hover:scale-105'
+                                  )}
+                                >
+                                  {value}
+                                </Button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))
+                    })()}
+                  </div>
+                )}
 
-                            return (
-                              <Button
-                                key={value}
-                                type='button'
-                                variant={isSelected ? 'default' : 'outline'}
-                                size='sm'
-                                onClick={() =>
-                                  variantWithThisOption &&
-                                  setState((previous) => ({
-                                    ...previous,
-                                    variant: variantWithThisOption,
-                                  }))
-                                }
-                                disabled={!variantWithThisOption?.availableForSale}
-                                className={classNames(
-                                  'justify-center text-sm font-medium uppercase transition-all duration-200',
-                                  !variantWithThisOption?.availableForSale
-                                    ? 'opacity-50 cursor-not-allowed'
-                                    : '',
-                                  isSelected ? 'shadow-md scale-105' : 'hover:scale-105'
-                                )}
-                              >
-                                {value}
-                              </Button>
-                            )
-                          })}
+                <div className='pt-4'>
+                  <AddToCartButton
+                    product={adaptProductForCart(product)}
+                    selectedVariant={state.variant ?? undefined}
+                    size='lg'
+                    className='w-full'
+                    showQuantitySelector={true}
+                  />
+                </div>
+              </form>
+
+              {/* Detalles de la Obra */}
+              {product.artworkDetails && (
+                <Card className='border-border bg-card shadow-sm'>
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='flex items-center gap-2 text-foreground'>
+                      <Palette className='size-5 text-primary' />
+                      Detalles de la Obra
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                    {product.artworkDetails.medium && (
+                      <div className='flex items-center gap-2'>
+                        <FileText className='size-4 text-muted-foreground' />
+                        <div>
+                          <p className='text-xs text-muted-foreground'>Técnica</p>
+                          <p className='text-sm font-medium'>{product.artworkDetails.medium}</p>
                         </div>
                       </div>
-                    ))
-                  })()}
-                </div>
+                    )}
+                    {product.artworkDetails.year && (
+                      <div className='flex items-center gap-2'>
+                        <Calendar className='size-4 text-muted-foreground' />
+                        <div>
+                          <p className='text-xs text-muted-foreground'>Año</p>
+                          <p className='text-sm font-medium'>{product.artworkDetails.year}</p>
+                        </div>
+                      </div>
+                    )}
+                    {(product.artworkDetails.width || product.artworkDetails.height || product.artworkDetails.depth) && (
+                      <div className='flex items-center gap-2'>
+                        <Ruler className='size-4 text-muted-foreground' />
+                        <div>
+                          <p className='text-xs text-muted-foreground'>Medidas (cm)</p>
+                          <p className='text-sm font-medium'>
+                            {product.artworkDetails.height} x {product.artworkDetails.width} {product.artworkDetails.depth ? `x ${product.artworkDetails.depth}` : ''}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {product.artworkDetails.serie && (
+                      <div className='flex items-center gap-2'>
+                        <ImageIcon className='size-4 text-muted-foreground' />
+                        <div>
+                          <p className='text-xs text-muted-foreground'>Serie</p>
+                          <p className='text-sm font-medium'>{product.artworkDetails.serie}</p>
+                        </div>
+                      </div>
+                    )}
+                    {product.artworkDetails.location && (
+                      <div className='flex items-center gap-2'>
+                        <Warehouse className='size-4 text-muted-foreground' />
+                        <div>
+                          <p className='text-xs text-muted-foreground'>Ubicación</p>
+                          <p className='text-sm font-medium'>{product.artworkDetails.location}</p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
 
-              <div className='pt-4'>
-                <AddToCartButton
-                  product={product}
-                  selectedVariant={state.variant ?? undefined}
-                  size='lg'
-                  className='w-full'
-                  showQuantitySelector={true}
-                />
-              </div>
-            </form>
+              {/* Detalles del Producto */}
+              <Card className='border-border bg-card shadow-sm'>
+                <CardHeader className='pb-4'>
+                  <CardTitle className='flex items-center gap-2 text-foreground'>
+                    <Package className='size-5 text-primary' />
+                    Detalles del Producto
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                  <div className='space-y-3'>
+                    <div className='flex justify-between text-sm'>
+                      <span className='font-medium text-muted-foreground'>Tipo:</span>
+                      <span className='text-foreground'>{product.productType || 'N/A'}</span>
+                    </div>
+                    <div className='flex justify-between text-sm'>
+                      <span className='font-medium text-muted-foreground'>SKU:</span>
+                      <span className='font-mono text-foreground'>{state.variant?.sku ?? 'N/A'}</span>
+                    </div>
+                  </div>
+                  <div className='space-y-3'>
+                    <div className='flex justify-between text-sm'>
+                      <span className='font-medium text-muted-foreground'>Proveedor:</span>
+                      <span className='text-foreground'>{product.vendor || 'N/A'}</span>
+                    </div>
+                    <div className='flex justify-between text-sm'>
+                      <span className='font-medium text-muted-foreground'>Disponibilidad:</span>
+                      <span
+                        className={`font-medium ${product.isAvailable
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                          }`}
+                      >
+                        {product.isAvailable ? 'En stock' : 'Agotado'}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {product.description && (
-              <div className='border-t border-border pt-8'>
-                <h3 className='mb-4 text-lg font-semibold text-foreground'>Descripción</h3>
-                <div
-                  className='prose prose-sm max-w-none text-muted-foreground prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground'
-                  dangerouslySetInnerHTML={{
-                    __html: product.description,
-                  }}
-                />
-              </div>
-            )}
+              {/* Descripción */}
+              {product.descriptionHtml && (
+                <Card className='border-border bg-card shadow-sm'>
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='text-foreground'>Descripción</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div
+                      className='prose prose-sm max-w-none text-muted-foreground prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground'
+                      dangerouslySetInnerHTML={{
+                        __html: product.descriptionHtml,
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              )}
 
-            <div className='border-t border-border pt-8'>
-              <h3 className='mb-4 text-lg font-semibold text-foreground'>Detalles del producto</h3>
-              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                <div className='space-y-3'>
-                  <div className='flex justify-between text-sm'>
-                    <span className='font-medium text-muted-foreground'>Tipo:</span>
-                    <span className='text-foreground'>{product.productType || 'N/A'}</span>
-                  </div>
-                  <div className='flex justify-between text-sm'>
-                    <span className='font-medium text-muted-foreground'>SKU:</span>
-                    <span className='font-mono text-foreground'>{state.variant?.sku ?? 'N/A'}</span>
-                  </div>
-                </div>
-                <div className='space-y-3'>
-                  <div className='flex justify-between text-sm'>
-                    <span className='font-medium text-muted-foreground'>Proveedor:</span>
-                    <span className='text-foreground'>{product.vendor || 'N/A'}</span>
-                  </div>
-                  <div className='flex justify-between text-sm'>
-                    <span className='font-medium text-muted-foreground'>Disponibilidad:</span>
-                    <span
-                      className={`font-medium ${product.availableForSale
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-red-600 dark:text-red-400'
-                        }`}
-                    >
-                      {product.availableForSale ? 'En stock' : 'Agotado'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
 
+        {/* Productos Relacionados */}
         {relatedProducts.length > 0 && (
           <div className='mt-16 lg:mt-24'>
             <div className='mb-8 flex items-center justify-between'>
@@ -388,7 +604,40 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
               <div className='flex gap-4 md:gap-6'>
                 {relatedProducts.map((relatedProduct) => (
                   <div key={relatedProduct.id} className='w-64 flex-none sm:w-72 md:w-80'>
-                    <Card.Product product={relatedProduct} />
+                    <Card className='group relative overflow-hidden border bg-card shadow-sm transition-all duration-300 hover:shadow-md'>
+                      <Link
+                        href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: relatedProduct.handle })}
+                        className='block focus:outline-none'
+                      >
+                        <div className='relative aspect-square overflow-hidden bg-muted'>
+                          {relatedProduct.images[ 0 ] ? (
+                            <img
+                              src={relatedProduct.images[ 0 ].url}
+                              alt={relatedProduct.images[ 0 ].altText ?? relatedProduct.title}
+                              className='size-full object-cover transition-all duration-500 group-hover:scale-105'
+                              loading='lazy'
+                            />
+                          ) : (
+                            <div className='flex size-full items-center justify-center bg-muted'>
+                              <span className='text-muted-foreground'>Sin imagen</span>
+                            </div>
+                          )}
+                        </div>
+                        <CardContent className='p-4'>
+                          <div className='space-y-2'>
+                            <h3 className='font-semibold text-foreground line-clamp-2'>
+                              {relatedProduct.title}
+                            </h3>
+                            <p className='text-sm text-muted-foreground'>
+                              {relatedProduct.vendor}
+                            </p>
+                            <p className='font-medium text-foreground'>
+                              {relatedProduct.formattedPrice}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Link>
+                    </Card>
                   </div>
                 ))}
               </div>
@@ -408,6 +657,7 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
         )}
       </div>
 
+      {/* Lightbox */}
       <Dialog open={state.lightboxOpen} onOpenChange={closeLightbox}>
         <DialogContent className='h-[calc(100vh-4rem)] max-h-screen w-full max-w-screen-xl border-none bg-black/95 p-0'>
           <div className='relative flex size-full items-center justify-center'>

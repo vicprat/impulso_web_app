@@ -1,18 +1,15 @@
-'use client'
-
-import { usePathname } from 'next/navigation'
-
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
+import { baseMetadata } from '@/lib/metadata'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = baseMetadata
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-  const isHomePage = pathname === '/'
-
   return (
     <div className='min-h-screen'>
       <main className='w-full'>
-        <Header.Public isHomePage={isHomePage} />
+        <Header.Public />
 
         {children}
       </main>

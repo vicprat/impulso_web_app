@@ -1,8 +1,22 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus, Save, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import {
+  Box,
+  Calendar,
+  DollarSign,
+  Hash,
+  Image as ImageIcon,
+  Package,
+  Palette,
+  Ruler,
+  Save,
+  Tag,
+  User,
+  Warehouse,
+  X
+} from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -29,12 +43,28 @@ import {
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { type Product } from '@/models/Product'
+import { useAuth } from '@/modules/auth/context/useAuth'
+import { useGetArtworkTypes, useGetLocations, useGetTechniques, useGetVendors } from '@/services/product/hook'
 import { type CreateProductPayload, type UpdateProductPayload } from '@/services/product/types'
-import { useGetTechniques, useGetArtworkTypes, useGetLocations } from '@/services/product/hook'
 import { useQueryClient } from '@tanstack/react-query'
 
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
+import { Check, ChevronsUpDown } from 'lucide-react'
 import { Tiptap } from '../TipTap'
-import { ImageUploader } from './ImageUploader'
+import { MultiImageUploader } from './MultiImageUploader'
 
 // Componente para dropdown con opción de agregar nueva
 const AddOptionSelect = ({
@@ -45,6 +75,7 @@ const AddOptionSelect = ({
   label,
   value,
   onValueChange,
+  icon: Icon,
 }: {
   options: { id: string; name: string }[]
   isLoading: boolean
@@ -53,6 +84,7 @@ const AddOptionSelect = ({
   label: string
   value?: string
   onValueChange: (value: string) => void
+  icon?: React.ComponentType<{ className?: string }>
 }) => {
   const [ isAdding, setIsAdding ] = useState(false)
   const [ newValue, setNewValue ] = useState('')
@@ -64,8 +96,8 @@ const AddOptionSelect = ({
       setIsAdding(true)
       await onAddNew(newValue.trim())
       setNewValue('')
-      // Establecer el nuevo valor como seleccionado
-      onValueChange(newValue.trim())
+      // No llamar onValueChange aquí para evitar el bucle infinito
+      // El usuario puede seleccionar manualmente la nueva opción
     } catch (error) {
       console.error('Error al agregar opción:', error)
     } finally {
@@ -73,74 +105,149 @@ const AddOptionSelect = ({
     }
   }
 
-  return (
-    <div className='space-y-2'>
-      <Label>{label}</Label>
-      <div className='flex gap-2'>
-        <Select value={value} onValueChange={onValueChange} disabled={isLoading}>
-          <SelectTrigger className='flex-1'>
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((option) => (
-              <SelectItem key={option.id} value={option.name}>
-                {option.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          onClick={() => setIsAdding(true)}
-          disabled={isLoading}
-          className='px-3'
-        >
-          <Plus className='size-4' />
-        </Button>
-      </div>
+  const handleCancel = () => {
+    setIsAdding(false)
+    setNewValue('')
+  }
 
-      {isAdding && (
-        <div className='flex gap-2 mt-2'>
-          <Input
-            placeholder={`Nuevo ${label.toLowerCase()}`}
-            value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                void handleAddNew()
-              }
-              if (e.key === 'Escape') {
-                setIsAdding(false)
-                setNewValue('')
-              }
-            }}
-            autoFocus
-            className='flex-1'
-          />
-          <Button
-            type='button'
-            size='sm'
-            onClick={handleAddNew}
-            disabled={!newValue.trim()}
-          >
-            Agregar
-          </Button>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            onClick={() => {
-              setIsAdding(false)
-              setNewValue('')
-            }}
-          >
-            Cancelar
-          </Button>
-        </div>
-      )}
+  return (
+    <div className='space-y-3'>
+      <Label className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+        {Icon && <Icon className='size-3' />}
+        {label}
+      </Label>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className='bg-surface-container-low hover:bg-surface-container'>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.id} value={option.name}>
+              {option.name}
+            </SelectItem>
+          ))}
+          <Separator />
+          <div className='p-2'>
+            <div className='flex items-center gap-2'>
+              <Input
+                placeholder='Agregar nuevo...'
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                className='h-8'
+                disabled={isAdding}
+              />
+              <Button
+                type='button'
+                size='sm'
+                onClick={handleAddNew}
+                disabled={!newValue.trim() || isAdding}
+              >
+                {isAdding ? 'Agregando...' : 'Agregar'}
+              </Button>
+              {newValue && (
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  onClick={handleCancel}
+                >
+                  Cancelar
+                </Button>
+              )}
+            </div>
+          </div>
+        </SelectContent>
+      </Select>
     </div>
+  )
+}
+
+// Componente para vendor con combobox (permite selección y escritura libre)
+const VendorCombobox = ({
+  vendors,
+  isLoading,
+  value,
+  onValueChange,
+  disabled = false,
+}: {
+  vendors?: string[]
+  isLoading: boolean
+  value: string
+  onValueChange: (value: string) => void
+  disabled?: boolean
+}) => {
+  const [ open, setOpen ] = useState(false)
+  const [ inputValue, setInputValue ] = useState(value)
+
+  // Actualizar inputValue cuando cambie el value
+  useEffect(() => {
+    setInputValue(value)
+  }, [ value ])
+
+  const handleSelect = (selectedValue: string) => {
+    onValueChange(selectedValue)
+    setInputValue(selectedValue)
+    setOpen(false)
+  }
+
+  const handleInputChange = (newValue: string) => {
+    setInputValue(newValue)
+    onValueChange(newValue)
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant='outline'
+          role='combobox'
+          aria-expanded={open}
+          className={cn(
+            'w-full justify-between bg-surface-container-low hover:bg-surface-container',
+            disabled && 'opacity-50 cursor-not-allowed'
+          )}
+          disabled={disabled}
+        >
+          {value || 'Seleccionar artista...'}
+          <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className='w-full p-0'>
+        <Command>
+          <CommandInput
+            placeholder='Buscar o escribir artista...'
+            value={inputValue}
+            onValueChange={handleInputChange}
+          />
+          <CommandList>
+            <CommandEmpty>No se encontraron artistas.</CommandEmpty>
+            <CommandGroup>
+              {isLoading ? (
+                <CommandItem disabled>
+                  Cargando artistas...
+                </CommandItem>
+              ) : (
+                vendors?.map((vendor) => (
+                  <CommandItem
+                    key={vendor}
+                    value={vendor}
+                    onSelect={() => handleSelect(vendor)}
+                  >
+                    <Check
+                      className={cn(
+                        'mr-2 h-4 w-4',
+                        value === vendor ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                    {vendor}
+                  </CommandItem>
+                ))
+              )}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -193,6 +300,18 @@ interface NewImage {
   originalSource: string
 }
 
+interface ImageData {
+  id: string
+  url: string
+  altText?: string
+  isPrimary?: boolean
+  isNew?: boolean
+  filename?: string
+  size?: number
+  status?: 'uploading' | 'completed' | 'error'
+  mediaId?: string // MediaImage ID para eliminación
+}
+
 export function ProductForm({
   isLoading = false,
   mode,
@@ -200,12 +319,40 @@ export function ProductForm({
   onSave,
   product,
 }: ProductFormProps) {
-  const [ newImages, setNewImages ] = useState<NewImage[]>([])
+  const { user, hasRole } = useAuth()
+  const { data: vendors, isLoading: vendorsLoading } = useGetVendors()
+  const [ allImages, setAllImages ] = useState<ImageData[]>([])
   const [ tagsArray, setTagsArray ] = useState<string[]>([])
   const queryClient = useQueryClient()
 
   const isEditing = mode === 'edit'
-  const variant = product?.primaryVariant
+  const variant = product?.variants && product.variants.length > 0 ? product.variants[ 0 ] : undefined
+
+  // Determinar si el usuario puede cambiar el vendor
+  const canChangeVendor = hasRole('admin') || hasRole('super_admin')
+  const isArtist = hasRole('artist')
+
+  // Valor por defecto del vendor para artistas
+  const defaultVendor = isArtist && user?.artist?.name ? user.artist.name : ''
+
+  // Inicializar imágenes existentes cuando el producto cambie
+  useEffect(() => {
+    if (product?.media) {
+      const existingImages: ImageData[] = product.media
+        .filter(node => node.mediaContentType === 'IMAGE' && node.image?.url && node.image?.id)
+        .map((node, index) => ({
+          id: node.image!.id, // ProductImage ID (para compatibilidad)
+          url: node.image!.url,
+          altText: node.image!.altText ?? undefined,
+          isPrimary: index === 0, // La primera imagen es la principal
+          isNew: false,
+          mediaId: node.id, // MediaImage ID (para eliminación)
+        }))
+      setAllImages(existingImages)
+    } else {
+      setAllImages([])
+    }
+  }, [ product?.media ])
 
   // Hooks para obtener las opciones
   const { data: techniques = [], isLoading: isLoadingTechniques } = useGetTechniques()
@@ -213,7 +360,7 @@ export function ProductForm({
   const { data: locations = [], isLoading: isLoadingLocations } = useGetLocations()
 
   // Función para agregar nuevas opciones
-  const handleAddNewOption = async (optionType: string, name: string) => {
+  const handleAddNewOption = useCallback(async (optionType: string, name: string) => {
     const response = await fetch(`/api/options/${optionType}`, {
       method: 'POST',
       headers: {
@@ -231,7 +378,7 @@ export function ProductForm({
     await queryClient.invalidateQueries({ queryKey: [ 'techniques' ] })
     await queryClient.invalidateQueries({ queryKey: [ 'artwork_types' ] })
     await queryClient.invalidateQueries({ queryKey: [ 'locations' ] })
-  }
+  }, [ queryClient ])
 
   const generateHandle = (title: string) => {
     return title
@@ -244,10 +391,7 @@ export function ProductForm({
 
   const extractDescription = (html: string | undefined): string => {
     if (!html) return ''
-    const tempDiv = document.createElement('div')
-    tempDiv.innerHTML = html
-    const paragraphs = tempDiv.getElementsByTagName('p')
-    return paragraphs.length > 0 ? (paragraphs[ 0 ].textContent ?? '') : ''
+    return html
   }
 
   const form = useForm<ProductFormData>({
@@ -263,9 +407,9 @@ export function ProductForm({
       productType: product?.productType ?? '',
       serie: product?.artworkDetails.serie ?? '',
       status: product?.status ?? 'DRAFT',
-      tags: product?.tags.join(', ') ?? '',
+      tags: product?.manualTags.join(', ') ?? '',
       title: product?.title ?? '',
-      vendor: product?.vendor ?? '',
+      vendor: isArtist ? defaultVendor : product?.vendor ?? '',
       width: product?.artworkDetails.width ?? '',
       year: product?.artworkDetails.year ?? '',
     },
@@ -280,6 +424,30 @@ export function ProductForm({
 
   const onSubmit = async (data: ProductFormData) => {
     if (isEditing) {
+      // Obtener las imágenes originales del producto
+      const originalImages = product?.media || []
+
+      // Identificar imágenes que fueron eliminadas usando mediaId
+      const remainingMediaIds = allImages
+        .filter(img => !img.isNew)
+        .map(img => img.mediaId)
+        .filter(id => id && id.startsWith('gid://')) // Solo IDs válidos de MediaImage
+
+      // Solo eliminar imágenes que realmente existen en el producto actual
+      const deletedMediaIds = originalImages
+        .filter(node => node.mediaContentType === 'IMAGE' && node.image?.url)
+        .filter(node => !remainingMediaIds.includes(node.id))
+        .map(node => node.id)
+        .filter(id => id)
+
+      // Convertir ImageData a NewImage para el payload
+      const newImages: NewImage[] = allImages
+        .filter(img => img.isNew)
+        .map(img => ({
+          mediaContentType: 'IMAGE' as const,
+          originalSource: img.url,
+        }))
+
       const updatePayload: UpdateProductPayload = {
         description: data.description,
         details: {
@@ -303,9 +471,19 @@ export function ProductForm({
           .filter((tag) => tag.length > 0),
         title: data.title,
         vendor: data.vendor,
+        // Solo enviar nuevas imágenes si hay nuevas imágenes para agregar
+        images: newImages.length > 0 ? newImages : undefined,
+        // Solo enviar imágenes a eliminar si hay imágenes para eliminar
+        imagesToDelete: deletedMediaIds.length > 0 ? deletedMediaIds : undefined,
       }
       onSave(updatePayload)
     } else {
+      // Convertir ImageData a NewImage para el payload
+      const newImages: NewImage[] = allImages.map(img => ({
+        mediaContentType: 'IMAGE' as const,
+        originalSource: img.url,
+      }))
+
       const createPayload: CreateProductPayload = {
         description: data.description ?? '',
         details: {
@@ -335,24 +513,28 @@ export function ProductForm({
     }
   }
 
-  const handleTitleChange = (value: string) => {
+  const handleImagesChange = useCallback((images: ImageData[]) => {
+    setAllImages(images)
+  }, [])
+
+  const handleTitleChange = useCallback((value: string) => {
     form.setValue('title', value)
     if (!isEditing && value) {
       const generatedHandle = generateHandle(value)
       form.setValue('handle', generatedHandle)
     }
-  }
+  }, [ form, isEditing ])
 
-  const handleTagsChange = (value: string) => {
+  const handleTagsChange = useCallback((value: string) => {
     form.setValue('tags', value)
     const newTagsArray = value
       .split(',')
       .map((tag) => tag.trim())
       .filter((tag) => tag.length > 0)
     setTagsArray(newTagsArray)
-  }
+  }, [ form ])
 
-  const removeTag = (tagToRemove: string) => {
+  const removeTag = useCallback((tagToRemove: string) => {
     const currentTags = form.getValues('tags')
     const updatedTags = currentTags
       .split(',')
@@ -366,48 +548,530 @@ export function ProductForm({
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0)
     )
-  }
-
-  const handleUploadComplete = (resourceUrl: string | null) => {
-    if (!resourceUrl) return
-    const newImage: NewImage = {
-      mediaContentType: 'IMAGE',
-      originalSource: resourceUrl,
-    }
-    setNewImages((prev) => {
-      const updated = [ ...prev, newImage ]
-      return updated
-    })
-  }
+  }, [ form ])
 
   return (
-    <div className='space-y-6'>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {isEditing ? 'Editar Información Básica' : 'Información Básica'}
-              </CardTitle>
-              <CardDescription>
-                {isEditing
-                  ? 'Modifica los detalles principales del producto'
-                  : 'Completa los detalles principales de tu nueva obra'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+    <div >
+      <div className='space-y-8'>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+
+            {/* Información Básica */}
+            <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
+              <CardHeader className='pb-4'>
+                <CardTitle className='flex items-center gap-2 text-on-surface'>
+                  <Box className='size-5 text-primary' />
+                  {isEditing ? 'Editar Información Básica' : 'Información Básica'}
+                </CardTitle>
+                <CardDescription className='text-on-surface-variant'>
+                  {isEditing
+                    ? 'Modifica los detalles principales del producto'
+                    : 'Completa los detalles principales de tu nueva obra'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='space-y-6'>
+                <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                  <FormField
+                    control={form.control}
+                    name='title'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                          <Package className='size-3' />
+                          Título *
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder='Título de la obra'
+                            {...field}
+                            onChange={(e) => handleTitleChange(e.target.value)}
+                            className='bg-surface-container-low hover:bg-surface-container'
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {!isEditing && (
+                    <FormField
+                      control={form.control}
+                      name='handle'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                            <Hash className='size-3' />
+                            Handle (URL)
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder='url-de-la-obra'
+                              {...field}
+                              disabled
+                              className='bg-surface-container-lowest'
+                            />
+                          </FormControl>
+                          <FormDescription className='text-on-surface-variant'>
+                            Se genera automáticamente desde el título.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  <FormField
+                    control={form.control}
+                    name='vendor'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                          <User className='size-3' />
+                          Artista
+                        </FormLabel>
+                        <FormControl>
+                          {canChangeVendor ? (
+                            <VendorCombobox
+                              vendors={vendors}
+                              isLoading={vendorsLoading}
+                              value={field.value || ''}
+                              onValueChange={field.onChange}
+                            />
+                          ) : (
+                            <Input
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder='Nombre del artista'
+                              className='bg-surface-container-low hover:bg-surface-container'
+                              disabled
+                            />
+                          )}
+                        </FormControl>
+                        {!canChangeVendor && (
+                          <p className='text-xs text-muted-foreground'>
+                            Solo administradores pueden cambiar el artista
+                          </p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='productType'
+                    render={({ field }) => (
+                      <AddOptionSelect
+                        options={artworkTypes}
+                        isLoading={isLoadingArtworkTypes}
+                        onAddNew={(name) => handleAddNewOption('artwork_types', name)}
+                        placeholder='Seleccionar tipo de obra'
+                        label='Tipo de Producto'
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        icon={Package}
+                      />
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='status'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                          <Box className='size-3' />
+                          Estado *
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className='bg-surface-container-low hover:bg-surface-container'>
+                              <SelectValue placeholder='Selecciona un estado' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value='ACTIVE'>
+                              <div className='flex items-center gap-2'>
+                                <div className='size-2 rounded-full bg-green-500'></div>
+                                Activo (Visible en tienda)
+                              </div>
+                            </SelectItem>
+                            <SelectItem value='DRAFT'>
+                              <div className='flex items-center gap-2'>
+                                <div className='size-2 rounded-full bg-yellow-500'></div>
+                                Borrador (Oculto)
+                              </div>
+                            </SelectItem>
+                            {isEditing && (
+                              <SelectItem value='ARCHIVED'>
+                                <div className='flex items-center gap-2'>
+                                  <div className='size-2 rounded-full bg-red-500'></div>
+                                  Archivado
+                                </div>
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Precio e Inventario */}
+                <Card className='border-primary/20 bg-primary-container shadow-elevation-2'>
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='flex items-center gap-2 text-on-primary-container'>
+                      <DollarSign className='size-5' />
+                      Precio e Inventario
+                    </CardTitle>
+                    <CardDescription className='text-on-primary-container/70'>
+                      Establece el precio e inventario inicial de tu obra
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                      <FormField
+                        control={form.control}
+                        name='price'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-primary-container'>
+                              <DollarSign className='size-3' />
+                              Precio (MXN) *
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type='number'
+                                step='0.01'
+                                placeholder='0.00'
+                                {...field}
+                                className='bg-card text-on-surface'
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name='inventoryQuantity'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-primary-container'>
+                              <Package className='size-3' />
+                              Inventario *
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type='number'
+                                min='0'
+                                placeholder='1'
+                                {...field}
+                                className='bg-card text-on-surface'
+                              />
+                            </FormControl>
+                            <FormDescription className='text-on-primary-container/70'>
+                              Cantidad disponible en inventario
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {isEditing && variant && (
+                        <div className='col-span-full grid grid-cols-1 gap-4 md:grid-cols-2'>
+                          <div className='rounded-lg bg-card p-4'>
+                            <Label className='text-sm font-medium text-on-surface-variant'>
+                              SKU Actual
+                            </Label>
+                            <p className='mt-1 font-mono text-sm text-on-surface'>
+                              {variant.sku ?? 'Sin SKU'}
+                            </p>
+                          </div>
+                          <div className='rounded-lg bg-card p-4'>
+                            <Label className='text-sm font-medium text-on-surface-variant'>
+                              Título de Variante
+                            </Label>
+                            <p className='mt-1 text-sm text-on-surface'>
+                              {variant.title || 'Sin título'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Separator className='bg-outline-variant' />
+
+
+                {/* Detalles de la Obra */}
+                <div >
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='flex items-center gap-2 text-on-surface'>
+                      <Palette className='size-5 text-secondary' />
+                      Detalles de la Obra
+                    </CardTitle>
+                    <CardDescription className='text-on-surface-variant'>
+                      Información específica sobre la obra de arte
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className='space-y-6'>
+                    <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                      <FormField
+                        control={form.control}
+                        name='medium'
+                        render={({ field }) => (
+                          <AddOptionSelect
+                            options={techniques}
+                            isLoading={isLoadingTechniques}
+                            onAddNew={(name) => handleAddNewOption('techniques', name)}
+                            placeholder='Seleccionar técnica'
+                            label='Técnica'
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            icon={Palette}
+                          />
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name='year'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                              <Calendar className='size-3' />
+                              Año
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder='ej: 2024'
+                                {...field}
+                                className='bg-surface-container-low hover:bg-surface-container'
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name='serie'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                              <ImageIcon className='size-3' />
+                              Serie
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder='ej: Colección Primavera'
+                                {...field}
+                                className='bg-surface-container-low hover:bg-surface-container'
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name='location'
+                        render={({ field }) => (
+                          <AddOptionSelect
+                            options={locations}
+                            isLoading={isLoadingLocations}
+                            onAddNew={(name) => handleAddNewOption('locations', name)}
+                            placeholder='Seleccionar ubicación'
+                            label='Localización'
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            icon={Warehouse}
+                          />
+                        )}
+                      />
+                    </div>
+
+                    <Separator className='bg-outline-variant' />
+
+                    <div>
+                      <Label className='mb-4 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                        <Ruler className='size-3' />
+                        Medidas (cm)
+                      </Label>
+                      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+                        <FormField
+                          control={form.control}
+                          name='height'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium text-on-surface'>Altura</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type='number'
+                                  step='0.1'
+                                  placeholder='0.0'
+                                  {...field}
+                                  className='bg-surface-container-low hover:bg-surface-container'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name='width'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium text-on-surface'>Ancho</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type='number'
+                                  step='0.1'
+                                  placeholder='0.0'
+                                  {...field}
+                                  className='bg-surface-container-low hover:bg-surface-container'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name='depth'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className='text-sm font-medium text-on-surface'>Profundidad</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type='number'
+                                  step='0.1'
+                                  placeholder='0.0'
+                                  {...field}
+                                  className='bg-surface-container-low hover:bg-surface-container'
+                                />
+                              </FormControl>
+                              <FormDescription className='text-on-surface-variant'>
+                                Para obras con volumen
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </div>
+
+                <Separator className='bg-outline-variant' />
+
+                {/* Descripción e Imágenes en Flexbox */}
+                <div className='flex flex-col gap-6 lg:flex-row'>
+                  {/* Descripción - Lado Izquierdo */}
+                  <div className='flex-1'>
+                    <FormField
+                      control={form.control}
+                      name='description'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                            Descripción
+                          </FormLabel>
+                          <FormControl>
+                            <div className='rounded-lg border border-outline-variant/20 bg-surface-container-low p-1 min-h-[300px]'>
+                              <Tiptap.Editor
+                                content={field.value ?? ''}
+                                onChange={(content) => field.onChange(content)}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Imágenes - Lado Derecho */}
+                  <div className='w-full lg:w-1/3'>
+                    <div className='space-y-4'>
+                      <div className='flex items-center gap-2'>
+                        <ImageIcon className='size-4 text-success' />
+                        <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                          {isEditing ? 'Gestionar Imágenes' : 'Imágenes de la Obra'}
+                        </Label>
+                      </div>
+
+                      <div>
+                        <Label className='mb-2 block text-xs text-on-surface-variant'>
+                          {isEditing ? 'Gestionar Imágenes' : 'Subir Imágenes'}
+                        </Label>
+                        <div className='rounded-lg border border-outline-variant/20 bg-surface-container-lowest p-3'>
+                          <MultiImageUploader
+                            existingImages={allImages}
+                            onImagesChange={handleImagesChange}
+                          />
+                        </div>
+
+                        {!isEditing && allImages.length === 0 && (
+                          <p className='mt-2 text-xs text-on-surface-variant'>
+                            Recomendable: al menos 1 imagen
+                          </p>
+                        )}
+
+                        {allImages.filter(img => img.isNew).length > 0 && (
+                          <div className='mt-3 rounded-md border border-success/20 bg-success-container p-3'>
+                            <p className='text-xs font-medium text-on-success-container'>
+                              {allImages.filter(img => img.isNew).length} nueva{allImages.filter(img => img.isNew).length !== 1 ? 's' : ''} imagen{allImages.filter(img => img.isNew).length !== 1 ? 'es' : ''}
+                            </p>
+                            <p className='text-xs text-on-success-container/70'>
+                              Se procesarán al guardar
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+
+
+            {/* Tags */}
+            <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
+              <CardHeader className='pb-4'>
+                <CardTitle className='flex items-center gap-2 text-on-surface'>
+                  <Tag className='size-5' />
+                  Tags
+                </CardTitle>
+                <CardDescription className='text-on-surface-variant'>
+                  Etiquetas para categorizar tu obra
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='space-y-4'>
                 <FormField
                   control={form.control}
-                  name='title'
+                  name='tags'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Título *</FormLabel>
+                      <FormLabel className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                        Tags (separados por comas)
+                      </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder='Título de la obra'
+                          placeholder='Arte Contemporáneo, Disponible, Óleo'
                           {...field}
-                          onChange={(e) => handleTitleChange(e.target.value)}
+                          onChange={(e) => handleTagsChange(e.target.value)}
+                          className='bg-surface-container-low hover:bg-surface-container'
                         />
                       </FormControl>
                       <FormMessage />
@@ -415,411 +1079,91 @@ export function ProductForm({
                   )}
                 />
 
-                {!isEditing && (
-                  <FormField
-                    control={form.control}
-                    name='handle'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Handle (URL)</FormLabel>
-                        <FormControl>
-                          <Input placeholder='url-de-la-obra' {...field} disabled />
-                        </FormControl>
-                        <FormDescription>
-                          Se genera automáticamente desde el título.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-
-                <FormField
-                  control={form.control}
-                  name='vendor'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Artista</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Nombre del artista' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='productType'
-                  render={({ field }) => (
-                    <AddOptionSelect
-                      options={artworkTypes}
-                      isLoading={isLoadingArtworkTypes}
-                      onAddNew={(name) => handleAddNewOption('artwork_types', name)}
-                      placeholder='Seleccionar tipo de obra'
-                      label='Tipo de Producto'
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    />
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='status'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estado *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Selecciona un estado' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value='ACTIVE'>Activo (Visible en tienda)</SelectItem>
-                          <SelectItem value='DRAFT'>Borrador (Oculto)</SelectItem>
-                          {isEditing && <SelectItem value='ARCHIVED'>Archivado</SelectItem>}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name='description'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descripción</FormLabel>
-                    <FormControl>
-                      <Tiptap.Editor
-                        content={field.value ?? ''}
-                        onChange={(content) => field.onChange(content)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Detalles de la Obra</CardTitle>
-              <CardDescription>Información específica sobre la obra de arte</CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                <FormField
-                  control={form.control}
-                  name='medium'
-                  render={({ field }) => (
-                    <AddOptionSelect
-                      options={techniques}
-                      isLoading={isLoadingTechniques}
-                      onAddNew={(name) => handleAddNewOption('techniques', name)}
-                      placeholder='Seleccionar técnica'
-                      label='Técnica'
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    />
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='year'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Año</FormLabel>
-                      <FormControl>
-                        <Input placeholder='ej: 2024' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='serie'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Serie</FormLabel>
-                      <FormControl>
-                        <Input placeholder='ej: Colección Primavera' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='location'
-                  render={({ field }) => (
-                    <AddOptionSelect
-                      options={locations}
-                      isLoading={isLoadingLocations}
-                      onAddNew={(name) => handleAddNewOption('locations', name)}
-                      placeholder='Seleccionar ubicación'
-                      label='Localización'
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    />
-                  )}
-                />
-              </div>
-
-              {/* Medidas */}
-              <Separator />
-              <div>
-                <Label className='mb-3 block text-sm font-medium'>Medidas (cm)</Label>
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                  <FormField
-                    control={form.control}
-                    name='height'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Altura</FormLabel>
-                        <FormControl>
-                          <Input type='number' step='0.1' placeholder='0.0' {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name='width'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ancho</FormLabel>
-                        <FormControl>
-                          <Input type='number' step='0.1' placeholder='0.0' {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name='depth'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Profundidad</FormLabel>
-                        <FormControl>
-                          <Input type='number' step='0.1' placeholder='0.0' {...field} />
-                        </FormControl>
-                        <FormDescription>Para obras con volumen</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Tags</CardTitle>
-              <CardDescription>Etiquetas para categorizar tu obra</CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='tags'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tags (separados por comas)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Arte Contemporáneo, Disponible, Óleo'
-                        {...field}
-                        onChange={(e) => handleTagsChange(e.target.value)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {tagsArray.length > 0 && (
-                <div className='flex flex-wrap gap-2'>
-                  {tagsArray.map((tag, index) => (
-                    <Badge key={index} variant='secondary' className='flex items-center gap-1'>
-                      {tag}
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='sm'
-                        className='size-4 p-0 hover:bg-destructive hover:text-destructive-foreground'
-                        onClick={() => removeTag(tag)}
-                      >
-                        <X className='size-3' />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Precio e Inventario</CardTitle>
-              <CardDescription>Establece el precio e inventario inicial de tu obra</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                <FormField
-                  control={form.control}
-                  name='price'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Precio (MXN) *</FormLabel>
-                      <FormControl>
-                        <Input type='number' step='0.01' placeholder='0.00' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='inventoryQuantity'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Inventario *</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' placeholder='1' {...field} />
-                      </FormControl>
-                      <FormDescription>Cantidad disponible en inventario</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {isEditing && variant && (
-                  <div className='space-y-4'>
-                    <div>
-                      <Label className='text-sm font-medium text-muted-foreground'>
-                        SKU Actual
-                      </Label>
-                      <p className='rounded-md border bg-muted px-3 py-2 text-sm'>
-                        {variant.sku ?? 'Sin SKU'}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className='text-sm font-medium text-muted-foreground'>
-                        Título de Variante
-                      </Label>
-                      <p className='rounded-md border bg-muted px-3 py-2 text-sm'>
-                        {variant.title || 'Sin título'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Imágenes</CardTitle>
-              <CardDescription>
-                {isEditing ? 'Gestiona las imágenes del producto' : 'Agrega imágenes de tu obra'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              {isEditing && product.images.length > 0 && (
-                <>
-                  <div>
-                    <Label className='mb-3 block text-sm font-medium'>Imágenes Actuales</Label>
-                    <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
-                      {product.images.map((img, index) => (
-                        <div key={index} className='space-y-2'>
-                          <div className='relative aspect-square'>
-                            <img
-                              src={img.url}
-                              alt={img.altText ?? product.title}
-                              className='rounded-md object-cover'
-                            />
-                            {index === 0 && (
-                              <Badge className='absolute left-1 top-1' variant='default'>
-                                Principal
-                              </Badge>
-                            )}
-                          </div>
-                          <p className='text-center text-xs text-muted-foreground'>
-                            {img.altText ?? 'Sin texto alternativo'}
-                          </p>
-                        </div>
+                {tagsArray.length > 0 && (
+                  <div className='rounded-lg border border-outline-variant/20 bg-surface-container-lowest p-4'>
+                    <Label className='mb-3 block text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                      Vista Previa de Tags
+                    </Label>
+                    <div className='flex flex-wrap gap-2'>
+                      {tagsArray.map((tag, index) => (
+                        <Badge key={index} variant='tertiary-container' className='flex items-center gap-1 font-medium'>
+                          {tag}
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='sm'
+                            className='size-4 p-0 hover:bg-destructive hover:text-destructive-foreground'
+                            onClick={() => removeTag(tag)}
+                          >
+                            <X className='size-3' />
+                          </Button>
+                        </Badge>
                       ))}
                     </div>
                   </div>
-                  <Separator />
-                </>
-              )}
-
-              <div>
-                <Label className='mb-3 block text-sm font-medium'>
-                  {isEditing ? 'Agregar Nuevas Imágenes' : 'Imágenes de la Obra'}
-                </Label>
-                <ImageUploader onChange={handleUploadComplete} />
-
-                {!isEditing && newImages.length === 0 && (
-                  <p className='mt-2 text-sm text-muted-foreground'>
-                    Es recomendable agregar al menos una imagen de tu obra.
-                  </p>
                 )}
+              </CardContent>
+            </Card>
 
-                {newImages.length > 0 && (
-                  <div className='mt-4'>
-                    <Label className='text-sm font-medium text-green-600'>
-                      Nuevas imágenes que se agregarán ({newImages.length})
-                    </Label>
-                    <p className='mt-1 text-xs text-muted-foreground'>
-                      Estas imágenes se procesarán al guardar el producto
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
 
-          {isEditing && (
-            <div className='rounded-lg border border-yellow-200 bg-yellow-50 p-4'>
-              <h4 className='mb-2 text-sm font-medium text-yellow-800'>Nota sobre la edición</h4>
-              <ul className='space-y-1 text-xs text-yellow-700'>
-                <li>• El handle (URL) no se puede cambiar una vez creado el producto</li>
-                <li>• Las imágenes nuevas se agregarán a las existentes</li>
-                <li>• Los cambios de inventario y precio se procesan por separado</li>
-                <li>• Los detalles de la obra se guardan como metafields en Shopify</li>
-              </ul>
+
+            {/* Nota de edición */}
+            {isEditing && (
+              <Card className='border-warning/20 bg-warning-container shadow-elevation-1'>
+                <CardContent className='p-6'>
+                  <h4 className='mb-3 flex items-center gap-2 text-sm font-medium text-on-warning-container'>
+                    <Box className='size-4' />
+                    Nota sobre la edición
+                  </h4>
+                  <ul className='space-y-2 text-sm text-on-warning-container/80'>
+                    <li className='flex items-start gap-2'>
+                      <div className='mt-1.5 size-1.5 rounded-full bg-on-warning-container/60' />
+                      El handle (URL) no se puede cambiar una vez creado el producto
+                    </li>
+                    <li className='flex items-start gap-2'>
+                      <div className='mt-1.5 size-1.5 rounded-full bg-on-warning-container/60' />
+                      Las imágenes nuevas se agregarán a las existentes
+                    </li>
+                    <li className='flex items-start gap-2'>
+                      <div className='mt-1.5 size-1.5 rounded-full bg-on-warning-container/60' />
+                      Los cambios de inventario y precio se procesan por separado
+                    </li>
+                    <li className='flex items-start gap-2'>
+                      <div className='mt-1.5 size-1.5 rounded-full bg-on-warning-container/60' />
+                      Los detalles de la obra se guardan como metafields en Shopify
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Botones de acción */}
+            <div >
+              <CardContent className='p-6'>
+                <div className='flex justify-end space-x-4'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={onCancel}
+                    className='bg-surface-container-low hover:bg-surface-container'
+                  >
+                    <X className='mr-2 size-4' />
+                    Cancelar
+                  </Button>
+                  <Button
+                    type='submit'
+                    disabled={isLoading}
+                    className='bg-primary hover:bg-primary/90'
+                  >
+                    <Save className='mr-2 size-4' />
+                    {isLoading ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Crear Obra'}
+                  </Button>
+                </div>
+              </CardContent>
             </div>
-          )}
-
-          <div className='flex justify-end space-x-4 pt-6'>
-            <Button type='button' variant='outline' onClick={onCancel}>
-              <X className='mr-2 size-4' />
-              Cancelar
-            </Button>
-            <Button type='submit' disabled={isLoading}>
-              <Save className='mr-2 size-4' />
-              {isLoading ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Crear Obra'}
-            </Button>
-          </div>
-        </form>
-      </Form>
+          </form>
+        </Form>
+      </div>
     </div>
   )
 }

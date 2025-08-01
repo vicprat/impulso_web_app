@@ -13,6 +13,19 @@ export interface Image {
   height?: number
 }
 
+export interface MediaNode {
+  id: string
+  mediaContentType: string
+  status: string
+  image?: {
+    id: string
+    url: string
+    altText: string | null
+    width?: number
+    height?: number
+  }
+}
+
 export interface Variant {
   id: string
   title: string
@@ -59,6 +72,9 @@ interface ShopifyProductData {
   tags: string[]
   images: {
     edges: { node: Image }[]
+  }
+  media: {
+    nodes: MediaNode[]
   }
   variants: {
     edges: { node: ShopifyVariantNode }[]
@@ -198,6 +214,7 @@ export class Product {
   vendor: string
   status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED'
   images: Image[]
+  media: MediaNode[]
   variants: Variant[]
   tags: string[]
   manualTags: string[] = []
@@ -215,6 +232,7 @@ export class Product {
     this.status = shopifyProductData.status
     this.tags = shopifyProductData.tags
     this.images = shopifyProductData.images.edges.map((edge) => edge.node)
+    this.media = shopifyProductData.media.nodes
 
     this.variants = shopifyProductData.variants.edges.map((edge) =>
       this._convertVariantFromApi(edge.node)

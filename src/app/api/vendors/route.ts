@@ -26,7 +26,7 @@ interface ShopifyVendorsResponse {
 
 export async function GET() {
   try {
-    await requirePermission(PERMISSIONS.MANAGE_USERS)
+    await requirePermission(PERMISSIONS.MANAGE_INVENTORY)
 
     const response = await makeAdminApiRequest<ShopifyVendorsResponse>(GET_PRODUCT_VENDORS_QUERY)
 

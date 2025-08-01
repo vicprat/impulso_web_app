@@ -3,10 +3,10 @@ import axios from 'axios'
 
 import { type Product } from '@/models/Product'
 import {
-    type CreateProductPayload,
-    type GetProductsParams,
-    type PaginatedProductsResponse,
-    type UpdateProductPayload,
+  type CreateProductPayload,
+  type GetProductsParams,
+  type PaginatedProductsResponse,
+  type UpdateProductPayload,
 } from '@/services/product/types'
 
 const PRODUCTS_QUERY_KEY = 'managementProducts'
@@ -67,7 +67,7 @@ export const useUpdateProduct = () => {
       const { data } = await axios.put(`/api/management/products/${productId}`, payload)
       return data
     },
-    onSuccess: (updatedProduct) => {
+    onSuccess: (updatedProduct, variables) => {
       const productId = updatedProduct.id.split('/').pop()
 
       // Invalidar todas las consultas relacionadas con productos
@@ -75,8 +75,16 @@ export const useUpdateProduct = () => {
       void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'infinite'] })
       void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'stats'] })
 
-      // Actualizar el producto específico en el caché
-      queryClient.setQueryData([PRODUCTS_QUERY_KEY, 'detail', productId], updatedProduct)
+      // Si se agregaron imágenes, invalidar completamente el cache del producto
+      if (variables.images && variables.images.length > 0) {
+        void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'detail', productId] })
+      } else if (variables.imagesToDelete && variables.imagesToDelete.length > 0) {
+        // Si se eliminaron imágenes, también invalidar el cache
+        void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'detail', productId] })
+      } else {
+        // Actualizar el producto específico en el caché solo si no se modificaron imágenes
+        queryClient.setQueryData([PRODUCTS_QUERY_KEY, 'detail', productId], updatedProduct)
+      }
 
       // Actualizar el producto en las listas paginadas
       queryClient.setQueriesData(
@@ -164,12 +172,13 @@ export const useProductStats = (params: Omit<GetProductsParams, 'cursor' | 'limi
 export const useGetVendors = () => {
   return useQuery({
     queryFn: async () => {
-      const { data } = await axios.get('/api/vendors')
-      return data
+      const response = await fetch('/api/vendors')
+      if (!response.ok) {
+        throw new Error('Error al obtener vendors')
+      }
+      return response.json() as Promise<string[]>
     },
     queryKey: ['vendors'],
-    staleTime: 10 * 60 * 1000, // 10 minutos
-    retry: 1,
   })
 }
 

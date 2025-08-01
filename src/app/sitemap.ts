@@ -44,6 +44,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
       url: `${baseUrl}/store/search`,
     },
+    {
+      changeFrequency: 'monthly' as const,
+      lastModified: new Date(),
+      priority: 0.7,
+      url: `${baseUrl}/services`,
+    },
+    {
+      changeFrequency: 'monthly' as const,
+      lastModified: new Date(),
+      priority: 0.6,
+      url: `${baseUrl}/membership`,
+    },
+    {
+      changeFrequency: 'yearly' as const,
+      lastModified: new Date(),
+      priority: 0.3,
+      url: `${baseUrl}/terms`,
+    },
   ]
 
   // Aquí podrías agregar páginas dinámicas como productos, artistas, etc.

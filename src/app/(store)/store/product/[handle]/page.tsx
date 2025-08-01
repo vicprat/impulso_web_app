@@ -1,13 +1,12 @@
 import { notFound } from 'next/navigation'
 
+import { type Product } from '@/models/Product'
 import { getServerSession } from '@/modules/auth/server/server'
-import { api } from '@/modules/shopify/api'
 import {
   getPrivateProductIds,
   getPrivateRoomByUserId,
-  shopifyService,
 } from '@/modules/shopify/service'
-import { type Product } from '@/modules/shopify/types'
+import { productService } from '@/services/product/service'
 
 import { Client } from './Client'
 
@@ -27,12 +26,13 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
     const session = await getServerSession()
     const privateProductIds = await getPrivateProductIds()
 
-    let productResponse
-    let product
+    let product: Product | null = null
 
     try {
-      productResponse = await api.getProductByHandle(handle)
-      product = productResponse.data
+      // Usar nuestro servicio personalizado para obtener el producto enriquecido
+      if (session) {
+        product = await productService.getProductByHandle(handle, session)
+      }
     } catch {
       if (!session) {
         notFound()
@@ -42,6 +42,30 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
 
     if (!product) {
       notFound()
+    }
+
+    // Convertir el modelo Product a un objeto plano para evitar problemas de serialización
+    const productData = {
+      id: product.id,
+      handle: product.handle,
+      title: product.title,
+      descriptionHtml: product.descriptionHtml,
+      productType: product.productType,
+      vendor: product.vendor,
+      status: product.status,
+      images: product.images,
+      media: product.media,
+      variants: product.variants,
+      tags: product.tags,
+      manualTags: product.manualTags,
+      autoTags: product.autoTags,
+      artworkDetails: product.artworkDetails,
+      // Getters
+      primaryImage: product.primaryImage,
+      primaryVariant: product.primaryVariant,
+      formattedPrice: product.formattedPrice,
+      isAvailable: product.isAvailable,
+      statusLabel: product.statusLabel,
     }
 
     if (privateProductIds.includes(product.id)) {
@@ -74,12 +98,48 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
 
     let relatedProducts: Product[] = []
     try {
-      relatedProducts = await shopifyService.getRelatedProducts(product)
+      // Obtener productos relacionados usando nuestro servicio
+      if (session) {
+        const relatedResponse = await productService.getProducts({
+          limit: 10,
+          vendor: product.vendor,
+          status: 'ACTIVE'
+        }, session)
+
+        // Filtrar el producto actual y limitar a 6 productos relacionados
+        relatedProducts = relatedResponse.products
+          .filter(p => p.id !== product.id)
+          .slice(0, 6)
+      }
     } catch {
       relatedProducts = []
     }
 
-    return <Client product={product} relatedProducts={relatedProducts} />
+    // Convertir los productos relacionados a objetos planos
+    const relatedProductsData = relatedProducts.map(product => ({
+      id: product.id,
+      handle: product.handle,
+      title: product.title,
+      descriptionHtml: product.descriptionHtml,
+      productType: product.productType,
+      vendor: product.vendor,
+      status: product.status,
+      images: product.images,
+      media: product.media,
+      variants: product.variants,
+      tags: product.tags,
+      manualTags: product.manualTags,
+      autoTags: product.autoTags,
+      artworkDetails: product.artworkDetails,
+      // Getters
+      primaryImage: product.primaryImage,
+      primaryVariant: product.primaryVariant,
+      formattedPrice: product.formattedPrice,
+      isAvailable: product.isAvailable,
+      statusLabel: product.statusLabel,
+    }))
+
+    return <Client product={productData} relatedProducts={relatedProductsData} />
   } catch {
     notFound()
   }

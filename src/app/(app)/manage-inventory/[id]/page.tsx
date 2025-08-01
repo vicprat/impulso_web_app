@@ -1,6 +1,27 @@
 'use client'
 
-import { ArrowLeft, Edit2, Eye, Plus, Trash2 } from 'lucide-react'
+import {
+  Activity,
+  ArrowLeft,
+  Box,
+  Calendar,
+  DollarSign,
+  Edit2,
+  ExternalLink,
+  FileText,
+  Hash,
+  Image as ImageIcon,
+  Inbox,
+  Package,
+  Palette,
+  Plus,
+  Ruler,
+  Settings,
+  Tag,
+  Trash2,
+  User,
+  Warehouse
+} from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -19,10 +40,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDeleteProduct, useGetArtworkTypes, useGetLocations, useGetProduct, useGetTechniques, useUpdateProduct } from '@/services/product/hook'
 import { type UpdateProductPayload } from '@/services/product/types'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
+import { formatCurrency } from '@/src/helpers'
 import { useQueryClient } from '@tanstack/react-query'
 
 // Componente para agregar nuevas opciones
@@ -256,258 +279,410 @@ export default function ProductDetailPage() {
     )
   }
 
+  const variant = product.variants && product.variants.length > 0 ? product.variants[ 0 ] : undefined
+
+  const getAvailabilityVariant = (available: boolean) => {
+    return available ? 'default' : 'destructive'
+  }
+
   return (
-    <div className='container mx-auto space-y-6 py-6'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <div className='mb-2 flex items-center space-x-2 text-sm text-muted-foreground'>
-            <Link href={ROUTES.INVENTORY.MAIN.PATH} className='hover:text-foreground'>
-              Gestión de Inventario
-            </Link>
-            <span>/</span>
-            <span>{product.title}</span>
-            {isEditing && (
-              <>
-                <span>/</span>
-                <span>Editar</span>
-              </>
-            )}
-          </div>
-          <div className='flex items-center space-x-4'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => router.push(ROUTES.INVENTORY.MAIN.PATH)}
-            >
-              <ArrowLeft className='mr-2 size-4' />
-              Volver
-            </Button>
-            <h1 className='text-2xl font-bold'>{isEditing ? 'Editar Producto' : product.title}</h1>
-            {!isEditing && (
-              <Badge
-                variant={
-                  product.status === 'ACTIVE'
-                    ? 'default'
-                    : product.status === 'DRAFT'
-                      ? 'secondary'
-                      : 'destructive'
-                }
-              >
-                {product.statusLabel}
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        {!isEditing && (
-          <div className='flex items-center space-x-2'>
-            <Button variant='outline' onClick={handleEdit}>
-              <Edit2 className='mr-2 size-4' />
-              Editar
-            </Button>
-            <Link
-              href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })}
-              target='_blank'
-              className='flex items-center'
-            >
-              <Eye className='mr-2 size-4' />
-              Ver en tienda
-            </Link>
-            <Button
-              variant='destructive'
-              onClick={handleDelete}
-              disabled={deleteMutation.isPending}
-            >
-              <Trash2 className='mr-2 size-4' />
-              {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {isEditing ? (
-        <Form.Product
-          mode='edit'
-          product={product}
-          onSave={handleSave}
-          onCancel={handleCancelEdit}
-          isLoading={updateMutation.isPending}
-        />
-      ) : (
-        <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-          <div className='space-y-6 lg:col-span-2'>
-            <Card>
-              <CardHeader>
-                <CardTitle>Información del Producto</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <Label className='text-sm font-medium text-muted-foreground'>Título</Label>
-                    <p className='text-sm'>{product.title}</p>
-                  </div>
-                  <div>
-                    <Label className='text-sm font-medium text-muted-foreground'>Handle</Label>
-                    <p className='font-mono text-sm'>{product.handle}</p>
-                  </div>
-                  <div>
-                    <Label className='text-sm font-medium text-muted-foreground'>Artista</Label>
-                    <p className='text-sm'>{product.vendor}</p>
-                  </div>
-                  <div>
-                    <Label className='text-sm font-medium text-muted-foreground'>Tipo</Label>
-                    <p className='text-sm'>{product.productType}</p>
-                  </div>
-                </div>
-
-                {product.descriptionHtml && (
-                  <div>
-                    <Label className='text-sm font-medium text-muted-foreground'>Descripción</Label>
-                    <div
-                      className='prose prose-sm mt-2 max-w-none text-sm'
-                      dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {product.tags.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Tags</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className='flex flex-wrap gap-2'>
-                    {product.tags.map((tag, index) => (
-                      <Badge key={index} variant='outline'>
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {product.images.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Imágenes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className='grid grid-cols-2 gap-4 md:grid-cols-3'>
-                    {product.images.map((image, index) => (
-                      <div key={index} className='relative aspect-square'>
-                        <img
-                          src={image.url}
-                          alt={image.altText ?? product.title}
-                          className='rounded-md object-cover'
-                        />
-                        {index === 0 && <Badge className='absolute left-2 top-2'>Principal</Badge>}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          <div className='space-y-6'>
-            <Card>
-              <CardHeader>
-                <CardTitle>Precio</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='text-2xl font-bold'>{product.formattedPrice}</div>
-                {product.primaryVariant?.sku && (
-                  <p className='mt-2 text-sm text-muted-foreground'>
-                    SKU: {product.primaryVariant.sku}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Inventario</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='space-y-3'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm font-medium'>Cantidad disponible</span>
-                    <span className='text-lg font-semibold'>
-                      {product.primaryVariant?.inventoryQuantity ?? 0}
-                    </span>
-                  </div>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm font-medium'>Estado</span>
-                    <Badge variant={product.isAvailable ? 'default' : 'destructive'}>
-                      {product.isAvailable ? 'Disponible' : 'Agotado'}
+    <div className='min-h-screen bg-surface'>
+      <div className='container mx-auto space-y-8 py-8'>
+        {/* Header */}
+        <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
+          <CardContent className='p-6'>
+            <div className='mb-4 flex items-center justify-between'>
+              <div className='flex items-center space-x-4'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => router.push(ROUTES.INVENTORY.MAIN.PATH)}
+                  className='bg-surface-container-low hover:bg-surface-container'
+                >
+                  <ArrowLeft className='mr-2 size-4' />
+                  Volver
+                </Button>
+                <div className='h-8 w-px bg-outline-variant' />
+                <div>
+                  <div className='mb-1 flex items-center gap-3'>
+                    <h1 className='text-2xl font-bold text-on-surface'>{product.title}</h1>
+                    <Badge
+                      variant={
+                        product.status === 'ACTIVE'
+                          ? 'default'
+                          : product.status === 'DRAFT'
+                            ? 'secondary'
+                            : 'destructive'
+                      }
+                    >
+                      {product.status}
                     </Badge>
                   </div>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm font-medium'>Gestión</span>
-                    <span className='text-sm text-muted-foreground'>
-                      {product.primaryVariant?.inventoryManagement ?? 'N/A'}
-                    </span>
-                  </div>
+                  <p className='text-sm text-on-surface-variant'>ID: {product.id.split('/').pop()}</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Opciones Disponibles</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <AddOptionDropdown
-                  options={techniques}
-                  isLoading={isLoadingTechniques}
-                  onAddNew={(name) => handleAddNewOption('techniques', name)}
-                  placeholder='Seleccionar técnica'
-                  label='Técnicas'
-                />
+              <div className='flex items-center space-x-3'>
+                <Button variant='outline' asChild>
+                  <Link
+                    href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, {
+                      handle: product.handle,
+                    })}
+                    target='_blank'
+                    className='flex items-center'
+                  >
+                    <ExternalLink className='mr-2 size-4' />
+                    Ver en tienda
+                  </Link>
+                </Button>
+                <Button variant='container-success' onClick={handleEdit}>
+                  <Edit2 className='mr-2 size-4' />
+                  Editar
+                </Button>
+                <Button
+                  variant='container-destructive'
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className='mr-2 size-4' />
+                  {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-                <AddOptionDropdown
-                  options={artworkTypes}
-                  isLoading={isLoadingArtworkTypes}
-                  onAddNew={(name) => handleAddNewOption('artwork_types', name)}
-                  placeholder='Seleccionar tipo de obra'
-                  label='Tipos de Obra'
-                />
+        {isEditing ? (
+          <Form.Product
+            mode='edit'
+            product={product}
+            onSave={handleSave}
+            onCancel={handleCancelEdit}
+            isLoading={updateMutation.isPending}
+          />
+        ) : (
+          <>
+            {/* Layout principal con información */}
+            <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
+              <div className='space-y-6 lg:col-span-2'>
+                {/* Información del Producto */}
+                <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='flex items-center gap-2 text-on-surface'>
+                      <Box className='size-5 text-primary' />
+                      Información del Producto
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-6'>
+                    <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+                      <div className='space-y-4'>
+                        <div>
+                          <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                            Título
+                          </Label>
+                          <p className='mt-1 text-sm font-medium text-on-surface'>{product.title}</p>
+                        </div>
+                        <div>
+                          <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                            Artista
+                          </Label>
+                          <div className='mt-1 flex items-center gap-2'>
+                            <User className='size-3 text-on-surface-variant' />
+                            <p className='text-sm font-medium text-on-surface'>{product.vendor}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className='space-y-4'>
+                        <div>
+                          <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                            Handle
+                          </Label>
+                          <div className='mt-1 flex items-center gap-2'>
+                            <Hash className='size-3 text-on-surface-variant' />
+                            <p className='font-mono text-sm text-on-surface'>{product.handle}</p>
+                          </div>
+                        </div>
+                        <div>
+                          <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                            Tipo de Producto
+                          </Label>
+                          <div className='mt-1 flex items-center gap-2'>
+                            <Package className='size-3 text-on-surface-variant' />
+                            <p className='text-sm font-medium text-on-surface'>{product.productType}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {product.descriptionHtml && (
+                      <>
+                        <Separator className='bg-outline-variant' />
+                        <div>
+                          <Label className='mb-3 block text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                            Descripción
+                          </Label>
+                          <div
+                            className="prose prose-sm prose-slate dark:prose-invert max-w-none 
+                   prose-headings:text-foreground prose-p:text-muted-foreground 
+                   prose-strong:text-foreground prose-code:text-foreground
+                   prose-pre:bg-muted prose-pre:border"
+                            dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
 
-                <AddOptionDropdown
-                  options={locations}
-                  isLoading={isLoadingLocations}
-                  onAddNew={(name) => handleAddNewOption('locations', name)}
-                  placeholder='Seleccionar ubicación'
-                  label='Ubicaciones'
-                />
-              </CardContent>
-            </Card>
+                {/* Galería de Imágenes - Más discreta */}
+                {product.images.length > 0 && (
+                  <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
+                    <CardHeader className='pb-3'>
+                      <CardTitle className='flex items-center gap-2 text-on-surface'>
+                        <ImageIcon className='size-5 text-success' />
+                        Imágenes ({product.images.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className='grid grid-cols-3 gap-3 md:grid-cols-4'>
+                        {product.images.slice(0, 8).map((image, index) => (
+                          <div key={index} className='group relative aspect-square'>
+                            <img
+                              src={image.url}
+                              alt={image.altText ?? product.title}
+                              className='h-full w-full rounded-lg object-cover shadow-elevation-1 transition-all duration-300 group-hover:shadow-elevation-2 group-hover:scale-105'
+                            />
+                            {index === 0 && (
+                              <Badge className='absolute left-1 top-1 bg-primary text-primary-foreground text-xs px-1 py-0'>
+                                1
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Detalles Técnicos</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-3'>
-                <div className='flex justify-between text-sm'>
-                  <span className='font-medium'>ID del Producto</span>
-                  <span className='font-mono text-xs'>{product.id.split('/').pop()}</span>
-                </div>
-                {product.primaryVariant && (
-                  <div className='flex justify-between text-sm'>
-                    <span className='font-medium'>ID de Variante</span>
-                    <span className='font-mono text-xs'>
-                      {product.primaryVariant.id.split('/').pop()}
-                    </span>
-                  </div>
+                        {/* Mostrar contador si hay más imágenes */}
+                        {product.images.length > 8 && (
+                          <div className='flex aspect-square items-center justify-center rounded-lg bg-surface-container-high border-2 border-dashed border-outline-variant'>
+                            <div className='text-center'>
+                              <p className='text-sm font-bold text-on-surface'>+{product.images.length - 8}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
+
+                {/* Detalles de la Obra */}
+                {product.artworkDetails && (
+                  <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
+                    <CardHeader className='pb-4'>
+                      <CardTitle className='flex items-center gap-2 text-on-surface'>
+                        <Palette className='size-5 text-secondary' />
+                        Detalles de la Obra
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className='grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3'>
+                      {product.artworkDetails.medium && (
+                        <div className='flex items-center gap-2'>
+                          <FileText className='size-4 text-on-surface-variant' />
+                          <div>
+                            <Label className='text-xs text-on-surface-variant'>Técnica</Label>
+                            <p className='text-sm font-medium'>{product.artworkDetails.medium}</p>
+                          </div>
+                        </div>
+                      )}
+                      {product.artworkDetails.year && (
+                        <div className='flex items-center gap-2'>
+                          <Calendar className='size-4 text-on-surface-variant' />
+                          <div>
+                            <Label className='text-xs text-on-surface-variant'>Año</Label>
+                            <p className='text-sm font-medium'>{product.artworkDetails.year}</p>
+                          </div>
+                        </div>
+                      )}
+                      {(product.artworkDetails.width || product.artworkDetails.height || product.artworkDetails.depth) && (
+                        <div className='flex items-center gap-2'>
+                          <Ruler className='size-4 text-on-surface-variant' />
+                          <div>
+                            <Label className='text-xs text-on-surface-variant'>Medidas (cm)</Label>
+                            <p className='text-sm font-medium'>
+                              {product.artworkDetails.height} x {product.artworkDetails.width} {product.artworkDetails.depth ? `x ${product.artworkDetails.depth}` : ''}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {product.artworkDetails.serie && (
+                        <div className='flex items-center gap-2'>
+                          <ImageIcon className='size-4 text-on-surface-variant' />
+                          <div>
+                            <Label className='text-xs text-on-surface-variant'>Serie</Label>
+                            <p className='text-sm font-medium'>{product.artworkDetails.serie}</p>
+                          </div>
+                        </div>
+                      )}
+                      {product.artworkDetails.location && (
+                        <div className='flex items-center gap-2'>
+                          <Warehouse className='size-4 text-on-surface-variant' />
+                          <div>
+                            <Label className='text-xs text-on-surface-variant'>Ubicación</Label>
+                            <p className='text-sm font-medium'>{product.artworkDetails.location}</p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Tags */}
+                {product.tags.length > 0 && (
+                  <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
+                    <CardHeader className='pb-4'>
+                      <CardTitle className='flex items-center gap-2 text-on-surface'>
+                        <Tag className='size-5' />
+                        Tags
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className='flex flex-wrap gap-2'>
+                        {product.tags.map((tag, index) => (
+                          <Badge key={index} variant='tertiary-container' className='font-medium'>
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* Sidebar */}
+              <div className='space-y-6'>
+                {/* Precio */}
+                <Card className='border-primary/20 bg-primary-container shadow-elevation-2'>
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='flex items-center gap-2 text-on-primary-container'>
+                      <DollarSign className='size-5' />
+                      Precio
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    <div className='text-center'>
+                      <div className='mb-1 text-3xl font-bold text-on-primary-container'>
+                        {variant?.price ? formatCurrency(variant.price.amount, variant.price.currencyCode) : 'N/A'}
+                      </div>
+                    </div>
+                    {variant?.sku && (
+                      <div className='bg-card p-3 rounded-lg'>
+                        <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                          SKU
+                        </Label>
+                        <p className='mt-1 font-mono text-sm text-on-surface'>{variant.sku}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Inventario */}
+                <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='flex items-center gap-2 text-on-surface'>
+                      <Inbox className='size-5 text-warning' />
+                      Inventario
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-2'>
+                        <Package className='size-4 text-on-surface-variant' />
+                        <span className='text-sm font-medium'>Cantidad</span>
+                      </div>
+                      <span className='text-lg font-semibold'>{variant?.inventoryQuantity ?? 0}</span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-2'>
+                        <Activity className='size-4 text-on-surface-variant' />
+                        <span className='text-sm font-medium'>Estado</span>
+                      </div>
+                      <Badge variant={getAvailabilityVariant(variant?.availableForSale ?? false)}>
+                        {variant?.availableForSale ? 'Disponible' : 'Agotado'}
+                      </Badge>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-2'>
+                        <Settings className='size-4 text-on-surface-variant' />
+                        <span className='text-sm font-medium'>Gestión</span>
+                      </div>
+                      <span className='text-sm text-muted-foreground'>{variant?.inventoryManagement ?? 'N/A'}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Opciones Disponibles */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Opciones Disponibles</CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    <AddOptionDropdown
+                      options={techniques}
+                      isLoading={isLoadingTechniques}
+                      onAddNew={(name) => handleAddNewOption('techniques', name)}
+                      placeholder='Seleccionar técnica'
+                      label='Técnicas'
+                    />
+
+                    <AddOptionDropdown
+                      options={artworkTypes}
+                      isLoading={isLoadingArtworkTypes}
+                      onAddNew={(name) => handleAddNewOption('artwork_types', name)}
+                      placeholder='Seleccionar tipo de obra'
+                      label='Tipos de Obra'
+                    />
+
+                    <AddOptionDropdown
+                      options={locations}
+                      isLoading={isLoadingLocations}
+                      onAddNew={(name) => handleAddNewOption('locations', name)}
+                      placeholder='Seleccionar ubicación'
+                      label='Ubicaciones'
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Detalles Técnicos */}
+                <Card className='border-outline-variant/20 shadow-elevation-1'>
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='flex items-center gap-2 text-on-surface'>
+                      <Settings className='size-5 text-on-surface-variant' />
+                      Detalles Técnicos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-3'>
+                    <div className='p-3 bg-surface-container-lowest rounded-lg'>
+                      <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                        ID del Producto
+                      </Label>
+                      <p className='mt-1 break-all font-mono text-xs text-on-surface'>
+                        {product.id.split('/').pop()}
+                      </p>
+                    </div>
+                    {variant && (
+                      <div className='p-3 bg-surface-container-lowest rounded-lg'>
+                        <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                          ID de Variante
+                        </Label>
+                        <p className='mt-1 break-all font-mono text-xs text-on-surface'>
+                          {variant.id.split('/').pop()}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }

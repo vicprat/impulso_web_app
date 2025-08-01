@@ -2,7 +2,11 @@
 
 import { motion } from 'framer-motion'
 import { BookOpen, DollarSign, Frame, Image, Printer, TrendingUp } from 'lucide-react'
+import Script from 'next/script'
 
+import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { routeMetadata } from '@/lib/metadata'
+import type { Metadata } from 'next'
 
 interface Service {
   id: string
@@ -70,60 +74,100 @@ const slideUp = {
 }
 
 export default function ServicesPage() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "Servicios de Arte - Impulso Galería",
+    "description": "Servicios especializados en arte contemporáneo: venta de obra original, enmarcado, impresión digital, inversión en arte, sistemas de colgaje y fabricación de catálogos.",
+    "provider": {
+      "@type": "Organization",
+      "name": "Impulso Galería",
+      "url": "https://impulsogaleria.com"
+    },
+    "serviceType": "Servicios de Arte",
+    "areaServed": "México",
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Servicios de Arte",
+      "itemListElement": services.map((service, index) => ({
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": service.title,
+          "description": service.description
+        }
+      }))
+    }
+  }
+
   return (
-    <div className='min-h-screen'>
-      <div className='container mx-auto px-6 py-12'>
-        {/* Header */}
-        <motion.div
-          variants={slideUp}
-          initial='initial'
-          animate='animate'
-          className='mb-16 text-center'
-        >
-          <h1 className='mb-4 text-4xl font-bold  md:text-5xl lg:text-6xl'>
-            Servicios
-          </h1>
-          <p className='mx-auto max-w-2xl text-lg '>
-            Ofrecemos una gama completa de servicios especializados para el mundo del arte
-          </p>
-        </motion.div>
+    <>
+      <Script
+        id="services-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <div className='min-h-screen'>
+        <div className='container mx-auto px-6 py-12'>
+          {/* Breadcrumbs */}
+          <Breadcrumbs items={[ { label: 'Servicios' } ]} />
 
-        {/* Services Grid */}
-        <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
-          {services.map((service, index) => {
-            const IconComponent = service.icon
-            return (
-              <motion.div
-                key={service.id}
-                variants={slideUp}
-                initial='initial'
-                animate='animate'
-                transition={{ delay: index * 0.1 }}
-                className='group overflow-hidden rounded-lg bg-gray-50 shadow-md transition-all duration-300 hover:shadow-lg'
-              >
-                <div className='relative aspect-video overflow-hidden'>
-                  <div className='absolute inset-0 bg-gradient-to-br from-gray-900/20 to-gray-900/40' />
-                  <div className='absolute inset-0 flex items-center justify-center'>
-                    <IconComponent className='h-16 w-16 text-gray-600' />
-                  </div>
-                  <div className='absolute inset-0 bg-gradient-to-t from-black/50 to-transparent' />
-                </div>
+          {/* Header */}
+          <header>
+            <motion.div
+              variants={slideUp}
+              initial='initial'
+              animate='animate'
+              className='mb-16 text-center'
+            >
+              <h1 className='mb-4 text-4xl font-bold  md:text-5xl lg:text-6xl'>
+                Servicios
+              </h1>
+              <p className='mx-auto max-w-2xl text-lg '>
+                Ofrecemos una gama completa de servicios especializados para el mundo del arte
+              </p>
+            </motion.div>
+          </header>
 
-                <div className='p-6'>
-                  <h3 className='mb-3 text-xl font-semibold text-gray-900'>
-                    {service.title}
-                  </h3>
-                  <p className='text-gray-600'>
-                    {service.description}
-                  </p>
-                </div>
-              </motion.div>
-            )
-          })}
+          {/* Services Grid */}
+          <section aria-label="Servicios disponibles">
+            <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
+              {services.map((service, index) => {
+                const IconComponent = service.icon
+                return (
+                  <motion.article
+                    key={service.id}
+                    variants={slideUp}
+                    initial='initial'
+                    animate='animate'
+                    transition={{ delay: index * 0.1 }}
+                    className='group overflow-hidden rounded-lg bg-gray-50 shadow-md transition-all duration-300 hover:shadow-lg'
+                  >
+                    <div className='relative aspect-video overflow-hidden'>
+                      <div className='absolute inset-0 bg-gradient-to-br from-gray-900/20 to-gray-900/40' />
+                      <div className='absolute inset-0 flex items-center justify-center'>
+                        <IconComponent className='h-16 w-16 text-gray-600' />
+                      </div>
+                      <div className='absolute inset-0 bg-gradient-to-t from-black/50 to-transparent' />
+                    </div>
+
+                    <div className='p-6'>
+                      <h3 className='mb-3 text-xl font-semibold text-gray-900'>
+                        {service.title}
+                      </h3>
+                      <p className='text-gray-600'>
+                        {service.description}
+                      </p>
+                    </div>
+                  </motion.article>
+                )
+              })}
+            </div>
+          </section>
+
+
         </div>
-
-
-      </div>
-    </div >
+      </div >
+    </>
   )
 } 
