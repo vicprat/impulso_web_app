@@ -3,19 +3,21 @@ import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
 import { api } from './api'
 import { shopifyService } from './service'
 
+import type { ShopifyProductDataResponse } from './api'
 import type {
   Collection,
   CollectionResponse,
   CollectionSearchParams,
   CollectionsResponse,
   EnrichedFilterOptions,
-  Product,
-  ProductResponse,
   ProductSearchParams,
   ProductsResponse,
   ShopInfo,
-  ShopInfoResponse,
+  ShopInfoResponse
 } from './types'
+
+// Importar el tipo desde el API
+
 export const SHOPIFY_KEYS = {
   all: ['shopify'] as const,
   collection: (handle: string) => [...SHOPIFY_KEYS.collections(), handle] as const,
@@ -70,7 +72,7 @@ export const useProductsByIds = (
 
 export const useProductByHandle = (
   handle: string,
-  options?: Omit<UseQueryOptions<ProductResponse, Error, Product>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<ShopifyProductDataResponse, Error, any>, 'queryKey' | 'queryFn'>
 ) => {
   return useQuery({
     enabled: !!handle,

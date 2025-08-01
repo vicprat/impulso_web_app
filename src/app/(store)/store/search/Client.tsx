@@ -72,19 +72,22 @@ export const Client = () => {
 
     // Validar y mapear el valor de sort
     const validSortKeys: Record<string, ProductSearchParams[ 'sortKey' ]> = {
-      'TITLE': 'TITLE',
-      'PRICE': 'PRICE',
-      'CREATED_AT': 'CREATED_AT',
-      'VENDOR': 'VENDOR',
-      'PRODUCT_TYPE': 'PRODUCT_TYPE',
       'BEST_SELLING': 'BEST_SELLING',
+      'CREATED_AT': 'CREATED_AT',
+      'PRICE': 'PRICE',
+      'PRODUCT_TYPE': 'PRODUCT_TYPE',
       'RELEVANCE': 'RELEVANCE',
-      // Mapear valores legacy si existen
-      'title': 'TITLE',
-      'price': 'PRICE',
+      'TITLE': 'TITLE',
+      'VENDOR': 'VENDOR',
+      
       'created_at': 'CREATED_AT',
+      
+'price': 'PRICE',
+      
+'product_type': 'PRODUCT_TYPE',
+      // Mapear valores legacy si existen
+'title': 'TITLE',
       'vendor': 'VENDOR',
-      'product_type': 'PRODUCT_TYPE',
     }
 
     const validSortKey = validSortKeys[ sort ]

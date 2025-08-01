@@ -86,7 +86,7 @@ export const Artist: React.FC<ArtistProps> = ({
       
       case 'gradient':
         return (
-          <div className='flex size-full items-center justify-center text-white font-bold text-lg bg-gradient-to-br from-blue-500 to-purple-600'>
+          <div className='flex size-full items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-lg font-bold text-white'>
             {initials}
           </div>
         )
@@ -94,7 +94,7 @@ export const Artist: React.FC<ArtistProps> = ({
       default: // 'initials'
         return (
           <div 
-            className='flex size-full items-center justify-center text-white font-semibold text-lg'
+            className='flex size-full items-center justify-center text-lg font-semibold text-white'
             style={{ backgroundColor: userColor }}
           >
             {initials}
@@ -108,13 +108,13 @@ export const Artist: React.FC<ArtistProps> = ({
     switch (backgroundFallback) {
       case 'minimal':
         return (
-          <div className='size-full bg-gradient-to-br from-muted/30 to-muted/10' />
+          <div className='from-muted/30 to-muted/10 size-full bg-gradient-to-br' />
         )
       
       case 'pattern':
         return (
           <div 
-            className='size-full relative'
+            className='relative size-full'
             style={{ backgroundColor: `${userColor}20` }}
           >
             <div 

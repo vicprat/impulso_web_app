@@ -27,8 +27,8 @@ interface MultiImageUploaderProps {
 
 export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
   existingImages = [],
-  onImagesChange,
   maxImages = 10,
+  onImagesChange,
 }) => {
   const inputId = useId()
   const [ isUploading, setIsUploading ] = useState(false)
@@ -64,11 +64,11 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
       return {
         filename: file.name,
         id: uploadId,
+        isNew: true,
         preview,
-        url: preview,
         size: file.size,
         status: 'uploading' as const,
-        isNew: true,
+        url: preview,
       }
     })
 
@@ -96,13 +96,13 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
           }
 
           const data = await response.json()
-          return { uploadId, success: true, url: data.resourceUrl, filename: file.name }
+          return { filename: file.name, success: true, uploadId, url: data.resourceUrl }
         } catch (error) {
           return {
-            uploadId,
-            success: false,
             error: error instanceof Error ? error.message : 'Error desconocido',
-            filename: file.name
+            filename: file.name,
+            success: false,
+            uploadId
           }
         }
       })
@@ -114,7 +114,7 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
         const result = results.find(r => r.uploadId === img.id)
         if (result) {
           if (result.success) {
-            return { ...img, url: result.url, status: 'completed' as const }
+            return { ...img, status: 'completed' as const, url: result.url }
           } else {
             return { ...img, status: 'error' as const }
           }
@@ -232,7 +232,7 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
               <img
                 src={image.url}
                 alt={image.altText || image.filename || `Imagen ${index + 1}`}
-                className='h-full w-full object-cover'
+                className='size-full object-cover'
               />
 
               {/* Overlay con estado de carga */}
@@ -248,7 +248,7 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
 
               {/* Badge de imagen principal */}
               {image.isPrimary && (
-                <Badge className='absolute left-1 top-1 bg-primary text-primary-foreground text-xs px-1 py-0'>
+                <Badge className='absolute left-1 top-1 bg-primary px-1 py-0 text-xs text-primary-foreground'>
                   Principal
                 </Badge>
               )}
@@ -261,7 +261,7 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
                     type='button'
                     variant='secondary'
                     size='sm'
-                    className='size-6 p-0 bg-white/90 hover:bg-white'
+                    className='size-6 bg-white/90 p-0 hover:bg-white'
                     onClick={() => setPrimaryImage(image.id)}
                     title='Hacer imagen principal'
                   >
@@ -274,7 +274,7 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
                   type='button'
                   variant='destructive'
                   size='sm'
-                  className='size-6 p-0 bg-white/90 hover:bg-white'
+                  className='size-6 bg-white/90 p-0 hover:bg-white'
                   onClick={() => removeImage(image.id)}
                   title='Remover imagen'
                 >
@@ -283,7 +283,7 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
               </div>
 
               {/* Información de la imagen */}
-              <div className='absolute bottom-0 left-0 right-0 bg-black/70 p-2 text-white'>
+              <div className='absolute inset-x-0 bottom-0 bg-black/70 p-2 text-white'>
                 <p className='truncate text-xs font-medium' title={image.filename}>
                   {image.filename || `Imagen ${index + 1}`}
                 </p>

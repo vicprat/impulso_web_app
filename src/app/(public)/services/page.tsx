@@ -5,8 +5,7 @@ import { BookOpen, DollarSign, Frame, Image, Printer, TrendingUp } from 'lucide-
 import Script from 'next/script'
 
 import { Breadcrumbs } from '@/components/Breadcrumbs'
-import { routeMetadata } from '@/lib/metadata'
-import type { Metadata } from 'next'
+
 
 interface Service {
   id: string
@@ -18,46 +17,46 @@ interface Service {
 
 const services: Service[] = [
   {
-    id: '1',
-    title: 'Venta de obra original',
     description: 'Desarrollamos artistas a través de la venta de obra original y gráfica (fotografía, serigrafía, grabado) de talentos mexicanos consagrados, emergentes y nuevos.',
+    icon: DollarSign,
+    id: '1',
     imageUrl: '/images/services/original-art.jpg',
-    icon: DollarSign
+    title: 'Venta de obra original'
   },
   {
-    id: '2',
-    title: 'Enmarcado',
     description: 'Mantenemos altos estándares de calidad para la conservación de obras de arte, recuerdos, fotografías y objetos valiosos.',
+    icon: Frame,
+    id: '2',
     imageUrl: '/images/services/framing.jpg',
-    icon: Frame
+    title: 'Enmarcado'
   },
   {
-    id: '3',
-    title: 'Estudio de Impresión',
     description: 'Equipos de alta calidad para reproducciones de arte y variedad de papeles para satisfacer todas las necesidades.',
+    icon: Printer,
+    id: '3',
     imageUrl: '/images/services/printing.jpg',
-    icon: Printer
+    title: 'Estudio de Impresión'
   },
   {
-    id: '4',
-    title: 'Inversión en Arte',
     description: 'El arte como inversión mantiene su valor y se comporta de manera diferente a otros activos financieros.',
+    icon: TrendingUp,
+    id: '4',
     imageUrl: '/images/services/investment.jpg',
-    icon: TrendingUp
+    title: 'Inversión en Arte'
   },
   {
-    id: '5',
-    title: 'Sistema de Colgajes',
     description: 'Facilita el colgado de cuadros con una gama completa de sistemas de colgaje.',
+    icon: Image,
+    id: '5',
     imageUrl: '/images/services/hanging.jpg',
-    icon: Image
+    title: 'Sistema de Colgajes'
   },
   {
-    id: '6',
-    title: 'Fabricación de Catálogos y Libros de Arte',
     description: 'Impresión de revistas, folletos, catálogos y libros de arte en grandes cantidades.',
+    icon: BookOpen,
+    id: '6',
     imageUrl: '/images/services/catalogs.jpg',
-    icon: BookOpen
+    title: 'Fabricación de Catálogos y Libros de Arte'
   }
 ]
 
@@ -77,27 +76,27 @@ export default function ServicesPage() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Service",
-    "name": "Servicios de Arte - Impulso Galería",
+    "areaServed": "México",
     "description": "Servicios especializados en arte contemporáneo: venta de obra original, enmarcado, impresión digital, inversión en arte, sistemas de colgaje y fabricación de catálogos.",
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "itemListElement": services.map((service, index) => ({
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "description": service.description,
+          "name": service.title
+        }
+      })),
+      "name": "Servicios de Arte"
+    },
+    "name": "Servicios de Arte - Impulso Galería",
     "provider": {
       "@type": "Organization",
       "name": "Impulso Galería",
       "url": "https://impulsogaleria.com"
     },
-    "serviceType": "Servicios de Arte",
-    "areaServed": "México",
-    "hasOfferCatalog": {
-      "@type": "OfferCatalog",
-      "name": "Servicios de Arte",
-      "itemListElement": services.map((service, index) => ({
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Service",
-          "name": service.title,
-          "description": service.description
-        }
-      }))
-    }
+    "serviceType": "Servicios de Arte"
   }
 
   return (
@@ -146,7 +145,7 @@ export default function ServicesPage() {
                     <div className='relative aspect-video overflow-hidden'>
                       <div className='absolute inset-0 bg-gradient-to-br from-gray-900/20 to-gray-900/40' />
                       <div className='absolute inset-0 flex items-center justify-center'>
-                        <IconComponent className='h-16 w-16 text-gray-600' />
+                        <IconComponent className='size-16 text-gray-600' />
                       </div>
                       <div className='absolute inset-0 bg-gradient-to-t from-black/50 to-transparent' />
                     </div>

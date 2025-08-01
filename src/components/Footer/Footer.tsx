@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+ 
 'use client'
 
 import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from 'lucide-react'
@@ -19,9 +19,9 @@ const navigationLinks = [
 ]
 
 const socialLinks = [
-  { href: 'https://twitter.com/galeriaimpulso', icon: Twitter, name: 'Twitter', handle: '@galeriaimpulso' },
-  { href: 'https://facebook.com/impulsogaleria', icon: Facebook, name: 'Facebook', handle: '/impulsogaleria' },
-  { href: 'https://instagram.com/impulsogaleria', icon: Instagram, name: 'Instagram', handle: '@impulsogaleria' },
+  { handle: '@galeriaimpulso', href: 'https://twitter.com/galeriaimpulso', icon: Twitter, name: 'Twitter' },
+  { handle: '/impulsogaleria', href: 'https://facebook.com/impulsogaleria', icon: Facebook, name: 'Facebook' },
+  { handle: '@impulsogaleria', href: 'https://instagram.com/impulsogaleria', icon: Instagram, name: 'Instagram' },
 ]
 
 export const Footer = () => {
@@ -62,19 +62,19 @@ export const Footer = () => {
 
               <div className='space-y-3'>
                 <div className='flex items-start'>
-                  <MapPin className='mr-3 mt-1 size-4 flex-shrink-0' />
+                  <MapPin className='mr-3 mt-1 size-4 shrink-0' />
                   <span className='text-sm'>
                     Hacienda Escolásticas 107, Jardines de la Hacienda, 76180 Santiago de Querétaro, Querétaro.
                   </span>
                 </div>
                 <div className='flex items-center'>
-                  <Mail className='mr-3 size-4 flex-shrink-0' />
+                  <Mail className='mr-3 size-4 shrink-0' />
                   <span className='text-sm'>
                     Correo electrónico: info@impulsogaleria.com
                   </span>
                 </div>
                 <div className='flex items-center'>
-                  <Phone className='mr-3 size-4 flex-shrink-0' />
+                  <Phone className='mr-3 size-4 shrink-0' />
                   <span className='text-sm'>
                     Tel: +52 442 831 73 33
                   </span>
@@ -107,7 +107,7 @@ export const Footer = () => {
                   const IconComponent = social.icon
                   return (
                     <div key={social.name} className='flex items-center'>
-                      <IconComponent className='mr-3 size-4 flex-shrink-0' />
+                      <IconComponent className='mr-3 size-4 shrink-0' />
                       <Link
                         href={social.href}
                         className='text-sm text-gray-300 transition-colors hover:text-white'

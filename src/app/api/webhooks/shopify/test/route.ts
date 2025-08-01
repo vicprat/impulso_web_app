@@ -7,20 +7,20 @@ export async function POST(request: Request) {
     
     console.log('🧪 Test webhook recibido:')
     console.log('  - Headers:', JSON.stringify(headers, null, 2))
-    console.log('  - Body:', body.substring(0, 500) + '...')
+    console.log('  - Body:', `${body.substring(0, 500)  }...`)
     
     return NextResponse.json({
-      message: 'Test webhook received',
-      headers: headers,
       bodyLength: body.length,
+      headers,
+      message: 'Test webhook received',
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
     console.error('❌ Error en test webhook:', error)
     return NextResponse.json(
       {
-        error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Internal server error',
       },
       { status: 500 }
     )

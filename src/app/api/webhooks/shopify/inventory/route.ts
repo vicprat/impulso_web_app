@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+
 import { revalidatePath } from 'next/cache'
 import { NextResponse } from 'next/server'
 
@@ -64,8 +65,8 @@ export async function POST(request: Request) {
         `https://${storeDomain}/admin/api/${apiVersion}/inventory_items/${inventoryItemId}.json`,
         {
           headers: {
-            'X-Shopify-Access-Token': accessToken!,
             'Content-Type': 'application/json',
+            'X-Shopify-Access-Token': accessToken!,
           },
         }
       )
@@ -80,9 +81,9 @@ export async function POST(request: Request) {
 
     if (!productId) {
       return NextResponse.json({
-        message: 'Inventory webhook processed (no product ID found)',
-        inventoryItemId,
         available: inventoryItem.available,
+        inventoryItemId,
+        message: 'Inventory webhook processed (no product ID found)',
         note: 'Product ID not found - this is normal for products without inventory',
         success: true,
       })
@@ -102,23 +103,23 @@ export async function POST(request: Request) {
     revalidatePath('/', 'page')
 
     return NextResponse.json({
+      available: inventoryItem.available,
+      inventoryItemId: inventoryItem.id,
       message: 'Inventory webhook processed successfully',
       productId,
-      inventoryItemId: inventoryItem.id,
-      available: inventoryItem.available,
-      revalidatedTags: [
-        'products',
-        `product-${productId}`,
-        'inventory',
-        'collections',
-        'homepage'
-      ],
       revalidatedPaths: [
         '/store',
         '/store/product/[handle]',
         '/store/event/[handle]',
         '/store/events',
         '/'
+      ],
+      revalidatedTags: [
+        'products',
+        `product-${productId}`,
+        'inventory',
+        'collections',
+        'homepage'
       ],
       success: true,
     })

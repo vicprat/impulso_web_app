@@ -16,7 +16,6 @@ export async function POST(request: NextRequest) {
     }
 
     const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
       include: {
         UserRole: {
           include: {
@@ -24,7 +23,8 @@ export async function POST(request: NextRequest) {
           }
         },
         artist: true
-      }
+      },
+      where: { id: userId }
     })
 
     if (!existingUser) {

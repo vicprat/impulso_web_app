@@ -317,7 +317,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   return (
     <motion.section
       ref={containerRef}
-      style={{ opacity, y, paddingTop: headerHeight }}
+      style={{ opacity, paddingTop: headerHeight, y }}
       className={`relative ${isTabletOrMobile ? 'min-h-screen' : 'min-h-[95vh]'} overflow-hidden bg-black ${className}`}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
@@ -421,9 +421,9 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
             className={`${isTabletOrMobile
               ? 'text-2xl sm:text-3xl'
               : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl'
-              } mb-6 text-white font-bold leading-tight tracking-wide sm:mb-8 md:mb-10 ${isTabletOrMobile ? 'max-w-sm' : 'max-w-4xl'} 
+              } mb-6 font-bold leading-tight tracking-wide text-white sm:mb-8 md:mb-10 ${isTabletOrMobile ? 'max-w-sm' : 'max-w-4xl'} 
     bg-gradient-to-r from-white via-white/95 to-white/90 bg-clip-text text-transparent
-    drop-shadow-lg shadow-black/50`}
+    shadow-black/50 drop-shadow-lg`}
           >
             Bienvenido a Impulso Galería
           </motion.h1>

@@ -16,32 +16,32 @@ interface EventCarouselProps {
 }
 
 export const EventCarousel: React.FC<EventCarouselProps> = ({
-  events,
-  title,
-  subtitle,
   autoplay = true,
+  events,
   scrollSpeed = 1,
   stopOnInteraction = false,
+  subtitle,
+  title,
 }) => {
   const duplicatedEvents = [ ...events, ...events, ...events ]
 
   const [ emblaRef, emblaApi ] = useEmblaCarousel(
     {
       align: 'start',
+      containScroll: false,
       dragFree: true,
       loop: true,
       skipSnaps: false,
-      containScroll: false,
       slidesToScroll: 1,
     },
     autoplay ? [
       AutoScroll({
+        direction: 'forward',
         playOnInit: true,
         speed: scrollSpeed,
+        stopOnFocusIn: false,
         stopOnInteraction,
         stopOnMouseEnter: true,
-        stopOnFocusIn: false,
-        direction: 'forward',
       })
     ] : []
   )

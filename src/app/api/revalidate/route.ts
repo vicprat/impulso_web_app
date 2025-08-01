@@ -82,9 +82,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       message: 'Cache revalidated successfully',
       revalidated: {
-        type: finalType,
         path: finalPath,
         tag: finalTag,
+        type: finalType,
       },
       timestamp: new Date().toISOString(),
     })
@@ -92,8 +92,8 @@ export async function POST(request: Request) {
     console.error('Error revalidating cache:', error)
     return NextResponse.json(
       {
-        error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Internal server error',
       },
       { status: 500 }
     )
@@ -102,13 +102,13 @@ export async function POST(request: Request) {
 
 export async function GET() {
   return NextResponse.json({
+    availableTypes: ['products', 'inventory', 'artists', 'collections', 'homepage', 'all'],
     message: 'Cache revalidation endpoint is active',
+    timestamp: new Date().toISOString(),
     usage: {
-      revalidateByType: 'POST /api/revalidate?token=YOUR_TOKEN&type=products',
       revalidateByPath: 'POST /api/revalidate?token=YOUR_TOKEN&path=/store',
       revalidateByTag: 'POST /api/revalidate?token=YOUR_TOKEN&tag=products',
+      revalidateByType: 'POST /api/revalidate?token=YOUR_TOKEN&type=products',
     },
-    availableTypes: ['products', 'inventory', 'artists', 'collections', 'homepage', 'all'],
-    timestamp: new Date().toISOString(),
   })
 } 

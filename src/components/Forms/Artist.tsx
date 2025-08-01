@@ -313,7 +313,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
             </PopoverTrigger>
             {isNewVendor && vendorName.trim() && (
               <div className="mt-2 text-xs text-primary">
-                <Plus className="inline mr-1 size-3" />
+                <Plus className="mr-1 inline size-3" />
                 Se creará un nuevo vendor llamado "{vendorName}"
               </div>
             )}
@@ -361,7 +361,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
                             // Mantener el vendorName actual para crear el nuevo vendor
                             setPopoverOpen(false)
                           }}
-                          className="text-primary border-t bg-primary/5"
+                          className="bg-primary/5 border-t text-primary"
                         >
                           <Check className="mr-2 size-4 opacity-0" />
                           <span className="flex items-center font-medium">

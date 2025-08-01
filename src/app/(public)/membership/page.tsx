@@ -29,28 +29,28 @@ const benefits: Benefit[] = [
 
 const features: Feature[] = [
   {
-    id: '1',
-    title: 'SEGURIDAD',
     description: 'Transacciones seguras y protección de tus obras',
-    icon: Shield
+    icon: Shield,
+    id: '1',
+    title: 'SEGURIDAD'
   },
   {
-    id: '2',
-    title: 'RECONOCIMIENTO',
     description: 'Presencia en exposiciones internacionales prestigiosas',
-    icon: Star
+    icon: Star,
+    id: '2',
+    title: 'RECONOCIMIENTO'
   },
   {
-    id: '3',
-    title: 'SOPORTE',
     description: 'Atención personalizada en cada paso del proceso',
-    icon: Headphones
+    icon: Headphones,
+    id: '3',
+    title: 'SOPORTE'
   },
   {
-    id: '4',
-    title: 'CALIDAD',
     description: 'Impresiones giclée de máxima calidad profesional',
-    icon: Settings
+    icon: Settings,
+    id: '4',
+    title: 'CALIDAD'
   }
 ]
 
@@ -79,14 +79,14 @@ export default function MembershipPage() {
             initial='initial'
             whileInView='animate'
             viewport={{ once: true }}
-            className='text-center mb-16'
+            className='mb-16 text-center'
           >
             <h2 className='text-4xl font-bold  md:text-5xl'>
               ¿POR QUÉ IMPULSO GALERÍA?
             </h2>
           </motion.div>
 
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8'>
+          <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4'>
             {features.map((feature, index) => {
               const IconComponent = feature.icon
               return (
@@ -99,8 +99,8 @@ export default function MembershipPage() {
                   transition={{ delay: index * 0.1 }}
                   className='text-center'
                 >
-                  <div className='mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-amber-400 bg-white/10'>
-                    <IconComponent className='h-10 w-10 text-amber-400' />
+                  <div className='mx-auto mb-4 flex size-20 items-center justify-center rounded-full border-2 border-amber-400 bg-white/10'>
+                    <IconComponent className='size-10 text-amber-400' />
                   </div>
                   <h3 className='mb-2 text-lg font-semibold'>
                     {feature.title}
@@ -123,7 +123,7 @@ export default function MembershipPage() {
             initial='initial'
             whileInView='animate'
             viewport={{ once: true }}
-            className='text-center mb-16'
+            className='mb-16 text-center'
           >
             <h2 className='mb-6 text-4xl font-bold  md:text-5xl'>
               Nos ocuparemos de todas tus necesidades
@@ -139,8 +139,8 @@ export default function MembershipPage() {
       {/* Hero Section */}
       <section className='relative py-20'>
         <div className='absolute ' />
-        <div className='container mx-auto px-6 relative z-10'>
-          <div className='grid grid-cols-1 lg:grid-cols-2 gap-12 items-center'>
+        <div className='container relative z-10 mx-auto px-6'>
+          <div className='grid grid-cols-1 items-center gap-12 lg:grid-cols-2'>
             {/* Left Content */}
             <motion.div
               variants={slideUp}
@@ -151,13 +151,13 @@ export default function MembershipPage() {
               <h1 className='mb-6 text-5xl font-bold  md:text-6xl lg:text-7xl'>
                 Vende tus obras
               </h1>
-              <p className='mb-8 text-lg text- max-w-lg mx-auto lg:mx-0'>
+              <p className='text- mx-auto mb-8 max-w-lg text-lg lg:mx-0'>
                 ADQUIERA UN PLAN DE MEMBRESÍA Y DISFRUTE DE LOS GRANDES BENEFICIOS DE VENDER SU ARTE CON NOSOTROS.
               </p>
               <Button
                 size='lg'
                 variant='outline'
-                className='border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-gray-900 transition-colors duration-200'
+                className='border-amber-400 text-amber-400 transition-colors duration-200 hover:bg-amber-400 hover:text-gray-900'
               >
                 Más información
               </Button>
@@ -169,10 +169,10 @@ export default function MembershipPage() {
               initial='initial'
               animate='animate'
               transition={{ delay: 0.2 }}
-              className='rounded-2xl p-8 shadow-2xl bg-white'
+              className='rounded-2xl bg-white p-8 shadow-2xl'
             >
-              <div className='text-center mb-6'>
-                <h2 className='text-2xl font-bold text-gray-900 mb-2'>
+              <div className='mb-6 text-center'>
+                <h2 className='mb-2 text-2xl font-bold text-gray-900'>
                   Mi espacio Impulso
                 </h2>
                 <div className='mb-4'>
@@ -182,17 +182,17 @@ export default function MembershipPage() {
                   </div>
                   <span className='text-sm text-gray-600'>MXN/mensual</span>
                 </div>
-                <div className='w-24 h-px bg-amber-400 mx-auto mb-6'></div>
+                <div className='mx-auto mb-6 h-px w-24 bg-amber-400'></div>
               </div>
 
               <div className='mb-6'>
-                <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+                <h3 className='mb-4 text-lg font-semibold text-gray-900'>
                   Beneficios para ti
                 </h3>
                 <div className='space-y-3'>
                   {benefits.map((benefit) => (
                     <div key={benefit.id} className='flex items-start gap-3'>
-                      <Check className='h-5 w-5 text-green-500 mt-0.5 flex-shrink-0' />
+                      <Check className='mt-0.5 size-5 shrink-0 text-green-500' />
                       <span className='text-sm text-gray-700'>{benefit.text}</span>
                     </div>
                   ))}
@@ -201,7 +201,7 @@ export default function MembershipPage() {
 
               <Button
                 size='lg'
-                className='w-full bg-gray-900 text-white hover:bg-gray-800 transition-colors duration-200'
+                className='w-full bg-gray-900 text-white transition-colors duration-200 hover:bg-gray-800'
                 onClick={() => {
                   const subject = encodeURIComponent('Solicitud de Membresía - Impulso Galería')
                   const body = encodeURIComponent(`Hola,\n\nMe interesa adquirir la membresía de Impulso Galería.\n\nPor favor, envíenme más información sobre el proceso de registro y los beneficios incluidos.\n\nSaludos cordiales.`)

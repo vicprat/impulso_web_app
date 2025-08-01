@@ -96,6 +96,8 @@ export class Event {
   variants: Variant[]
   tags: string[]
   eventDetails: EventDetails
+  createdAt: string
+  updatedAt: string
   private primaryLocationId: string
 
   constructor(shopifyEventData: ShopifyEventData, primaryLocationId: string) {
@@ -113,6 +115,8 @@ export class Event {
     )
     this.primaryLocationId = primaryLocationId
     this.eventDetails = this._parseDetailsFromMetafields(shopifyEventData.metafields.edges)
+    this.createdAt = (shopifyEventData as any).createdAt
+    this.updatedAt = (shopifyEventData as any).updatedAt
   }
 
   private _convertVariantFromApi(apiVariant: ShopifyVariantNode): Variant {
@@ -176,10 +180,7 @@ export class Event {
     return this.descriptionHtml
   }
 
-  public get createdAt(): string {
-    // You might want to get this from Shopify data if available
-    return new Date().toISOString()
-  }
+  
 
   public get priceRange(): {
     minVariantPrice: Money

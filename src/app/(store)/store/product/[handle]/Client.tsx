@@ -131,20 +131,23 @@ interface Props {
 
 // Adaptador para convertir Product a IProductForCart
 const adaptProductForCart = (product: ProductData): IProductForCart => ({
-  id: product.id,
-  title: product.title,
-  handle: product.handle,
-  descriptionHtml: product.descriptionHtml,
-  vendor: product.vendor,
-  images: product.images,
-  variants: product.variants,
   availableForSale: product.isAvailable,
+  createdAt: new Date().toISOString(),
   description: product.descriptionHtml,
-  createdAt: new Date().toISOString(), // No tenemos esta info en el modelo Product
-  priceRange: {
-    minVariantPrice: product.primaryVariant?.price || { amount: '0', currencyCode: 'MXN' },
+  descriptionHtml: product.descriptionHtml,
+  handle: product.handle,
+  id: product.id,
+  images: product.images,
+  // No tenemos esta info en el modelo Product
+priceRange: {
     maxVariantPrice: product.primaryVariant?.price || { amount: '0', currencyCode: 'MXN' },
+    minVariantPrice: product.primaryVariant?.price || { amount: '0', currencyCode: 'MXN' },
   },
+  
+title: product.title,
+  
+variants: product.variants, 
+  vendor: product.vendor,
 })
 
 interface State {
@@ -625,7 +628,7 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                         </div>
                         <CardContent className='p-4'>
                           <div className='space-y-2'>
-                            <h3 className='font-semibold text-foreground line-clamp-2'>
+                            <h3 className='line-clamp-2 font-semibold text-foreground'>
                               {relatedProduct.title}
                             </h3>
                             <p className='text-sm text-muted-foreground'>

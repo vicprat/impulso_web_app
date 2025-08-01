@@ -1,9 +1,20 @@
 import { createStorefrontApiClient } from '@shopify/storefront-api-client'
 
+const apiVersion = process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION ?? '2024-10'
+const publicAccessToken = process.env.NEXT_PUBLIC_API_SHOPIFY_STOREFRONT ?? ''
+let storeDomain = process.env.NEXT_PUBLIC_SHOPIFY_STORE ?? ''
+
+// Limpiar el storeDomain removiendo el protocolo si está presente
+if (storeDomain.startsWith('https://')) {
+  storeDomain = storeDomain.replace('https://', '')
+} else if (storeDomain.startsWith('http://')) {
+  storeDomain = storeDomain.replace('http://', '')
+}
+
 export const storeClient = createStorefrontApiClient({
-  apiVersion: process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION ?? '2024-10',
-  publicAccessToken: process.env.NEXT_PUBLIC_API_SHOPIFY_STOREFRONT ?? '',
-  storeDomain: process.env.NEXT_PUBLIC_SHOPIFY_STORE ?? '',
+  apiVersion,
+  publicAccessToken,
+  storeDomain,
 })
 
 export const makeStorefrontRequest = async (query: string, variables?: Record<string, unknown>) => {

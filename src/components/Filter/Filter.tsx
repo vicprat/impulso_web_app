@@ -54,10 +54,10 @@ const defaultFilters: State = {
 }
 
 const sortOptions = [
-  { value: 'TITLE', label: 'Título' },
-  { value: 'PRICE', label: 'Precio' },
-  { value: 'CREATED_AT', label: 'Fecha de creación' },
-  { value: 'VENDOR', label: 'Artista' },
+  { label: 'Título', value: 'TITLE' },
+  { label: 'Precio', value: 'PRICE' },
+  { label: 'Fecha de creación', value: 'CREATED_AT' },
+  { label: 'Artista', value: 'VENDOR' },
 ] as const
 
 const FilterSkeleton = () => (
@@ -68,7 +68,7 @@ const FilterSkeleton = () => (
           <div className='mb-3 h-4 w-24 rounded bg-muted'></div>
           <div className='space-y-2'>
             {[ ...Array(3) ].map((_, j) => (
-              <div key={j} className='h-8 rounded bg-muted/50'></div>
+              <div key={j} className='bg-muted/50 h-8 rounded'></div>
             ))}
           </div>
         </CardContent>
@@ -284,7 +284,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       <Card className='border shadow-sm'>
         <div
           onClick={() => toggleSection(sectionKey)}
-          className='flex w-full cursor-pointer items-center justify-between p-4 transition-colors hover:bg-muted/50'
+          className='hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between p-4 transition-colors'
         >
           <div className='flex items-center space-x-3'>
             <div className='rounded-lg bg-muted p-2'>
@@ -352,7 +352,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                     onClick={() => handleOptionToggle(filterKey, option.value)}
                     className={`flex cursor-pointer items-center justify-between rounded-lg p-3 text-sm transition-colors ${selectedValues.includes(option.value)
                       ? 'border bg-muted font-medium'
-                      : 'border border-transparent hover:bg-muted/50'
+                      : 'hover:bg-muted/50 border border-transparent'
                       }`}
                   >
                     <span>{option.label}</span>
@@ -383,7 +383,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       {/* Sidebar con layout mejorado */}
       <div className='fixed left-0 top-0 z-50 flex h-screen w-[28rem] flex-col bg-background shadow-2xl'>
         {/* Header del sidebar - fijo */}
-        <div className='flex-shrink-0 border-b px-6 py-4'>
+        <div className='shrink-0 border-b px-6 py-4'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center space-x-3'>
               <div className='rounded-lg bg-muted p-2'>
@@ -402,7 +402,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
               variant='ghost'
               size='sm'
               onClick={onClose}
-              className='h-8 w-8 p-0'
+              className='size-8 p-0'
             >
               <X className='size-4' />
             </Button>
@@ -422,7 +422,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
               <Card className='border shadow-sm'>
                 <div
                   onClick={() => toggleSection('sorting')}
-                  className='flex w-full cursor-pointer items-center justify-between p-4 transition-colors hover:bg-muted/50'
+                  className='hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between p-4 transition-colors'
                 >
                   <div className='flex items-center space-x-3'>
                     <div className='rounded-lg bg-muted p-2'>
@@ -468,13 +468,13 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                           onValueChange={(value) => handleFilterChange('sortOrder', value as 'asc' | 'desc')}
                           className='space-y-2'
                         >
-                          <div className='flex items-center space-x-3 rounded-lg p-2 hover:bg-muted/50'>
+                          <div className='hover:bg-muted/50 flex items-center space-x-3 rounded-lg p-2'>
                             <RadioGroupItem value='asc' id='sort-asc' />
                             <Label htmlFor='sort-asc' className='flex-1 cursor-pointer text-sm'>
                               Ascendente
                             </Label>
                           </div>
-                          <div className='flex items-center space-x-3 rounded-lg p-2 hover:bg-muted/50'>
+                          <div className='hover:bg-muted/50 flex items-center space-x-3 rounded-lg p-2'>
                             <RadioGroupItem value='desc' id='sort-desc' />
                             <Label htmlFor='sort-desc' className='flex-1 cursor-pointer text-sm'>
                               Descendente
@@ -556,7 +556,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
               <Card className='border shadow-sm'>
                 <div
                   onClick={() => toggleSection('price')}
-                  className='flex w-full cursor-pointer items-center justify-between p-4 transition-colors hover:bg-muted/50'
+                  className='hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between p-4 transition-colors'
                 >
                   <div className='flex items-center space-x-3'>
                     <div className='rounded-lg bg-muted p-2'>
@@ -626,7 +626,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
         </div>
 
         {/* Footer del sidebar - fijo y siempre visible */}
-        <div className='flex-shrink-0 border-t bg-background px-6 py-4'>
+        <div className='shrink-0 border-t bg-background px-6 py-4'>
           <div className='space-y-3'>
             <Button
               onClick={applyFilters}

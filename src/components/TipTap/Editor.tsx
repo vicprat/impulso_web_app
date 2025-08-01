@@ -46,12 +46,12 @@ export const Editor: React.FC<Props> = ({ content, onChange }) => {
   }, [ editor, content ])
 
   return (
-    <div className='flex flex-col h-full w-full'>
+    <div className='flex size-full flex-col'>
       <Toolbar editor={editor} />
       <div className='flex-1 overflow-auto'>
         <EditorContent
           editor={editor}
-          className='h-full w-full [&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full [&_.ProseMirror]:outline-none [&_.ProseMirror]:border-none'
+          className='size-full [&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full [&_.ProseMirror]:border-none [&_.ProseMirror]:outline-none'
         />
       </div>
     </div>

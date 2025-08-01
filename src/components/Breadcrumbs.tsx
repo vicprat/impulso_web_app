@@ -17,25 +17,25 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
         <li>
           <Link
             href="/"
-            className="flex items-center hover:text-gray-900 transition-colors"
+            className="flex items-center transition-colors hover:text-gray-900"
             aria-label="Ir al inicio"
           >
-            <Home className="h-4 w-4" />
+            <Home className="size-4" />
           </Link>
         </li>
 
         {items.map((item, index) => (
           <li key={index} className="flex items-center">
-            <ChevronRight className="h-4 w-4 mx-2" />
+            <ChevronRight className="mx-2 size-4" />
             {item.href ? (
               <Link
                 href={item.href}
-                className="hover:text-gray-900 transition-colors"
+                className="transition-colors hover:text-gray-900"
               >
                 {item.label}
               </Link>
             ) : (
-              <span className="text-gray-900 font-medium">{item.label}</span>
+              <span className="font-medium text-gray-900">{item.label}</span>
             )}
           </li>
         ))}

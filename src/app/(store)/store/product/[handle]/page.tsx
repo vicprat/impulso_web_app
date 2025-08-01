@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 
-import { type Product } from '@/models/Product'
+import { Product } from '@/models/Product'
 import { getServerSession } from '@/modules/auth/server/server'
+import { api as shopifyApi } from '@/modules/shopify/api'
 import {
   getPrivateProductIds,
   getPrivateRoomByUserId,
@@ -29,14 +30,33 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
     let product: Product | null = null
 
     try {
-      // Usar nuestro servicio personalizado para obtener el producto enriquecido
+      // Si hay sesión, usar nuestro servicio personalizado para obtener el producto enriquecido
       if (session) {
         product = await productService.getProductByHandle(handle, session)
+      } else {
+        // Si no hay sesión, usar el API público de Shopify que ya devuelve el formato correcto
+        try {
+          const response = await shopifyApi.getProductByHandle(handle)
+
+          if (response.data) {
+            // El API ya devuelve el formato correcto para el modelo Product
+            product = new Product(response.data, '') // locationId será vacío para productos públicos
+          }
+        } catch (apiError) {
+          // Si falla el API público, intentar con el servicio autenticado si hay sesión
+          if (session) {
+            try {
+              product = await productService.getProductByHandle(handle, session)
+            } catch (fallbackError) {
+              throw apiError // Lanzar el error original
+            }
+          } else {
+            // Si no hay sesión y el API público falla, mostrar 404
+            notFound()
+          }
+        }
       }
-    } catch {
-      if (!session) {
-        notFound()
-      }
+    } catch (error) {
       product = null
     }
 
@@ -46,26 +66,31 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
 
     // Convertir el modelo Product a un objeto plano para evitar problemas de serialización
     const productData = {
-      id: product.id,
-      handle: product.handle,
-      title: product.title,
       descriptionHtml: product.descriptionHtml,
-      productType: product.productType,
-      vendor: product.vendor,
-      status: product.status,
-      images: product.images,
-      media: product.media,
-      variants: product.variants,
-      tags: product.tags,
-      manualTags: product.manualTags,
+      handle: product.handle,
+      id: product.id,
       autoTags: product.autoTags,
+      images: product.images,
       artworkDetails: product.artworkDetails,
-      // Getters
-      primaryImage: product.primaryImage,
-      primaryVariant: product.primaryVariant,
+      media: product.media,
       formattedPrice: product.formattedPrice,
+      productType: product.productType,
       isAvailable: product.isAvailable,
-      statusLabel: product.statusLabel,
+      status: product.status,
+      manualTags: product.manualTags,
+      title: product.title,
+      // Getters
+primaryImage: product.primaryImage,
+      
+      
+primaryVariant: product.primaryVariant,
+      
+
+vendor: product.vendor,
+      
+statusLabel: product.statusLabel,
+      tags: product.tags,
+      variants: product.variants,
     }
 
     if (privateProductIds.includes(product.id)) {
@@ -102,14 +127,67 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
       if (session) {
         const relatedResponse = await productService.getProducts({
           limit: 10,
-          vendor: product.vendor,
-          status: 'ACTIVE'
+          status: 'ACTIVE',
+          vendor: product.vendor
         }, session)
 
         // Filtrar el producto actual y limitar a 6 productos relacionados
         relatedProducts = relatedResponse.products
           .filter(p => p.id !== product.id)
           .slice(0, 6)
+      } else {
+        // Si no hay sesión, usar el API público para productos relacionados
+        const relatedResponse = await shopifyApi.getProducts({
+          filters: {
+            vendor: [ product.vendor ]
+          },
+          first: 10
+        })
+
+        if (relatedResponse.data.products) {
+          relatedProducts = relatedResponse.data.products
+            .filter(p => p.id !== product.id)
+            .slice(0, 6)
+            .map(p => {
+              // Convertir cada producto relacionado al formato correcto
+              const shopifyData = {
+                descriptionHtml: p.descriptionHtml,
+                handle: p.handle,
+                id: p.id,
+                images: {
+                  edges: p.images?.map((image: any) => ({ node: image })) || []
+                },
+                media: {
+                  nodes: []
+                },
+                metafields: {
+                  edges: []
+                },
+                productType: p.productType,
+                status: 'ACTIVE' as const,
+                tags: [],
+                title: p.title,
+                variants: {
+                  edges: p.variants?.map((variant: any) => ({
+                    node: {
+                      availableForSale: variant.availableForSale,
+                      id: variant.id,
+                      inventoryItem: {
+                        tracked: false
+                      },
+                      inventoryPolicy: 'DENY' as const,
+                      inventoryQuantity: null,
+                      price: variant.price.amount,
+                      sku: variant.sku,
+                      title: variant.title
+                    }
+                  })) || []
+                },
+                vendor: p.vendor
+              }
+              return new Product(shopifyData, '')
+            })
+        }
       }
     } catch {
       relatedProducts = []
@@ -117,26 +195,31 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
 
     // Convertir los productos relacionados a objetos planos
     const relatedProductsData = relatedProducts.map(product => ({
-      id: product.id,
-      handle: product.handle,
-      title: product.title,
       descriptionHtml: product.descriptionHtml,
-      productType: product.productType,
-      vendor: product.vendor,
-      status: product.status,
-      images: product.images,
-      media: product.media,
-      variants: product.variants,
-      tags: product.tags,
-      manualTags: product.manualTags,
+      handle: product.handle,
+      id: product.id,
       autoTags: product.autoTags,
+      images: product.images,
       artworkDetails: product.artworkDetails,
-      // Getters
-      primaryImage: product.primaryImage,
-      primaryVariant: product.primaryVariant,
+      media: product.media,
       formattedPrice: product.formattedPrice,
+      productType: product.productType,
       isAvailable: product.isAvailable,
-      statusLabel: product.statusLabel,
+      status: product.status,
+      manualTags: product.manualTags,
+      title: product.title,
+      // Getters
+primaryImage: product.primaryImage,
+      
+      
+primaryVariant: product.primaryVariant,
+      
+
+vendor: product.vendor,
+      
+statusLabel: product.statusLabel,
+      tags: product.tags,
+      variants: product.variants,
     }))
 
     return <Client product={productData} relatedProducts={relatedProductsData} />
@@ -144,3 +227,4 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
     notFound()
   }
 }
+

@@ -30,8 +30,8 @@ export const baseMetadata: Metadata = {
     description: 'Descubre arte contemporáneo único en Impulso Galería. Explora exposiciones, conoce artistas y encuentra piezas exclusivas.',
     images: [
       {
-        height: 630,
         alt: 'Impulso Galería - Arte Contemporáneo',
+        height: 630,
         url: '/og-image.jpg',
         width: 1200,
       },
@@ -149,6 +149,58 @@ export const routeMetadata: Record<string, Metadata> = {
     },
     title: 'Eventos - Impulso Galería',
   },
+  '/membership': {
+    description: 'Únete a Impulso Galería como artista. Beneficios exclusivos: venta de obras, impresión digital, exposición internacional, publicidad y pagos seguros.',
+    keywords: [
+      'membership artista',
+      'beneficios artista',
+      'venta de obras',
+      'impresión digital',
+      'exposición internacional',
+      'publicidad artista',
+      'pagos seguros',
+      'arte contemporáneo'
+    ],
+    openGraph: {
+      description: 'Únete a Impulso Galería como artista. Beneficios exclusivos: venta de obras, impresión digital y exposición internacional.',
+      images: [
+        {
+          alt: 'Membership - Impulso Galería',
+          height: 630,
+          url: '/og-membership.jpg',
+          width: 1200,
+        },
+      ],
+      title: 'Membership - Impulso Galería',
+    },
+    title: 'Membership - Impulso Galería',
+  },
+  '/services': {
+    description: 'Servicios especializados en arte contemporáneo: venta de obra original, enmarcado, impresión digital, inversión en arte, sistemas de colgaje y fabricación de catálogos.',
+    keywords: [
+      'servicios de arte',
+      'venta de obra original',
+      'enmarcado',
+      'impresión digital',
+      'inversión en arte',
+      'sistemas de colgaje',
+      'catálogos de arte',
+      'arte contemporáneo'
+    ],
+    openGraph: {
+      description: 'Servicios especializados en arte contemporáneo: venta de obra original, enmarcado, impresión digital y más.',
+      images: [
+        {
+          alt: 'Servicios - Impulso Galería',
+          height: 630,
+          url: '/og-services.jpg',
+          width: 1200,
+        },
+      ],
+      title: 'Servicios - Impulso Galería',
+    },
+    title: 'Servicios - Impulso Galería',
+  },
   '/store': {
     description: 'Explora nuestra galería de arte contemporáneo. Encuentra piezas únicas, pinturas originales, esculturas y obras de arte que transformarán cualquier espacio.',
     keywords: [
@@ -221,58 +273,6 @@ export const routeMetadata: Record<string, Metadata> = {
       title: 'Buscar - Impulso Galería',
     },
     title: 'Buscar - Impulso Galería',
-  },
-  '/services': {
-    description: 'Servicios especializados en arte contemporáneo: venta de obra original, enmarcado, impresión digital, inversión en arte, sistemas de colgaje y fabricación de catálogos.',
-    keywords: [
-      'servicios de arte',
-      'venta de obra original',
-      'enmarcado',
-      'impresión digital',
-      'inversión en arte',
-      'sistemas de colgaje',
-      'catálogos de arte',
-      'arte contemporáneo'
-    ],
-    openGraph: {
-      description: 'Servicios especializados en arte contemporáneo: venta de obra original, enmarcado, impresión digital y más.',
-      images: [
-        {
-          alt: 'Servicios - Impulso Galería',
-          height: 630,
-          url: '/og-services.jpg',
-          width: 1200,
-        },
-      ],
-      title: 'Servicios - Impulso Galería',
-    },
-    title: 'Servicios - Impulso Galería',
-  },
-  '/membership': {
-    description: 'Únete a Impulso Galería como artista. Beneficios exclusivos: venta de obras, impresión digital, exposición internacional, publicidad y pagos seguros.',
-    keywords: [
-      'membership artista',
-      'beneficios artista',
-      'venta de obras',
-      'impresión digital',
-      'exposición internacional',
-      'publicidad artista',
-      'pagos seguros',
-      'arte contemporáneo'
-    ],
-    openGraph: {
-      description: 'Únete a Impulso Galería como artista. Beneficios exclusivos: venta de obras, impresión digital y exposición internacional.',
-      images: [
-        {
-          alt: 'Membership - Impulso Galería',
-          height: 630,
-          url: '/og-membership.jpg',
-          width: 1200,
-        },
-      ],
-      title: 'Membership - Impulso Galería',
-    },
-    title: 'Membership - Impulso Galería',
   },
   '/terms': {
     description: 'Términos y condiciones de Impulso Galería. Política de privacidad, cookies, derechos de usuario y información legal sobre el uso de nuestra plataforma.',

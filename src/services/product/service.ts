@@ -360,8 +360,8 @@ async function getProductByHandle(handle: string, session: AuthSession): Promise
   const variables = {
     first: 1,
     query: shopifyQuery,
-    sortKey: 'TITLE' as const,
     reverse: false,
+    sortKey: 'TITLE' as const,
   }
 
   try {
@@ -473,10 +473,10 @@ async function createProduct(
       const metafields = Object.entries(payload.details)
         .filter(([, value]) => value != null && value !== undefined && value !== '')
         .map(([key, value]) => ({
-          namespace: 'art_details',
           key,
-          value: String(value),
+          namespace: 'art_details',
           type: 'single_line_text_field',
+          value: String(value),
         }))
 
       if (metafields.length > 0) {
@@ -569,15 +569,15 @@ async function createProduct(
         // Revalidar cache manualmente después de crear producto con inventario
         try {
           const revalidationResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
-            },
             body: JSON.stringify({
-              type: 'inventory',
               productId: newProductData.id,
+              type: 'inventory',
             }),
+            headers: {
+              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
           })
 
           if (revalidationResponse.ok) {
@@ -740,20 +740,20 @@ async function deleteImagesFromProduct(
       }>(
         PRODUCT_DELETE_MEDIA_MUTATION,
         {
-          productId,
-          mediaIds: [imageId], // Solo una imagen a la vez
+          mediaIds: [imageId],
+          productId, // Solo una imagen a la vez
         }
       )
 
       if (response.productDeleteMedia.mediaUserErrors.length > 0) {
         console.warn(`Error al eliminar imagen ${imageId}:`, response.productDeleteMedia.mediaUserErrors)
-        results.push({ imageId, success: false, error: response.productDeleteMedia.mediaUserErrors })
+        results.push({ error: response.productDeleteMedia.mediaUserErrors, imageId, success: false })
       } else {
         results.push({ imageId, success: true })
       }
     } catch (error) {
       console.warn(`Error al eliminar imagen ${imageId}:`, error)
-      results.push({ imageId, success: false, error: error instanceof Error ? error.message : 'Error desconocido' })
+      results.push({ error: error instanceof Error ? error.message : 'Error desconocido', imageId, success: false })
     }
   }
 
@@ -916,15 +916,15 @@ async function updateProduct(
           // Revalidar cache manualmente después de actualizar inventario
           try {
             await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
-              },
               body: JSON.stringify({
-                type: 'inventory',
                 productId: existingProduct.id,
+                type: 'inventory',
               }),
+              headers: {
+                'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+                'Content-Type': 'application/json',
+              },
+              method: 'POST',
             })
           } catch (revalidationError) {
             // Silenciar errores de revalidación
@@ -981,8 +981,8 @@ export const productService = {
   createProduct,
   createProductFromRequest,
   deleteProduct,
-  getProductById,
   getProductByHandle,
+  getProductById,
   getProductStats,
   getProducts,
   getProductsFromRequest,

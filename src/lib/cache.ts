@@ -4,8 +4,8 @@ export class CacheManager {
   // Tags para productos
   static readonly PRODUCT_TAGS = {
     all: 'products',
-    byId: (id: string) => `product-${id}`,
     byHandle: (handle: string) => `product-handle-${handle}`,
+    byId: (id: string) => `product-${id}`,
     byVendor: (vendor: string) => `products-vendor-${vendor}`,
   }
 

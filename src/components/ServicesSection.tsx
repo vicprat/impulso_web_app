@@ -16,40 +16,40 @@ interface Service {
 
 const services: Service[] = [
   {
-    id: '1',
-    title: 'Venta de obra original',
     description: 'Desarrollamos artistas a través de la venta de obra original y gráfica.',
-    icon: DollarSign
+    icon: DollarSign,
+    id: '1',
+    title: 'Venta de obra original'
   },
   {
-    id: '2',
-    title: 'Enmarcado',
     description: 'Mantenemos altos estándares de calidad para la conservación de obras de arte.',
-    icon: Frame
+    icon: Frame,
+    id: '2',
+    title: 'Enmarcado'
   },
   {
-    id: '3',
-    title: 'Estudio de Impresión',
     description: 'Equipos de alta calidad para reproducciones de arte y variedad de papeles.',
-    icon: Printer
+    icon: Printer,
+    id: '3',
+    title: 'Estudio de Impresión'
   },
   {
-    id: '4',
-    title: 'Inversión en Arte',
     description: 'El arte como inversión mantiene su valor y se comporta diferente a otros activos.',
-    icon: TrendingUp
+    icon: TrendingUp,
+    id: '4',
+    title: 'Inversión en Arte'
   },
   {
-    id: '5',
-    title: 'Sistema de Colgajes',
     description: 'Facilita el colgado de cuadros con una gama completa de sistemas.',
-    icon: Image
+    icon: Image,
+    id: '5',
+    title: 'Sistema de Colgajes'
   },
   {
-    id: '6',
-    title: 'Fabricación de Catálogos',
     description: 'Impresión de revistas, folletos, catálogos y libros de arte.',
-    icon: BookOpen
+    icon: BookOpen,
+    id: '6',
+    title: 'Fabricación de Catálogos'
   }
 ]
 
@@ -99,8 +99,8 @@ export const ServicesSection: React.FC = () => {
                 className='group text-center'
               >
                 {/* Icon Circle */}
-                <div className='mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-amber-400 bg-transparent transition-all duration-300 group-hover:bg-amber-400/20'>
-                  <IconComponent className='h-8 w-8 text-amber-400' />
+                <div className='mx-auto mb-4 flex size-20 items-center justify-center rounded-full border-2 border-amber-400 bg-transparent transition-all duration-300 group-hover:bg-amber-400/20'>
+                  <IconComponent className='size-8 text-amber-400' />
                 </div>
 
                 {/* Text */}
@@ -130,7 +130,7 @@ export const ServicesSection: React.FC = () => {
             asChild
             size='lg'
             variant='outline'
-            className='border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-gray-900 transition-colors duration-200'
+            className='border-amber-400 text-amber-400 transition-colors duration-200 hover:bg-amber-400 hover:text-gray-900'
           >
             <Link href={ROUTES.STORE.SERVICES.PATH}>
               Más información

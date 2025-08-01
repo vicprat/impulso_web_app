@@ -18,13 +18,13 @@ export function StoreLayoutAutoUpdate({ children }: StoreLayoutAutoUpdateProps) 
       try {
         // Verificar si hay actualizaciones de productos
         const response = await fetch('/api/store/check-update', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
           body: JSON.stringify({
             lastUpdate,
           }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
         })
 
         if (response.ok) {
@@ -49,13 +49,13 @@ export function StoreLayoutAutoUpdate({ children }: StoreLayoutAutoUpdateProps) 
 
         if (handle && (pathname.includes('/store/product/') || pathname.includes('/store/event/'))) {
           const response = await fetch(`/api/products/${handle}/check-update`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
             body: JSON.stringify({
               lastUpdate,
             }),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
           })
 
           if (response.ok) {

@@ -16,8 +16,8 @@ export const usePublicProducts = (limit = 10) => {
         setLoading(true)
         const response = await shopifyService.getPublicProducts({
           first: limit,
-          sortKey: 'CREATED_AT',
           reverse: true,
+          sortKey: 'CREATED_AT',
         })
         setProducts(response.data.products)
       } catch (err) {
@@ -30,5 +30,5 @@ export const usePublicProducts = (limit = 10) => {
     fetchProducts()
   }, [limit])
 
-  return { products, loading, error }
+  return { error, loading, products }
 } 

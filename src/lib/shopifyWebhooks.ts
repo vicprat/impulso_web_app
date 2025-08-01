@@ -44,19 +44,19 @@ interface WebhookSubscriptionDeleteResponse {
 export class ShopifyWebhookService {
   private static readonly WEBHOOKS: WebhookConfig[] = [
     {
-      topic: 'PRODUCTS_UPDATE',
       address: `${process.env.NEXTAUTH_URL}/api/webhooks/shopify/products`,
       format: 'JSON',
+      topic: 'PRODUCTS_UPDATE',
     },
     {
-      topic: 'INVENTORY_LEVELS_UPDATE',
       address: `${process.env.NEXTAUTH_URL}/api/webhooks/shopify/inventory`,
       format: 'JSON',
+      topic: 'INVENTORY_LEVELS_UPDATE',
     },
     {
-      topic: 'ORDERS_CREATE',
       address: `${process.env.NEXTAUTH_URL}/api/webhooks/shopify`,
       format: 'JSON',
+      topic: 'ORDERS_CREATE',
     },
   ]
 
@@ -195,7 +195,7 @@ export class ShopifyWebhookService {
 
       for (const webhook of webhooks) {
         const callbackUrl = webhook.endpoint?.callbackUrl
-        if (callbackUrl && callbackUrl.startsWith(appUrl)) {
+        if (callbackUrl?.startsWith(appUrl)) {
           console.log(`🗑️ Eliminando webhook antiguo: ${webhook.topic}`)
           await this.deleteWebhook(webhook.id)
         }

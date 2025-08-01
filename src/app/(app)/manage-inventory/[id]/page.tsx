@@ -1,5 +1,6 @@
 'use client'
 
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Activity,
   ArrowLeft,
@@ -46,15 +47,14 @@ import { useDeleteProduct, useGetArtworkTypes, useGetLocations, useGetProduct, u
 import { type UpdateProductPayload } from '@/services/product/types'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
-import { useQueryClient } from '@tanstack/react-query'
 
 // Componente para agregar nuevas opciones
 const AddOptionDropdown = ({
-  options,
   isLoading,
-  onAddNew,
-  placeholder,
   label,
+  onAddNew,
+  options,
+  placeholder,
 }: {
   options: { id: string; name: string }[]
   isLoading: boolean
@@ -210,11 +210,11 @@ export default function ProductDetailPage() {
   // Función para agregar nuevas opciones
   const handleAddNewOption = async (optionType: string, name: string) => {
     const response = await fetch(`/api/options/${optionType}`, {
-      method: 'POST',
+      body: JSON.stringify({ name }),
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name }),
+      method: 'POST',
     })
 
     if (!response.ok) {
@@ -421,10 +421,10 @@ export default function ProductDetailPage() {
                             Descripción
                           </Label>
                           <div
-                            className="prose prose-sm prose-slate dark:prose-invert max-w-none 
+                            className="prose prose-sm prose-slate max-w-none dark:prose-invert 
                    prose-headings:text-foreground prose-p:text-muted-foreground 
                    prose-strong:text-foreground prose-code:text-foreground
-                   prose-pre:bg-muted prose-pre:border"
+                   prose-pre:border prose-pre:bg-muted"
                             dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
                           />
                         </div>
@@ -449,10 +449,10 @@ export default function ProductDetailPage() {
                             <img
                               src={image.url}
                               alt={image.altText ?? product.title}
-                              className='h-full w-full rounded-lg object-cover shadow-elevation-1 transition-all duration-300 group-hover:shadow-elevation-2 group-hover:scale-105'
+                              className='size-full rounded-lg object-cover shadow-elevation-1 transition-all duration-300 group-hover:scale-105 group-hover:shadow-elevation-2'
                             />
                             {index === 0 && (
-                              <Badge className='absolute left-1 top-1 bg-primary text-primary-foreground text-xs px-1 py-0'>
+                              <Badge className='absolute left-1 top-1 bg-primary px-1 py-0 text-xs text-primary-foreground'>
                                 1
                               </Badge>
                             )}
@@ -461,7 +461,7 @@ export default function ProductDetailPage() {
 
                         {/* Mostrar contador si hay más imágenes */}
                         {product.images.length > 8 && (
-                          <div className='flex aspect-square items-center justify-center rounded-lg bg-surface-container-high border-2 border-dashed border-outline-variant'>
+                          <div className='flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-outline-variant bg-surface-container-high'>
                             <div className='text-center'>
                               <p className='text-sm font-bold text-on-surface'>+{product.images.length - 8}</p>
                             </div>
@@ -572,7 +572,7 @@ export default function ProductDetailPage() {
                       </div>
                     </div>
                     {variant?.sku && (
-                      <div className='bg-card p-3 rounded-lg'>
+                      <div className='rounded-lg bg-card p-3'>
                         <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
                           SKU
                         </Label>
@@ -658,7 +658,7 @@ export default function ProductDetailPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-3'>
-                    <div className='p-3 bg-surface-container-lowest rounded-lg'>
+                    <div className='rounded-lg bg-surface-container-lowest p-3'>
                       <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
                         ID del Producto
                       </Label>
@@ -667,7 +667,7 @@ export default function ProductDetailPage() {
                       </p>
                     </div>
                     {variant && (
-                      <div className='p-3 bg-surface-container-lowest rounded-lg'>
+                      <div className='rounded-lg bg-surface-container-lowest p-3'>
                         <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
                           ID de Variante
                         </Label>

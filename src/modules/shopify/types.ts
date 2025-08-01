@@ -38,6 +38,7 @@ export interface Product {
   productType: string
   vendor: string
   createdAt: string
+  updatedAt: string
   priceRange: {
     minVariantPrice: Money
     maxVariantPrice: Money
@@ -59,6 +60,7 @@ export interface IProductForCart {
   availableForSale: boolean
   description?: string
   createdAt?: string
+  updatedAt?: string
   priceRange?: {
     minVariantPrice: Money
     maxVariantPrice: Money
@@ -84,6 +86,7 @@ export interface RawProduct {
   productType: string
   vendor: string
   createdAt: string
+  updatedAt: string
   priceRange: {
     minVariantPrice: Money
     maxVariantPrice: Money

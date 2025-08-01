@@ -34,8 +34,8 @@ export async function GET(
       return NextResponse.json(
         { 
           error: 'Tipo de opción inválido',
-          validOptions: Object.keys(TABLE_MAP),
-          received: name
+          received: name,
+          validOptions: Object.keys(TABLE_MAP)
         },
         { status: 400 }
       )
@@ -115,8 +115,8 @@ export async function POST(
       return NextResponse.json(
         { 
           error: 'Tipo de opción inválido',
-          validOptions: Object.keys(TABLE_MAP),
-          received: optionType
+          received: optionType,
+          validOptions: Object.keys(TABLE_MAP)
         },
         { status: 400 }
       )

@@ -308,15 +308,15 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
         // Revalidar cache manualmente después de crear evento con inventario
         try {
           const revalidationResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
-            },
             body: JSON.stringify({
-              type: 'inventory',
               productId: newEventData.id,
+              type: 'inventory',
             }),
+            headers: {
+              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
           })
 
           if (revalidationResponse.ok) {
@@ -488,15 +488,15 @@ async function updateEvent(payload: UpdateEventPayload, session: AuthSession): P
         // Revalidar cache manualmente después de actualizar inventario del evento
         try {
           const revalidationResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
-            },
             body: JSON.stringify({
-              type: 'inventory',
               productId: payload.id,
+              type: 'inventory',
             }),
+            headers: {
+              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+              'Content-Type': 'application/json',
+            },
+            method: 'POST',
           })
 
           if (revalidationResponse.ok) {

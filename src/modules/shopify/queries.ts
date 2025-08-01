@@ -319,6 +319,7 @@ export const PRODUCT_BY_HANDLE_QUERY = `
       productType
       vendor
       createdAt
+      updatedAt
       priceRange {
         minVariantPrice {
           amount

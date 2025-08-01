@@ -189,13 +189,13 @@ export default function ManageInventoryPage() {
     const updatePayload: UpdateProductPayload = {
       details: editingChanges.artworkDetails ? {
         artist: editingChanges.vendor ?? editingChanges.artworkDetails.artist,
-        medium: editingChanges.artworkDetails.medium,
-        height: editingChanges.artworkDetails.height,
-        serie: editingChanges.artworkDetails.serie,
         depth: editingChanges.artworkDetails.depth,
-        year: editingChanges.artworkDetails.year,
+        height: editingChanges.artworkDetails.height,
         location: editingChanges.artworkDetails.location,
+        medium: editingChanges.artworkDetails.medium,
+        serie: editingChanges.artworkDetails.serie,
         width: editingChanges.artworkDetails.width,
+        year: editingChanges.artworkDetails.year,
       } : undefined,
       id: editingRowId,
       inventoryQuantity: editingChanges.inventoryQuantity,
@@ -250,13 +250,13 @@ export default function ManageInventoryPage() {
       const updatePayload: UpdateProductPayload = {
         details: payload.artworkDetails ? {
           artist: payload.vendor ?? undefined,
-          medium: payload.artworkDetails.medium,
-          height: payload.artworkDetails.height,
-          serie: payload.artworkDetails.serie,
           depth: payload.artworkDetails.depth,
-          year: payload.artworkDetails.year,
+          height: payload.artworkDetails.height,
           location: payload.artworkDetails.location,
+          medium: payload.artworkDetails.medium,
+          serie: payload.artworkDetails.serie,
           width: payload.artworkDetails.width,
+          year: payload.artworkDetails.year,
         } : undefined,
         id: payload.id,
         inventoryQuantity: payload.inventoryQuantity,
@@ -327,8 +327,8 @@ export default function ManageInventoryPage() {
       isAdmin,
       isArtist,
       isUpdating: updateMutation.isPending,
-      setEditingRowId,
       saveAllChanges,
+      setEditingRowId,
       
       updateEditingChanges,
       

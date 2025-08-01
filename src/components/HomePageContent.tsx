@@ -145,31 +145,31 @@ const useDotButton = (emblaApi: EmblaCarouselType | undefined) => {
 
 const heroSlides: Slide[] = [
   {
+    actionText: 'Explorar la Galería',
+    actionUrl: ROUTES.STORE.MAIN.PATH,
     alt: 'Espacio de Impulso Galería',
     imageUrl: 'https://impulsogaleria.com/wp-content/uploads/2021/11/CrutityStudio-3378.jpg',
     parallaxFactor: 1.2,
     subtitle: 'Descubre obras únicas de artistas emergentes y consagrados.',
-    title: 'Explora un Mundo de Arte',
-    actionUrl: ROUTES.STORE.MAIN.PATH,
-    actionText: 'Explorar la Galería'
+    title: 'Explora un Mundo de Arte'
   },
   {
+    actionText: 'Ver Eventos',
+    actionUrl: ROUTES.STORE.EVENTS.PATH,
     alt: 'Exposición de arte contemporáneo',
     imageUrl: 'https://impulsogaleria.com/wp-content/uploads/2021/11/CrutityStudio-3381.jpg',
     parallaxFactor: 1.1,
     subtitle: 'Sumérgete en experiencias artísticas inolvidables.',
-    title: 'Eventos y Exposiciones Exclusivas',
-    actionUrl: ROUTES.STORE.EVENTS.PATH,
-    actionText: 'Ver Eventos'
+    title: 'Eventos y Exposiciones Exclusivas'
   },
   {
+    actionText: 'Conocer Servicios',
+    actionUrl: ROUTES.STORE.SERVICES.PATH,
     alt: 'Detalle de una obra de arte',
     imageUrl: 'https://impulsogaleria.com/wp-content/uploads/2021/10/IMG_3321-scaled.jpg',
     parallaxFactor: 1.5,
     subtitle: 'Nuestra colección curada tiene algo especial para cada amante del arte.',
-    title: 'Encuentra la Pieza Perfecta',
-    actionUrl: ROUTES.STORE.SERVICES.PATH,
-    actionText: 'Conocer Servicios'
+    title: 'Encuentra la Pieza Perfecta'
   },
 ]
 
@@ -300,7 +300,7 @@ const mapPublicArtistToArtist = (publicArtist: PublicArtist) => {
 
 export function HomePageContent() {
   const { data: artists } = usePublicArtists()
-  const { products: publicProducts, loading: productsLoading } = usePublicProducts(8)
+  const { loading: productsLoading, products: publicProducts } = usePublicProducts(8)
   const { events: publicEvents, loading: eventsLoading } = usePublicEvents(6)
 
   return (

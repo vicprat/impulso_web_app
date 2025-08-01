@@ -19,13 +19,102 @@ import {
   type CollectionsResponse,
   type Edge,
   type Product,
-  type ProductResponse,
   type ProductSearchParams,
   type ProductsResponse,
   type RawCollection,
-  type RawProduct,
-  type ShopInfoResponse,
+  type RawProduct
 } from './types'
+
+// Tipo para la respuesta de getProductByHandle que devuelve ShopifyProductData
+export interface ShopifyProductDataResponse {
+  data: {
+    id: string
+    handle: string
+    title: string
+    descriptionHtml: string
+    vendor: string
+    productType: string
+    status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED'
+    tags: string[]
+    updatedAt: string
+    images: {
+      edges: { node: any }[]
+    }
+    media: {
+      nodes: any[]
+    }
+    variants: {
+      edges: { node: any }[]
+    }
+    metafields: {
+      edges: { node: any }[]
+    }
+  }
+  statusCode: number
+}
+
+// Función para convertir datos del API público al formato ShopifyProductData
+function convertToShopifyProductData(rawProduct: RawProduct) {
+  return {
+    descriptionHtml: rawProduct.descriptionHtml,
+    handle: rawProduct.handle,
+    id: rawProduct.id,
+    // Los productos públicos no tienen tags personalizados
+images: {
+      edges: rawProduct.images?.edges || []
+    },
+    
+media: {
+      nodes: [] // Los productos públicos no tienen media adicional
+    },
+    
+metafields: {
+      edges: [] // Los productos públicos no tienen metafields personalizados
+    },
+    
+productType: rawProduct.productType,
+    
+status: 'ACTIVE' as const, 
+    
+// Los productos públicos siempre están activos
+tags: [], 
+    
+
+title: rawProduct.title,
+    
+
+updatedAt: rawProduct.updatedAt,
+    
+variants: {
+      edges: rawProduct.variants?.edges.map(edge => ({
+        node: {
+          availableForSale: edge.node.availableForSale,
+          id: edge.node.id,
+          // Política por defecto
+inventoryItem: {
+            tracked: false // Los productos públicos no están rastreados
+          },
+          
+// Los productos públicos no tienen información de inventario
+inventoryPolicy: 'DENY' as const,
+          
+
+inventoryQuantity: null,
+          
+
+price: edge.node.price.amount, 
+          
+
+sku: edge.node.sku, 
+          
+title: edge.node.title
+        }
+      })) || []
+    },
+    vendor: rawProduct.vendor
+  }
+}
+
 export const api = {
   getCollectionByHandle: async (
     handle: string,
@@ -152,30 +241,48 @@ export const api = {
     }
   },
 
-  getProductByHandle: async (handle: string): Promise<ProductResponse> => {
-    try {
-      const { data, errors } = await storeClient.request(PRODUCT_BY_HANDLE_QUERY, {
-        variables: {
-          handle,
-        },
-      })
+  getProductByHandle: async (handle: string): Promise<ShopifyProductDataResponse> => {
+    const maxRetries = 3
+    let lastError: Error | null = null
 
-      if (errors) {
-        handleGraphQLErrors(Array.isArray(errors) ? errors : [])
-      }
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const { data, errors } = await storeClient.request(PRODUCT_BY_HANDLE_QUERY, {
+          variables: {
+            handle,
+          },
+        })
 
-      if (!data.product) {
-        throw new Error(`Product with handle "${handle}" not found`)
-      }
+        if (errors) {
+          handleGraphQLErrors(Array.isArray(errors) ? errors : [])
+        }
 
-      return {
-        data: transformProductData(data.product as RawProduct),
-        statusCode: 200,
+        if (!data) {
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            continue
+          }
+          throw new Error(`No data received from Shopify API for handle "${handle}" after ${maxRetries} attempts`)
+        }
+
+        if (!data.product) {
+          throw new Error(`Product with handle "${handle}" not found`)
+        }
+
+        return {
+          data: convertToShopifyProductData(data.product as RawProduct),
+          statusCode: 200,
+        }
+      } catch (error) {
+        lastError = error as Error
+        
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, attempt * 1000))
+        }
       }
-    } catch (error) {
-      console.error(`Error fetching product with handle "${handle}":`, error)
-      throw error
     }
+
+    throw lastError || new Error(`Failed to fetch product with handle "${handle}" after ${maxRetries} attempts`)
   },
 
   getProducts: async (params: ProductSearchParams = {}): Promise<ProductsResponse> => {
@@ -245,7 +352,7 @@ export const api = {
     }
   },
 
-  getProductsByIds: async (productIds: string[]): Promise<ProductsResponse> => {
+  getProductsByIds: async (productIds: string[]): Promise<{ data: { pageInfo: any; products: Product[] }; statusCode: number }> => {
     try {
       const { data, errors } = await storeClient.request(PRODUCTS_BY_IDS_QUERY, {
         variables: {
@@ -279,7 +386,7 @@ export const api = {
     }
   },
 
-  getShopInfo: async (): Promise<ShopInfoResponse> => {
+  getShopInfo: async (): Promise<{ data: any; statusCode: number }> => {
     try {
       const { data, errors } = await storeClient.request(SHOP_INFO_QUERY)
 

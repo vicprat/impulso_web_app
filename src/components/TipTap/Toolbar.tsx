@@ -30,7 +30,7 @@ export const Toolbar: React.FC<Props> = ({ editor }) => {
   }
 
   return (
-    <Card className='flex flex-wrap gap-1 rounded-md border border-input bg-transparent p-1 flex-shrink-0'>
+    <Card className='flex shrink-0 flex-wrap gap-1 rounded-md border border-input bg-transparent p-1'>
       <Toggle
         size='sm'
         pressed={editor.isActive('heading', { level: 1 })}

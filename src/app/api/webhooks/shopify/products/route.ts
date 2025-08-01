@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { NextResponse } from 'next/server'
 
@@ -55,8 +56,8 @@ export async function POST(request: Request) {
 
     // Revalidar cache usando CacheManager
     CacheManager.revalidateProductCache({
-      id: product.id,
       handle: productHandle,
+      id: product.id,
       vendor: product.vendor,
     })
 
@@ -94,10 +95,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       message: 'Product webhook processed successfully',
-      productId: product.id,
       productHandle,
+      productId: product.id,
       productType: isEvent ? 'event' : 'product',
-      vendor: product.vendor,
       revalidatedPaths: isEvent 
         ? [
             `/store/event/${productHandle}`,
@@ -114,6 +114,7 @@ export async function POST(request: Request) {
             ...(product.vendor && !isEvent ? ['/artists'] : [])
           ],
       success: true,
+      vendor: product.vendor,
     })
   } catch (error) {
     console.error('❌ Error procesando webhook:', error)

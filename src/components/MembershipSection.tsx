@@ -36,13 +36,13 @@ const slideUp = {
 
 export const MembershipSection: React.FC = () => {
   return (
-    <section className='py-20 srelative overflow-hidden'>
+    <section className='srelative overflow-hidden py-20'>
       {/* Background Pattern */}
       <div className='absolute inset-0 bg-black/20' />
       <div className='absolute inset-0 ' />
 
-      <div className='container mx-auto px-6 relative z-10'>
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-12 items-center'>
+      <div className='container relative z-10 mx-auto px-6'>
+        <div className='grid grid-cols-1 items-center gap-12 lg:grid-cols-2'>
           {/* Left Content */}
           <motion.div
             variants={slideUp}
@@ -54,14 +54,14 @@ export const MembershipSection: React.FC = () => {
             <h2 className='mb-6 text-4xl font-bold  md:text-5xl lg:text-6xl'>
               Vende tus obras
             </h2>
-            <p className='mb-8 text-lg  max-w-lg mx-auto lg:mx-0'>
+            <p className='mx-auto mb-8  max-w-lg text-lg lg:mx-0'>
               ADQUIERA UN PLAN DE MEMBRESÍA Y DISFRUTE DE LOS GRANDES BENEFICIOS DE VENDER SU ARTE CON NOSOTROS.
             </p>
             <Button
               asChild
               size='lg'
               variant='outline'
-              className='border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-gray-900 transition-colors duration-200'
+              className='border-amber-400 text-amber-400 transition-colors duration-200 hover:bg-amber-400 hover:text-gray-900'
             >
               <Link href={ROUTES.STORE.MEMBERSHIP.PATH}>
                 Más información
@@ -76,10 +76,10 @@ export const MembershipSection: React.FC = () => {
             whileInView='animate'
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className='bg-white rounded-2xl p-8 shadow-2xl'
+            className='rounded-2xl bg-white p-8 shadow-2xl'
           >
-            <div className='text-center mb-6'>
-              <h3 className='text-2xl font-bold text-gray-900 mb-2'>
+            <div className='mb-6 text-center'>
+              <h3 className='mb-2 text-2xl font-bold text-gray-900'>
                 Mi espacio Impulso
               </h3>
               <div className='mb-4'>
@@ -89,17 +89,17 @@ export const MembershipSection: React.FC = () => {
                 </div>
                 <span className='text-sm text-gray-600'>MXN/mensual</span>
               </div>
-              <div className='w-24 h-px bg-amber-400 mx-auto mb-6'></div>
+              <div className='mx-auto mb-6 h-px w-24 bg-amber-400'></div>
             </div>
 
             <div className='mb-6'>
-              <h4 className='text-lg font-semibold text-gray-900 mb-4'>
+              <h4 className='mb-4 text-lg font-semibold text-gray-900'>
                 Beneficios para ti
               </h4>
               <div className='space-y-3'>
                 {benefits.map((benefit) => (
                   <div key={benefit.id} className='flex items-start gap-3'>
-                    <Check className='h-5 w-5 text-green-500 mt-0.5 flex-shrink-0' />
+                    <Check className='mt-0.5 size-5 shrink-0 text-green-500' />
                     <span className='text-sm text-gray-700'>{benefit.text}</span>
                   </div>
                 ))}
@@ -109,7 +109,7 @@ export const MembershipSection: React.FC = () => {
             <Button
               asChild
               size='lg'
-              className='w-full bg-gray-900 text-white hover:bg-gray-800 transition-colors duration-200'
+              className='w-full bg-gray-900 text-white transition-colors duration-200 hover:bg-gray-800'
             >
               <Link href={ROUTES.STORE.MEMBERSHIP.PATH}>
                 Adquirir

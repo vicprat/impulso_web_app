@@ -295,13 +295,13 @@ export class Product {
     
     const finalDetails = {
       artist: details.artist || null,
-      medium: details.medium || null,
-      year: details.year || null,
-      height: details.height || null,
-      width: details.width || null,
       depth: details.depth || null,
-      serie: details.serie || null,
+      height: details.height || null,
       location: details.location || null,
+      medium: details.medium || null,
+      serie: details.serie || null,
+      width: details.width || null,
+      year: details.year || null,
     }
     
     return finalDetails
@@ -338,11 +338,11 @@ export class Product {
     // Buscar patrones en el texto - mejorados para capturar correctamente
     const patterns = {
       artist: /Artist:\s*([^M]+?)(?=Medium|Dimensions|Year|Location|Serie|$)/i,
-      medium: /Medium:\s*([^D]+?)(?=Dimensions|Year|Location|Serie|$)/i,
       dimensions: /Dimensions:\s*([^Y]+?)(?=Year|Location|Serie|$)/i,
-      year: /Year:\s*(\d{4})/i,
       location: /Location:\s*([^A-Z]+?)(?=Serie|$)/i,
+      medium: /Medium:\s*([^D]+?)(?=Dimensions|Year|Location|Serie|$)/i,
       serie: /Serie:\s*([^A-Z]+?)(?=$)/i,
+      year: /Year:\s*(\d{4})/i,
     }
     
     // Extraer artist
@@ -399,11 +399,11 @@ export class Product {
     // Buscar patrones en el HTML
     const patterns = {
       artist: /<strong>Artista:<\/strong>\s*([^<]+)/i,
-      medium: /<strong>Técnica:<\/strong>\s*([^<]+)/i,
       dimensions: /<strong>Medidas[^<]*:<\/strong>\s*([^<]+)/i,
-      year: /<strong>Año:<\/strong>\s*(\d{4})/i,
       location: /<strong>Localización:<\/strong>\s*([^<]+)/i,
+      medium: /<strong>Técnica:<\/strong>\s*([^<]+)/i,
       serie: /<strong>Serie:<\/strong>\s*([^<]+)/i,
+      year: /<strong>Año:<\/strong>\s*(\d{4})/i,
     }
     
     // Extraer artist

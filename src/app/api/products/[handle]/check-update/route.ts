@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+
 import { api } from '@/modules/shopify/api'
+
+import type { NextRequest } from 'next/server'
 
 export async function POST(
   request: NextRequest,
@@ -8,14 +10,14 @@ export async function POST(
 ) {
   try {
     const { handle } = await params
-    const { productId, lastUpdate } = await request.json()
+    const { lastUpdate, productId } = await request.json()
 
     // Obtener el producto actual desde Shopify
     const productResponse = await api.getProductByHandle(handle)
     const product = productResponse.data
 
     // Verificar si el producto ha sido actualizado
-    const productUpdatedAt = new Date(product.createdAt).getTime()
+    const productUpdatedAt = new Date(product.updatedAt).getTime()
     const hasUpdates = productUpdatedAt > lastUpdate
 
     return NextResponse.json({
@@ -27,8 +29,8 @@ export async function POST(
     console.error('Error verificando actualizaciones:', error)
     return NextResponse.json(
       {
-        hasUpdates: false,
         error: 'Error verificando actualizaciones',
+        hasUpdates: false,
       },
       { status: 500 }
     )

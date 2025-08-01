@@ -28,5 +28,5 @@ export const usePublicEvents = (limit = 10) => {
     fetchEvents()
   }, [limit])
 
-  return { events, loading, error }
+  return { error, events, loading }
 } 

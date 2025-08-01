@@ -18,6 +18,7 @@ export const transformProductData = (rawProduct: RawProduct): Product => {
     priceRange: rawProduct.priceRange,
     productType: rawProduct.productType,
     title: rawProduct.title,
+    updatedAt: rawProduct.updatedAt,
     variants: rawProduct.variants?.edges.map((edge) => edge.node) ?? [],
     vendor: rawProduct.vendor,
   }

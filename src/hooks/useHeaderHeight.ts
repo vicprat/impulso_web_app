@@ -32,10 +32,10 @@ export function useHeaderHeight() {
 
     if (header) {
       mutationObserver.observe(header, {
-        childList: true,
-        subtree: true,
+        attributeFilter: ['class'],
         attributes: true,
-        attributeFilter: ['class']
+        childList: true,
+        subtree: true
       })
     }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Box,
   Calendar,
@@ -16,6 +17,7 @@ import {
   Warehouse,
   X
 } from 'lucide-react'
+import { Check, ChevronsUpDown } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -23,6 +25,14 @@ import { z } from 'zod'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
 import {
   Form,
   FormControl,
@@ -35,6 +45,11 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -42,40 +57,27 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
 import { type Product } from '@/models/Product'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import { useGetArtworkTypes, useGetLocations, useGetTechniques, useGetVendors } from '@/services/product/hook'
 import { type CreateProductPayload, type UpdateProductPayload } from '@/services/product/types'
-import { useQueryClient } from '@tanstack/react-query'
 
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
-import { Check, ChevronsUpDown } from 'lucide-react'
+
+
 import { Tiptap } from '../TipTap'
 import { MultiImageUploader } from './MultiImageUploader'
 
 // Componente para dropdown con opción de agregar nueva
 const AddOptionSelect = ({
-  options,
-  isLoading,
-  onAddNew,
-  placeholder,
-  label,
-  value,
-  onValueChange,
   icon: Icon,
+  isLoading,
+  label,
+  onAddNew,
+  onValueChange,
+  options,
+  placeholder,
+  value,
 }: {
   options: { id: string; name: string }[]
   isLoading: boolean
@@ -164,11 +166,11 @@ const AddOptionSelect = ({
 
 // Componente para vendor con combobox (permite selección y escritura libre)
 const VendorCombobox = ({
-  vendors,
-  isLoading,
-  value,
-  onValueChange,
   disabled = false,
+  isLoading,
+  onValueChange,
+  value,
+  vendors,
 }: {
   vendors?: string[]
   isLoading: boolean
@@ -204,12 +206,12 @@ const VendorCombobox = ({
           aria-expanded={open}
           className={cn(
             'w-full justify-between bg-surface-container-low hover:bg-surface-container',
-            disabled && 'opacity-50 cursor-not-allowed'
+            disabled && 'cursor-not-allowed opacity-50'
           )}
           disabled={disabled}
         >
           {value || 'Seleccionar artista...'}
-          <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+          <ChevronsUpDown className='ml-2 size-4 shrink-0 opacity-50' />
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-full p-0'>
@@ -235,7 +237,7 @@ const VendorCombobox = ({
                   >
                     <Check
                       className={cn(
-                        'mr-2 h-4 w-4',
+                        'mr-2 size-4',
                         value === vendor ? 'opacity-100' : 'opacity-0'
                       )}
                     />
@@ -319,7 +321,7 @@ export function ProductForm({
   onSave,
   product,
 }: ProductFormProps) {
-  const { user, hasRole } = useAuth()
+  const { hasRole, user } = useAuth()
   const { data: vendors, isLoading: vendorsLoading } = useGetVendors()
   const [ allImages, setAllImages ] = useState<ImageData[]>([])
   const [ tagsArray, setTagsArray ] = useState<string[]>([])
@@ -341,12 +343,18 @@ export function ProductForm({
       const existingImages: ImageData[] = product.media
         .filter(node => node.mediaContentType === 'IMAGE' && node.image?.url && node.image?.id)
         .map((node, index) => ({
-          id: node.image!.id, // ProductImage ID (para compatibilidad)
-          url: node.image!.url,
-          altText: node.image!.altText ?? undefined,
-          isPrimary: index === 0, // La primera imagen es la principal
-          isNew: false,
-          mediaId: node.id, // MediaImage ID (para eliminación)
+          altText: node.image!.altText ?? undefined, 
+          id: node.image!.id,
+          
+// La primera imagen es la principal
+isNew: false,
+          
+
+isPrimary: index === 0, 
+          
+mediaId: node.id,
+          // ProductImage ID (para compatibilidad)
+url: node.image!.url, // MediaImage ID (para eliminación)
         }))
       setAllImages(existingImages)
     } else {
@@ -362,11 +370,11 @@ export function ProductForm({
   // Función para agregar nuevas opciones
   const handleAddNewOption = useCallback(async (optionType: string, name: string) => {
     const response = await fetch(`/api/options/${optionType}`, {
-      method: 'POST',
+      body: JSON.stringify({ name }),
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name }),
+      method: 'POST',
     })
 
     if (!response.ok) {
@@ -431,7 +439,7 @@ export function ProductForm({
       const remainingMediaIds = allImages
         .filter(img => !img.isNew)
         .map(img => img.mediaId)
-        .filter(id => id && id.startsWith('gid://')) // Solo IDs válidos de MediaImage
+        .filter(id => id?.startsWith('gid://')) // Solo IDs válidos de MediaImage
 
       // Solo eliminar imágenes que realmente existen en el producto actual
       const deletedMediaIds = originalImages
@@ -461,20 +469,34 @@ export function ProductForm({
           year: data.year ?? null,
         },
         id: product.id,
-        inventoryQuantity: data.inventoryQuantity ? parseInt(data.inventoryQuantity) : undefined,
-        price: data.price,
-        productType: data.productType,
-        status: data.status as 'ACTIVE' | 'DRAFT',
-        tags: data.tags
+        // Solo enviar nuevas imágenes si hay nuevas imágenes para agregar
+images: newImages.length > 0 ? newImages : undefined,
+        
+// Solo enviar imágenes a eliminar si hay imágenes para eliminar
+imagesToDelete: deletedMediaIds.length > 0 ? deletedMediaIds : undefined,
+        
+
+inventoryQuantity: data.inventoryQuantity ? parseInt(data.inventoryQuantity) : undefined,
+        
+
+price: data.price,
+        
+
+productType: data.productType,
+        
+
+status: data.status as 'ACTIVE' | 'DRAFT',
+        
+
+tags: data.tags
           .split(',')
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
-        title: data.title,
+        
+        
+title: data.title,
+        
         vendor: data.vendor,
-        // Solo enviar nuevas imágenes si hay nuevas imágenes para agregar
-        images: newImages.length > 0 ? newImages : undefined,
-        // Solo enviar imágenes a eliminar si hay imágenes para eliminar
-        imagesToDelete: deletedMediaIds.length > 0 ? deletedMediaIds : undefined,
       }
       onSave(updatePayload)
     } else {
@@ -987,7 +1009,7 @@ export function ProductForm({
                             Descripción
                           </FormLabel>
                           <FormControl>
-                            <div className='rounded-lg border border-outline-variant/20 bg-surface-container-low p-1 min-h-[300px]'>
+                            <div className='border-outline-variant/20 min-h-[300px] rounded-lg border bg-surface-container-low p-1'>
                               <Tiptap.Editor
                                 content={field.value ?? ''}
                                 onChange={(content) => field.onChange(content)}
@@ -1014,7 +1036,7 @@ export function ProductForm({
                         <Label className='mb-2 block text-xs text-on-surface-variant'>
                           {isEditing ? 'Gestionar Imágenes' : 'Subir Imágenes'}
                         </Label>
-                        <div className='rounded-lg border border-outline-variant/20 bg-surface-container-lowest p-3'>
+                        <div className='border-outline-variant/20 rounded-lg border bg-surface-container-lowest p-3'>
                           <MultiImageUploader
                             existingImages={allImages}
                             onImagesChange={handleImagesChange}
@@ -1028,11 +1050,11 @@ export function ProductForm({
                         )}
 
                         {allImages.filter(img => img.isNew).length > 0 && (
-                          <div className='mt-3 rounded-md border border-success/20 bg-success-container p-3'>
+                          <div className='border-success/20 mt-3 rounded-md border bg-success-container p-3'>
                             <p className='text-xs font-medium text-on-success-container'>
                               {allImages.filter(img => img.isNew).length} nueva{allImages.filter(img => img.isNew).length !== 1 ? 's' : ''} imagen{allImages.filter(img => img.isNew).length !== 1 ? 'es' : ''}
                             </p>
-                            <p className='text-xs text-on-success-container/70'>
+                            <p className='text-on-success-container/70 text-xs'>
                               Se procesarán al guardar
                             </p>
                           </div>
@@ -1080,7 +1102,7 @@ export function ProductForm({
                 />
 
                 {tagsArray.length > 0 && (
-                  <div className='rounded-lg border border-outline-variant/20 bg-surface-container-lowest p-4'>
+                  <div className='border-outline-variant/20 rounded-lg border bg-surface-container-lowest p-4'>
                     <Label className='mb-3 block text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
                       Vista Previa de Tags
                     </Label>
@@ -1115,21 +1137,21 @@ export function ProductForm({
                     <Box className='size-4' />
                     Nota sobre la edición
                   </h4>
-                  <ul className='space-y-2 text-sm text-on-warning-container/80'>
+                  <ul className='text-on-warning-container/80 space-y-2 text-sm'>
                     <li className='flex items-start gap-2'>
-                      <div className='mt-1.5 size-1.5 rounded-full bg-on-warning-container/60' />
+                      <div className='bg-on-warning-container/60 mt-1.5 size-1.5 rounded-full' />
                       El handle (URL) no se puede cambiar una vez creado el producto
                     </li>
                     <li className='flex items-start gap-2'>
-                      <div className='mt-1.5 size-1.5 rounded-full bg-on-warning-container/60' />
+                      <div className='bg-on-warning-container/60 mt-1.5 size-1.5 rounded-full' />
                       Las imágenes nuevas se agregarán a las existentes
                     </li>
                     <li className='flex items-start gap-2'>
-                      <div className='mt-1.5 size-1.5 rounded-full bg-on-warning-container/60' />
+                      <div className='bg-on-warning-container/60 mt-1.5 size-1.5 rounded-full' />
                       Los cambios de inventario y precio se procesan por separado
                     </li>
                     <li className='flex items-start gap-2'>
-                      <div className='mt-1.5 size-1.5 rounded-full bg-on-warning-container/60' />
+                      <div className='bg-on-warning-container/60 mt-1.5 size-1.5 rounded-full' />
                       Los detalles de la obra se guardan como metafields en Shopify
                     </li>
                   </ul>
@@ -1153,7 +1175,7 @@ export function ProductForm({
                   <Button
                     type='submit'
                     disabled={isLoading}
-                    className='bg-primary hover:bg-primary/90'
+                    className='hover:bg-primary/90 bg-primary'
                   >
                     <Save className='mr-2 size-4' />
                     {isLoading ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Crear Obra'}

@@ -17,32 +17,32 @@ interface ProductCarouselProps {
 }
 
 export const ProductCarousel: React.FC<ProductCarouselProps> = ({
-  products,
-  title,
-  subtitle,
   autoplay = true,
+  products,
   scrollSpeed = 1,
   stopOnInteraction = false,
+  subtitle,
+  title,
 }) => {
   const duplicatedProducts = [ ...products, ...products, ...products ]
 
   const [ emblaRef, emblaApi ] = useEmblaCarousel(
     {
       align: 'start',
+      containScroll: false,
       dragFree: true,
       loop: true,
       skipSnaps: false,
-      containScroll: false,
       slidesToScroll: 1,
     },
     autoplay ? [
       AutoScroll({
+        direction: 'forward',
         playOnInit: true,
         speed: scrollSpeed,
+        stopOnFocusIn: false,
         stopOnInteraction,
         stopOnMouseEnter: true,
-        stopOnFocusIn: false,
-        direction: 'forward',
       })
     ] : []
   )

@@ -3,6 +3,7 @@
 import { Suspense } from 'react'
 
 import { StoreLayoutAutoUpdate } from '@/components/StoreLayoutAutoUpdate'
+
 import { StoreLayoutContent } from './StoreLayoutContent'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
