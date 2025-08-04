@@ -10,13 +10,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <Guard.Route>
       <SidebarProvider>
-        <div className='flex h-screen w-full overflow-auto bg-background'>
+        <div className='flex h-screen w-full'>
           <AppSidebar routes={getAllRoutes()} />
 
-          <div className='flex size-full flex-1 flex-col'>
+          <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
             <Header.Authenticated />
 
-            {children}
+            <div className='flex-1 overflow-x-auto'>
+              {children}
+            </div>
           </div>
         </div>
       </SidebarProvider>

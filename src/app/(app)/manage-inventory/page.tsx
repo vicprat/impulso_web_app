@@ -384,8 +384,8 @@ export default function ManageInventoryPage() {
   }
 
   return (
-    <div className='space-y-6 p-4 md:p-6'>
-      <div className='flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0'>
+    <div className='space-y-4 p-2 md:p-4 min-w-0 max-w-full'>
+      <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 min-w-0'>
         <div>
           <h1 className='text-2xl font-bold'>Gestión de Inventario</h1>
           <p className='text-muted-foreground'>Administra tu catálogo de obras de arte</p>
@@ -404,8 +404,8 @@ export default function ManageInventoryPage() {
         </div>
       </div>
 
-      <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
-        <div className='rounded-lg border p-3'>
+      <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
+        <div className='rounded-lg border p-2'>
           <div className='flex items-center justify-between'>
             <p className='text-sm font-medium text-muted-foreground'>Total</p>
             <div className='flex items-center space-x-2'>
@@ -414,7 +414,7 @@ export default function ManageInventoryPage() {
             </div>
           </div>
         </div>
-        <div className='rounded-lg border p-3'>
+        <div className='rounded-lg border p-2'>
           <div className='flex items-center justify-between'>
             <p className='text-sm font-medium text-muted-foreground'>Activos</p>
             <div className='flex items-center space-x-2'>
@@ -423,7 +423,7 @@ export default function ManageInventoryPage() {
             </div>
           </div>
         </div>
-        <div className='rounded-lg border p-3'>
+        <div className='rounded-lg border p-2'>
           <div className='flex items-center justify-between'>
             <p className='text-sm font-medium text-muted-foreground'>Borradores</p>
             <div className='flex items-center space-x-2'>
@@ -432,7 +432,7 @@ export default function ManageInventoryPage() {
             </div>
           </div>
         </div>
-        <div className='rounded-lg border p-3'>
+        <div className='rounded-lg border p-2'>
           <div className='flex items-center justify-between'>
             <p className='text-sm font-medium text-muted-foreground'>Sin Stock</p>
             <div className='flex items-center space-x-2'>
@@ -443,7 +443,7 @@ export default function ManageInventoryPage() {
         </div>
       </div>
 
-      <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-3 sm:space-y-0'>
+      <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0 min-w-0'>
         <div className='relative max-w-sm flex-1 flex'>
           <Input
             placeholder='Buscar por título, tipo, artista...'
@@ -500,9 +500,9 @@ export default function ManageInventoryPage() {
           </div>
         )}
 
-        <div className='flex items-center space-x-2'>
+        <div className='flex items-center space-x-1'>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className='w-48'>
+            <SelectTrigger className='w-44'>
               <Filter className='mr-2 size-4' />
               <SelectValue placeholder='Filtrar por estado' />
             </SelectTrigger>
@@ -515,9 +515,9 @@ export default function ManageInventoryPage() {
           </Select>
         </div>
 
-        <div className='flex items-center space-x-2'>
+        <div className='flex items-center space-x-1'>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className='w-40'>
+            <SelectTrigger className='w-36'>
               <SelectValue placeholder='Ordenar por' />
             </SelectTrigger>
             <SelectContent>
@@ -531,9 +531,9 @@ export default function ManageInventoryPage() {
           </Select>
         </div>
 
-        <div className='flex items-center space-x-2'>
+        <div className='flex items-center space-x-1'>
           <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}>
-            <SelectTrigger className='w-32'>
+            <SelectTrigger className='w-28'>
               <SelectValue placeholder='Orden' />
             </SelectTrigger>
             <SelectContent>
@@ -541,7 +541,6 @@ export default function ManageInventoryPage() {
               <SelectItem value='desc'>Descendente</SelectItem>
             </SelectContent>
           </Select>
-
         </div>
       </div>
 
@@ -581,7 +580,7 @@ export default function ManageInventoryPage() {
               </span>
             </div>
           )}
-          <div className='rounded-md border'>
+          <div className='w-full min-w-0 max-w-full'>
             <Table.Data
               table={table}
               emptyMessage={

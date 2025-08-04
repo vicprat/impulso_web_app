@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { type Product } from '@/models/Product'
-import { useGetVendors, useGetTechniques, useGetArtworkTypes, useGetLocations } from '@/services/product/hook'
+import { useGetArtworkTypes, useGetLocations, useGetTechniques, useGetVendors } from '@/services/product/hook'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 
@@ -327,9 +327,6 @@ const EditableVendorSelect = ({
     return (
       <div className='flex flex-col gap-1'>
         <span className={className}>{value || '-'}</span>
-        {disabled && (
-          <span className='text-xs text-muted-foreground'>Solo lectura (artista)</span>
-        )}
       </div>
     )
   }
@@ -358,9 +355,6 @@ const EditableVendorSelect = ({
           ))}
         </SelectContent>
       </Select>
-      {disabled && (
-        <span className='text-xs text-muted-foreground'>Solo lectura (artista)</span>
-      )}
     </div>
   )
 }

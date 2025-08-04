@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   Box,
   Calendar,
+  Check, ChevronsUpDown,
   DollarSign,
   Hash,
   Image as ImageIcon,
@@ -17,7 +18,6 @@ import {
   Warehouse,
   X
 } from 'lucide-react'
-import { Check, ChevronsUpDown } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -253,7 +253,8 @@ const VendorCombobox = ({
   )
 }
 
-const productFormSchema = z.object({
+// Función para crear el esquema de validación dinámicamente
+const createProductFormSchema = (isArtist: boolean) => z.object({
   depth: z.string().optional(),
   description: z.string().optional(),
   handle: z.string().min(3, 'El handle debe tener al menos 3 caracteres').optional(),
@@ -271,12 +272,12 @@ const productFormSchema = z.object({
   status: z.enum([ 'ACTIVE', 'DRAFT', 'ARCHIVED' ]),
   tags: z.string(),
   title: z.string().min(3, 'El título debe tener al menos 3 caracteres'),
-  vendor: z.string().optional(),
+  vendor: isArtist ? z.string().min(1, 'El campo artista es requerido') : z.string().optional(),
   width: z.string().optional(),
   year: z.string().optional(),
 })
 
-type ProductFormData = z.infer<typeof productFormSchema>
+type ProductFormData = z.infer<ReturnType<typeof createProductFormSchema>>
 
 interface BaseProductFormProps {
   onCancel: () => void
@@ -343,18 +344,18 @@ export function ProductForm({
       const existingImages: ImageData[] = product.media
         .filter(node => node.mediaContentType === 'IMAGE' && node.image?.url && node.image?.id)
         .map((node, index) => ({
-          altText: node.image!.altText ?? undefined, 
+          altText: node.image!.altText ?? undefined,
           id: node.image!.id,
-          
-// La primera imagen es la principal
-isNew: false,
-          
 
-isPrimary: index === 0, 
-          
-mediaId: node.id,
+          // La primera imagen es la principal
+          isNew: false,
+
+
+          isPrimary: index === 0,
+
+          mediaId: node.id,
           // ProductImage ID (para compatibilidad)
-url: node.image!.url, // MediaImage ID (para eliminación)
+          url: node.image!.url, // MediaImage ID (para eliminación)
         }))
       setAllImages(existingImages)
     } else {
@@ -421,14 +422,28 @@ url: node.image!.url, // MediaImage ID (para eliminación)
       width: product?.artworkDetails.width ?? '',
       year: product?.artworkDetails.year ?? '',
     },
-    resolver: zodResolver(productFormSchema),
+    resolver: zodResolver(createProductFormSchema(isArtist)),
   })
+
+
 
   useEffect(() => {
     if (product?.tags) {
       setTagsArray(product.tags)
     }
   }, [ product ])
+
+  // Actualizar el vendor cuando el usuario se cargue completamente (especialmente para artistas)
+  useEffect(() => {
+    if (isArtist && user?.artist?.name && !isEditing) {
+      form.setValue('vendor', user.artist.name)
+    }
+  }, [ isArtist, user?.artist?.name, isEditing, form ])
+
+  // Reinicializar el formulario cuando cambie el rol del usuario (para actualizar la validación)
+  useEffect(() => {
+    form.clearErrors()
+  }, [ isArtist, form ])
 
   const onSubmit = async (data: ProductFormData) => {
     if (isEditing) {
@@ -470,32 +485,32 @@ url: node.image!.url, // MediaImage ID (para eliminación)
         },
         id: product.id,
         // Solo enviar nuevas imágenes si hay nuevas imágenes para agregar
-images: newImages.length > 0 ? newImages : undefined,
-        
-// Solo enviar imágenes a eliminar si hay imágenes para eliminar
-imagesToDelete: deletedMediaIds.length > 0 ? deletedMediaIds : undefined,
-        
+        images: newImages.length > 0 ? newImages : undefined,
 
-inventoryQuantity: data.inventoryQuantity ? parseInt(data.inventoryQuantity) : undefined,
-        
+        // Solo enviar imágenes a eliminar si hay imágenes para eliminar
+        imagesToDelete: deletedMediaIds.length > 0 ? deletedMediaIds : undefined,
 
-price: data.price,
-        
 
-productType: data.productType,
-        
+        inventoryQuantity: data.inventoryQuantity ? parseInt(data.inventoryQuantity) : undefined,
 
-status: data.status as 'ACTIVE' | 'DRAFT',
-        
 
-tags: data.tags
+        price: data.price,
+
+
+        productType: data.productType,
+
+
+        status: data.status as 'ACTIVE' | 'DRAFT',
+
+
+        tags: data.tags
           .split(',')
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
-        
-        
-title: data.title,
-        
+
+
+        title: data.title,
+
         vendor: data.vendor,
       }
       onSave(updatePayload)
@@ -506,10 +521,13 @@ title: data.title,
         originalSource: img.url,
       }))
 
+      // Asegurar que el vendor se establezca para artistas
+      const vendorValue = isArtist && user?.artist?.name ? user.artist.name : data.vendor
+
       const createPayload: CreateProductPayload = {
         description: data.description ?? '',
         details: {
-          artist: data.vendor ?? null,
+          artist: vendorValue ?? null,
           depth: data.depth ?? null,
           height: data.height ?? null,
           location: data.location ?? null,
@@ -528,7 +546,7 @@ title: data.title,
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
         title: data.title,
-        vendor: data.vendor,
+        vendor: vendorValue,
       }
 
       onSave(createPayload)

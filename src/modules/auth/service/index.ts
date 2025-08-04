@@ -21,6 +21,7 @@ export interface AuthSession {
     permissions: string[]
     profile?: Profile | null
     links?: Links[] | null
+    artist?: { id: string; name: string; } | null
   }
   tokens: {
     accessToken: string
@@ -86,6 +87,7 @@ export class AuthService {
           permissions: effectivePermissions,
           roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
           shopifyCustomerId: user.shopifyCustomerId ?? undefined,
+          artist: userWithPermissions.artist,
         },
       }
     } catch (error) {
@@ -141,6 +143,7 @@ export class AuthService {
           permissions: effectivePermissions,
           roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
           shopifyCustomerId: existingSession.user.shopifyCustomerId ?? undefined,
+          artist: userWithPermissions.artist,
         },
       }
     } catch (error) {
@@ -206,6 +209,7 @@ export class AuthService {
           permissions: effectivePermissions,
           roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
           shopifyCustomerId: session.user.shopifyCustomerId ?? undefined,
+          artist: userWithPermissions.artist,
         },
       }
     } catch (error) {
@@ -245,7 +249,7 @@ export class AuthService {
     try {
       await prisma.sessionToken.deleteMany({
         where: {
-          OR: [{ expiresAt: { lt: new Date() } }, { isActive: false }],
+          OR: [ { expiresAt: { lt: new Date() } }, { isActive: false } ],
         },
       })
     } catch (error) {
@@ -452,6 +456,7 @@ export class AuthService {
         },
         links: true,
         profile: true,
+        artist: true,
       },
       where: { id: userId },
     })
@@ -475,6 +480,7 @@ export class AuthService {
         },
         links: true,
         profile: true,
+        artist: true,
       },
       where: { id: userId },
     })

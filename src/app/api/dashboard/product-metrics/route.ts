@@ -17,15 +17,15 @@ export async function GET() {
       averagePrice:
         products.length > 0
           ? products.reduce(
-              (sum: number, p: Product) => sum + parseFloat(p.primaryVariant?.price?.amount ?? '0'),
-              0
-            ) / products.length
+            (sum: number, p: Product) => sum + parseFloat(p.primaryVariant?.price?.amount ?? '0'),
+            0
+          ) / products.length
           : 0,
       draftProducts: products.filter((p) => p.status === 'DRAFT').length,
       productsByArtist: products.reduce(
         (acc: Record<string, number>, product: Product) => {
           const artist = product.vendor ?? 'Sin artista'
-          acc[artist] = (acc[artist] ?? 0) + 1
+          acc[ artist ] = (acc[ artist ] ?? 0) + 1
           return acc
         },
         {} as Record<string, number>
@@ -33,7 +33,7 @@ export async function GET() {
       productsByCategory: products.reduce(
         (acc: Record<string, number>, product: Product) => {
           const category = product.productType ?? 'Sin categoría'
-          acc[category] = (acc[category] ?? 0) + 1
+          acc[ category ] = (acc[ category ] ?? 0) + 1
           return acc
         },
         {} as Record<string, number>
