@@ -58,7 +58,7 @@ async function getPrimaryLocationId(): Promise<string> {
     {}
   )
 
-  const locationId = response.locations.edges[0]?.node?.id
+  const locationId = response.locations.edges[ 0 ]?.node?.id
   if (!locationId) {
     throw new Error('No se pudo encontrar una ubicación de Shopify para gestionar el inventario.')
   }
@@ -188,9 +188,9 @@ async function getProductsWithManualPriceSorting(
     const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
     const locationId = await getPrimaryLocationId()
     const products = response.products.edges.map((edge: { node: ShopifyProductData; cursor: string }) => new Product(edge.node, locationId))
-    
+
     allProducts.push(...products)
-    
+
     hasNextPage = response.products.pageInfo.hasNextPage
     cursor = response.products.pageInfo.endCursor || undefined
     pageCount++
@@ -198,9 +198,9 @@ async function getProductsWithManualPriceSorting(
 
   // Ordenar productos por precio
   allProducts.sort((a, b) => {
-    const priceA = parseFloat(a.variants[0]?.price?.amount || '0')
-    const priceB = parseFloat(b.variants[0]?.price?.amount || '0')
-    
+    const priceA = parseFloat(a.variants[ 0 ]?.price?.amount || '0')
+    const priceB = parseFloat(b.variants[ 0 ]?.price?.amount || '0')
+
     if (reverse) {
       return priceB - priceA // Descendente
     } else {
@@ -212,7 +212,7 @@ async function getProductsWithManualPriceSorting(
   const startIndex = params.cursor ? parseInt(params.cursor, 10) : 0
   const endIndex = startIndex + limit
   const paginatedProducts = allProducts.slice(startIndex, endIndex)
-  
+
   const hasNextPageResult = endIndex < allProducts.length
   const endCursor = hasNextPageResult ? endIndex.toString() : null
 
@@ -238,12 +238,12 @@ async function getProductStats(search?: string, session?: AuthSession) {
 
   // Obtener información del usuario para verificar si es artista
   const user = await prisma.user.findUnique({
-    include: { 
+    include: {
       UserRole: {
         include: {
           role: true,
         },
-      }, 
+      },
       artist: true,
       role: true,
     },
@@ -252,7 +252,7 @@ async function getProductStats(search?: string, session?: AuthSession) {
 
   // Si el usuario es artista, establecer automáticamente su vendor
   const isArtist = user?.UserRole?.some(ur => ur.role.name === 'artist') || user?.role?.name === 'artist'
-  
+
   if (isArtist && user?.artist?.name) {
     if (shopifyQuery) {
       shopifyQuery += ` AND vendor:"${user.artist.name}"`
@@ -284,17 +284,17 @@ async function getProductStats(search?: string, session?: AuthSession) {
       sortKey: 'TITLE',
     }
 
+
     const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
-    
+
     const locationId = await getPrimaryLocationId()
     const products = response.products.edges.map((edge: any) => new Product(edge.node, locationId))
-    
     allProducts.push(...products)
-    
+
     // Verificar si hay más páginas
     hasNextPage = response.products.pageInfo.hasNextPage
     cursor = response.products.pageInfo.endCursor ?? undefined
-    
+
     // Para inventarios muy grandes, limitamos a 5000 productos máximo
     // Esto debería cubrir la mayoría de casos reales
     if (allProducts.length >= 5000) {
@@ -328,12 +328,12 @@ async function getProductById(id: string, session: AuthSession): Promise<Product
 
   // Verificar si el usuario es artista y si el producto le pertenece
   const user = await prisma.user.findUnique({
-    include: { 
+    include: {
       UserRole: {
         include: {
           role: true,
         },
-      }, 
+      },
       artist: true,
       role: true,
     },
@@ -342,7 +342,7 @@ async function getProductById(id: string, session: AuthSession): Promise<Product
 
   // Si el usuario es artista, verificar que el producto sea suyo
   const isArtist = user?.UserRole?.some(ur => ur.role.name === 'artist') || user?.role?.name === 'artist'
-  
+
   if (isArtist && user?.artist?.name) {
     if (product.vendor !== user.artist.name) {
       throw new Error('No tienes permisos para acceder a este producto.')
@@ -356,7 +356,7 @@ async function getProductByHandle(handle: string, session: AuthSession): Promise
   validateSession(session)
 
   const shopifyQuery = `handle:"${handle}"`
-  
+
   const variables = {
     first: 1,
     query: shopifyQuery,
@@ -367,11 +367,11 @@ async function getProductByHandle(handle: string, session: AuthSession): Promise
   try {
     const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
     const locationId = await getPrimaryLocationId()
-    
+
     if (response.products.edges.length > 0) {
-      return new Product(response.products.edges[0].node, locationId)
+      return new Product(response.products.edges[ 0 ].node, locationId)
     }
-    
+
     return null
   } catch (error) {
     console.error('Error getting product by handle:', error)
@@ -387,12 +387,12 @@ async function getProductsFromRequest(
 
   // Obtener información del usuario para verificar si es artista
   const user = await prisma.user.findUnique({
-    include: { 
+    include: {
       UserRole: {
         include: {
           role: true,
         },
-      }, 
+      },
       artist: true,
       role: true,
     },
@@ -412,7 +412,7 @@ async function getProductsFromRequest(
 
   // Si el usuario es artista, establecer automáticamente su vendor
   const isArtist = user?.UserRole?.some(ur => ur.role.name === 'artist') || user?.role?.name === 'artist'
-  
+
   if (isArtist && user?.artist?.name) {
     params.vendor = user.artist.name
   }
@@ -471,8 +471,8 @@ async function createProduct(
   if (payload.details) {
     try {
       const metafields = Object.entries(payload.details)
-        .filter(([, value]) => value != null && value !== undefined && value !== '')
-        .map(([key, value]) => ({
+        .filter(([ , value ]) => value != null && value !== undefined && value !== '')
+        .map(([ key, value ]) => ({
           key,
           namespace: 'art_details',
           type: 'single_line_text_field',
@@ -497,7 +497,7 @@ async function createProduct(
   }
 
   if (payload.price && parseFloat(payload.price) > 0) {
-    const defaultVariant = newProductData.variants.edges[0]?.node
+    const defaultVariant = newProductData.variants.edges[ 0 ]?.node
     try {
       const variantUpdatePayload = {
         productId: newProductData.id,
@@ -519,7 +519,7 @@ async function createProduct(
   }
 
   if (payload.inventoryQuantity && payload.inventoryQuantity > 0) {
-    const defaultVariant = newProductData.variants.edges[0]?.node
+    const defaultVariant = newProductData.variants.edges[ 0 ]?.node
     try {
       // Primero, activar el tracking de inventario para la variante
       const variantUpdatePayload = {
@@ -740,7 +740,7 @@ async function deleteImagesFromProduct(
       }>(
         PRODUCT_DELETE_MEDIA_MUTATION,
         {
-          mediaIds: [imageId],
+          mediaIds: [ imageId ],
           productId, // Solo una imagen a la vez
         }
       )
@@ -832,7 +832,7 @@ async function updateProduct(
   }
 
   if (variants.length > 0) {
-    const variant = variants[0]
+    const variant = variants[ 0 ]
 
     if (payload.price) {
       const priceUpdatePayload = {
