@@ -25,6 +25,7 @@ interface ProfileFormData {
 interface Props {
   isLoading?: boolean
   onSave: (data: ProfileFormData) => void
+  compact?: boolean
   profile?: {
     firstName?: string | null
     lastName?: string | null
@@ -36,8 +37,8 @@ interface Props {
   } | null
 }
 
-export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
-  const [formData, setFormData] = useState<ProfileFormData>({
+export const Profile: React.FC<Props> = ({ isLoading, onSave, profile, compact = false }) => {
+  const [ formData, setFormData ] = useState<ProfileFormData>({
     avatarUrl: null,
     backgroundImageUrl: null,
     bio: '',
@@ -59,11 +60,11 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
         occupation: profile.occupation ?? '',
       })
     }
-  }, [profile])
+  }, [ profile ])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({ ...prev, [ name ]: value }))
   }
 
   const handleAvatarUpload = (url: string | null) => {
@@ -88,7 +89,7 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
       profile.backgroundImageUrl)
 
   return (
-    <form onSubmit={handleSubmit} className='space-y-6'>
+    <form onSubmit={handleSubmit} className={`space-y-${compact ? '4' : '6'}`}>
       <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
         {/* First Name Field */}
         <div className='space-y-2'>
@@ -130,9 +131,9 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
             <img
               src={formData.avatarUrl}
               alt='Avatar Preview'
-              width={96}
-              height={96}
-              className='size-24 rounded-full object-cover'
+              width={compact ? 64 : 96}
+              height={compact ? 64 : 96}
+              className={`${compact ? 'size-16' : 'size-24'} rounded-full object-cover`}
             />
           </div>
         )}
@@ -142,16 +143,16 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
       {/* Background Image Field */}
       <div className='space-y-2'>
         <Label htmlFor='backgroundImage' className='font-medium text-foreground'>
-          Background Image
+          Imagen de Fondo
         </Label>
         {formData.backgroundImageUrl && (
           <div className='mb-2'>
             <img
               src={formData.backgroundImageUrl}
               alt='Background Preview'
-              width={500}
-              height={128}
-              className='h-32 w-full object-cover'
+              width={compact ? 300 : 500}
+              height={compact ? 80 : 128}
+              className={`${compact ? 'h-20' : 'h-32'} w-full object-cover`}
             />
           </div>
         )}
@@ -166,7 +167,7 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
       {/* Occupation Field */}
       <div className='space-y-2'>
         <Label htmlFor='occupation' className='font-medium text-foreground'>
-          Occupation
+          Ocupación
         </Label>
         <Input
           type='text'
@@ -174,7 +175,7 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
           id='occupation'
           value={formData.occupation}
           onChange={handleChange}
-          placeholder='e.g., Software Developer, Artist, Designer...'
+          placeholder='ej. Pintor, Escultor, etc.'
           className='border-border bg-background focus:border-primary focus:ring-primary'
         />
       </div>
@@ -182,7 +183,7 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
       {/* Description Field */}
       <div className='space-y-2'>
         <Label htmlFor='description' className='font-medium text-foreground'>
-          Short Description
+          Descripción Corta
         </Label>
         <Textarea
           name='description'
@@ -190,7 +191,7 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
           rows={1}
           value={formData.description}
           onChange={handleChange}
-          placeholder='A brief description about yourself...'
+          placeholder='Una breve descripción sobre ti...'
           className='resize-none border-border bg-background focus:border-primary focus:ring-primary'
         />
       </div>
@@ -200,10 +201,12 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
         <Label htmlFor='bio' className='font-medium text-foreground'>
           Bio
         </Label>
-        <Tiptap.Editor
-          content={formData.bio}
-          onChange={(value) => setFormData((prev) => ({ ...prev, bio: value }))}
-        />
+        <div className={compact ? 'max-h-40 overflow-y-auto' : ''}>
+          <Tiptap.Editor
+            content={formData.bio}
+            onChange={(value) => setFormData((prev) => ({ ...prev, bio: value }))}
+          />
+        </div>
       </div>
 
       {/* Submit Button */}
@@ -216,10 +219,10 @@ export const Profile: React.FC<Props> = ({ isLoading, onSave, profile }) => {
           {isLoading ? (
             <>
               <Loader2 className='mr-2 size-4 animate-spin' />
-              Saving...
+              Guardando...
             </>
           ) : (
-            <>{hasData ? 'Update Profile' : 'Save Profile'}</>
+            <>{hasData ? 'Actualizar Perfil' : 'Guardar Perfil'}</>
           )}
         </Button>
       </div>

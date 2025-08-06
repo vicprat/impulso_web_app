@@ -48,7 +48,9 @@ import { type UpdateProductPayload } from '@/services/product/types'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
 
-// Componente para agregar nuevas opciones
+
+export const dynamic = 'force-dynamic'
+
 const AddOptionDropdown = ({
   isLoading,
   label,
@@ -146,8 +148,7 @@ const AddOptionDropdown = ({
   )
 }
 
-// Forzar que la página sea dinámica
-export const dynamic = 'force-dynamic'
+
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -228,6 +229,10 @@ export default function ProductDetailPage() {
     await queryClient.invalidateQueries({ queryKey: [ 'locations' ] })
   }
 
+  const handleNavigateBack = () => {
+    router.back()
+  }
+
   if (isLoading) {
     return (
       <div className='container mx-auto space-y-6 py-6'>
@@ -251,7 +256,7 @@ export default function ProductDetailPage() {
             </p>
             <div className='space-x-2'>
               <Button onClick={() => refetch()}>Reintentar</Button>
-              <Button variant='outline' onClick={() => router.push(ROUTES.INVENTORY.MAIN.PATH)}>
+              <Button variant='outline' onClick={handleNavigateBack}>
                 Volver al listado
               </Button>
             </div>
@@ -270,7 +275,7 @@ export default function ProductDetailPage() {
             <p className='mb-4 text-muted-foreground'>
               El producto que buscas no existe o no tienes permisos para verlo.
             </p>
-            <Button onClick={() => router.push(ROUTES.INVENTORY.MAIN.PATH)}>
+            <Button onClick={handleNavigateBack}>
               Volver al listado
             </Button>
           </CardContent>
@@ -296,7 +301,7 @@ export default function ProductDetailPage() {
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => router.push(ROUTES.INVENTORY.MAIN.PATH)}
+                  onClick={handleNavigateBack}
                   className='bg-surface-container-low hover:bg-surface-container'
                 >
                   <ArrowLeft className='mr-2 size-4' />

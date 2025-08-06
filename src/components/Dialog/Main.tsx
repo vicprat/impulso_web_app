@@ -55,7 +55,7 @@ export const Main: React.FC<Props> = ({
       sm: 'max-w-sm',
       xl: 'max-w-xl',
     }
-    return widthMap[width as keyof typeof widthMap] || 'max-w-2xl'
+    return widthMap[ width as keyof typeof widthMap ] || 'max-w-2xl'
   }
 
   return (
@@ -72,7 +72,7 @@ export const Main: React.FC<Props> = ({
         )}
       </DialogTrigger>
 
-      <DialogContent className={`${getMaxWidthClass(maxWidth)} ${contentClassName}`}>
+      <DialogContent className={`${getMaxWidthClass(maxWidth)} max-h-[90vh] overflow-y-auto ${contentClassName}`}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

@@ -29,6 +29,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Currency } from '@/components/ui/currency'
 import { useUserById } from '@/modules/user/hooks/management'
+import { useAdminUserProfile } from '@/modules/user/hooks/useAdminUserProfile'
 import { useUserBankAccounts } from '@/modules/user/hooks/useUserBankAccounts'
 import { useUserFinance } from '@/modules/user/hooks/useUserFinance'
 import { ROUTES } from '@/src/config/routes'
@@ -36,17 +37,21 @@ import { ROUTES } from '@/src/config/routes'
 export default function UserDetailPage() {
   const params = useParams()
   const userId = params.id as string
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [ editDialogOpen, setEditDialogOpen ] = useState(false)
+  const [ profileEditDialogOpen, setProfileEditDialogOpen ] = useState(false)
 
   const { data: user, isError, isLoading } = useUserById(userId)
-  const primaryRole = user?.roles[0] || 'customer'
-  
+  const primaryRole = user?.roles[ 0 ] || 'customer'
+
   console.log('User data:', user)
   console.log('Primary role:', primaryRole)
   console.log('User ID:', userId)
-  
+
   const { data: financeData, isLoading: financeLoading } = useUserFinance(userId, user ? primaryRole : undefined)
   const { data: bankAccountsData, isLoading: bankAccountsLoading } = useUserBankAccounts(userId)
+
+  // Hook para manejar el perfil del usuario por parte del admin
+  const { profile: userProfile, isProfileLoading, isUpdatingProfile, updateProfile } = useAdminUserProfile(userId)
 
   if (isLoading) {
     return (
@@ -83,7 +88,7 @@ export default function UserDetailPage() {
   }
 
   const getInitials = (firstName?: string, lastName?: string) => {
-    return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase()
+    return `${firstName?.[ 0 ] ?? ''}${lastName?.[ 0 ] ?? ''}`.toUpperCase()
   }
 
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Sin nombre'
@@ -98,7 +103,12 @@ export default function UserDetailPage() {
       case 'partner':
         return <PartnerSection user={user} financeData={financeData} isLoading={financeLoading} />
       case 'artist':
-        return <ArtistSection user={user} financeData={financeData} isLoading={financeLoading} />
+        return <ArtistSection
+          user={user}
+          financeData={financeData}
+          isLoading={financeLoading}
+          onEditProfile={() => setProfileEditDialogOpen(true)}
+        />
       case 'customer':
       case 'vip_customer':
         return <CustomerSection user={user} financeData={financeData} isLoading={financeLoading} />
@@ -322,6 +332,33 @@ export default function UserDetailPage() {
           onCancel={() => setEditDialogOpen(false)}
         />
       </Dialog.Form>
+
+      {/* Edit Profile Dialog - Only for Artists */}
+      {primaryRole === 'artist' && (
+        <Dialog.Form
+          open={profileEditDialogOpen}
+          onOpenChange={setProfileEditDialogOpen}
+          title={`Editar Perfil de Artista - ${fullName}`}
+          description='Modifica la información del perfil del artista.'
+          maxWidth='5xl'
+          contentClassName='max-h-[85vh] overflow-y-auto'
+        >
+          <div className='space-y-4 pr-2'>
+            {isProfileLoading ? (
+              <div className='flex items-center justify-center p-8'>
+                <div className='h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent'></div>
+              </div>
+            ) : (
+              <Form.Profile
+                profile={userProfile}
+                onSave={updateProfile}
+                isLoading={isUpdatingProfile}
+                compact={true}
+              />
+            )}
+          </div>
+        </Dialog.Form>
+      )}
     </div>
   )
 }
@@ -389,13 +426,13 @@ function ProviderSection({ financeData, isLoading, user }: { user: any; financeD
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH}?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
@@ -469,13 +506,13 @@ function EmployeeSection({ financeData, isLoading, user }: { user: any; financeD
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH}?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
@@ -549,13 +586,13 @@ function PartnerSection({ financeData, isLoading, user }: { user: any; financeDa
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH}?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
@@ -567,7 +604,17 @@ function PartnerSection({ financeData, isLoading, user }: { user: any; financeDa
   )
 }
 
-function ArtistSection({ financeData, isLoading, user }: { user: any; financeData: any; isLoading: boolean }) {
+function ArtistSection({
+  financeData,
+  isLoading,
+  user,
+  onEditProfile
+}: {
+  user: any;
+  financeData: any;
+  isLoading: boolean;
+  onEditProfile: () => void;
+}) {
   const metrics = financeData?.financialMetrics
   const artistInfo = financeData?.artistInfo
 
@@ -630,18 +677,25 @@ function ArtistSection({ financeData, isLoading, user }: { user: any; financeDat
       </CardContent>
       <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
               <FileText className='mr-2 size-4' />
               Ver Movimientos
             </Button>
           </Link>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH  }?userId=${user.id}`}>
+          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH}?userId=${user.id}`}>
             <Button size='sm'>
               <Plus className='mr-2 size-4' />
               Crear Movimiento
             </Button>
           </Link>
+          <Button
+            onClick={onEditProfile}
+            className='ml-auto'
+          >
+            <Edit className='mr-2 size-4' />
+            Editar Perfil
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -710,7 +764,7 @@ function CustomerSection({ financeData, isLoading, user }: { user: any; financeD
             </Button>
           </Link>
           {customerInfo?.orders && customerInfo.orders.length > 0 && (
-            <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH  }?userId=${user.id}`}>
+            <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
               <Button variant='outline' size='sm'>
                 <FileText className='mr-2 size-4' />
                 Ver Movimientos
