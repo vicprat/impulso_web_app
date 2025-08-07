@@ -417,8 +417,8 @@ async function getProductsFromRequest(
     params.vendor = user.artist.name
   }
 
-  if (params.limit && (params.limit < 1 || params.limit > 100)) {
-    throw new Error('El límite debe estar entre 1 y 100')
+  if (params.limit && (params.limit < 1 || params.limit > 1000)) {
+    throw new Error('El límite debe estar entre 1 y 1000')
   }
 
   if (params.page && params.page < 1) {

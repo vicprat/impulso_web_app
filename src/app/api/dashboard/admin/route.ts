@@ -5,7 +5,6 @@ import { PERMISSIONS } from '@/src/config/Permissions'
 import { makeAdminApiRequest } from '@/src/lib/shopifyAdmin'
 import { requirePermission } from '@/src/modules/auth/server/server'
 import { getAllUsers } from '@/src/modules/user/user.service'
-import { productService } from '@/src/services/product/service'
 
 interface ShopifyMoneyV2 {
   amount: string
@@ -47,53 +46,465 @@ interface ShopifyOrdersResponse {
   }
 }
 
+let primaryLocationId: string | null = null
+
+async function getPrimaryLocationId(): Promise<string> {
+  if (primaryLocationId) return primaryLocationId
+
+  const response = await makeAdminApiRequest<{ locations: { edges: { node: { id: string } }[] } }>(
+    `query { locations(first: 1, query: "is_active:true") { edges { node { id name } } } }`,
+    {}
+  )
+
+  const locationId = response.locations.edges[ 0 ]?.node?.id
+  if (!locationId) {
+    throw new Error('No se pudo encontrar una ubicación de Shopify para gestionar el inventario.')
+  }
+
+  primaryLocationId = locationId
+  return primaryLocationId
+}
+
 export async function GET() {
   try {
     const session = await requirePermission(PERMISSIONS.VIEW_ANALYTICS)
+    const locationId = await getPrimaryLocationId()
 
     const today = new Date()
     const firstDayOfPreviousMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
 
-    const shopifyQuery = `
-      query {
-        orders(query: "created_at:>=${firstDayOfPreviousMonth.toISOString()} created_at:<=${today.toISOString()}", first: 250) {
-          edges {
-            node {
-              id
-              createdAt
-              displayFinancialStatus
-              currentTotalPriceSet {
-                shopMoney {
-                  amount
+    // Obtener TODAS las órdenes usando paginación
+    const allOrders: ShopifyOrderEdge[] = []
+    let ordersHasNextPage = true
+    let ordersCursor: string | undefined = undefined
+
+    while (ordersHasNextPage) {
+      const orderQuery = `
+        query($after: String, $first: Int!) {
+          orders(query: "created_at:>=${firstDayOfPreviousMonth.toISOString()} created_at:<=${today.toISOString()}", first: $first, after: $after) {
+            edges {
+              node {
+                id
+                createdAt
+                displayFinancialStatus
+                currentTotalPriceSet {
+                  shopMoney {
+                    amount
+                  }
                 }
-              }
-              lineItems(first: 10) {
-                edges {
-                  node {
-                    id
-                    title
-                    quantity
-                    originalUnitPriceSet {
-                      shopMoney {
-                        amount
+                lineItems(first: 50) {
+                  edges {
+                    node {
+                      id
+                      title
+                      quantity
+                      originalUnitPriceSet {
+                        shopMoney {
+                          amount
+                        }
                       }
                     }
                   }
                 }
               }
             }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
           }
         }
+      `
+
+      const orderVariables: {
+        after?: string
+        first: number
+      } = {
+        after: ordersCursor,
+        first: 250, // Máximo permitido por Shopify
       }
-    `
 
-    const shopifyResponse: ShopifyOrdersResponse = await makeAdminApiRequest(shopifyQuery)
+      const orderResponse: any = await makeAdminApiRequest(orderQuery, orderVariables)
+      allOrders.push(...orderResponse.orders.edges)
 
-    const { products: managementProducts } = await productService.getProducts(
-      { limit: 100 },
-      session
-    )
-    const { users } = await getAllUsers({})
+      // Verificar si hay más páginas
+      ordersHasNextPage = orderResponse.orders.pageInfo.hasNextPage
+      ordersCursor = orderResponse.orders.pageInfo.endCursor ?? undefined
+
+      // Para órdenes muy grandes, limitamos a 5000 órdenes máximo
+      if (allOrders.length >= 5000) {
+        break
+      }
+    }
+
+    const shopifyResponse: ShopifyOrdersResponse = { orders: { edges: allOrders } }
+
+    // Obtener TODOS los productos usando el método de stats que implementa paginación
+    const allProducts: any[] = []
+    let productsHasNextPage = true
+    let productsCursor: string | undefined = undefined
+
+    // Obtener todos los productos usando paginación como en getProductStats
+    while (productsHasNextPage) {
+      const productVariables: {
+        after?: string
+        first: number
+        query: string
+        reverse: boolean
+        sortKey: 'TITLE'
+      } = {
+        after: productsCursor,
+        first: 50, // Reducido para evitar throttling
+        query: '',
+        reverse: false,
+        sortKey: 'TITLE',
+      }
+
+      try {
+        const productResponse: any = await makeAdminApiRequest(`
+          query($after: String, $first: Int!, $query: String, $reverse: Boolean, $sortKey: ProductSortKeys) {
+            products(after: $after, first: $first, query: $query, reverse: $reverse, sortKey: $sortKey) {
+              edges {
+                node {
+                  id
+                  handle
+                  title
+                  descriptionHtml
+                  vendor
+                  productType
+                  status
+                  tags
+                  variants(first: 10) {
+                    edges {
+                      node {
+                        id
+                        title
+                        availableForSale
+                        price
+                        sku
+                        inventoryQuantity
+                        inventoryPolicy
+                        inventoryItem {
+                          tracked
+                        }
+                      }
+                    }
+                  }
+                  metafields(first: 50) {
+                    edges {
+                      node {
+                        namespace
+                        key
+                        value
+                      }
+                    }
+                  }
+                }
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+        `, productVariables)
+
+        const products = productResponse.products.edges.map((edge: any) => {
+          // Crear un objeto Product simplificado para el dashboard
+          const productData = edge.node
+
+          return {
+            id: productData.id,
+            handle: productData.handle,
+            title: productData.title,
+            descriptionHtml: productData.descriptionHtml,
+            vendor: productData.vendor,
+            productType: productData.productType,
+            status: productData.status,
+            tags: productData.tags,
+            images: [], // Array vacío para evitar errores
+            media: [], // Array vacío para evitar errores
+            variants: productData.variants.edges.map((variantEdge: any) => ({
+              id: variantEdge.node.id,
+              title: variantEdge.node.title,
+              availableForSale: variantEdge.node.availableForSale,
+              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
+              sku: variantEdge.node.sku,
+              inventoryQuantity: variantEdge.node.inventoryQuantity,
+              inventoryPolicy: variantEdge.node.inventoryPolicy,
+              inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED'
+            })),
+            metafields: productData.metafields.edges,
+            // Métodos del modelo Product
+            get primaryVariant() {
+              return this.variants[ 0 ] || null
+            },
+            get formattedPrice() {
+              const variant = this.primaryVariant
+              return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
+            },
+            get isAvailable() {
+              const variant = this.primaryVariant
+              return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
+            },
+            // Procesar artworkDetails desde metafields
+            get artworkDetails() {
+              const details: any = {}
+              for (const { node } of this.metafields) {
+                if (node.namespace === 'art_details') {
+                  const validKeys = [ 'medium', 'year', 'height', 'width', 'depth', 'serie', 'location', 'artist' ]
+                  if (validKeys.includes(node.key)) {
+                    details[ node.key ] = node.value
+                  }
+                }
+              }
+              return {
+                artist: details.artist || null,
+                medium: details.medium || null,
+                year: details.year || null,
+                height: details.height || null,
+                width: details.width || null,
+                depth: details.depth || null,
+                serie: details.serie || null,
+                location: details.location || null,
+              }
+            },
+            // Procesar tags
+            get manualTags() {
+              return this.tags.filter((tag: string) => !tag.startsWith('auto-'))
+            },
+            get autoTags() {
+              return this.tags.filter((tag: string) => tag.startsWith('auto-'))
+            }
+          }
+        })
+        allProducts.push(...products)
+
+        // Verificar si hay más páginas
+        productsHasNextPage = productResponse.products.pageInfo.hasNextPage
+        productsCursor = productResponse.products.pageInfo.endCursor ?? undefined
+
+        // Para inventarios muy grandes, limitamos a 5000 productos máximo
+        if (allProducts.length >= 5000) {
+          break
+        }
+
+        // Delay para evitar throttling
+        await new Promise(resolve => setTimeout(resolve, 200))
+      } catch (error: any) {
+        if (error.message?.includes('Throttled')) {
+          console.log('Throttled, esperando 2 segundos...')
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          continue
+        }
+        throw error
+      }
+    }
+
+    const managementProducts = allProducts
+
+    // Obtener TODOS los eventos usando paginación
+    const allEvents: any[] = []
+    let eventsHasNextPage = true
+    let eventsCursor: string | undefined = undefined
+
+    while (eventsHasNextPage) {
+      const eventVariables: {
+        after?: string
+        first: number
+        query: string
+        reverse: boolean
+        sortKey: 'TITLE'
+      } = {
+        after: eventsCursor,
+        first: 50, // Reducido para evitar throttling
+        query: 'product_type:event', // Filtrar solo eventos
+        reverse: false,
+        sortKey: 'TITLE',
+      }
+
+      try {
+        const eventResponse: any = await makeAdminApiRequest(`
+          query($after: String, $first: Int!, $query: String, $reverse: Boolean, $sortKey: ProductSortKeys) {
+            products(after: $after, first: $first, query: $query, reverse: $reverse, sortKey: $sortKey) {
+              edges {
+                node {
+                  id
+                  handle
+                  title
+                  descriptionHtml
+                  vendor
+                  productType
+                  status
+                  tags
+                  variants(first: 10) {
+                    edges {
+                      node {
+                        id
+                        title
+                        availableForSale
+                        price
+                        sku
+                        inventoryQuantity
+                        inventoryPolicy
+                        inventoryItem {
+                          tracked
+                        }
+                      }
+                    }
+                  }
+                  metafields(first: 50) {
+                    edges {
+                      node {
+                        namespace
+                        key
+                        value
+                      }
+                    }
+                  }
+                }
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+        `, eventVariables)
+
+        const events = eventResponse.products.edges.map((edge: any) => {
+          // Crear un objeto Event simplificado para el dashboard
+          const eventData = edge.node
+
+          return {
+            id: eventData.id,
+            handle: eventData.handle,
+            title: eventData.title,
+            descriptionHtml: eventData.descriptionHtml,
+            vendor: eventData.vendor,
+            productType: eventData.productType,
+            status: eventData.status,
+            tags: eventData.tags,
+            images: [], // Array vacío para evitar errores
+            variants: eventData.variants.edges.map((variantEdge: any) => ({
+              id: variantEdge.node.id,
+              title: variantEdge.node.title,
+              availableForSale: variantEdge.node.availableForSale,
+              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
+              sku: variantEdge.node.sku,
+              inventoryQuantity: variantEdge.node.inventoryQuantity,
+              inventoryPolicy: variantEdge.node.inventoryPolicy,
+              inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED'
+            })),
+            metafields: eventData.metafields.edges,
+            // Métodos del modelo Event
+            get primaryVariant() {
+              return this.variants[ 0 ] || null
+            },
+            get formattedPrice() {
+              const variant = this.primaryVariant
+              return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
+            },
+            get isAvailable() {
+              const variant = this.primaryVariant
+              return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
+            },
+            get availableForSale() {
+              const variant = this.primaryVariant
+              return variant ? variant.availableForSale : false
+            },
+            // Procesar eventDetails desde metafields
+            get eventDetails() {
+              const details: any = {}
+              for (const { node } of this.metafields) {
+                if (node.namespace === 'event_details') {
+                  const validKeys = [ 'date', 'location', 'startTime', 'endTime', 'organizer' ]
+                  if (validKeys.includes(node.key)) {
+                    details[ node.key ] = node.value
+                  }
+                }
+              }
+              return {
+                date: details.date || null,
+                location: details.location || null,
+                startTime: details.startTime || null,
+                endTime: details.endTime || null,
+                organizer: details.organizer || null,
+              }
+            },
+            get formattedEventDetails() {
+              const details = this.eventDetails
+              const parts = []
+              if (details.date) parts.push(`Fecha: ${details.date}`)
+              if (details.location) parts.push(`Ubicación: ${details.location}`)
+              if (details.startTime) parts.push(`Hora: ${details.startTime}`)
+              if (details.organizer) parts.push(`Organizador: ${details.organizer}`)
+              return parts.join(' | ')
+            },
+            get isPastEvent() {
+              if (!this.eventDetails.date) return false
+              const eventDate = new Date(this.eventDetails.date)
+              return eventDate < new Date()
+            },
+            get daysUntilEvent() {
+              if (!this.eventDetails.date) return null
+              const eventDate = new Date(this.eventDetails.date)
+              const today = new Date()
+              const diffTime = eventDate.getTime() - today.getTime()
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+              return diffDays
+            }
+          }
+        })
+        allEvents.push(...events)
+
+        // Verificar si hay más páginas
+        eventsHasNextPage = eventResponse.products.pageInfo.hasNextPage
+        eventsCursor = eventResponse.products.pageInfo.endCursor ?? undefined
+
+        // Para eventos muy grandes, limitamos a 1000 eventos máximo
+        if (allEvents.length >= 1000) {
+          break
+        }
+
+        // Delay para evitar throttling
+        await new Promise(resolve => setTimeout(resolve, 200))
+      } catch (error: any) {
+        if (error.message?.includes('Throttled')) {
+          console.log('Throttled, esperando 2 segundos...')
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          continue
+        }
+        throw error
+      }
+    }
+
+    const managementEvents = allEvents
+
+    // Obtener TODOS los usuarios usando paginación
+    const allUsers: any[] = []
+    let userPage = 1
+    let userHasMore = true
+
+    while (userHasMore) {
+      const { users, total } = await getAllUsers({
+        limit: 100,
+        page: userPage
+      })
+
+      allUsers.push(...users)
+
+      // Verificar si hay más páginas
+      userHasMore = allUsers.length < total && userPage * 100 < total
+      userPage++
+
+      // Para usuarios muy grandes, limitamos a 5000 usuarios máximo
+      if (allUsers.length >= 5000) {
+        break
+      }
+    }
+
+    const users = allUsers
 
     const currentDate = new Date()
     const currentMonth = currentDate.getMonth()
@@ -134,11 +545,14 @@ export async function GET() {
     })
 
     const products = managementProducts ?? []
+    const events = managementEvents ?? []
+
+    // Procesar datos enriquecidos de productos
     const productSalesMap = new Map<
       string,
-      { name: string; artist: string; sales: number; units: number }
+      { name: string; artist: string; sales: number; units: number; details: any }
     >()
-    const artistsMap = new Map<string, { name: string; products: number; sales: number }>()
+    const artistsMap = new Map<string, { name: string; products: number; sales: number; details: any[] }>()
 
     orders.forEach((order: ShopifyOrderEdge) => {
       order.node.lineItems.edges.forEach((item: ShopifyLineItemEdge) => {
@@ -160,6 +574,7 @@ export async function GET() {
             name: productName,
             sales: itemSales,
             units: quantity,
+            details: product || null
           })
         }
 
@@ -168,6 +583,7 @@ export async function GET() {
             name: artistName,
             products: 0,
             sales: 0,
+            details: []
           })
         }
         const artist = artistsMap.get(artistName)!
@@ -182,10 +598,20 @@ export async function GET() {
           name: artistName,
           products: 0,
           sales: 0,
+          details: []
         })
       }
       const artist = artistsMap.get(artistName)!
       artist.products += 1
+      artist.details.push({
+        id: product.id,
+        title: product.title,
+        status: product.status,
+        artworkDetails: product.artworkDetails,
+        tags: product.tags,
+        manualTags: product.manualTags,
+        autoTags: product.autoTags
+      })
     })
 
     const topProducts = Array.from(productSalesMap.values())
@@ -195,6 +621,12 @@ export async function GET() {
     const artistStats = Array.from(artistsMap.values())
       .sort((a, b) => b.sales - a.sales)
       .slice(0, 5)
+      .map(artist => ({
+        ...artist,
+        topProducts: artist.details
+          .sort((a: any, b: any) => (b.sales || 0) - (a.sales || 0))
+          .slice(0, 3)
+      }))
 
     const categoriesMap = new Map()
     products.forEach((product) => {
@@ -202,10 +634,35 @@ export async function GET() {
       categoriesMap.set(category, (categoriesMap.get(category) ?? 0) + 1)
     })
 
-    const productCategories = Array.from(categoriesMap.entries()).map(([name, value], index) => ({
-      color: ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1'][index % 5],
+    const productCategories = Array.from(categoriesMap.entries()).map(([ name, value ], index) => ({
+      color: [ '#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1' ][ index % 5 ],
       name,
       value,
+    }))
+
+    // Procesar eventos
+    const eventsMap = new Map<string, { event: any; ticketsSold: number; totalTickets: number }>()
+    const upcomingEvents = events.filter(event => !event.isPastEvent && event.status === 'ACTIVE')
+    const pastEvents = events.filter(event => event.isPastEvent && event.status === 'ACTIVE')
+
+    // Calcular métricas de eventos
+    const totalEvents = events.length
+    const activeEvents = events.filter(event => event.status === 'ACTIVE').length
+    const upcomingEventsCount = upcomingEvents.length
+    const pastEventsCount = pastEvents.length
+
+    // Procesar detalles de eventos
+    const eventDetails = events.map(event => ({
+      id: event.id,
+      title: event.title,
+      status: event.status,
+      eventDetails: event.eventDetails,
+      formattedEventDetails: event.formattedEventDetails,
+      isPastEvent: event.isPastEvent,
+      daysUntilEvent: event.daysUntilEvent,
+      price: event.formattedPrice,
+      availableForSale: event.availableForSale,
+      isAvailable: event.isAvailable
     }))
 
     interface AdminRecentActivityItem {
@@ -261,6 +718,29 @@ export async function GET() {
       return sum + price * quantity
     }, 0)
 
+    // Métricas adicionales con datos enriquecidos
+    const productsWithArtworkDetails = products.filter(p =>
+      p.artworkDetails && Object.values(p.artworkDetails).some(value => value !== null)
+    ).length
+
+    const productsByMedium = products.reduce((acc, product) => {
+      const medium = product.artworkDetails?.medium || 'Sin medio especificado'
+      acc[ medium ] = (acc[ medium ] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    const productsByYear = products.reduce((acc, product) => {
+      const year = product.artworkDetails?.year || 'Sin año especificado'
+      acc[ year ] = (acc[ year ] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    const productsByLocation = products.reduce((acc, product) => {
+      const location = product.artworkDetails?.location || 'Sin ubicación especificada'
+      acc[ location ] = (acc[ location ] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
     const totalRevenue = totalSales
     const totalExpenses = totalRevenue * 0.3
     const totalProfit = totalRevenue * 0.7
@@ -276,10 +756,10 @@ export async function GET() {
     const averageOrderValue =
       orders.length > 0
         ? orders.reduce(
-            (sum, order) =>
-              sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
-            0
-          ) / orders.length
+          (sum, order) =>
+            sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
+          0
+        ) / orders.length
         : 0
 
     const totalUsers = users?.length ?? 0
@@ -321,10 +801,11 @@ export async function GET() {
       averageOrderValue,
 
       events: {
-        active: 1,
-        ticketsSold: 89,
-        totalTickets: 156,
-        upcoming: 3,
+        active: activeEvents,
+        ticketsSold: pastEventsCount,
+        totalTickets: totalEvents,
+        upcoming: upcomingEventsCount,
+        details: eventDetails
       },
 
       financialSummary: {
@@ -338,6 +819,10 @@ export async function GET() {
         lowStock,
         outOfStock,
         totalValue: totalInventoryValue,
+        productsWithArtworkDetails,
+        productsByMedium,
+        productsByYear,
+        productsByLocation,
       },
 
       overview: {

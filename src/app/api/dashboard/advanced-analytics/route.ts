@@ -48,26 +48,56 @@ export async function GET() {
   try {
     const session = await requirePermission(PERMISSIONS.VIEW_ANALYTICS)
 
-    const ordersQuery = `
-      query {
-        orders(first: 250) {
-          edges {
-            node {
-              id
-              createdAt
-              currentTotalPriceSet {
-                shopMoney {
-                  amount
+    // Obtener TODAS las órdenes usando paginación
+    const allOrders: ShopifyOrderEdge[] = []
+    let hasNextPage = true
+    let cursor: string | undefined = undefined
+
+    while (hasNextPage) {
+      const ordersQuery = `
+        query($after: String, $first: Int!) {
+          orders(first: $first, after: $after) {
+            edges {
+              node {
+                id
+                createdAt
+                currentTotalPriceSet {
+                  shopMoney {
+                    amount
+                  }
                 }
               }
             }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
           }
         }
-      }
-    `
+      `
 
-    const response: ShopifyOrdersResponse = await makeAdminApiRequest(ordersQuery)
-    const orders: ShopifyOrderEdge[] = response.orders.edges
+      const variables: {
+        after?: string
+        first: number
+      } = {
+        after: cursor,
+        first: 250, // Máximo permitido por Shopify
+      }
+
+      const response: any = await makeAdminApiRequest(ordersQuery, variables)
+      allOrders.push(...response.orders.edges)
+
+      // Verificar si hay más páginas
+      hasNextPage = response.orders.pageInfo.hasNextPage
+      cursor = response.orders.pageInfo.endCursor ?? undefined
+
+      // Para órdenes muy grandes, limitamos a 5000 órdenes máximo
+      if (allOrders.length >= 5000) {
+        break
+      }
+    }
+
+    const orders: ShopifyOrderEdge[] = allOrders
     const currentDate = new Date()
 
     // Análisis temporal
@@ -125,17 +155,17 @@ export async function GET() {
         averageOrderValue:
           orders.length > 0
             ? orders.reduce(
-                (sum: number, order: ShopifyOrderEdge) =>
-                  sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
-                0
-              ) / orders.length
+              (sum: number, order: ShopifyOrderEdge) =>
+                sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
+              0
+            ) / orders.length
             : 0,
         ordersByHour,
         ordersThisMonth: last30Days.length,
         ordersThisWeek: last7Days.length,
         peakHour: ordersByHour.reduce(
           (max, current) => (current.orders > max.orders ? current : max),
-          ordersByHour[0]
+          ordersByHour[ 0 ]
         ),
         totalOrders: orders.length,
       },

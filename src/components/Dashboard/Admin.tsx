@@ -1,18 +1,26 @@
 import {
   AlertTriangle,
+  BookOpen,
+  Calendar,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
   DollarSign,
+  MapPin,
   Package,
   ShoppingCart,
+  Star,
   TrendingDown,
   TrendingUp,
   Users,
   XCircle,
 } from 'lucide-react'
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
   Cell,
   Pie,
@@ -23,14 +31,12 @@ import {
   YAxis,
 } from 'recharts'
 
-import { ROLES } from '@/src/config/Roles'
 import {
   useAdminDashboard,
   useAdvancedAnalytics,
   useProductMetrics,
 } from '@/src/modules/dashboard/hooks'
 
-import { FinanceOverview } from './FinanceOverview'
 import { Badge } from '../ui/badge'
 
 interface TopProduct {
@@ -39,6 +45,93 @@ interface TopProduct {
   sales: number
   units: number
 }
+
+interface ArtworkDetails {
+  medium: string | null
+  year: string | null
+  location: string | null
+  artist: string | null
+  serie: string | null
+  height: string | null
+  width: string | null
+  depth: string | null
+}
+
+interface EventDetails {
+  date: string | null
+  location: string | null
+  startTime: string | null
+  endTime: string | null
+  organizer: string | null
+}
+
+interface EnrichedProduct {
+  id: string
+  title: string
+  vendor: string
+  productType: string
+  status: string
+  formattedPrice: string
+  isAvailable: boolean
+  artworkDetails: ArtworkDetails
+  manualTags: string[]
+  autoTags: string[]
+}
+
+interface EnrichedEvent {
+  id: string
+  title: string
+  vendor: string
+  productType: string
+  status: string
+  formattedPrice: string
+  isAvailable: boolean
+  availableForSale: boolean
+  eventDetails: EventDetails
+  formattedEventDetails: string
+  isPastEvent: boolean
+  daysUntilEvent: number | null
+}
+
+const AccordionCard = ({
+  title,
+  children,
+  isExpanded,
+  onToggle,
+  totalItems,
+  visibleItems,
+}: {
+  title: string
+  children: React.ReactNode
+  isExpanded: boolean
+  onToggle: () => void
+  totalItems: number
+  visibleItems: number
+}) => (
+  <ChartCard title={title}>
+    <div className='space-y-4'>
+      {children}
+      {totalItems > visibleItems && (
+        <button
+          onClick={onToggle}
+          className='flex w-full items-center justify-center gap-2 rounded-lg border border-outline bg-surface-container-low px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-container'
+        >
+          {isExpanded ? (
+            <>
+              <ChevronUp className='size-4' />
+              Mostrar menos
+            </>
+          ) : (
+            <>
+              <ChevronDown className='size-4' />
+              Mostrar {totalItems - visibleItems} más
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  </ChartCard>
+)
 
 const MetricCard = ({
   change,
@@ -66,7 +159,7 @@ const MetricCard = ({
 
   return (
     <div
-      className={`rounded-lg border-outline p-6 ${colorClasses[color]} transition-all hover:shadow-md`}
+      className={`rounded-lg border-outline p-6 ${colorClasses[ color ]} transition-all hover:shadow-md`}
     >
       <div className='flex items-center justify-between'>
         <div>
@@ -112,12 +205,12 @@ const LoadingDashboard = () => (
     <div className='animate-pulse space-y-6'>
       <div className='h-8 w-1/3 rounded bg-gray-200'></div>
       <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
-        {[...Array(4)].map((_, i) => (
+        {[ ...Array(4) ].map((_, i) => (
           <div key={i} className='h-32 rounded-lg bg-gray-200'></div>
         ))}
       </div>
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-        {[...Array(4)].map((_, i) => (
+        {[ ...Array(4) ].map((_, i) => (
           <div key={i} className='h-64 rounded-lg bg-gray-200'></div>
         ))}
       </div>
@@ -139,6 +232,16 @@ export const Admin = () => {
   const { data, error, isLoading } = useAdminDashboard()
   const productMetrics = useProductMetrics()
   const advancedAnalytics = useAdvancedAnalytics()
+
+  // Estado para los accordions
+  const [ expandedArtists, setExpandedArtists ] = useState(false)
+  const [ expandedEvents, setExpandedEvents ] = useState(false)
+
+  // Console logs para analizar la data
+  console.log('=== ADMIN DASHBOARD DATA ===')
+  console.log('data:', data)
+  console.log('productMetrics.data:', productMetrics.data)
+  console.log('advancedAnalytics.data:', advancedAnalytics.data)
 
   if (isLoading || productMetrics.isLoading || advancedAnalytics.isLoading)
     return <LoadingDashboard />
@@ -183,36 +286,6 @@ export const Admin = () => {
         />
       </div>
 
-      {/* Resumen financiero */}
-      <ChartCard title='Resumen Financiero'>
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-4'>
-          <div className='text-center'>
-            <p className='text-2xl font-bold text-success'>
-              ${financialSummary.revenue.toLocaleString()}
-            </p>
-            <p className='text-sm text-muted-foreground'>Ingresos</p>
-          </div>
-          <div className='text-center'>
-            <p className='text-2xl font-bold text-error'>
-              ${financialSummary.expenses.toLocaleString()}
-            </p>
-            <p className='text-sm text-muted-foreground'>Gastos</p>
-          </div>
-          <div className='text-center'>
-            <p className='text-2xl font-bold text-primary'>
-              ${financialSummary.profit.toLocaleString()}
-            </p>
-            <p className='text-sm text-muted-foreground'>Ganancia</p>
-          </div>
-          <div className='text-center'>
-            <p className='text-2xl font-bold text-warning'>
-              ${financialSummary.pendingPayments.toLocaleString()}
-            </p>
-            <p className='text-sm text-muted-foreground'>Pendientes</p>
-          </div>
-        </div>
-      </ChartCard>
-
       {/* Métricas adicionales */}
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
         <div className='rounded-lg border-outline bg-card p-6 shadow-elevation-1'>
@@ -244,49 +317,37 @@ export const Admin = () => {
         </div>
       </div>
 
-      {/* Gráficos principales */}
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-        <ChartCard title='Tendencia de Ventas'>
-          <ResponsiveContainer width='100%' height={300}>
-            <AreaChart data={salesData}>
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey='month' />
-              <YAxis />
-              <Tooltip formatter={(value) => [`${value.toLocaleString()}`, 'Ventas']} />
-              <Area
-                type='monotone'
-                dataKey='sales'
-                stroke='#8884d8'
-                fill='#8884d8'
-                fillOpacity={0.6}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
 
-        <ChartCard title='Distribución por Categorías'>
-          <ResponsiveContainer width='100%' height={300}>
-            <PieChart>
-              <Pie
-                data={productCategories}
-                cx='50%'
-                cy='50%'
-                outerRadius={80}
-                fill='#8884d8'
-                dataKey='value'
-                label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-              >
-                {productCategories.map(
-                  (entry: { name: string; value: number; color: string }, index: number) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  )
-                )}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div>
+      {/* Resumen financiero */}
+      {/* <ChartCard title='Resumen Financiero'>
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-4'>
+          <div className='text-center'>
+            <p className='text-2xl font-bold text-success'>
+              ${financialSummary.revenue.toLocaleString()}
+            </p>
+            <p className='text-sm text-muted-foreground'>Ingresos</p>
+          </div>
+          <div className='text-center'>
+            <p className='text-2xl font-bold text-error'>
+              ${financialSummary.expenses.toLocaleString()}
+            </p>
+            <p className='text-sm text-muted-foreground'>Gastos</p>
+          </div>
+          <div className='text-center'>
+            <p className='text-2xl font-bold text-primary'>
+              ${financialSummary.profit.toLocaleString()}
+            </p>
+            <p className='text-sm text-muted-foreground'>Ganancia</p>
+          </div>
+          <div className='text-center'>
+            <p className='text-2xl font-bold text-warning'>
+              ${financialSummary.pendingPayments.toLocaleString()}
+            </p>
+            <p className='text-sm text-muted-foreground'>Pendientes</p>
+          </div>
+        </div>
+      </ChartCard> */}
+
 
       {/* Estado del inventario y productos destacados */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
@@ -339,6 +400,8 @@ export const Admin = () => {
         </ChartCard>
       </div>
 
+
+
       {/* Product Metrics */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <ChartCard title='Métricas de Producto'>
@@ -357,33 +420,24 @@ export const Admin = () => {
                 </span>
               </div>
               <div className='flex items-center justify-between border-b border-border py-2 last:border-b-0'>
+                <span className='text-muted-foreground'>Productos en borrador:</span>
+                <span className='font-semibold text-foreground'>
+                  {productMetrics.data.draftProducts}
+                </span>
+              </div>
+              <div className='flex items-center justify-between border-b border-border py-2 last:border-b-0'>
                 <span className='text-muted-foreground'>Valor total del inventario:</span>
                 <span className='font-semibold text-foreground'>
                   ${productMetrics.data.totalInventoryValue.toLocaleString()}
                 </span>
               </div>
-              <div className='flex items-start justify-between border-b border-border py-2 last:border-b-0'>
-                <span className='text-muted-foreground'>Productos por artista:</span>
-                <div className='flex flex-wrap gap-1'>
-                  {Object.entries(productMetrics.data.productsByArtist).map(([artist, count]) => (
-                    <Badge key={artist} variant='secondary-container'>
-                      {artist} ({count as number})
-                    </Badge>
-                  ))}
-                </div>
+              <div className='flex items-center justify-between border-b border-border py-2 last:border-b-0'>
+                <span className='text-muted-foreground'>Precio promedio por obra:</span>
+                <span className='font-semibold text-foreground'>
+                  ${parseFloat(productMetrics.data.averagePrice).toFixed(2)}
+                </span>
               </div>
-              <div className='flex items-start justify-between border-b border-border py-2 last:border-b-0'>
-                <span className='text-muted-foreground'>Productos por categoría:</span>
-                <div className='flex flex-wrap gap-1'>
-                  {Object.entries(productMetrics.data.productsByCategory).map(
-                    ([category, count]) => (
-                      <Badge key={category} variant='secondary'>
-                        {category} ({count as number})
-                      </Badge>
-                    )
-                  )}
-                </div>
-              </div>
+
             </div>
           )}
         </ChartCard>
@@ -434,7 +488,227 @@ export const Admin = () => {
         </ChartCard>
       </div>
 
-      <FinanceOverview role={ROLES.ADMIN.NAME} />
+      {/* Gráficos principales */}
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+        <ChartCard title='Tendencia de Ventas'>
+          <ResponsiveContainer width='100%' height={300}>
+            <AreaChart data={salesData}>
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis dataKey='month' />
+              <YAxis />
+              <Tooltip formatter={(value) => [ `${value.toLocaleString()}`, 'Ventas' ]} />
+              <Area
+                type='monotone'
+                dataKey='sales'
+                stroke='#8884d8'
+                fill='#8884d8'
+                fillOpacity={0.6}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title='Distribución por Categorías'>
+          <ResponsiveContainer width='100%' height={300}>
+            <PieChart>
+              <Pie
+                data={productCategories}
+                cx='50%'
+                cy='50%'
+                outerRadius={80}
+                fill='#8884d8'
+                dataKey='value'
+                label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+              >
+                {productCategories.map(
+                  (entry: { name: string; value: number; color: string }, index: number) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  )
+                )}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+
+
+      {/* Distribución por Artista */}
+      <ChartCard title='Distribución por Artista'>
+        {productMetrics.data?.productsByArtist && (
+          <ResponsiveContainer width='100%' height={400}>
+            <BarChart
+              data={Object.entries(productMetrics.data.productsByArtist)
+                .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+                .slice(0, 10) // Top 10 artistas
+                .map(([ artist, count ], index) => ({
+                  name: artist,
+                  value: count as number,
+                  color: `hsl(${(index * 137.5) % 360}, 70%, 50%)`
+                }))}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='name'
+                angle={-45}
+                textAnchor='end'
+                height={80}
+                tick={{ fontSize: 10 }}
+              />
+              <YAxis />
+              <Tooltip formatter={(value) => [ value, 'Obras' ]} />
+              <Bar dataKey='value' fill='#8884d8' />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </ChartCard>
+
+
+
+      {/* Eventos en el Sistema */}
+      <AccordionCard
+        title='Eventos en el Sistema'
+        isExpanded={expandedEvents}
+        onToggle={() => setExpandedEvents(!expandedEvents)}
+        totalItems={productMetrics.data?.productsDetails?.filter((product: any) => product.productType === 'Evento').length || 0}
+        visibleItems={5}
+      >
+        {productMetrics.data?.productsDetails ? (
+          <>
+            {productMetrics.data.productsDetails
+              .filter((product: any) => product.productType === 'Evento')
+              .slice(0, expandedEvents ? undefined : 5)
+              .map((event: any, index: number) => (
+                <div key={index} className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'>
+                  <div className='flex-1'>
+                    <div className='flex items-center'>
+                      <Calendar className='mr-2 size-4 text-primary' />
+                      <h4 className='font-semibold text-foreground'>{event.title}</h4>
+                    </div>
+                    <div className='mt-2 flex flex-wrap gap-2'>
+                      <Badge variant='secondary'>{event.vendor}</Badge>
+                      <Badge variant='outline'>{event.status}</Badge>
+                      <Badge variant='secondary-container'>{event.price}</Badge>
+                    </div>
+                    {event.artworkDetails && (
+                      <div className='mt-2 text-sm text-muted-foreground'>
+                        {event.artworkDetails.location && `📍 ${event.artworkDetails.location}`}
+                        {event.artworkDetails.artist && ` | 👤 ${event.artworkDetails.artist}`}
+                      </div>
+                    )}
+                  </div>
+                  <div className='text-right'>
+                    <p className='text-sm text-muted-foreground'>Estado</p>
+                    <Badge variant={event.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                      {event.status === 'ACTIVE' ? 'Activo' : 'Borrador'}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            {productMetrics.data.productsDetails.filter((product: any) => product.productType === 'Evento').length === 0 && (
+              <p className='text-center text-muted-foreground'>No hay eventos registrados en el sistema</p>
+            )}
+          </>
+        ) : (
+          <p className='text-center text-muted-foreground'>No hay datos de eventos disponibles</p>
+        )}
+      </AccordionCard>
+
+
+
+      {/* Análisis de Ubicaciones y Series */}
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+        <ChartCard title='Distribución por Ubicación'>
+          {productMetrics.data?.productsByLocation && (
+            <div className='space-y-4'>
+              {Object.entries(productMetrics.data.productsByLocation)
+                .filter(([ location ]) => location !== 'Sin ubicación especificada')
+                .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+                .slice(0, 10)
+                .map(([ location, count ]) => (
+                  <div key={location} className='flex items-center justify-between'>
+                    <div className='flex items-center'>
+                      <MapPin className='mr-2 size-4 text-primary' />
+                      <span className='text-sm text-muted-foreground'>{location}</span>
+                    </div>
+                    <Badge variant='secondary'>{count as number} obras</Badge>
+                  </div>
+                ))}
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard title='Series y Colecciones'>
+          {productMetrics.data?.productsBySerie && (
+            <div className='space-y-4'>
+              {Object.entries(productMetrics.data.productsBySerie)
+                .filter(([ serie ]) => serie !== 'Sin serie especificada')
+                .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+                .slice(0, 10)
+                .map(([ serie, count ]) => (
+                  <div key={serie} className='flex items-center justify-between'>
+                    <div className='flex items-center'>
+                      <BookOpen className='mr-2 size-4 text-primary' />
+                      <span className='text-sm text-muted-foreground'>{serie}</span>
+                    </div>
+                    <Badge variant='secondary'>{count as number} obras</Badge>
+                  </div>
+                ))}
+            </div>
+          )}
+        </ChartCard>
+      </div>
+
+      {/* Análisis por Artista */}
+      <AccordionCard
+        title='Análisis por Artista'
+        isExpanded={expandedArtists}
+        onToggle={() => setExpandedArtists(!expandedArtists)}
+        totalItems={productMetrics.data?.productsByArtist ? Object.keys(productMetrics.data.productsByArtist).length : 0}
+        visibleItems={5}
+      >
+        {productMetrics.data?.productsByArtist && Object.keys(productMetrics.data.productsByArtist).length > 0 ? (
+          <>
+            {Object.entries(productMetrics.data.productsByArtist)
+              .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+              .slice(0, expandedArtists ? undefined : 5)
+              .map(([ artist, count ]) => (
+                <div key={artist} className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'>
+                  <div className='flex-1'>
+                    <div className='flex items-center'>
+                      <Star className='mr-2 size-4 text-warning' />
+                      <h4 className='font-semibold text-foreground'>{artist}</h4>
+                    </div>
+                    <div className='mt-2 flex flex-wrap gap-2'>
+                      <Badge variant='secondary'>{count as number} obras</Badge>
+                      {productMetrics.data?.averagePrice && (
+                        <Badge variant='outline'>${parseFloat(productMetrics.data.averagePrice).toFixed(2)} promedio</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className='text-right'>
+                    <p className='text-sm text-muted-foreground'>Valor estimado</p>
+                    <p className='font-bold text-success'>
+                      ${productMetrics.data?.averagePrice ?
+                        (parseFloat(productMetrics.data.averagePrice) * (count as number)).toLocaleString() :
+                        '0'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+          </>
+        ) : (
+          <p className='text-center text-muted-foreground'>No hay datos de artistas disponibles</p>
+        )}
+      </AccordionCard>
+
+
+
+
+
+
+      {/* <FinanceOverview role={ROLES.ADMIN.NAME} /> */}
     </div>
   )
 }
