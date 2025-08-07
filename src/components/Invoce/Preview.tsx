@@ -49,8 +49,11 @@ export const Preview: React.FC<Props> = ({ order }) => {
       <div className='rounded-lg border bg-white p-8 text-black' id='invoice-content'>
         <div className='mb-8 flex items-start justify-between'>
           <div>
-            <h1 className='mb-2 text-3xl font-bold text-gray-800'>IMPULSO</h1>
-            <p className='text-sm text-gray-600'>GALERÍA</p>
+            <img
+              src="/assets/logo.png"
+              alt="Impulso Galería"
+              className="h-16 w-auto object-contain"
+            />
           </div>
           <div className='text-right'>
             <h2 className='text-2xl font-semibold text-gray-800'>Invoice {order.name}</h2>

@@ -264,7 +264,7 @@ export const ROUTES = {
     MAIN: {
       DESCRIPTION: 'Historial de pedidos',
       ICON: 'package',
-      LABEL: 'Mis Pedidos',
+      LABEL: 'Ordenes',
       PATH: '/orders',
       PERMISSIONS: [ PERMISSIONS.VIEW_ORDERS ],
     },

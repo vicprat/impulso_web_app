@@ -10,7 +10,7 @@ export function Login() {
 
   return (
     <Button onClick={login} disabled={isLoading} className='w-full font-semibold text-white '>
-      {isLoading ? <LoaderIcon className='size-8 animate-spin' /> : 'Iniciar Sesión con Shopify'}
+      {isLoading ? <LoaderIcon className='size-8 animate-spin' /> : 'Iniciar Sesión'}
     </Button>
   )
 }

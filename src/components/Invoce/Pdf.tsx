@@ -1,5 +1,5 @@
 'use client'
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 
 import { type CustomerOrder, type LineItem } from '@/src/modules/customer/types'
 
@@ -71,9 +71,14 @@ const pdfStyles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'right',
   },
-  logo: { height: 40, objectFit: 'contain', width: 120 },
+  logo: {
+    height: 60,
+    objectFit: 'contain',
+    width: 180
+  },
   logoSection: {
     flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   logoSubtitle: {
     color: '#6b7280',
@@ -192,8 +197,10 @@ export const PDF: React.FC<Props> = ({ order }) => {
       <Page size='A4' style={pdfStyles.page}>
         <View style={pdfStyles.header}>
           <View style={pdfStyles.logoSection}>
-            <Text style={pdfStyles.logoTitle}>IMPULSO</Text>
-            <Text style={pdfStyles.logoSubtitle}>GALERÍA</Text>
+            <Image
+              src="/assets/logo.png"
+              style={pdfStyles.logo}
+            />
           </View>
           <View>
             <Text style={pdfStyles.invoiceTitle}>Invoice {order.name}</Text>
@@ -242,20 +249,20 @@ export const PDF: React.FC<Props> = ({ order }) => {
           <Text style={pdfStyles.sectionTitle}>INVOICE ITEMS</Text>
 
           <View style={pdfStyles.tableHeader}>
-            <Text style={[pdfStyles.tableHeaderText, pdfStyles.col6]}>Producto</Text>
-            <Text style={[pdfStyles.tableHeaderText, pdfStyles.col2]}>Cantidad</Text>
-            <Text style={[pdfStyles.tableHeaderText, pdfStyles.col2Right]}>Precio Original</Text>
-            <Text style={[pdfStyles.tableHeaderText, pdfStyles.col2Right]}>Precio Factura</Text>
+            <Text style={[ pdfStyles.tableHeaderText, pdfStyles.col6 ]}>Producto</Text>
+            <Text style={[ pdfStyles.tableHeaderText, pdfStyles.col2 ]}>Cantidad</Text>
+            <Text style={[ pdfStyles.tableHeaderText, pdfStyles.col2Right ]}>Precio Original</Text>
+            <Text style={[ pdfStyles.tableHeaderText, pdfStyles.col2Right ]}>Precio Factura</Text>
           </View>
 
           {order.lineItems.edges.map((item: LineItemEdge, index: number) => (
             <View key={index} style={pdfStyles.tableRow}>
-              <Text style={[pdfStyles.tableCellBold, pdfStyles.col6]}>{item.node.title}</Text>
-              <Text style={[pdfStyles.tableCell, pdfStyles.col2]}>{item.node.quantity}</Text>
-              <Text style={[pdfStyles.tableCell, pdfStyles.col2Right]}>
+              <Text style={[ pdfStyles.tableCellBold, pdfStyles.col6 ]}>{item.node.title}</Text>
+              <Text style={[ pdfStyles.tableCell, pdfStyles.col2 ]}>{item.node.quantity}</Text>
+              <Text style={[ pdfStyles.tableCell, pdfStyles.col2Right ]}>
                 {formatPrice(item.node.price.amount, item.node.price.currencyCode)}
               </Text>
-              <Text style={[pdfStyles.tableCellBold, pdfStyles.col2Right]}>
+              <Text style={[ pdfStyles.tableCellBold, pdfStyles.col2Right ]}>
                 {formatPrice(item.node.price.amount, item.node.price.currencyCode)}
               </Text>
             </View>

@@ -8,7 +8,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { FloatingParticles } from '@/components/Animations'
 import { Button } from '@/components/ui/button'
-import { useHeaderHeight } from '@/hooks/useHeaderHeight'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
 
 interface YTPlayerEvent {
@@ -47,7 +46,6 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
 
   const { setTheme, theme } = useTheme()
   const userPreferredThemeRef = useRef<string | undefined>(undefined)
-  const headerHeight = useHeaderHeight()
 
   const particlePositions = useMemo(() => generateParticlePositions(20), [])
 
@@ -317,8 +315,8 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   return (
     <motion.section
       ref={containerRef}
-      style={{ opacity, paddingTop: headerHeight, y }}
-      className={`relative ${isTabletOrMobile ? 'min-h-screen' : 'min-h-[95vh]'} overflow-hidden bg-black ${className}`}
+      style={{ opacity, y }}
+      className={`relative ${isTabletOrMobile ? 'min-h-screen' : 'min-h-[90vh]'} overflow-hidden bg-black`}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
     >
@@ -404,7 +402,6 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
       />
 
       <div
-        style={{ paddingTop: headerHeight }}
         className={`absolute inset-0 flex flex-col ${isTabletOrMobile
           ? 'items-center justify-center text-center'
           : 'items-start justify-center'
