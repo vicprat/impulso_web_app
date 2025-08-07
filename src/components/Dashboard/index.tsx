@@ -24,9 +24,7 @@ export const Dashboard: React.FC<Props> = ({ role, userId }) => {
     case 'manager':
       return <Manager />
     case 'artist':
-      if (!userId)
-        return <div className='p-8 text-center'>User ID is required for Artist Dashboard.</div>
-      return <Artist userId={userId} />
+      return <Artist />
     case 'employee':
       return (
         <div className='space-y-6 p-8'>

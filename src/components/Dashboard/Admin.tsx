@@ -381,7 +381,7 @@ export const Admin = () => {
 
         <ChartCard title='Productos Más Vendidos'>
           <div className='space-y-4'>
-            {topProducts.map((product: TopProduct, index: number) => (
+            {topProducts.slice(0, 3).map((product: TopProduct, index: number) => (
               <div
                 key={index}
                 className='flex items-center justify-between rounded-lg bg-surface-container-low p-3'
@@ -425,12 +425,7 @@ export const Admin = () => {
                   {productMetrics.data.draftProducts}
                 </span>
               </div>
-              <div className='flex items-center justify-between border-b border-border py-2 last:border-b-0'>
-                <span className='text-muted-foreground'>Valor total del inventario:</span>
-                <span className='font-semibold text-foreground'>
-                  ${productMetrics.data.totalInventoryValue.toLocaleString()}
-                </span>
-              </div>
+
               <div className='flex items-center justify-between border-b border-border py-2 last:border-b-0'>
                 <span className='text-muted-foreground'>Precio promedio por obra:</span>
                 <span className='font-semibold text-foreground'>

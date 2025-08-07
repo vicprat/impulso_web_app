@@ -39,6 +39,7 @@ export default function UserDetailPage() {
   const userId = params.id as string
   const [ editDialogOpen, setEditDialogOpen ] = useState(false)
   const [ profileEditDialogOpen, setProfileEditDialogOpen ] = useState(false)
+  const [ linksEditDialogOpen, setLinksEditDialogOpen ] = useState(false)
 
   const { data: user, isError, isLoading } = useUserById(userId)
   const primaryRole = user?.roles[ 0 ] || 'customer'
@@ -51,7 +52,23 @@ export default function UserDetailPage() {
   const { data: bankAccountsData, isLoading: bankAccountsLoading } = useUserBankAccounts(userId)
 
   // Hook para manejar el perfil del usuario por parte del admin
-  const { profile: userProfile, isProfileLoading, isUpdatingProfile, updateProfile } = useAdminUserProfile(userId)
+  const {
+    profile: userProfile,
+    isProfileLoading,
+    isUpdatingProfile,
+    updateProfile,
+    // Links functionality
+    links: userLinks,
+    isLinksLoading,
+    createLink,
+    updateLink,
+    deleteLink,
+    updateLinksOrder,
+    isCreatingLink,
+    isUpdatingLink,
+    isDeletingLink,
+    isUpdatingLinksOrder,
+  } = useAdminUserProfile(userId)
 
   if (isLoading) {
     return (
@@ -108,6 +125,7 @@ export default function UserDetailPage() {
           financeData={financeData}
           isLoading={financeLoading}
           onEditProfile={() => setProfileEditDialogOpen(true)}
+          onEditLinks={() => setLinksEditDialogOpen(true)}
         />
       case 'customer':
       case 'vip_customer':
@@ -354,6 +372,40 @@ export default function UserDetailPage() {
                 onSave={updateProfile}
                 isLoading={isUpdatingProfile}
                 compact={true}
+              />
+            )}
+          </div>
+        </Dialog.Form>
+      )}
+
+      {/* Edit Links Dialog - Only for Artists */}
+      {primaryRole === 'artist' && (
+        <Dialog.Form
+          open={linksEditDialogOpen}
+          onOpenChange={setLinksEditDialogOpen}
+          title={`Editar Links de Artista - ${fullName}`}
+          description='Modifica los enlaces del artista.'
+          maxWidth='4xl'
+          contentClassName='max-h-[85vh] overflow-y-auto'
+        >
+          <div className='space-y-4 pr-2'>
+            {isLinksLoading ? (
+              <div className='flex items-center justify-center p-8'>
+                <div className='h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent'></div>
+              </div>
+            ) : (
+              <Form.AdminLinks
+                userId={userId}
+                links={userLinks || []}
+                isLoading={isLinksLoading}
+                isCreating={isCreatingLink}
+                isUpdating={isUpdatingLink}
+                isDeleting={isDeletingLink}
+                isUpdatingOrder={isUpdatingLinksOrder}
+                onCreateLink={createLink}
+                onUpdateLink={(linkId, data) => updateLink({ linkId, data })}
+                onDeleteLink={deleteLink}
+                onUpdateLinksOrder={updateLinksOrder}
               />
             )}
           </div>
@@ -608,12 +660,14 @@ function ArtistSection({
   financeData,
   isLoading,
   user,
-  onEditProfile
+  onEditProfile,
+  onEditLinks
 }: {
   user: any;
   financeData: any;
   isLoading: boolean;
   onEditProfile: () => void;
+  onEditLinks: () => void;
 }) {
   const metrics = financeData?.financialMetrics
   const artistInfo = financeData?.artistInfo
@@ -695,6 +749,13 @@ function ArtistSection({
           >
             <Edit className='mr-2 size-4' />
             Editar Perfil
+          </Button>
+          <Button
+            onClick={onEditLinks}
+            variant='outline'
+          >
+            <Edit className='mr-2 size-4' />
+            Editar Links
           </Button>
         </div>
       </CardContent>

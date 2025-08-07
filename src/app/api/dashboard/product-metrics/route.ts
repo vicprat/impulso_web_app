@@ -220,7 +220,11 @@ export async function GET() {
         {} as Record<string, number>
       ),
       totalInventoryValue: products.reduce(
-        (sum: number, p: any) => sum + parseFloat(p.primaryVariant?.price?.amount ?? '0'),
+        (sum: number, p: any) => {
+          const price = parseFloat(p.primaryVariant?.price?.amount ?? '0')
+          const quantity = p.primaryVariant?.inventoryQuantity ?? 0
+          return sum + (price * quantity)
+        },
         0
       ),
       totalProducts: products.length,

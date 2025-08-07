@@ -9,12 +9,24 @@ const fetchUserProfile = async (userId: string) => {
   return response.json()
 }
 
+const fetchUserLinks = async (userId: string) => {
+  const response = await fetch(`/api/admin/users/${userId}/links`)
+  if (!response.ok) throw new Error('Failed to fetch user links')
+  return response.json()
+}
+
 export const useAdminUserProfile = (userId: string) => {
   const queryClient = useQueryClient()
 
   const profileQuery = useQuery({
     queryFn: () => fetchUserProfile(userId),
-    queryKey: ['admin', 'user', userId, 'profile'],
+    queryKey: [ 'admin', 'user', userId, 'profile' ],
+    enabled: !!userId,
+  })
+
+  const linksQuery = useQuery({
+    queryFn: () => fetchUserLinks(userId),
+    queryKey: [ 'admin', 'user', userId, 'links' ],
     enabled: !!userId,
   })
 
@@ -34,10 +46,92 @@ export const useAdminUserProfile = (userId: string) => {
       })
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'user', userId, 'profile'] })
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
-      void queryClient.invalidateQueries({ queryKey: ['user', userId] })
+      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'user', userId, 'profile' ] })
+      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'users' ] })
+      void queryClient.invalidateQueries({ queryKey: [ 'user', userId ] })
       toast.success('Perfil del usuario actualizado correctamente')
+    },
+  })
+
+  const createLinkMutation = useMutation({
+    mutationFn: async (data: { platform: string; url: string }) => {
+      const response = await fetch(`/api/admin/users/${userId}/links`, {
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      })
+      if (!response.ok) throw new Error('Failed to create user link')
+      return response.json()
+    },
+    onError: (error) => {
+      toast.error('Error al crear el link del usuario', {
+        description: error instanceof Error ? error.message : 'Ocurrió un error inesperado',
+      })
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'user', userId, 'links' ] })
+      toast.success('Link del usuario creado correctamente')
+    },
+  })
+
+  const updateLinkMutation = useMutation({
+    mutationFn: async ({ linkId, data }: { linkId: string; data: { platform: string; url: string } }) => {
+      const response = await fetch(`/api/admin/users/${userId}/links/${linkId}`, {
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PUT',
+      })
+      if (!response.ok) throw new Error('Failed to update user link')
+      return response.json()
+    },
+    onError: (error) => {
+      toast.error('Error al actualizar el link del usuario', {
+        description: error instanceof Error ? error.message : 'Ocurrió un error inesperado',
+      })
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'user', userId, 'links' ] })
+      toast.success('Link del usuario actualizado correctamente')
+    },
+  })
+
+  const deleteLinkMutation = useMutation({
+    mutationFn: async (linkId: string) => {
+      const response = await fetch(`/api/admin/users/${userId}/links/${linkId}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) throw new Error('Failed to delete user link')
+      return response.json()
+    },
+    onError: (error) => {
+      toast.error('Error al eliminar el link del usuario', {
+        description: error instanceof Error ? error.message : 'Ocurrió un error inesperado',
+      })
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'user', userId, 'links' ] })
+      toast.success('Link del usuario eliminado correctamente')
+    },
+  })
+
+  const updateLinksOrderMutation = useMutation({
+    mutationFn: async (data: { id: string; order: number }[]) => {
+      const response = await fetch(`/api/admin/users/${userId}/links/reorder`, {
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      })
+      if (!response.ok) throw new Error('Failed to reorder user links')
+      return response.json()
+    },
+    onError: (error) => {
+      toast.error('Error al reordenar los links del usuario', {
+        description: error instanceof Error ? error.message : 'Ocurrió un error inesperado',
+      })
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'user', userId, 'links' ] })
+      toast.success('Orden de los links del usuario actualizado')
     },
   })
 
@@ -46,5 +140,16 @@ export const useAdminUserProfile = (userId: string) => {
     isProfileLoading: profileQuery.isLoading,
     isUpdatingProfile: updateProfileMutation.isPending,
     updateProfile: updateProfileMutation.mutateAsync,
+    // Links functionality
+    links: linksQuery.data,
+    isLinksLoading: linksQuery.isLoading,
+    createLink: createLinkMutation.mutateAsync,
+    updateLink: updateLinkMutation.mutateAsync,
+    deleteLink: deleteLinkMutation.mutateAsync,
+    updateLinksOrder: updateLinksOrderMutation.mutateAsync,
+    isCreatingLink: createLinkMutation.isPending,
+    isUpdatingLink: updateLinkMutation.isPending,
+    isDeletingLink: deleteLinkMutation.isPending,
+    isUpdatingLinksOrder: updateLinksOrderMutation.isPending,
   }
 }

@@ -1,3 +1,4 @@
+import { AdminLinks } from './AdminLinks'
 import { UserRoleForm as Artist } from './Artist'
 import { EventForm as Event } from './Event'
 import { ExpenseForm as Expense } from './Expense'
@@ -9,6 +10,7 @@ import { Profile } from './Profile'
 import { Room } from './Room'
 
 export const Form = {
+  AdminLinks,
   Artist,
   Event,
   Expense,

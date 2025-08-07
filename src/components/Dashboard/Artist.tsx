@@ -1,29 +1,128 @@
+'use client'
 import {
   AlertTriangle,
+  BookOpen,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
   DollarSign,
-  Package,
-  PlusCircle,
+  MapPin,
+  Palette,
   TrendingDown,
-  TrendingUp,
+  TrendingUp
 } from 'lucide-react'
 import React, { useState } from 'react'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from 'recharts'
 
-import { useArtistProducts } from '@/src/modules/dashboard/hooks/useArtistProducts'
+import {
+  useArtistDashboard,
+} from '@/src/modules/dashboard/hooks'
 
-// Reusing components from Admin.tsx for consistency
-const ChartCard = ({
-  children,
-  className = '',
+import { Badge } from '../ui/badge'
+
+interface TopProduct {
+  name: string
+  artist: string
+  sales: number
+  units: number
+}
+
+interface ArtworkDetails {
+  medium: string | null
+  year: string | null
+  location: string | null
+  artist: string | null
+  serie: string | null
+  height: string | null
+  width: string | null
+  depth: string | null
+}
+
+interface EventDetails {
+  date: string | null
+  location: string | null
+  startTime: string | null
+  endTime: string | null
+  organizer: string | null
+}
+
+interface EnrichedProduct {
+  id: string
+  title: string
+  vendor: string
+  productType: string
+  status: string
+  formattedPrice: string
+  isAvailable: boolean
+  artworkDetails: ArtworkDetails
+  manualTags: string[]
+  autoTags: string[]
+}
+
+interface EnrichedEvent {
+  id: string
+  title: string
+  vendor: string
+  productType: string
+  status: string
+  formattedPrice: string
+  isAvailable: boolean
+  availableForSale: boolean
+  eventDetails: EventDetails
+  formattedEventDetails: string
+  isPastEvent: boolean
+  daysUntilEvent: number | null
+}
+
+const AccordionCard = ({
   title,
+  children,
+  isExpanded,
+  onToggle,
+  totalItems,
+  visibleItems,
 }: {
   title: string
   children: React.ReactNode
-  className?: string
+  isExpanded: boolean
+  onToggle: () => void
+  totalItems: number
+  visibleItems: number
 }) => (
-  <div className={`rounded-lg border-outline bg-card p-6 shadow-elevation-1 ${className}`}>
-    <h3 className='mb-4 text-lg font-semibold text-foreground'>{title}</h3>
-    {children}
-  </div>
+  <ChartCard title={title}>
+    <div className='space-y-4'>
+      {children}
+      {totalItems > visibleItems && (
+        <button
+          onClick={onToggle}
+          className='flex w-full items-center justify-center gap-2 rounded-lg border border-outline bg-surface-container-low px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-container'
+        >
+          {isExpanded ? (
+            <>
+              <ChevronUp className='size-4' />
+              Mostrar menos
+            </>
+          ) : (
+            <>
+              <ChevronDown className='size-4' />
+              Mostrar {totalItems - visibleItems} más
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  </ChartCard>
 )
 
 const MetricCard = ({
@@ -52,7 +151,7 @@ const MetricCard = ({
 
   return (
     <div
-      className={`rounded-lg border-outline p-6 ${colorClasses[color]} transition-all hover:shadow-md`}
+      className={`rounded-lg border-outline p-6 ${colorClasses[ color ]} transition-all hover:shadow-md`}
     >
       <div className='flex items-center justify-between'>
         <div>
@@ -78,17 +177,32 @@ const MetricCard = ({
   )
 }
 
+const ChartCard = ({
+  children,
+  className = '',
+  title,
+}: {
+  title: string
+  children: React.ReactNode
+  className?: string
+}) => (
+  <div className={`rounded-lg border-outline bg-card p-6 shadow-elevation-1 ${className}`}>
+    <h3 className='mb-4 text-lg font-semibold text-foreground'>{title}</h3>
+    {children}
+  </div>
+)
+
 const LoadingDashboard = () => (
   <div className='p-8'>
     <div className='animate-pulse space-y-6'>
       <div className='h-8 w-1/3 rounded bg-gray-200'></div>
       <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
-        {[...Array(4)].map((_, i) => (
+        {[ ...Array(4) ].map((_, i) => (
           <div key={i} className='h-32 rounded-lg bg-gray-200'></div>
         ))}
       </div>
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-        {[...Array(4)].map((_, i) => (
+        {[ ...Array(4) ].map((_, i) => (
           <div key={i} className='h-64 rounded-lg bg-gray-200'></div>
         ))}
       </div>
@@ -107,179 +221,274 @@ const ErrorDashboard = ({ error }: { error: Error }) => (
   </div>
 )
 
-interface ArtistDashboardProps {
-  userId: string
-}
+export const Artist = () => {
+  const { data, error, isLoading } = useArtistDashboard()
 
-export const Artist: React.FC<ArtistDashboardProps> = ({ userId }) => {
-  const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState(10)
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined)
-  const [sortBy, setSortBy] = useState<string | undefined>(undefined)
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | undefined>(undefined)
+  // Estado para los accordions
+  const [ expandedArtists, setExpandedArtists ] = useState(false)
+  const [ expandedEvents, setExpandedEvents ] = useState(false)
 
-  const { artistDetails, error, isLoading, productsData } = useArtistProducts(
-    userId,
-    page,
-    limit,
-    statusFilter,
-    sortBy,
-    sortOrder
-  )
+  // Console logs para analizar la data
+  console.log('=== ARTIST DASHBOARD DATA ===')
+  console.log('data:', data)
 
   if (isLoading) return <LoadingDashboard />
-  if (error) return <ErrorDashboard error={error} />
-  if (!productsData || !artistDetails)
-    return <div className='p-8 text-center'>No hay datos disponibles para el artista.</div>
+  if (error) return <ErrorDashboard error={error as Error} />
+  if (!data) return <div className='p-8 text-center'>No hay datos disponibles</div>
 
-  const totalProducts = productsData.products.length // This will only be the count of products on the current page
-  const totalSalesValue = productsData.products.reduce(
-    (sum, product) => sum + parseFloat(product.price),
-    0
-  )
-  const activeProducts = productsData.products.filter((p) => p.status === 'ACTIVE').length
+  const {
+    user,
+    artistProducts,
+    artistMetrics,
+    artistEvents,
+    artistProductsByCategory,
+    artistProductsByMedium,
+    artistProductsByYear,
+    artistProductsByLocation,
+    artistProductsBySerie,
+  } = data
+
+  const currentArtist = user?.name || 'Artista'
 
   return (
     <div className='min-h-screen space-y-8 bg-surface-container-low p-8'>
-      <h1 className='text-3xl font-bold text-foreground'>
-        Bienvenido, {artistDetails.firstName} {artistDetails.lastName}!
-      </h1>
-      {artistDetails.artist?.name && (
-        <p className='text-lg text-muted-foreground'>
-          Gestionando productos para:{' '}
-          <span className='font-semibold'>{artistDetails.artist.name}</span>
-        </p>
-      )}
+      {/* Header del Artista */}
+      <div className='mb-8'>
+        <h1 className='text-3xl font-bold text-foreground'>Dashboard de {currentArtist}</h1>
+        <p className='text-muted-foreground'>Bienvenido a tu panel de control personal</p>
+      </div>
 
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+      {/* Métricas principales del artista */}
+      <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
         <MetricCard
-          title='Total de Productos'
-          value={totalProducts.toLocaleString()}
-          icon={Package}
-          color='blue'
-        />
-        <MetricCard
-          title='Productos Activos'
-          value={activeProducts.toLocaleString()}
-          icon={Package}
-          color='green'
-        />
-        <MetricCard
-          title='Valor Total de Ventas (Estimado)'
-          value={`${totalSalesValue.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`}
-          icon={DollarSign}
+          title='Mis Obras'
+          value={artistMetrics.totalProducts}
+          icon={Palette}
           color='purple'
+          subtitle={`${artistMetrics.activeProducts} activas`}
+        />
+        <MetricCard
+          title='Valor Total'
+          value={`$${artistMetrics.totalValue.toLocaleString()}`}
+          icon={DollarSign}
+          color='green'
+          subtitle={`$${artistMetrics.averagePrice.toFixed(2)} promedio`}
+        />
+        <MetricCard
+          title='Obras con Detalles'
+          value={artistMetrics.productsWithArtworkDetails}
+          icon={BookOpen}
+          color='blue'
+          subtitle={`${Object.keys(artistProductsByMedium).length - 1} medios`}
+        />
+        <MetricCard
+          title='Mis Eventos'
+          value={artistEvents.length}
+          icon={Calendar}
+          color='orange'
+          subtitle={`${artistEvents.filter((e: any) => e.status === 'ACTIVE').length} activos`}
         />
       </div>
 
-      <ChartCard title='Tus Productos'>
-        <div className='mb-4 flex flex-col items-center justify-between space-y-4 md:flex-row md:space-x-4 md:space-y-0'>
-          <button className='hover:bg-primary/90 flex items-center rounded-md bg-primary px-4 py-2 text-primary-foreground'>
-            <PlusCircle className='mr-2 size-5' />
-            Agregar Nuevo Producto
-          </button>
-
-          <div className='flex items-center space-x-2'>
-            <label htmlFor='statusFilter' className='text-sm text-muted-foreground'>
-              Estado:
-            </label>
-            <select
-              id='statusFilter'
-              className='rounded-md border bg-background p-2 text-foreground'
-              value={statusFilter || ''}
-              onChange={(e) => setStatusFilter(e.target.value || undefined)}
-            >
-              <option value=''>Todos</option>
-              <option value='ACTIVE'>Activo</option>
-              <option value='DRAFT'>Borrador</option>
-              <option value='ARCHIVED'>Archivado</option>
-            </select>
-
-            <label htmlFor='sortBy' className='text-sm text-muted-foreground'>
-              Ordenar por:
-            </label>
-            <select
-              id='sortBy'
-              className='rounded-md border bg-background p-2 text-foreground'
-              value={sortBy || ''}
-              onChange={(e) => setSortBy(e.target.value || undefined)}
-            >
-              <option value=''>Defecto</option>
-              <option value='title'>Título</option>
-              <option value='price'>Precio</option>
-              <option value='createdAt'>Fecha de Creación</option>
-              <option value='updatedAt'>Última Actualización</option>
-              <option value='inventoryQuantity'>Inventario</option>
-            </select>
-
-            <label htmlFor='sortOrder' className='text-sm text-muted-foreground'>
-              Orden:
-            </label>
-            <select
-              id='sortOrder'
-              className='rounded-md border bg-background p-2 text-foreground'
-              value={sortOrder || ''}
-              onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc' | undefined)}
-            >
-              <option value=''>Defecto</option>
-              <option value='asc'>Ascendente</option>
-              <option value='desc'>Descendente</option>
-            </select>
-          </div>
-        </div>
-
-        <div className='space-y-4'>
-          {productsData.products.length > 0 ? (
-            productsData.products.map((product) => (
-              <div
-                key={product.id}
-                className='flex items-center justify-between rounded-lg bg-surface-container-low p-3'
-              >
-                <div className='flex-1'>
-                  <h4 className='font-semibold text-foreground'>{product.title}</h4>
-                  <p className='text-sm text-muted-foreground'>
-                    Estado: {product.status} | Inventario: {product.inventoryQuantity}
-                  </p>
-                  <p className='text-sm text-muted-foreground'>
-                    Precio: $
-                    {parseFloat(product.price).toLocaleString(undefined, {
-                      maximumFractionDigits: 2,
-                      minimumFractionDigits: 2,
-                    })}
-                  </p>
-                </div>
-                <div className='flex space-x-2 text-right'>
-                  <button className='text-sm text-primary hover:underline'>Editar</button>
-                  <button className='text-sm text-error hover:underline'>Eliminar</button>
-                </div>
-              </div>
-            ))
+      {/* Gráficos de distribución del artista */}
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+        <ChartCard title='Mis Obras por Categoría'>
+          {Object.keys(artistProductsByCategory).length > 0 ? (
+            <ResponsiveContainer width='100%' height={300}>
+              <PieChart>
+                <Pie
+                  data={Object.entries(artistProductsByCategory)
+                    .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+                    .map(([ category, count ], index) => ({
+                      name: category,
+                      value: count,
+                      color: `hsl(${(index * 137.5) % 360}, 70%, 50%)`
+                    }))}
+                  cx='50%'
+                  cy='50%'
+                  outerRadius={80}
+                  fill='#8884d8'
+                  dataKey='value'
+                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                >
+                  {Object.entries(artistProductsByCategory)
+                    .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+                    .map(([ category, count ], index) => (
+                      <Cell key={`cell-${index}`} fill={`hsl(${(index * 137.5) % 360}, 70%, 50%)`} />
+                    ))}
+                </Pie>
+                <Tooltip formatter={(value) => [ value, 'Obras' ]} />
+              </PieChart>
+            </ResponsiveContainer>
           ) : (
-            <p className='text-center text-muted-foreground'>
-              No tienes productos para gestionar con los filtros actuales.
-            </p>
+            <p className='text-center text-muted-foreground'>No hay datos de categorías disponibles</p>
           )}
-        </div>
+        </ChartCard>
 
-        {/* Pagination Controls */}
-        <div className='mt-4 flex items-center justify-center space-x-2'>
-          <button
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-            disabled={page === 1}
-            className='rounded-md border bg-background px-4 py-2 text-foreground disabled:opacity-50'
-          >
-            Anterior
-          </button>
-          <span className='text-foreground'>Página {page}</span>
-          <button
-            onClick={() => setPage((prev) => prev + 1)}
-            disabled={!productsData.pageInfo.hasNextPage}
-            className='rounded-md border bg-background px-4 py-2 text-foreground disabled:opacity-50'
-          >
-            Siguiente
-          </button>
-        </div>
-      </ChartCard>
+        <ChartCard title='Mis Obras por Medio Artístico'>
+          {Object.keys(artistProductsByMedium).length > 0 ? (
+            <ResponsiveContainer width='100%' height={300}>
+              <BarChart
+                data={Object.entries(artistProductsByMedium)
+                  .filter(([ medium ]) => medium !== 'Sin medio especificado')
+                  .map(([ medium, count ]) => ({
+                    name: medium,
+                    value: count,
+                    color: `hsl(${Math.random() * 360}, 70%, 50%)`
+                  }))}>
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis dataKey='name' angle={-45} textAnchor='end' height={80} />
+                <YAxis />
+                <Tooltip formatter={(value) => [ value, 'Obras' ]} />
+                <Bar dataKey='value' fill='#8884d8' />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className='text-center text-muted-foreground'>No hay datos de medios disponibles</p>
+          )}
+        </ChartCard>
+      </div>
+
+      {/* Distribución por año y ubicación */}
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+        <ChartCard title='Mis Obras por Año'>
+          {Object.keys(artistProductsByYear).length > 0 ? (
+            <ResponsiveContainer width='100%' height={300}>
+              <BarChart
+                data={Object.entries(artistProductsByYear)
+                  .filter(([ year ]) => year !== 'Sin año especificado')
+                  .sort(([ a ], [ b ]) => parseInt(a as string) - parseInt(b as string))
+                  .map(([ year, count ]) => ({
+                    name: year,
+                    value: count,
+                    color: `hsl(${Math.random() * 360}, 70%, 50%)`
+                  }))}>
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis dataKey='name' />
+                <YAxis />
+                <Tooltip formatter={(value) => [ value, 'Obras' ]} />
+                <Bar dataKey='value' fill='#82ca9d' />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className='text-center text-muted-foreground'>No hay datos de años disponibles</p>
+          )}
+        </ChartCard>
+
+        <ChartCard title='Mis Obras por Ubicación'>
+          {Object.keys(artistProductsByLocation).length > 0 ? (
+            <div className='space-y-4'>
+              {Object.entries(artistProductsByLocation)
+                .filter(([ location ]) => location !== 'Sin ubicación especificada')
+                .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+                .slice(0, 10)
+                .map(([ location, count ]) => (
+                  <div key={location} className='flex items-center justify-between'>
+                    <div className='flex items-center'>
+                      <MapPin className='mr-2 size-4 text-primary' />
+                      <span className='text-sm text-muted-foreground'>{location}</span>
+                    </div>
+                    <Badge variant='secondary'>{count as number} obras</Badge>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <p className='text-center text-muted-foreground'>No hay datos de ubicaciones disponibles</p>
+          )}
+        </ChartCard>
+      </div>
+
+      {/* Mis Obras */}
+      <AccordionCard
+        title='Mis Obras'
+        isExpanded={expandedArtists}
+        onToggle={() => setExpandedArtists(!expandedArtists)}
+        totalItems={artistProducts.length}
+        visibleItems={5}
+      >
+        {artistProducts.length > 0 ? (
+          <>
+            {artistProducts
+              .slice(0, expandedArtists ? undefined : 5)
+              .map((product: any, index: number) => (
+                <div key={index} className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'>
+                  <div className='flex-1'>
+                    <div className='flex items-center'>
+                      <Palette className='mr-2 size-4 text-primary' />
+                      <h4 className='font-semibold text-foreground'>{product.title}</h4>
+                    </div>
+                    <div className='mt-2 flex flex-wrap gap-2'>
+                      <Badge variant='secondary'>{product.productType}</Badge>
+                      <Badge variant='outline'>{product.status}</Badge>
+                      <Badge variant='secondary-container'>{product.price}</Badge>
+                    </div>
+                    {product.artworkDetails && (
+                      <div className='mt-2 text-sm text-muted-foreground'>
+                        {product.artworkDetails.medium && `🎨 ${product.artworkDetails.medium}`}
+                        {product.artworkDetails.year && ` | 📅 ${product.artworkDetails.year}`}
+                        {product.artworkDetails.location && ` | 📍 ${product.artworkDetails.location}`}
+                        {product.artworkDetails.serie && ` | 📚 ${product.artworkDetails.serie}`}
+                      </div>
+                    )}
+                  </div>
+                  <div className='text-right'>
+                    <p className='text-sm text-muted-foreground'>Estado</p>
+                    <Badge variant={product.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                      {product.status === 'ACTIVE' ? 'Activo' : 'Borrador'}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+          </>
+        ) : (
+          <p className='text-center text-muted-foreground'>No tienes obras registradas</p>
+        )}
+      </AccordionCard>
+
+      {/* Mis Eventos */}
+      <AccordionCard
+        title='Mis Eventos'
+        isExpanded={expandedEvents}
+        onToggle={() => setExpandedEvents(!expandedEvents)}
+        totalItems={artistEvents.length}
+        visibleItems={5}
+      >
+        {artistEvents.length > 0 ? (
+          <>
+            {artistEvents
+              .slice(0, expandedEvents ? undefined : 5)
+              .map((event: any, index: number) => (
+                <div key={index} className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'>
+                  <div className='flex-1'>
+                    <div className='flex items-center'>
+                      <Calendar className='mr-2 size-4 text-primary' />
+                      <h4 className='font-semibold text-foreground'>{event.title}</h4>
+                    </div>
+                    <div className='mt-2 flex flex-wrap gap-2'>
+                      <Badge variant='secondary'>{event.vendor}</Badge>
+                      <Badge variant='outline'>{event.status}</Badge>
+                      <Badge variant='secondary-container'>{event.price}</Badge>
+                    </div>
+                    {event.artworkDetails && (
+                      <div className='mt-2 text-sm text-muted-foreground'>
+                        {event.artworkDetails.location && `📍 ${event.artworkDetails.location}`}
+                        {event.artworkDetails.artist && ` | 👤 ${event.artworkDetails.artist}`}
+                      </div>
+                    )}
+                  </div>
+                  <div className='text-right'>
+                    <p className='text-sm text-muted-foreground'>Estado</p>
+                    <Badge variant={event.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                      {event.status === 'ACTIVE' ? 'Activo' : 'Borrador'}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+          </>
+        ) : (
+          <p className='text-center text-muted-foreground'>No tienes eventos registrados</p>
+        )}
+      </AccordionCard>
     </div>
   )
 }
