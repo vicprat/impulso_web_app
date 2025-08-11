@@ -359,18 +359,6 @@ export default function CartPage() {
                 </CardFooter>
               </Card>
 
-              <Card>
-                <CardContent className='space-y-2 p-4 text-sm text-muted-foreground'>
-                  <p className='flex items-center gap-2'>
-                    <ShoppingCart className='size-4' />
-                    Envío gratis en pedidos mayores a $1000
-                  </p>
-                  <p className='flex items-center gap-2'>
-                    <ArrowLeft className='size-4' />
-                    30 días para devoluciones
-                  </p>
-                </CardContent>
-              </Card>
             </div>
           </div>
         )}
