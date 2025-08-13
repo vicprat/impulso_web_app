@@ -51,8 +51,8 @@ const getInitials = (firstName?: string, lastName?: string, email?: string) => {
   return 'U'
 }
 
-export const Artist: React.FC<ArtistProps> = ({ 
-  artist, 
+export const Artist: React.FC<ArtistProps> = ({
+  artist,
   avatarFallback = 'initials',
   backgroundFallback = 'dynamic'
 }) => {
@@ -69,31 +69,31 @@ export const Artist: React.FC<ArtistProps> = ({
     switch (avatarFallback) {
       case 'icon':
         return (
-          <div 
+          <div
             className='flex size-full items-center justify-center'
             style={{ backgroundColor: userColor }}
           >
             <User className='size-10 text-white' strokeWidth={1.5} />
           </div>
         )
-      
+
       case 'logo':
         return (
           <div className='flex size-full items-center justify-center bg-muted'>
             <Logo className='size-8' />
           </div>
         )
-      
+
       case 'gradient':
         return (
           <div className='flex size-full items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-lg font-bold text-white'>
             {initials}
           </div>
         )
-      
+
       default: // 'initials'
         return (
-          <div 
+          <div
             className='flex size-full items-center justify-center text-lg font-semibold text-white'
             style={{ backgroundColor: userColor }}
           >
@@ -110,14 +110,14 @@ export const Artist: React.FC<ArtistProps> = ({
         return (
           <div className='from-muted/30 to-muted/10 size-full bg-gradient-to-br' />
         )
-      
+
       case 'pattern':
         return (
-          <div 
+          <div
             className='relative size-full'
             style={{ backgroundColor: `${userColor}20` }}
           >
-            <div 
+            <div
               className='absolute inset-0 opacity-30'
               style={{
                 backgroundImage: `radial-gradient(circle, ${userColor} 1px, transparent 1px)`,
@@ -126,18 +126,18 @@ export const Artist: React.FC<ArtistProps> = ({
             />
           </div>
         )
-      
+
       case 'solid':
         return (
-          <div 
+          <div
             className='size-full'
             style={{ backgroundColor: `${userColor}15` }}
           />
         )
-      
+
       default: // 'dynamic'
         return (
-          <div 
+          <div
             className='size-full bg-gradient-to-br opacity-60'
             style={{
               background: `linear-gradient(135deg, ${userColor}20, ${userColor}10, transparent)`
@@ -148,68 +148,78 @@ export const Artist: React.FC<ArtistProps> = ({
   }
 
   return (
-    <Card className='to-card/80 group relative overflow-hidden border-0 bg-gradient-to-br from-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl'>
+    < Card className='to-card/80 group relative h-80 overflow-hidden border-0 bg-gradient-to-br from-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl' >
       <Link
         href={replaceRouteParams(ROUTES.PUBLIC.PROFILE_DETAIL.PATH, { userId: artist.id })}
-        className='block focus:outline-none'
+        className='block h-full focus:outline-none'
         aria-label={`Ver perfil de ${artistName}`}
       >
-        {/* Header con background */}
-        <div className='relative h-28 overflow-hidden'>
-          {artist.profile?.backgroundImageUrl ? (
-            <>
-              <img
-                src={artist.profile.backgroundImageUrl}
-                alt="Background"
-                className='size-full object-cover transition-transform duration-700 group-hover:scale-110'
-                loading='lazy'
-              />
-              <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent' />
-            </>
-          ) : (
-            renderBackgroundFallback()
-          )}
-        </div>
-        
-        {/* Avatar flotante */}
-        <div className='relative -mt-12 flex justify-center'>
-          <div className='relative'>
-            <div className='size-24 overflow-hidden rounded-full border-4 border-background bg-background shadow-xl transition-transform duration-300 group-hover:scale-110'>
-              {artist.profile?.avatarUrl ? (
+        {/* Estructura flex para distribuir el contenido */}
+        <div className='flex h-full flex-col'>
+          {/* Header con background - Altura fija */}
+          <div className='relative h-28 shrink-0 overflow-hidden'>
+            {artist.profile?.backgroundImageUrl ? (
+              <>
                 <img
-                  src={artist.profile.avatarUrl}
-                  alt={artistName}
-                  className='size-full object-cover'
+                  src={artist.profile.backgroundImageUrl}
+                  alt="Background"
+                  className='size-full object-cover transition-transform duration-700 group-hover:scale-110'
                   loading='lazy'
-                  style={{
-                    viewTransitionName: `artist-avatar-${artist.id}`,
-                  }}
                 />
-              ) : (
-                renderAvatarFallback()
-              )}
-            </div>
-          </div>
-        </div>
-
-        <CardContent className='px-6 pb-6 pt-4 text-center'>
-          <div className='mb-3'>
-            <h3 className='text-lg font-semibold text-foreground transition-colors duration-200 group-hover:text-primary'>
-              {artistName}
-            </h3>
-            
-            {artist.profile?.occupation && (
-              <p className='mt-1 text-sm text-muted-foreground'>
-                {artist.profile.occupation}
-              </p>
+                <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent' />
+              </>
+            ) : (
+              renderBackgroundFallback()
             )}
           </div>
-        </CardContent>
+
+          {/* Avatar flotante - Posición fija */}
+          <div className='relative -mt-12 flex shrink-0 justify-center'>
+            <div className='relative'>
+              <div className='size-24 overflow-hidden rounded-full border-4 border-background bg-background shadow-xl transition-transform duration-300 group-hover:scale-110'>
+                {artist.profile?.avatarUrl ? (
+                  <img
+                    src={artist.profile.avatarUrl}
+                    alt={artistName}
+                    className='size-full object-cover'
+                    loading='lazy'
+                    style={{
+                      viewTransitionName: `artist-avatar-${artist.id}`,
+                    }}
+                  />
+                ) : (
+                  renderAvatarFallback()
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Contenido principal - Área flexible */}
+          <CardContent className='flex flex-1 flex-col justify-center px-6 pb-6 pt-4 text-center'>
+            <div className='mb-3'>
+              {/* Nombre con altura mínima para consistencia */}
+              <div className='flex min-h-14 items-center justify-center'>
+                <h3 className='text-lg font-semibold leading-tight text-foreground transition-colors duration-200 group-hover:text-primary'>
+                  {artistName}
+                </h3>
+              </div>
+
+              {/* Ocupación con altura fija */}
+              <div className='flex min-h-8 items-center justify-center'>
+                {artist.profile?.occupation && (
+                  <p className='text-sm text-muted-foreground'>
+                    {artist.profile.occupation}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </div>
 
         {/* Overlay de hover */}
         <div className='from-primary/5 pointer-events-none absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
-        
+
       </Link>
-    </Card>
+    </ Card >
   )
 }

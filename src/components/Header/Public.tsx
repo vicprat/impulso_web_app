@@ -93,7 +93,6 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
     }
   }, [ isMobileMenuOpen ])
 
-  const shouldShowHeader = !isHomePage || isScrolled
 
   return (
     <>

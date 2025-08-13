@@ -17,35 +17,59 @@ export interface RouteConfig {
 
 export const ROUTES = {
   ADMIN: {
+    BLOG: {
+      CREATE: {
+        ICON: 'plus',
+        LABEL: 'Crear Post',
+        PATH: '/posts/create',
+        PERMISSIONS: [PERMISSIONS.MANAGE_ALL_BLOG_POSTS, PERMISSIONS.MANAGE_OWN_BLOG_POSTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      },
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Editar Post',
+        PATH: '/posts/:id',
+        PERMISSIONS: [PERMISSIONS.MANAGE_ALL_BLOG_POSTS, PERMISSIONS.MANAGE_OWN_BLOG_POSTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar entradas del blog',
+        ICON: 'newspaper',
+        LABEL: 'Blog',
+        PATH: '/posts',
+        PERMISSIONS: [PERMISSIONS.MANAGE_ALL_BLOG_POSTS, PERMISSIONS.MANAGE_OWN_BLOG_POSTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      },
+    },
     EVENTS: {
       CREATE: {
         ICON: 'plus',
         LABEL: 'Crear Evento',
         PATH: '/admin/events/create',
-        PERMISSIONS: [ PERMISSIONS.MANAGE_EVENTS ],
-        ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+        PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
       DETAIL: {
         ICON: 'edit',
         LABEL: 'Detalle del Evento',
         PATH: '/admin/events/:eventId',
-        PERMISSIONS: [ PERMISSIONS.MANAGE_EVENTS ],
-        ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+        PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
       FINANCE: {
         ICON: 'dollar-sign',
         LABEL: 'Finanzas del Evento',
         PATH: '/admin/events/:eventId/finance',
-        PERMISSIONS: [ PERMISSIONS.MANAGE_EVENTS, PERMISSIONS.VIEW_FINANCIAL_ENTRIES ],
-        ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+        PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS, PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
       MAIN: {
         DESCRIPTION: 'Gestionar Eventos',
         ICON: 'calendar',
         LABEL: 'Eventos',
         PATH: '/admin/events',
-        PERMISSIONS: [ PERMISSIONS.MANAGE_EVENTS ],
-        ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+        PERMISSIONS: [PERMISSIONS.MANAGE_EVENTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
     FINANCE: {
@@ -54,30 +78,30 @@ export const ROUTES = {
           ICON: 'plus',
           LABEL: 'Crear Cuenta Bancaria',
           PATH: '/admin/finance/bank-accounts/new',
-          PERMISSIONS: [ PERMISSIONS.MANAGE_BANK_ACCOUNTS ],
-          ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+          PERMISSIONS: [PERMISSIONS.MANAGE_BANK_ACCOUNTS],
+          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
         },
         DETAIL: {
           ICON: 'edit',
           LABEL: 'Detalle de Cuenta Bancaria',
           PATH: '/admin/finance/bank-accounts/:id',
-          PERMISSIONS: [ PERMISSIONS.VIEW_FINANCIAL_ENTRIES ],
-          ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+          PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
+          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
         },
         EDIT: {
           ICON: 'edit',
           LABEL: 'Editar Cuenta Bancaria',
           PATH: '/admin/finance/bank-accounts/:id/edit',
-          PERMISSIONS: [ PERMISSIONS.MANAGE_BANK_ACCOUNTS ],
-          ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+          PERMISSIONS: [PERMISSIONS.MANAGE_BANK_ACCOUNTS],
+          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
         },
         MAIN: {
           DESCRIPTION: 'Gestionar Cuentas Bancarias',
           ICON: 'credit-card',
           LABEL: 'Cuentas Bancarias',
           PATH: '/admin/finance/bank-accounts',
-          PERMISSIONS: [ PERMISSIONS.VIEW_FINANCIAL_ENTRIES ],
-          ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+          PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
+          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
         },
       },
       ENTRIES: {
@@ -85,23 +109,23 @@ export const ROUTES = {
           ICON: 'plus',
           LABEL: 'Crear Movimiento',
           PATH: '/admin/finance/entries/new',
-          PERMISSIONS: [ PERMISSIONS.MANAGE_FINANCIAL_ENTRIES ],
-          ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+          PERMISSIONS: [PERMISSIONS.MANAGE_FINANCIAL_ENTRIES],
+          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
         },
         DETAIL: {
           ICON: 'edit',
           LABEL: 'Detalle de Movimiento',
           PATH: '/admin/finance/entries/:id',
-          PERMISSIONS: [ PERMISSIONS.VIEW_FINANCIAL_ENTRIES, PERMISSIONS.MANAGE_FINANCIAL_ENTRIES ],
-          ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+          PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES, PERMISSIONS.MANAGE_FINANCIAL_ENTRIES],
+          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
         },
         MAIN: {
           DESCRIPTION: 'Gestionar Movimientos Financieros',
           ICON: 'trending-up',
           LABEL: 'Movimientos',
           PATH: '/admin/finance/entries',
-          PERMISSIONS: [ PERMISSIONS.VIEW_FINANCIAL_ENTRIES ],
-          ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+          PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
+          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
         },
       },
       REPORTS: {
@@ -110,8 +134,8 @@ export const ROUTES = {
           ICON: 'bar-chart-3',
           LABEL: 'Reportes',
           PATH: '/admin/finance/reports',
-          PERMISSIONS: [ PERMISSIONS.VIEW_FINANCE_REPORTS ],
-          ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.PARTNER.NAME ],
+          PERMISSIONS: [PERMISSIONS.VIEW_FINANCE_REPORTS],
+          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.PARTNER.NAME],
         },
       },
     },
@@ -120,38 +144,38 @@ export const ROUTES = {
       ICON: 'settings',
       LABEL: 'Administración',
       PATH: '/admin',
-      PERMISSIONS: [ PERMISSIONS.ACCESS_ADMIN ],
-      ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ], // Esta ruta no debe aparecer individualmente
+      PERMISSIONS: [PERMISSIONS.ACCESS_ADMIN],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME], // Esta ruta no debe aparecer individualmente
     },
     PRIVATE_ROOMS: {
       ACCESS: {
         ICON: 'lock',
         LABEL: 'Acceder a Sala Privada',
         PATH: '/private-room',
-        PERMISSIONS: [ PERMISSIONS.VIEW_PRIVATE_ROOMS ],
-        ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.VIP_CUSTOMER.NAME ],
+        PERMISSIONS: [PERMISSIONS.VIEW_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.VIP_CUSTOMER.NAME],
       },
       CREATE: {
         ICON: 'plus',
         LABEL: 'Crear Sala Privada',
         PATH: '/admin/private-rooms/create',
-        PERMISSIONS: [ PERMISSIONS.MANAGE_PRIVATE_ROOMS ],
-        ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
       DETAIL: {
         ICON: 'edit',
         LABEL: 'Editar Sala Privada',
         PATH: '/admin/private-rooms/:id',
-        PERMISSIONS: [ PERMISSIONS.MANAGE_PRIVATE_ROOMS ],
-        ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
       MAIN: {
         DESCRIPTION: 'Gestionar Salas Privadas',
         ICON: 'lock',
         LABEL: 'Salas Privadas',
         PATH: '/admin/private-rooms',
-        PERMISSIONS: [ PERMISSIONS.MANAGE_PRIVATE_ROOMS ],
-        ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
     USERS: {
@@ -159,17 +183,29 @@ export const ROUTES = {
         ICON: 'edit',
         LABEL: 'Editar Usuario',
         PATH: '/admin/users/:id',
-        PERMISSIONS: [ PERMISSIONS.MANAGE_USERS ],
-        ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+        PERMISSIONS: [PERMISSIONS.MANAGE_USERS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
       MAIN: {
         DESCRIPTION: 'Gestionar Usuarios',
         ICON: 'users',
         LABEL: 'Usuarios',
         PATH: '/admin/users',
-        PERMISSIONS: [ PERMISSIONS.MANAGE_USERS ],
-        ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
+        PERMISSIONS: [PERMISSIONS.MANAGE_USERS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
+    },
+  },
+
+  // (sección ADMIN ya declarada arriba)
+  ARTIST: {
+    DASHBOARD: {
+      DESCRIPTION: 'Dashboard específico para artistas',
+      ICON: 'palette',
+      LABEL: 'Mi Dashboard',
+      PATH: '/artist-dashboard',
+      PERMISSIONS: [PERMISSIONS.VIEW_PROFILE],
+      ROLES: [ROLES.ARTIST.NAME],
     },
   },
 
@@ -180,6 +216,23 @@ export const ROUTES = {
       IS_PUBLIC: true,
       LABEL: 'Iniciar Sesión',
       PATH: '/auth/login',
+    },
+  },
+
+  BLOG: {
+    DETAIL: {
+      DESCRIPTION: 'Detalle de una entrada del blog',
+      ICON: 'newspaper',
+      IS_PUBLIC: true,
+      LABEL: 'Entrada',
+      PATH: '/blog/:slug',
+    },
+    MAIN: {
+      DESCRIPTION: 'Listado del blog',
+      ICON: 'newspaper',
+      IS_PUBLIC: true,
+      LABEL: 'Blog',
+      PATH: '/blog',
     },
   },
 
@@ -206,26 +259,15 @@ export const ROUTES = {
       ICON: 'layout-dashboard',
       LABEL: 'Panel Principal',
       PATH: '/dashboard',
-      PERMISSIONS: [ PERMISSIONS.VIEW_PROFILE ],
+      PERMISSIONS: [PERMISSIONS.VIEW_PROFILE],
     },
     PROFILE: {
       DESCRIPTION: 'Gestiona tu información personal',
       ICON: 'user',
       LABEL: 'Mi Perfil',
       PATH: '/profile',
-      PERMISSIONS: [ PERMISSIONS.VIEW_PROFILE, PERMISSIONS.UPDATE_PROFILE ],
-      ROLES: [ ROLES.ARTIST.NAME, ROLES.MANAGER.NAME, ROLES.ADMIN.NAME ],
-    },
-  },
-
-  ARTIST: {
-    DASHBOARD: {
-      DESCRIPTION: 'Dashboard específico para artistas',
-      ICON: 'palette',
-      LABEL: 'Mi Dashboard',
-      PATH: '/artist-dashboard',
-      PERMISSIONS: [ PERMISSIONS.VIEW_PROFILE ],
-      ROLES: [ ROLES.ARTIST.NAME ],
+      PERMISSIONS: [PERMISSIONS.VIEW_PROFILE, PERMISSIONS.UPDATE_PROFILE],
+      ROLES: [ROLES.ARTIST.NAME, ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
   },
 
@@ -234,22 +276,22 @@ export const ROUTES = {
       ICON: 'plus',
       LABEL: 'Crear Producto',
       PATH: '/manage-inventory/create',
-      PERMISSIONS: [ PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS ],
-      ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME ],
+      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
     DETAIL: {
       ICON: 'edit',
       LABEL: 'Editar Producto',
       PATH: '/manage-inventory/:id',
-      PERMISSIONS: [ PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS ],
-      ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME ],
+      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
     MAIN: {
       ICON: 'archive',
       LABEL: 'Inventario',
       PATH: '/manage-inventory',
-      PERMISSIONS: [ PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS ],
-      ROLES: [ ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME ],
+      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
   },
 
@@ -259,14 +301,14 @@ export const ROUTES = {
       HIDE_IN_NAV: true,
       LABEL: 'Detalle del Pedido',
       PATH: '/orders/:orderId',
-      PERMISSIONS: [ PERMISSIONS.VIEW_ORDERS ],
+      PERMISSIONS: [PERMISSIONS.VIEW_ORDERS],
     },
     MAIN: {
       DESCRIPTION: 'Historial de pedidos',
       ICON: 'package',
       LABEL: 'Ordenes',
       PATH: '/orders',
-      PERMISSIONS: [ PERMISSIONS.VIEW_ORDERS ],
+      PERMISSIONS: [PERMISSIONS.VIEW_ORDERS],
     },
   },
 
@@ -277,6 +319,22 @@ export const ROUTES = {
       IS_PUBLIC: true,
       LABEL: 'Artistas',
       PATH: '/artists',
+    },
+    BLOG: {
+      DETAIL: {
+        DESCRIPTION: 'Detalle de entrada del blog',
+        ICON: 'newspaper',
+        IS_PUBLIC: true,
+        LABEL: 'Entrada',
+        PATH: '/blog/:slug',
+      },
+      MAIN: {
+        DESCRIPTION: 'Listado del blog',
+        ICON: 'newspaper',
+        IS_PUBLIC: true,
+        LABEL: 'Blog',
+        PATH: '/blog',
+      },
     },
     HOME: {
       DESCRIPTION: 'Página principal de la tienda',
@@ -365,7 +423,7 @@ export const ROUTES = {
       ICON: 'ticket',
       LABEL: 'Mis Tickets',
       PATH: '/manage-tickets',
-      PERMISSIONS: [ PERMISSIONS.VIEW_ACQUIRED_TICKETS ],
+      PERMISSIONS: [PERMISSIONS.VIEW_ACQUIRED_TICKETS],
       ROLES: [
         ROLES.CUSTOMER.NAME,
         ROLES.VIP_CUSTOMER.NAME,
@@ -461,6 +519,8 @@ export const getDashboardNavRoutes = (
     ROUTES.INVENTORY.MAIN,
     // Mis Pedidos
     ROUTES.ORDERS.MAIN,
+    // Blog
+    ROUTES.ADMIN.BLOG.MAIN,
     // Mi Perfil
     ROUTES.CUSTOMER.PROFILE,
     // Rutas administrativas agrupadas
@@ -494,19 +554,20 @@ export const getGroupedDashboardNavRoutes = (
     ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN,
     ROUTES.ADMIN.FINANCE.ENTRIES.MAIN,
     ROUTES.ADMIN.FINANCE.REPORTS.MAIN,
-  ].filter(route =>
-    filterRoutesByAccess([ route ], userRoles, userPermissions).length > 0 &&
-    !('HIDE_IN_NAV' in route && route.HIDE_IN_NAV)
+  ].filter(
+    (route) =>
+      filterRoutesByAccess([route], userRoles, userPermissions).length > 0 &&
+      !('HIDE_IN_NAV' in route && route.HIDE_IN_NAV)
   )
 
   // Rutas que deben estar individuales (incluyendo ACCESS que no está en el grupo)
-  const individualRoutes = allRoutes.filter(route =>
-    !adminGroupRoutes.some(adminRoute => adminRoute.PATH === route.PATH)
+  const individualRoutes = allRoutes.filter(
+    (route) => !adminGroupRoutes.some((adminRoute) => adminRoute.PATH === route.PATH)
   )
 
   return {
     groupedRoutes: adminGroupRoutes,
-    individualRoutes
+    individualRoutes,
   }
 }
 
@@ -515,8 +576,8 @@ export const getStoreNavRoutes = (): RouteConfig[] => {
     ROUTES.PUBLIC.HOME,
     ROUTES.STORE.MAIN,
     ROUTES.STORE.EVENTS,
-    // ROUTES.COLLECTIONS.MAIN,
     ROUTES.PUBLIC.ARTISTS,
+    ROUTES.PUBLIC.BLOG.MAIN,
   ]
 
   return publicStoreRoutes.filter((route) => !('HIDE_IN_NAV' in route && route.HIDE_IN_NAV))
@@ -527,7 +588,7 @@ export const getSectionRoutes = (
   userRoles: string[],
   userPermissions: string[]
 ): RouteConfig[] => {
-  const sectionRoutes = Object.values(ROUTES[ sectionName ])
+  const sectionRoutes = Object.values(ROUTES[sectionName])
   return filterRoutesByAccess(sectionRoutes, userRoles, userPermissions)
 }
 
@@ -630,7 +691,7 @@ export const replaceRouteParams = (
   params: Record<string, string | number>
 ): string => {
   let path = routePath
-  Object.entries(params).forEach(([ key, value ]) => {
+  Object.entries(params).forEach(([key, value]) => {
     path = path.replace(`:${key}`, String(value))
   })
   return path

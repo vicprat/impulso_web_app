@@ -19,6 +19,7 @@ import {
   LogIn,
   MapPin,
   MessageSquare,
+  Newspaper,
   Package,
   Plus,
   Search,
@@ -59,6 +60,7 @@ export const Icons = {
   plus: Plus,
   search: Search,
   settings: Settings,
+  'newspaper': Newspaper,
   shield: Shield,
   'shopping-bag': ShoppingBag,
   'shopping-cart': ShoppingCart,
@@ -80,7 +82,7 @@ export interface IconProps {
 }
 
 export const Icon = ({ className, name, size = 24 }: IconProps) => {
-  const IconComponent = Icons[name]
+  const IconComponent = Icons[ name ]
 
   if (!IconComponent) {
     console.warn(`Icon "${name}" not found`)

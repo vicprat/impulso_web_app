@@ -28,19 +28,6 @@ import { useGetArtworkTypes, useGetLocations, useGetTechniques, useGetVendors } 
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 
-const productTypeOptions = [
-  { label: 'Pintura', value: 'Pintura' },
-  { label: 'Escultura', value: 'Escultura' },
-  { label: 'Fotografía', value: 'Fotografía' },
-  { label: 'Grabado', value: 'Grabado' },
-  { label: 'Dibujo', value: 'Dibujo' },
-  { label: 'Arte Digital', value: 'Arte Digital' },
-  { label: 'Arte Textil', value: 'Arte Textil' },
-  { label: 'Cerámica', value: 'Cerámica' },
-  { label: 'Otro', value: 'Otro' }
-]
-
-
 declare module '@tanstack/react-table' {
   interface TableMeta<TData> {
     editingRowId?: string | null

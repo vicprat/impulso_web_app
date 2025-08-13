@@ -3,15 +3,14 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-        
 
 model User {
   id                String    @id @default(cuid())
-  shopifyCustomerId String?    @unique
+  shopifyCustomerId String?   @unique
   email             String    @unique
   firstName         String?
   lastName          String?
@@ -20,24 +19,26 @@ model User {
   updatedAt         DateTime  @updatedAt
   lastLoginAt       DateTime?
 
-  roleId            String?
-  role              Role?     @relation(fields: [roleId], references: [id])
+  roleId String?
+  role   Role?   @relation(fields: [roleId], references: [id])
 
-  sessionTokens     SessionToken[]
-  activityLogs      ActivityLog[]
-  articles          ArticleMetadata[]
-  artist            Artist?           @relation(fields: [artistId], references: [id])
-  artistId          String?           @unique
-  cartId            String?           @unique
-  privateRooms      PrivateRoom[]
-  tickets           Ticket[]
-  profile           Profile?
-  links             Links[]
-  isPublic          Boolean   @default(false)
-  financialEntries  FinancialEntry[]
+  sessionTokens    SessionToken[]
+  activityLogs     ActivityLog[]
+  articles         ArticleMetadata[]
+  artist           Artist?           @relation(fields: [artistId], references: [id])
+  artistId         String?           @unique
+  cartId           String?           @unique
+  privateRooms     PrivateRoom[]
+  tickets          Ticket[]
+  profile          Profile?
+  links            Links[]
+  isPublic         Boolean           @default(false)
+  financialEntries FinancialEntry[]
+
+  blogPosts Post[]     @relation("BlogPosts")
+  UserRole  UserRole[]
 
   @@map("users")
-  UserRole UserRole[]
 }
 
 model Links {
@@ -52,7 +53,7 @@ model Links {
   isPrimary Boolean @default(false)
 
   userId String?
-  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   companyId String?
 
@@ -69,10 +70,10 @@ model Profile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  occupation  String?
-  description String? @db.Text
-  bio         String? @db.Text
-  avatarUrl   String?
+  occupation         String?
+  description        String? @db.Text
+  bio                String? @db.Text
+  avatarUrl          String?
   backgroundImageUrl String?
 
   createdAt DateTime @default(now()) @db.Timestamptz(6)
@@ -89,9 +90,9 @@ model Role {
 
   users       User[]
   permissions RolePermission[]
+  UserRole    UserRole[]
 
   @@map("roles")
-  UserRole UserRole[]
 }
 
 model Permission {
@@ -212,21 +213,21 @@ model ArticleMetadata {
 }
 
 model PrivateRoom {
-  id          String   @id @default(cuid())
+  id          String               @id @default(cuid())
   name        String
   description String?
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   products    PrivateRoomProduct[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 
   @@unique([userId, name])
   @@map("private_rooms")
 }
 
 model PrivateRoomProduct {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   privateRoomId String
   privateRoom   PrivateRoom @relation(fields: [privateRoomId], references: [id], onDelete: Cascade)
   productId     String // Shopify product GID
@@ -254,16 +255,16 @@ enum FinancialEntryType {
 }
 
 model BankAccount {
-  id              String   @id @default(cuid())
-  name            String
-  bankName        String?
-  accountNo       String?
-  clabe           String?
-  initialBalance  Decimal  @db.Decimal(10,2)
-  currentBalance  Decimal  @db.Decimal(10,2)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  movements       FinancialEntry[] @relation("BankMovements")
+  id             String           @id @default(cuid())
+  name           String
+  bankName       String?
+  accountNo      String?
+  clabe          String?
+  initialBalance Decimal          @db.Decimal(10, 2)
+  currentBalance Decimal          @db.Decimal(10, 2)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  movements      FinancialEntry[] @relation("BankMovements")
 }
 
 enum FinancialEntryStatus {
@@ -277,7 +278,7 @@ model FinancialEntry {
   id            String               @id @default(cuid())
   type          FinancialEntryType
   amount        Decimal              @db.Decimal(10, 2)
-  amountPaid    Decimal              @db.Decimal(10, 2) @default(0)
+  amountPaid    Decimal              @default(0) @db.Decimal(10, 2)
   currency      String               @default("MXN")
   description   String
   date          DateTime             @default(now())
@@ -292,11 +293,12 @@ model FinancialEntry {
   dueDate       DateTime?
   notes         String?
   createdAt     DateTime             @default(now())
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime             @updatedAt
   bankAccountId String?
-  bankAccount   BankAccount? @relation("BankMovements", fields: [bankAccountId], references: [id])
+  bankAccount   BankAccount?         @relation("BankMovements", fields: [bankAccountId], references: [id])
   userId        String?
-  user          User?   @relation(fields: [userId], references: [id])
+  user          User?                @relation(fields: [userId], references: [id])
+
   @@index([eventId])
   @@index([type])
   @@index([date])
@@ -336,8 +338,8 @@ model Location {
 }
 
 model Event {
-  id               String @id @default(cuid())
-  shopifyProductId String @unique
+  id               String   @id @default(cuid())
+  shopifyProductId String   @unique
   name             String
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -345,4 +347,110 @@ model Event {
   financialEntries FinancialEntry[]
 
   @@map("events")
+}
+
+// ===== MODELOS DEL BLOG =====
+
+model Post {
+  id       String     @id @default(cuid())
+  title    String
+  content  String     @db.Text
+  excerpt  String?    @db.Text
+  slug     String     @unique
+  status   PostStatus @default(DRAFT)
+  featured Boolean    @default(false)
+
+  // Imagen destacada
+  featuredImageUrl String?
+
+  // Imágenes adicionales del post
+  additionalImages String[]
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Fechas
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relaciones
+  authorId String
+  author   User   @relation("BlogPosts", fields: [authorId], references: [id])
+
+  categories PostCategory[]
+  tags       PostTag[]
+
+  @@index([status])
+  @@index([publishedAt])
+  @@index([authorId])
+  @@index([featured])
+  @@map("blog_posts")
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String? @db.Text
+  color       String? // Para UI
+  order       Int     @default(0)
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  posts PostCategory[]
+
+  @@map("blog_categories")
+}
+
+model Tag {
+  id       String  @id @default(cuid())
+  name     String
+  slug     String  @unique
+  color    String? // Para UI
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  posts PostTag[]
+
+  @@map("blog_tags")
+}
+
+// Tabla de relación muchos a muchos entre Posts y Categories
+model PostCategory {
+  id         String @id @default(cuid())
+  postId     String
+  categoryId String
+
+  post     Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, categoryId])
+  @@map("blog_post_categories")
+}
+
+// Tabla de relación muchos a muchos entre Posts y Tags
+model PostTag {
+  id     String @id @default(cuid())
+  postId String
+  tagId  String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@map("blog_post_tags")
 }
