@@ -262,50 +262,8 @@ export const updateUserRole = async (userId: string, roleName: string) => {
       })
     }
 
-    // Si el usuario no era artista y ahora será artista, crear el registro del artista
-    if (!isCurrentlyArtist && willBeArtist && !currentUser.artist) {
-      const artistName = `${currentUser.firstName || 'Usuario'} ${currentUser.lastName || ''}`.trim()
-      
-      // Verificar si ya existe un artista con ese nombre
-      const existingArtist = await tx.artist.findUnique({
-        where: { name: artistName },
-      })
-
-      if (existingArtist) {
-        // Si ya existe, usar un nombre único
-        const uniqueArtistName = `${artistName} (${Date.now()})`
-        
-        const newArtist = await tx.artist.create({
-          data: {
-            name: uniqueArtistName,
-            user: {
-              connect: { id: userId },
-            },
-          },
-        })
-
-        // Conectar el artista al usuario
-        await tx.user.update({
-          data: { artistId: newArtist.id },
-          where: { id: userId },
-        })
-      } else {
-        const newArtist = await tx.artist.create({
-          data: {
-            name: artistName,
-            user: {
-              connect: { id: userId },
-            },
-          },
-        })
-
-        // Conectar el artista al usuario
-        await tx.user.update({
-          data: { artistId: newArtist.id },
-          where: { id: userId },
-        })
-      }
-    }
+    // Importante: ya no creamos automáticamente un Artist al promover a 'artist'.
+    // La asociación con un vendor se hará explícitamente mediante los endpoints de artistas.
   })
 
   return await getUserById(userId)
@@ -423,7 +381,6 @@ export const cleanupOrphanedArtists = async () => {
   })
 
   if (orphanedArtists.length > 0) {
-     
     await prisma.artist.deleteMany({
       where: {
         user: null,

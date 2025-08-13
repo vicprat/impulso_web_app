@@ -11,8 +11,8 @@ const UserUpdateSchema = z.object({
 })
 
 const ProfileUpdateSchema = z.object({
-  avatarUrl: z.string().optional(),
-  backgroundImageUrl: z.string().optional(),
+  avatarUrl: z.string().nullish(),
+  backgroundImageUrl: z.string().nullish(),
   bio: z.string().optional(),
   description: z.string().optional(),
   occupation: z.string().optional(),
@@ -20,12 +20,9 @@ const ProfileUpdateSchema = z.object({
 
 const CombinedUpdateSchema = UserUpdateSchema.merge(ProfileUpdateSchema)
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    const session = await requirePermission(PERMISSIONS.MANAGE_USERS)
+    await requirePermission(PERMISSIONS.MANAGE_USERS)
     const userId = params.id
 
     const user = await getUserById(userId)
@@ -36,13 +33,13 @@ export async function GET(
 
     // Retornar solo los datos del perfil necesarios para el formulario
     const profileData = {
-      firstName: user.firstName,
-      lastName: user.lastName,
-      bio: user.profile?.bio,
-      description: user.profile?.description,
-      occupation: user.profile?.occupation,
       avatarUrl: user.profile?.avatarUrl,
       backgroundImageUrl: user.profile?.backgroundImageUrl,
+      bio: user.profile?.bio,
+      description: user.profile?.description,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      occupation: user.profile?.occupation,
     }
 
     return NextResponse.json(profileData, { status: 200 })
@@ -57,12 +54,9 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    const session = await requirePermission(PERMISSIONS.MANAGE_USERS)
+    await requirePermission(PERMISSIONS.MANAGE_USERS)
     const userId = params.id
 
     const json = await request.json()

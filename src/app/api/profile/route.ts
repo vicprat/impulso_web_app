@@ -10,8 +10,8 @@ const UserUpdateSchema = z.object({
 })
 
 const ProfileUpdateSchema = z.object({
-  avatarUrl: z.string().optional(),
-  backgroundImageUrl: z.string().optional(),
+  avatarUrl: z.string().nullish(),
+  backgroundImageUrl: z.string().nullish(),
   bio: z.string().optional(),
   description: z.string().optional(),
   occupation: z.string().optional(),

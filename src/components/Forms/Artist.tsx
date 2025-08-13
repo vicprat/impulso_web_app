@@ -14,6 +14,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -31,17 +32,20 @@ interface UserRoleFormProps {
 
 export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserRoleFormProps) {
   const queryClient = useQueryClient()
-  const [ selectedRole, setSelectedRole ] = useState<string>(user?.roles[ 0 ] || 'customer')
+  const [ selectedRole, setSelectedRole ] = useState<string>(user?.roles[ 0 ] ?? 'customer')
   const [ vendorName, setVendorName ] = useState('')
   const [ popoverOpen, setPopoverOpen ] = useState(false)
   const [ isNewVendor, setIsNewVendor ] = useState(false)
+  const [ confirmReassignOpen, setConfirmReassignOpen ] = useState(false)
+  const [ conflictInfo, setConflictInfo ] = useState<{ vendorName: string; assignedTo?: { id: string; email: string; firstName: string | null; lastName: string | null } } | null>(null)
+  const [ reassignTargetUserId, setReassignTargetUserId ] = useState<string | null>(null)
 
   // Campos para crear nuevo usuario
   const [ formData, setFormData ] = useState({
-    email: user?.email || '',
-    firstName: user?.firstName || '',
+    email: user?.email ?? '',
+    firstName: user?.firstName ?? '',
     isActive: user?.isActive ?? true,
-    lastName: user?.lastName || '',
+    lastName: user?.lastName ?? '',
   })
 
   const updateRoles = useUpdateUserRoles()
@@ -79,16 +83,49 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
       }).then(async (res) => {
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}))
-          throw new Error(errorData.error || 'Falló la creación del artista')
+          // Captura conflicto 409 para reasignación
+          if (res.status === 409 && errorData?.code === 'ARTIST_ASSIGNED') {
+            setConflictInfo({ assignedTo: errorData.assignedTo, vendorName: errorData.vendorName })
+            setConfirmReassignOpen(true)
+          }
+          throw new Error(errorData.error ?? 'Falló la creación del artista')
         }
         return res.json()
       })
     },
     onError: (error) => {
-      toast.error(error.message || 'Error al crear el artista')
+      if (!conflictInfo) {
+        toast.error(error.message || 'Error al crear el artista')
+      }
     },
     onSuccess: () => {
       toast.success('Artista creado exitosamente')
+      void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
+      onSuccess()
+    },
+  })
+
+  const reassignArtistMutation = useMutation({
+    mutationFn: async ({ targetUserId, vendorName }: { targetUserId: string; vendorName: string }) => {
+      const res = await fetch('/api/artists/reassign', {
+        body: JSON.stringify({ targetUserId, vendorName }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error ?? 'No se pudo reasignar el artista')
+      }
+      return res.json()
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Error al reasignar el artista')
+    },
+    onSuccess: () => {
+      toast.success('Artista reasignado correctamente')
+      setConfirmReassignOpen(false)
+      setConflictInfo(null)
+      setReassignTargetUserId(null)
       void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
       onSuccess()
     },
@@ -103,7 +140,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
       }).then(async (res) => {
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}))
-          throw new Error(errorData.error || 'Falló la creación del usuario')
+          throw new Error(errorData.error ?? 'Falló la creación del usuario')
         }
         return res.json()
       })
@@ -160,10 +197,16 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
 
         // Si es artista, crear también la relación con el vendor
         if (selectedRole === 'artist' && vendorName.trim() && userResponse.user?.id) {
-          await createArtistMutation.mutateAsync({
-            userId: userResponse.user.id,
-            vendorName: vendorName.trim(),
-          })
+          setReassignTargetUserId(userResponse.user.id)
+          try {
+            await createArtistMutation.mutateAsync({
+              userId: userResponse.user.id,
+              vendorName: vendorName.trim(),
+            })
+          } catch {
+            // El error ya fue gestionado para abrir el diálogo si aplica
+            return
+          }
         } else {
           toast.success('Usuario creado exitosamente')
           onSuccess()
@@ -182,10 +225,35 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
         await updateRoles.mutateAsync({ role: selectedRole, userId: user.id })
 
         if (isBecomingArtist) {
-          await createArtistMutation.mutateAsync({
-            userId: user.id,
-            vendorName: vendorName.trim(),
-          })
+          setReassignTargetUserId(user.id)
+          try {
+            await createArtistMutation.mutateAsync({
+              userId: user.id,
+              vendorName: vendorName.trim(),
+            })
+          } catch {
+            return
+          }
+        } else if (selectedRole === 'artist') {
+          const currentVendorName = user.artist?.name ?? ''
+          if (!currentVendorName && !vendorName.trim()) {
+            toast.error('Debes seleccionar un vendor para este artista')
+            return
+          }
+          if (vendorName.trim() && vendorName.trim() !== currentVendorName) {
+            setReassignTargetUserId(user.id)
+            try {
+              await createArtistMutation.mutateAsync({
+                userId: user.id,
+                vendorName: vendorName.trim(),
+              })
+            } catch {
+              return
+            }
+          } else {
+            toast.success('Rol actualizado exitosamente')
+            onSuccess()
+          }
         } else {
           toast.success('Rol actualizado exitosamente')
           onSuccess()
@@ -201,10 +269,15 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
     }
   }
 
-  const isBecomingArtist = selectedRole === 'artist' && (!user?.roles.includes('artist'))
+  const _isBecomingArtist = selectedRole === 'artist' && (!user?.roles.includes('artist'))
 
   return (
     <div className='space-y-6'>
+      {user?.artist?.name && (
+        <div className='rounded-md border bg-primary-container p-3 text-sm'>
+          <span className='font-medium'>Artista actual:</span> {user.artist.name}
+        </div>
+      )}
       {/* Campos para crear usuario */}
       {mode === 'create' && (
         <div className='space-y-4'>
@@ -281,13 +354,13 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
         ))}
       </div>
 
-      {(isBecomingArtist || (mode === 'create' && selectedRole === 'artist')) && (
+      {selectedRole === 'artist' && (
         <div className='mt-6 rounded-lg bg-primary-container p-4'>
           <h4 className='mb-2 text-sm font-medium text-on-primary-container'>
             Asignar Vendor para Artista
           </h4>
           <p className='text-on-primary-container/80 mb-3 text-xs'>
-            Escribe el nombre de un vendor existente para seleccionarlo, o escribe un nuevo nombre para crear un vendor nuevo.
+            Escribe el nombre de un artista existente para seleccionarlo, o escribe un nuevo nombre para crear un vendor nuevo.
           </p>
 
           <Popover open={popoverOpen} onOpenChange={(open) => {
@@ -391,6 +464,34 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
             : mode === 'create' ? 'Crear Usuario' : 'Guardar'}
         </Button>
       </div>
+
+      <Dialog open={confirmReassignOpen} onOpenChange={setConfirmReassignOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reasignar artista</DialogTitle>
+            <DialogDescription>
+              {conflictInfo?.vendorName ? (
+                <>El artista "{conflictInfo.vendorName}" ya está asignado a {conflictInfo.assignedTo?.firstName ?? ''} {conflictInfo.assignedTo?.lastName ?? ''} ({conflictInfo.assignedTo?.email}). ¿Deseas reasignarlo a este usuario?</>
+              ) : (
+                <>Este artista ya está asignado a otro usuario. ¿Deseas reasignarlo?</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant='outline' onClick={() => { setConfirmReassignOpen(false); setConflictInfo(null) }}>Cancelar</Button>
+            </DialogClose>
+            <Button
+              onClick={() => {
+                if (!reassignTargetUserId || !conflictInfo?.vendorName) return
+                void reassignArtistMutation.mutate({ targetUserId: reassignTargetUserId, vendorName: conflictInfo.vendorName })
+              }}
+            >
+              Confirmar reasignación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
