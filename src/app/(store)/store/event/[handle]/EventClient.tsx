@@ -1,19 +1,20 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Calendar,
-  Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
   Clock,
+  Copy,
   Gift,
   MapPin,
   Share2,
   Ticket,
   User,
-  Users,
+  Users
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -32,6 +33,85 @@ interface EventClientProps {
   event: Event
   relatedEvents: Event[]
   session: UserType | null
+}
+
+// Estado de carga específico para eventos
+const EventLoadingSkeleton = () => {
+  return (
+    <div className='min-h-screen bg-surface'>
+      <div className='mx-auto max-w-7xl px-3 py-6 sm:px-6 lg:px-8'>
+        {/* Breadcrumb skeleton */}
+        <div className='mb-6 flex items-center gap-2'>
+          <div className='h-4 w-12 animate-pulse rounded bg-muted' />
+          <div className='h-4 w-1 animate-pulse rounded bg-muted' />
+          <div className='h-4 w-16 animate-pulse rounded bg-muted' />
+          <div className='h-4 w-1 animate-pulse rounded bg-muted' />
+          <div className='h-4 w-32 animate-pulse rounded bg-muted' />
+        </div>
+
+        <div className='lg:grid lg:grid-cols-12 lg:gap-8'>
+          {/* Hero image skeleton */}
+          <div className='lg:col-span-8'>
+            <div className='mb-6 aspect-[16/9] animate-pulse rounded-2xl bg-muted' />
+
+            {/* Thumbnails skeleton */}
+            <div className='mb-6 grid grid-cols-4 gap-3'>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className='aspect-square animate-pulse rounded-lg bg-muted' />
+              ))}
+            </div>
+
+            {/* Description skeleton */}
+            <Card className='bg-card shadow-elevation-1'>
+              <CardHeader>
+                <div className='h-7 w-48 animate-pulse rounded bg-muted' />
+              </CardHeader>
+              <CardContent className='space-y-3'>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className='h-4 w-full animate-pulse rounded bg-muted' />
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Registration card skeleton */}
+          <div className='mt-8 lg:col-span-4 lg:mt-0'>
+            <Card className='bg-card shadow-elevation-3'>
+              <CardHeader className='space-y-4 text-center'>
+                <div className='mx-auto size-16 animate-pulse rounded-full bg-muted' />
+                <div className='mx-auto h-8 w-32 animate-pulse rounded bg-muted' />
+                <div className='mx-auto h-6 w-24 animate-pulse rounded-full bg-muted' />
+              </CardHeader>
+              <CardContent className='space-y-6'>
+                <div className='h-12 w-full animate-pulse rounded bg-muted' />
+                <div className='space-y-4 rounded-lg bg-surface-container p-4'>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className='flex gap-3'>
+                      <div className='size-5 animate-pulse rounded bg-muted' />
+                      <div className='flex-1 space-y-2'>
+                        <div className='h-4 w-24 animate-pulse rounded bg-muted' />
+                        <div className='h-3 w-32 animate-pulse rounded bg-muted' />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Floating loading indicator */}
+        <div className='fixed bottom-6 right-6 z-50'>
+          <Card className='bg-card/90 border-primary/20 shadow-elevation-3 backdrop-blur-sm'>
+            <CardContent className='flex items-center gap-3 p-4'>
+              <div className='size-5 animate-spin rounded-full border-2 border-primary border-t-transparent' />
+              <span className='text-sm font-medium text-foreground'>Cargando evento...</span>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 const extractEventDetails = (event: Event) => {
@@ -65,9 +145,10 @@ const isEventFree = (event: Event): boolean => {
 }
 
 export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, session }) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [lightboxOpen, setLightboxOpen] = useState(false)
-  const [lightboxImageIndex, setLightboxImageIndex] = useState(0)
+  const [ currentImageIndex, setCurrentImageIndex ] = useState(0)
+  const [ lightboxOpen, setLightboxOpen ] = useState(false)
+  const [ lightboxImageIndex, setLightboxImageIndex ] = useState(0)
+  const [ shareMenuOpen, setShareMenuOpen ] = useState(false)
 
   const eventDetails = extractEventDetails(event)
   const eventDate = eventDetails.date ? new Date(eventDetails.date) : null
@@ -100,10 +181,12 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
           url: window.location.href,
         })
       } catch {
-        // You could show a toast here
+        // Fallback to copy
+        await navigator.clipboard.writeText(window.location.href)
       }
     } else {
-      void navigator.clipboard.writeText(window.location.href)
+      await navigator.clipboard.writeText(window.location.href)
+      setShareMenuOpen(false)
     }
   }
 
@@ -122,31 +205,21 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
 
   return (
     <div className='min-h-screen'>
-      <div className='mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8'>
-        {/* Breadcrumb */}
-        <nav className='mb-6 text-sm text-muted-foreground'>
-          <Link href={ROUTES.STORE.MAIN.PATH} className='transition-colors hover:text-primary'>
-            Inicio
-          </Link>
-          <span className='mx-2'>/</span>
-          <Link href={ROUTES.STORE.EVENTS.PATH} className='transition-colors hover:text-primary'>
-            Eventos
-          </Link>
-          <span className='mx-2'>/</span>
-          <span className='text-foreground'>{event.title}</span>
-        </nav>
+      <div className='mx-auto max-w-7xl px-3 py-4 sm:px-6 lg:px-8'>
 
-        {/* Hero Section */}
-        <div className='mb-12'>
-          <div className='lg:grid lg:grid-cols-12 lg:gap-12'>
+
+        {/* Hero Section - Completamente rediseñado para móvil */}
+        <div className='mb-8'>
+          <div className='lg:grid lg:grid-cols-12 lg:gap-8'>
             {/* Hero Image */}
             <div className='lg:col-span-8'>
-              <div className='group relative aspect-[16/9] overflow-hidden rounded-2xl bg-muted shadow-elevation-2'>
+              {/* Mobile: Image sin overlay de información */}
+              <div className='group relative mb-4 aspect-[16/9] overflow-hidden rounded-2xl bg-muted shadow-elevation-2'>
                 {event.images.length > 0 ? (
                   <img
-                    src={event.images[currentImageIndex]?.url}
-                    alt={event.images[currentImageIndex]?.altText ?? event.title}
-                    className='object-cover transition-transform duration-700 group-hover:scale-105'
+                    src={event.images[ currentImageIndex ]?.url}
+                    alt={event.images[ currentImageIndex ]?.altText ?? event.title}
+                    className='size-full object-cover transition-transform duration-700 group-hover:scale-105'
                     onClick={() => openLightbox(currentImageIndex)}
                   />
                 ) : (
@@ -155,87 +228,113 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                   </div>
                 )}
 
-                {/* Gradient Overlay */}
-                <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent' />
+                {/* Solo gradient sutil - sin texto superpuesto */}
+                <div className='absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent' />
 
-                {/* Event Info Overlay */}
-                <div className='absolute inset-x-6 bottom-6 text-white'>
-                  <div className='flex items-start justify-between'>
-                    <div className='flex-1'>
-                      <h1 className='mb-2 text-3xl font-bold leading-tight lg:text-4xl'>
-                        {event.title}
-                      </h1>
-                      {event.vendor && (
-                        <p className='mb-4 text-lg font-medium opacity-90'>por {event.vendor}</p>
-                      )}
+                {/* Botones flotantes mejorados */}
+                <div className='absolute right-4 top-4 flex gap-2'>
+                  {/* Status badge */}
+                  {isPastEvent ? (
+                    <Badge variant='destructive' className='bg-error-container text-on-error shadow-elevation-2'>
+                      Evento Pasado
+                    </Badge>
+                  ) : daysUntilEvent !== null && daysUntilEvent <= 7 ? (
+                    <Badge className='bg-primary text-on-primary shadow-elevation-2'>
+                      {daysUntilEvent === 0 ? '¡Hoy!' : `En ${daysUntilEvent} días`}
+                    </Badge>
+                  ) : null}
 
-                      {/* Quick Info */}
-                      <div className='flex flex-wrap gap-4 text-sm'>
-                        {eventDate && (
-                          <div className='flex items-center gap-2'>
-                            <CalendarIcon className='size-4' />
-                            {formatEventDate(eventDate)}
+                  {/* Share button */}
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setShareMenuOpen(true)}
+                    className='border-white/20 bg-white/10 text-white shadow-elevation-2 backdrop-blur-sm hover:bg-white/20'
+                  >
+                    <Share2 className='size-4' />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Mobile: Info del evento DEBAJO de la imagen */}
+              <div className='mb-6'>
+                <div className='space-y-4'>
+                  <div>
+                    <h1 className='mb-2 text-2xl font-bold leading-tight text-foreground sm:text-3xl lg:text-4xl'>
+                      {event.title}
+                    </h1>
+
+                  </div>
+
+                  {/* Quick Info Cards para móvil */}
+                  <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+                    {eventDate && (
+                      <Card className='bg-card p-3 shadow-elevation-1'>
+                        <div className='flex items-center gap-3'>
+                          <div className='flex size-10 items-center justify-center rounded-lg bg-primary-container'>
+                            <Calendar className='size-5 text-primary' />
                           </div>
-                        )}
-                        {eventDetails.location && (
-                          <div className='flex items-center gap-2'>
-                            <MapPin className='size-4' />
-                            {eventDetails.location}
+                          <div className='min-w-0 flex-1'>
+                            <p className='text-xs text-muted-foreground'>Fecha</p>
+                            <p className='truncate text-sm font-medium text-foreground'>
+                              {format(eventDate, 'd MMM yyyy', { locale: es })}
+                            </p>
                           </div>
-                        )}
-                        {eventDetails.startTime && (
-                          <div className='flex items-center gap-2'>
-                            <Clock className='size-4' />
-                            {formatEventTime(eventDetails.startTime)}
-                            {eventDetails.endTime && ` - ${formatEventTime(eventDetails.endTime)}`}
+                        </div>
+                      </Card>
+                    )}
+
+                    {eventDetails.startTime && (
+                      <Card className='bg-card p-3 shadow-elevation-1'>
+                        <div className='flex items-center gap-3'>
+                          <div className='flex size-10 items-center justify-center rounded-lg bg-primary-container'>
+                            <Clock className='size-5 text-primary' />
                           </div>
-                        )}
-                      </div>
-                    </div>
+                          <div className='min-w-0 flex-1'>
+                            <p className='text-xs text-muted-foreground'>Hora</p>
+                            <p className='text-sm font-medium text-foreground'>
+                              {formatEventTime(eventDetails.startTime)}
+                              {eventDetails.endTime && ` - ${formatEventTime(eventDetails.endTime)}`}
+                            </p>
+                          </div>
+                        </div>
+                      </Card>
+                    )}
 
-                    {/* Status Badge */}
-                    <div className='flex flex-col items-end gap-2'>
-                      {isPastEvent ? (
-                        <Badge variant='destructive' className='bg-error-container text-on-error'>
-                          Evento Pasado
-                        </Badge>
-                      ) : daysUntilEvent !== null && daysUntilEvent <= 7 ? (
-                        <Badge className='bg-primary text-on-primary'>
-                          {daysUntilEvent === 0 ? '¡Hoy!' : `En ${daysUntilEvent} días`}
-                        </Badge>
-                      ) : null}
-
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={shareEvent}
-                        className='border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20'
-                      >
-                        <Share2 className='size-4' />
-                      </Button>
-                    </div>
+                    {eventDetails.location && (
+                      <Card className='bg-card p-3 shadow-elevation-1 sm:col-span-2'>
+                        <div className='flex items-center gap-3'>
+                          <div className='flex size-10 items-center justify-center rounded-lg bg-primary-container'>
+                            <MapPin className='size-5 text-primary' />
+                          </div>
+                          <div className='min-w-0 flex-1'>
+                            <p className='text-xs text-muted-foreground'>Ubicación</p>
+                            <p className='truncate text-sm font-medium text-foreground'>
+                              {eventDetails.location}
+                            </p>
+                          </div>
+                        </div>
+                      </Card>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Thumbnails */}
               {event.images.length > 1 && (
-                <div className='mt-4 grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-8'>
+                <div className='mb-6 grid grid-cols-4 gap-2 sm:gap-3 lg:grid-cols-8'>
                   {event.images.map((image, index) => (
                     <button
                       key={image.id ?? index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`aspect-square overflow-hidden rounded-lg border-2 transition-all ${
-                        currentImageIndex === index
-                          ? 'ring-primary/20 border-primary ring-2'
-                          : 'border-border hover:border-muted-foreground'
-                      }`}
+                      className={`aspect-square overflow-hidden rounded-lg border-2 transition-all ${currentImageIndex === index
+                        ? 'ring-primary/20 border-primary ring-2'
+                        : 'border-border hover:border-muted-foreground'
+                        }`}
                     >
                       <img
                         src={image.url}
                         alt={image.altText ?? `${event.title} ${index + 1}`}
-                        width={120}
-                        height={120}
                         className='size-full object-cover'
                       />
                     </button>
@@ -245,9 +344,9 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
 
               {/* Event Description */}
               {event.descriptionHtml && (
-                <Card className='my-6 bg-card shadow-elevation-1'>
+                <Card className='mb-6 bg-card shadow-elevation-1'>
                   <CardHeader>
-                    <CardTitle className='text-2xl text-foreground'>Sobre este Evento</CardTitle>
+                    <CardTitle className='text-xl text-foreground sm:text-2xl'>Sobre este Evento</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div
@@ -259,9 +358,9 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
               )}
             </div>
 
-            {/* Registration Card */}
-            <div className='mt-8 lg:col-span-4 lg:mt-0'>
-              <Card className='sticky top-6 bg-card shadow-elevation-3'>
+            {/* Registration Card - Optimizado para móvil */}
+            <div className='lg:col-span-4'>
+              <Card className='sticky top-4 bg-card shadow-elevation-3'>
                 <CardHeader className='text-center'>
                   <div className='mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-primary-container'>
                     {isFreeEvent ? (
@@ -272,14 +371,13 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                   </div>
 
                   <div className='space-y-2'>
-                    <div className='text-3xl font-bold text-foreground'>{getEventPrice()}</div>
+                    <div className='text-2xl font-bold text-foreground sm:text-3xl'>{getEventPrice()}</div>
                     {!isFreeEvent && <p className='text-sm text-muted-foreground'>por entrada</p>}
 
                     <Badge
                       variant={eventStatus.variant}
-                      className={`${
-                        eventStatus.variant === 'default' ? 'bg-success-container text-success' : ''
-                      }`}
+                      className={`${eventStatus.variant === 'default' ? 'bg-success-container text-success' : ''
+                        }`}
                     >
                       {eventStatus.text}
                     </Badge>
@@ -301,11 +399,10 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                       }}
                       selectedVariant={primaryVariant || undefined}
                       size='lg'
-                      className={`w-full ${
-                        isFreeEvent
-                          ? 'hover:bg-success/90 bg-success text-on-primary'
-                          : 'hover:bg-primary/90 bg-primary text-on-primary'
-                      }`}
+                      className={`w-full shadow-elevation-2 ${isFreeEvent
+                        ? 'hover:bg-success/90 bg-success text-on-primary'
+                        : 'hover:bg-primary/90 bg-primary text-on-primary'
+                        }`}
                       disabled={!isAvailable}
                       showQuantitySelector={true}
                       title={{
@@ -404,13 +501,13 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
         {relatedEvents.length > 0 && (
           <div>
             <div className='mb-8 text-center'>
-              <h2 className='mb-2 text-3xl font-bold text-foreground'>
+              <h2 className='mb-2 text-2xl font-bold text-foreground sm:text-3xl'>
                 Otros Eventos que te Podrían Interesar
               </h2>
               <p className='text-muted-foreground'>Descubre más experiencias únicas</p>
             </div>
 
-            <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
               {relatedEvents.slice(0, 6).map((relatedEvent) => {
                 const relatedEventDetails = extractEventDetails(relatedEvent)
                 const isRelatedFree = isEventFree(relatedEvent)
@@ -425,13 +522,11 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                         handle: relatedEvent.handle,
                       })}
                     >
-                      <div className='aspect-[4/3] overflow-hidden'>
-                        {relatedEvent.images[0] ? (
+                      <div className='relative aspect-[4/3] overflow-hidden'>
+                        {relatedEvent.images[ 0 ] ? (
                           <img
-                            src={relatedEvent.images[0].url}
+                            src={relatedEvent.images[ 0 ].url}
                             alt={relatedEvent.title}
-                            width={400}
-                            height={300}
                             className='size-full object-cover transition-transform duration-300 group-hover:scale-105'
                           />
                         ) : (
@@ -443,11 +538,10 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                         {/* Overlay with price */}
                         <div className='absolute right-3 top-3'>
                           <Badge
-                            className={`${
-                              isRelatedFree
-                                ? 'bg-success-container text-success'
-                                : 'bg-surface-container text-on-surface'
-                            } shadow-elevation-1`}
+                            className={`${isRelatedFree
+                              ? 'bg-success-container text-success'
+                              : 'bg-surface-container text-on-surface'
+                              } shadow-elevation-1`}
                           >
                             {isRelatedFree ? 'Gratuito' : relatedEvent.formattedPrice}
                           </Badge>
@@ -455,26 +549,28 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                       </div>
 
                       <CardContent className='p-4'>
-                        <h3 className='line-clamp-2 font-semibold text-foreground transition-colors group-hover:text-primary'>
+                        <h3 className='mb-2 line-clamp-2 font-semibold text-foreground transition-colors group-hover:text-primary'>
                           {relatedEvent.title}
                         </h3>
                         <p className='mb-2 text-sm text-muted-foreground'>{relatedEvent.vendor}</p>
 
-                        {relatedEventDetails.date && (
-                          <div className='mb-2 flex items-center gap-1 text-xs text-muted-foreground'>
-                            <Calendar className='size-3' />
-                            {format(new Date(relatedEventDetails.date), 'd MMM yyyy', {
-                              locale: es,
-                            })}
-                          </div>
-                        )}
+                        <div className='space-y-1'>
+                          {relatedEventDetails.date && (
+                            <div className='flex items-center gap-1 text-xs text-muted-foreground'>
+                              <Calendar className='size-3' />
+                              {format(new Date(relatedEventDetails.date), 'd MMM yyyy', {
+                                locale: es,
+                              })}
+                            </div>
+                          )}
 
-                        {relatedEventDetails.location && (
-                          <div className='flex items-center gap-1 text-xs text-muted-foreground'>
-                            <MapPin className='size-3' />
-                            <span className='truncate'>{relatedEventDetails.location}</span>
-                          </div>
-                        )}
+                          {relatedEventDetails.location && (
+                            <div className='flex items-center gap-1 text-xs text-muted-foreground'>
+                              <MapPin className='size-3' />
+                              <span className='truncate'>{relatedEventDetails.location}</span>
+                            </div>
+                          )}
+                        </div>
                       </CardContent>
                     </Link>
                   </Card>
@@ -485,16 +581,48 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
         )}
       </div>
 
+      {/* Share Menu Dialog */}
+      <Dialog open={shareMenuOpen} onOpenChange={setShareMenuOpen}>
+        <DialogContent className='sm:max-w-md'>
+          <div className='space-y-4'>
+            <div className='text-center'>
+              <h3 className='mb-2 text-lg font-semibold text-foreground'>Compartir Evento</h3>
+              <p className='text-sm text-muted-foreground'>Comparte este evento con tus amigos</p>
+            </div>
+
+            <div className='space-y-3'>
+              <Button
+                onClick={shareEvent}
+                className='hover:bg-primary/90 w-full justify-start gap-3 bg-primary text-on-primary'
+              >
+                <Share2 className='size-4' />
+                Compartir enlace
+              </Button>
+
+              <Button
+                onClick={async () => {
+                  await navigator.clipboard.writeText(window.location.href)
+                  setShareMenuOpen(false)
+                }}
+                variant='outline'
+                className='w-full justify-start gap-3'
+              >
+                <Copy className='size-4' />
+                Copiar enlace
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className='max-w-screen-xl border-none bg-black/95 p-0'>
           <div className='relative flex h-[90vh] items-center justify-center'>
             {event.images.length > 0 && (
               <img
-                src={event.images[lightboxImageIndex]?.url}
-                alt={event.images[lightboxImageIndex]?.altText ?? event.title}
-                width={1200}
-                height={800}
+                src={event.images[ lightboxImageIndex ]?.url}
+                alt={event.images[ lightboxImageIndex ]?.altText ?? event.title}
                 className='max-h-full max-w-full object-contain'
               />
             )}

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { Calendar, Eye, MapPin, QrCode, Ticket, User } from 'lucide-react'
@@ -12,7 +13,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Skeleton } from '@/components/ui/skeleton'
 import { useGetTicketsByUserId } from '@/services/ticket/hook'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
-import { formatCurrency } from '@/src/helpers'
 import { useAuth } from '@/src/modules/auth/context/useAuth'
 
 interface TicketWithEvent {
@@ -23,6 +23,7 @@ interface TicketWithEvent {
   status: string
   createdAt: string
   updatedAt: string
+  quantity: number
   event: {
     id: string
     title: string
@@ -51,14 +52,14 @@ export default function ManageTicketsPage() {
   const { isLoading: authLoading } = useAuth()
   const { data: tickets, error, isLoading } = useGetTicketsByUserId()
 
-  const [ticketToShowQr, setTicketToShowQr] = useState<TicketWithEvent | null>(null)
+  const [ ticketToShowQr, setTicketToShowQr ] = useState<TicketWithEvent | null>(null)
 
   if (authLoading || isLoading) {
     return (
       <div className='space-y-4 p-4 md:p-6'>
         <Skeleton className='h-8 w-64' />
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-          {[1, 2, 3].map((i) => (
+          {[ 1, 2, 3 ].map((i) => (
             <Skeleton key={i} className='h-64 w-full' />
           ))}
         </div>
@@ -96,8 +97,8 @@ export default function ManageTicketsPage() {
     }
 
     return (
-      <Badge variant={variants[status as keyof typeof variants]}>
-        {labels[status as keyof typeof labels] || status}
+      <Badge variant={variants[ status as keyof typeof variants ]}>
+        {labels[ status as keyof typeof labels ] || status}
       </Badge>
     )
   }
@@ -134,7 +135,8 @@ export default function ManageTicketsPage() {
           <div className='flex items-center gap-2'>
             <Ticket className='size-5' />
             <span className='text-sm text-muted-foreground'>
-              {tickets?.length ?? 0} boleto{tickets?.length !== 1 ? 's' : ''}
+              {tickets?.length ?? 0} boleto{tickets?.length !== 1 ? 's' : ''} •{' '}
+              {tickets?.reduce((total, ticket) => total + ticket.quantity, 0) ?? 0} entradas
             </span>
           </div>
         </div>
@@ -197,14 +199,8 @@ export default function ManageTicketsPage() {
                         </div>
                       )}
                       <div className='flex items-center justify-between border-t pt-2'>
-                        <span className='text-sm text-muted-foreground'>Precio pagado:</span>
-
-                        <span className='font-semibold'>
-                          {formatCurrency(
-                            ticket.event.price.amount,
-                            ticket.event.price.currencyCode
-                          )}
-                        </span>
+                        <span className='text-sm text-muted-foreground'>Cantidad de entradas:</span>
+                        <span className='font-semibold'>{ticket.quantity}</span>
                       </div>
                     </div>
                   ) : (
@@ -221,7 +217,7 @@ export default function ManageTicketsPage() {
                     {ticket.event && (
                       <Button variant='outline' size='sm' className='flex-1' asChild>
                         <Link
-                          href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, {
+                          href={replaceRouteParams(ROUTES.STORE.EVENT_DETAIL.PATH, {
                             handle: ticket.event.handle,
                           })}
                           target='_blank'
@@ -232,7 +228,14 @@ export default function ManageTicketsPage() {
                       </Button>
                     )}
 
-                    {ticket.status === 'VALID' && (
+                    <Button size='sm' className='flex-1' asChild>
+                      <Link href={`/manage-tickets/${ticket.id}`}>
+                        <Eye className='mr-1 size-4' />
+                        Ver Detalles
+                      </Link>
+                    </Button>
+
+                    {/* {ticket.status === 'VALID' && (
                       <Button
                         size='sm'
                         className='flex-1'
@@ -241,7 +244,7 @@ export default function ManageTicketsPage() {
                         <QrCode className='mr-1 size-4' />
                         Mostrar QR
                       </Button>
-                    )}
+                    )} */}
                   </div>
                 </CardContent>
               </Card>

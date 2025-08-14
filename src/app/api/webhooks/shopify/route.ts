@@ -166,52 +166,51 @@ export async function POST(request: Request) {
         const eventId = `gid://shopify/Product/${lineItem.product_id}`
         const quantity = lineItem.quantity ?? 1
 
-        const existingTickets = await prisma.ticket.findMany({
+        // Verificar si ya existe un ticket agrupado para este evento y orden
+        const existingTicket = await prisma.ticket.findFirst({
           where: {
             eventId,
             userId: user.id,
+            orderId: order.id.toString(),
           },
         })
 
-        const ticketsToCreate = Math.max(0, quantity - existingTickets.length)
-
-        if (ticketsToCreate === 0) {
+        if (existingTicket) {
           skippedItems.push({
-            existingCount: existingTickets.length,
-            reason: 'tickets_already_exist',
+            existingCount: existingTicket.quantity,
+            reason: 'ticket_already_exists_for_order',
             title: lineItem.title,
           })
           continue
         }
 
-        for (let j = 0; j < ticketsToCreate; j++) {
-          try {
-            const qrCode = generateQRCode()
+        try {
+          const qrCode = generateQRCode()
 
-            const ticket = await prisma.ticket.create({
-              data: {
-                eventId,
-                qrCode,
-                status: 'VALID',
-                userId: user.id,
-              },
-            })
-
-            createdTickets.push({
+          const ticket = await prisma.ticket.create({
+            data: {
               eventId,
-              eventTitle: lineItem.title,
-              orderLineItem: i + 1,
-              qrCode: ticket.qrCode,
-              ticketId: ticket.id,
-              ticketNumber: j + 1,
-            })
-          } catch (ticketError) {
-            errors.push({
-              error: ticketError instanceof Error ? ticketError.message : 'Unknown error',
-              lineItem: i + 1,
-              ticketNumber: j + 1,
-            })
-          }
+              qrCode,
+              quantity,
+              orderId: order.id.toString(),
+              status: 'VALID',
+              userId: user.id,
+            },
+          })
+
+          createdTickets.push({
+            eventId,
+            eventTitle: lineItem.title,
+            orderLineItem: i + 1,
+            qrCode: ticket.qrCode,
+            ticketId: ticket.id,
+            quantity: ticket.quantity,
+          })
+        } catch (ticketError) {
+          errors.push({
+            error: ticketError instanceof Error ? ticketError.message : 'Unknown error',
+            lineItem: i + 1,
+          })
         }
       } else {
         skippedItems.push({

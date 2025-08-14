@@ -12,8 +12,28 @@ export async function GET() {
 
     const tickets = await ticketService.getTicketsByUserId(userId, session)
 
+    // Agrupar tickets por evento y orden
+    const groupedTickets = tickets.reduce(
+      (acc, ticket) => {
+        const key = `${ticket.eventId}_${ticket.orderId || 'no_order'}`
+
+        if (!acc[key]) {
+          acc[key] = {
+            ...ticket,
+            event: null,
+          }
+        } else {
+          // Si ya existe un ticket para este evento y orden, sumar las cantidades
+          acc[key].quantity += ticket.quantity
+        }
+
+        return acc
+      },
+      {} as Record<string, any>
+    )
+
     const enrichedTickets = await Promise.all(
-      tickets.map(async (ticket) => {
+      Object.values(groupedTickets).map(async (ticket) => {
         try {
           const event = await eventService.getEventById(ticket.eventId, session)
 

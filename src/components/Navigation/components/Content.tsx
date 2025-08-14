@@ -5,10 +5,8 @@ import {
   ChevronRight,
   FolderOpen,
   Home,
-  Menu,
   SlidersHorizontal,
-  Store,
-  X
+  Store
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
@@ -27,7 +25,6 @@ interface Props {
 export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters }) => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [ mobileMenuOpen, setMobileMenuOpen ] = useState(false)
   const [ isMobile, setIsMobile ] = useState(false)
 
   useEffect(() => {
@@ -69,7 +66,6 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
   const isCollectionPage = pathname.includes('/collections/') && pathname.split('/').length > 3
   const collectionHandle = isCollectionPage ? pathname.split('/').pop() : null
 
-  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen)
 
   return (
     <div className='relative'>
@@ -285,95 +281,12 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
               )}
             </div>
 
-            {/* Mobile menu button */}
-            <div className='ml-auto flex md:hidden'>
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={toggleMobileMenu}
-                className='size-8 rounded-full p-2 hover:bg-surface-container-high'
-              >
-                {mobileMenuOpen ? <X className='size-4' /> : <Menu className='size-4' />}
-              </Button>
-            </div>
+
           </div>
 
         </div>
       </div>
 
-      {/* Mobile menu overlay */}
-      {mobileMenuOpen && (
-        <div className='fixed inset-0 z-50 md:hidden '>
-          <div className='fixed inset-0 bg-surface' onClick={toggleMobileMenu} />
-          <div className='fixed inset-x-0 top-16 bg-gray-300 shadow-lg dark:bg-gray-900'>
-            <div className='space-y-2 p-4'>
-              <div className='mb-2 flex items-center justify-end'>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={toggleMobileMenu}
-                  className='size-8 rounded-full p-2 hover:bg-surface-container-high'
-                >
-                  <X className='size-4' />
-                </Button>
-              </div>
-              {navItems.map((item) => {
-                const Icon = item.icon
-                const isActive = item.exact
-                  ? pathname === item.href
-                  : pathname.startsWith(item.href) && !isSearchPage
-
-                return (
-                  <Button
-                    key={item.href}
-                    variant='ghost'
-                    size='sm'
-                    asChild
-                    onClick={toggleMobileMenu}
-                    className={cn(
-                      'h-12 w-full justify-start gap-3 rounded-xl px-4',
-                      isActive
-                        ? 'bg-primary-container text-on-primary-container'
-                        : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-                    )}
-                  >
-                    <Link href={item.href}>
-                      <Icon
-                        className={cn(
-                          'size-5',
-                          isActive ? 'text-primary' : 'text-on-surface-variant'
-                        )}
-                      />
-                      <div className='flex flex-col items-start'>
-                        <span className='text-sm font-medium'>{item.label}</span>
-                        <span className='text-on-surface-variant/70 text-xs'>
-                          {item.description}
-                        </span>
-                      </div>
-                    </Link>
-                  </Button>
-                )
-              })}
-
-              {/* Mobile back button for product/collection pages */}
-              {(pathname.includes('/product/') || isCollectionPage) && (
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  asChild
-                  onClick={toggleMobileMenu}
-                  className='border-outline-variant/20 hover:text-primary/80 mt-4 h-12 w-full justify-start gap-3 rounded-xl border-t px-4 pt-6 text-primary hover:bg-primary-container'
-                >
-                  <Link href={ROUTES.STORE.MAIN.PATH}>
-                    <ArrowLeft className='size-5' />
-                    <span className='text-sm font-medium'>Volver a la tienda</span>
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
 
     </div>

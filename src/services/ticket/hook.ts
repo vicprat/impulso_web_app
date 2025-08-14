@@ -6,7 +6,9 @@ export interface TicketWithEvent {
   userId: string
   eventId: string
   qrCode: string
+  quantity: number
   status: string
+  orderId?: string
   createdAt: string
   updatedAt: string
   event: {

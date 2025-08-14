@@ -284,49 +284,49 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       <Card className='border shadow-sm'>
         <div
           onClick={() => toggleSection(sectionKey)}
-          className='hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between p-4 transition-colors'
+          className='hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between p-3 transition-colors sm:p-4'
         >
-          <div className='flex items-center space-x-3'>
-            <div className='rounded-lg bg-muted p-2'>
-              <Icon className='size-4' />
+          <div className='flex items-center space-x-2 sm:space-x-3'>
+            <div className='rounded-lg bg-muted p-1.5 sm:p-2'>
+              <Icon className='size-3 sm:size-4' />
             </div>
             <div>
-              <h3 className='font-medium'>{title}</h3>
+              <h3 className='text-sm font-medium sm:text-base'>{title}</h3>
               {selectedValues.length > 0 && (
-                <p className='text-sm text-muted-foreground'>{selectedValues.length} seleccionado(s)</p>
+                <p className='text-xs text-muted-foreground sm:text-sm'>{selectedValues.length} seleccionado(s)</p>
               )}
             </div>
           </div>
           <ChevronDown
-            className={`size-5 text-muted-foreground transition-transform ${openSections.includes(sectionKey) ? 'rotate-180' : ''
+            className={`size-4 text-muted-foreground transition-transform sm:size-5 ${openSections.includes(sectionKey) ? 'rotate-180' : ''
               }`}
           />
         </div>
 
         {openSections.includes(sectionKey) && (
-          <div className='border-t p-4'>
+          <div className='border-t p-3 sm:p-4'>
             {showSearch && (
-              <div className='relative mb-4'>
+              <div className='relative mb-3 sm:mb-4'>
                 <Input
                   placeholder={`Buscar ${title.toLowerCase()}...`}
                   value={searchTerm}
                   onChange={(e) =>
                     setSearchTerms((prev) => ({ ...prev, [ sectionKey ]: e.target.value }))
                   }
-                  className='h-9'
+                  className='h-8 text-sm sm:h-9'
                 />
               </div>
             )}
 
             {selectedValues.length > 0 && (
-              <div className='mb-4 flex flex-wrap gap-2'>
+              <div className='mb-3 flex flex-wrap gap-1.5 sm:mb-4 sm:gap-2'>
                 {selectedValues.map((value) => {
                   const option = options.find((opt) => opt.value === value)
                   return (
                     <Badge
                       key={value}
                       variant='secondary'
-                      className='pl-3 pr-1'
+                      className='pl-2 pr-1 text-xs sm:pl-3'
                     >
                       {option?.label}
                       <button
@@ -334,9 +334,9 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                           e.stopPropagation()
                           removeFilter(filterKey, value)
                         }}
-                        className='ml-2 rounded-full p-0.5 hover:bg-muted'
+                        className='ml-1 rounded-full p-0.5 hover:bg-muted sm:ml-2'
                       >
-                        <X className='size-3' />
+                        <X className='size-2.5 sm:size-3' />
                       </button>
                     </Badge>
                   )
@@ -344,13 +344,13 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
               </div>
             )}
 
-            <ScrollArea className='h-48'>
+            <ScrollArea className='h-40 sm:h-48'>
               <div className='space-y-1 pr-2'>
                 {filteredOptions.map((option) => (
                   <div
                     key={option.value}
                     onClick={() => handleOptionToggle(filterKey, option.value)}
-                    className={`flex cursor-pointer items-center justify-between rounded-lg p-3 text-sm transition-colors ${selectedValues.includes(option.value)
+                    className={`flex cursor-pointer items-center justify-between rounded-lg p-2 text-xs transition-colors sm:p-3 sm:text-sm ${selectedValues.includes(option.value)
                       ? 'border bg-muted font-medium'
                       : 'hover:bg-muted/50 border border-transparent'
                       }`}
@@ -362,7 +362,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
             </ScrollArea>
 
             {filteredOptions.length === 0 && (
-              <p className='py-4 text-center text-sm text-muted-foreground'>No se encontraron opciones</p>
+              <p className='py-4 text-center text-xs text-muted-foreground sm:text-sm'>No se encontraron opciones</p>
             )}
           </div>
         )}
@@ -380,19 +380,22 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
         onClick={onClose}
       />
 
-      {/* Sidebar con layout mejorado */}
-      <div className='fixed left-0 top-0 z-50 flex h-screen w-[28rem] flex-col bg-background shadow-2xl'>
-        {/* Header del sidebar - fijo */}
-        <div className='shrink-0 border-b px-6 py-4'>
+      {/* Sidebar con responsive design mejorado */}
+      <div className='fixed inset-y-0 right-0 z-50 flex w-full max-w-full flex-col 
+                      bg-background shadow-2xl sm:left-0 sm:right-auto
+                      sm:w-[28rem] sm:max-w-none'>
+
+        {/* Header del sidebar - fijo y más prominente en móvil */}
+        <div className='shrink-0 border-b bg-background px-4 py-3 sm:px-6 sm:py-4'>
           <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <FilterIcon className='size-5' />
+            <div className='flex items-center space-x-2 sm:space-x-3'>
+              <div className='rounded-lg bg-muted p-1.5 sm:p-2'>
+                <FilterIcon className='size-4 sm:size-5' />
               </div>
               <div>
-                <h3 className='text-lg font-semibold'>Filtros</h3>
+                <h3 className='text-base font-semibold sm:text-lg'>Filtros</h3>
                 {getActiveFiltersCount() > 0 && (
-                  <Badge variant='default' className='ml-2 rounded-full px-2.5 py-0.5'>
+                  <Badge variant='default' className='ml-2 rounded-full px-2 py-0.5 text-xs'>
                     {getActiveFiltersCount()}
                   </Badge>
                 )}
@@ -402,54 +405,54 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
               variant='ghost'
               size='sm'
               onClick={onClose}
-              className='size-8 p-0'
+              className='size-8 p-0 hover:bg-muted sm:size-8'
             >
               <X className='size-4' />
             </Button>
           </div>
-          <p className='mt-1 text-sm text-muted-foreground'>
+          <p className='mt-1 text-xs text-muted-foreground sm:text-sm'>
             Filtra y ordena los productos según tus preferencias
           </p>
         </div>
 
         {/* Contenido scrolleable del sidebar */}
-        <div className='flex-1 overflow-y-auto px-6 py-4'>
+        <div className='flex-1 overflow-y-auto px-4 py-3 sm:px-6 sm:py-4'>
           {isLoadingFilters ? (
             <FilterSkeleton />
           ) : (
-            <div className='space-y-4'>
+            <div className='space-y-3 sm:space-y-4'>
               {/* Sorting */}
               <Card className='border shadow-sm'>
                 <div
                   onClick={() => toggleSection('sorting')}
-                  className='hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between p-4 transition-colors'
+                  className='hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between p-3 transition-colors sm:p-4'
                 >
-                  <div className='flex items-center space-x-3'>
-                    <div className='rounded-lg bg-muted p-2'>
-                      <Package className='size-4' />
+                  <div className='flex items-center space-x-2 sm:space-x-3'>
+                    <div className='rounded-lg bg-muted p-1.5 sm:p-2'>
+                      <Package className='size-3 sm:size-4' />
                     </div>
                     <div>
-                      <h3 className='font-medium'>Ordenar por</h3>
-                      <p className='text-sm text-muted-foreground'>
-                        {sortOptions.find(s => s.value === filters.sortBy)?.label} ({filters.sortOrder === 'asc' ? 'Ascendente' : 'Descendente'})
+                      <h3 className='text-sm font-medium sm:text-base'>Ordenar por</h3>
+                      <p className='text-xs text-muted-foreground sm:text-sm'>
+                        {sortOptions.find(s => s.value === filters.sortBy)?.label} ({filters.sortOrder === 'asc' ? 'Asc' : 'Desc'})
                       </p>
                     </div>
                   </div>
                   <ChevronDown
-                    className={`size-5 text-muted-foreground transition-transform ${openSections.includes('sorting') ? 'rotate-180' : ''
+                    className={`size-4 text-muted-foreground transition-transform sm:size-5 ${openSections.includes('sorting') ? 'rotate-180' : ''
                       }`}
                   />
                 </div>
                 {openSections.includes('sorting') && (
-                  <div className='border-t p-4'>
-                    <div className='space-y-4'>
+                  <div className='border-t p-3 sm:p-4'>
+                    <div className='space-y-3 sm:space-y-4'>
                       <div className='space-y-2'>
-                        <Label className='text-sm font-medium'>Campo</Label>
+                        <Label className='text-xs font-medium sm:text-sm'>Campo</Label>
                         <Select
                           value={filters.sortBy}
                           onValueChange={(value) => handleFilterChange('sortBy', value)}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className='h-9 sm:h-10'>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -462,21 +465,21 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                         </Select>
                       </div>
                       <div className='space-y-2'>
-                        <Label className='text-sm font-medium'>Orden</Label>
+                        <Label className='text-xs font-medium sm:text-sm'>Orden</Label>
                         <RadioGroup
                           value={filters.sortOrder}
                           onValueChange={(value) => handleFilterChange('sortOrder', value as 'asc' | 'desc')}
-                          className='space-y-2'
+                          className='space-y-1 sm:space-y-2'
                         >
-                          <div className='hover:bg-muted/50 flex items-center space-x-3 rounded-lg p-2'>
+                          <div className='hover:bg-muted/50 flex items-center space-x-2 rounded-lg p-2 sm:space-x-3'>
                             <RadioGroupItem value='asc' id='sort-asc' />
-                            <Label htmlFor='sort-asc' className='flex-1 cursor-pointer text-sm'>
+                            <Label htmlFor='sort-asc' className='flex-1 cursor-pointer text-xs sm:text-sm'>
                               Ascendente
                             </Label>
                           </div>
-                          <div className='hover:bg-muted/50 flex items-center space-x-3 rounded-lg p-2'>
+                          <div className='hover:bg-muted/50 flex items-center space-x-2 rounded-lg p-2 sm:space-x-3'>
                             <RadioGroupItem value='desc' id='sort-desc' />
-                            <Label htmlFor='sort-desc' className='flex-1 cursor-pointer text-sm'>
+                            <Label htmlFor='sort-desc' className='flex-1 cursor-pointer text-xs sm:text-sm'>
                               Descendente
                             </Label>
                           </div>
@@ -556,31 +559,31 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
               <Card className='border shadow-sm'>
                 <div
                   onClick={() => toggleSection('price')}
-                  className='hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between p-4 transition-colors'
+                  className='hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between p-3 transition-colors sm:p-4'
                 >
-                  <div className='flex items-center space-x-3'>
-                    <div className='rounded-lg bg-muted p-2'>
-                      <DollarSign className='size-4' />
+                  <div className='flex items-center space-x-2 sm:space-x-3'>
+                    <div className='rounded-lg bg-muted p-1.5 sm:p-2'>
+                      <DollarSign className='size-3 sm:size-4' />
                     </div>
                     <div>
-                      <h3 className='font-medium'>Rango de precio</h3>
+                      <h3 className='text-sm font-medium sm:text-base'>Rango de precio</h3>
                       {(filters.priceRange.min || filters.priceRange.max) && (
-                        <p className='text-sm text-muted-foreground'>
+                        <p className='text-xs text-muted-foreground sm:text-sm'>
                           ${filters.priceRange.min || '0'} - ${filters.priceRange.max || '∞'}
                         </p>
                       )}
                     </div>
                   </div>
                   <ChevronDown
-                    className={`size-5 text-muted-foreground transition-transform ${openSections.includes('price') ? 'rotate-180' : ''
+                    className={`size-4 text-muted-foreground transition-transform sm:size-5 ${openSections.includes('price') ? 'rotate-180' : ''
                       }`}
                   />
                 </div>
                 {openSections.includes('price') && (
-                  <div className='border-t p-4'>
-                    <div className='grid grid-cols-2 gap-3'>
+                  <div className='border-t p-3 sm:p-4'>
+                    <div className='grid grid-cols-2 gap-2 sm:gap-3'>
                       <div className='space-y-2'>
-                        <Label htmlFor='price-min' className='text-sm font-medium'>
+                        <Label htmlFor='price-min' className='text-xs font-medium sm:text-sm'>
                           Mínimo
                         </Label>
                         <Input
@@ -594,11 +597,11 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                               min: e.target.value,
                             })
                           }
-                          className='h-10'
+                          className='h-9 text-sm sm:h-10'
                         />
                       </div>
                       <div className='space-y-2'>
-                        <Label htmlFor='price-max' className='text-sm font-medium'>
+                        <Label htmlFor='price-max' className='text-xs font-medium sm:text-sm'>
                           Máximo
                         </Label>
                         <Input
@@ -612,32 +615,31 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                               max: e.target.value,
                             })
                           }
-                          className='h-10'
+                          className='h-9 text-sm sm:h-10'
                         />
                       </div>
                     </div>
                   </div>
                 )}
               </Card>
-
-
             </div>
           )}
         </div>
 
-        {/* Footer del sidebar - fijo y siempre visible */}
-        <div className='shrink-0 border-t bg-background px-6 py-4'>
-          <div className='space-y-3'>
+        {/* Footer del sidebar - fijo y más visible en móvil */}
+        <div className='shrink-0 border-t bg-background px-4 py-3 shadow-lg sm:px-6 
+                        sm:py-4 sm:shadow-none'>
+          <div className='space-y-2 sm:space-y-3'>
             <Button
               onClick={applyFilters}
-              className='h-11 w-full rounded-lg font-medium'
+              className='h-10 w-full rounded-lg text-sm font-medium sm:h-11 sm:text-base'
             >
               Aplicar filtros
             </Button>
             <Button
               onClick={clearFilters}
               variant='outline'
-              className='h-11 w-full rounded-lg font-medium'
+              className='h-10 w-full rounded-lg text-sm font-medium sm:h-11 sm:text-base'
             >
               Limpiar filtros
             </Button>

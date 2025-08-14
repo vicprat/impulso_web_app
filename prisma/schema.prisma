@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  // directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -242,7 +242,9 @@ model Ticket {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   eventId   String // Shopify Product GID for the event
   qrCode    String   @unique
+  quantity  Int      @default(1) // Cantidad de entradas que representa este ticket
   status    String   @default("VALID") // e.g., VALID, USED, CANCELLED
+  orderId   String? // ID de la orden de Shopify para agrupar tickets
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
