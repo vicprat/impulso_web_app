@@ -16,7 +16,7 @@ import { useDeleteEvent } from '@/src/services/event/hook'
 const ActionsCell = ({ event }: { event: Event }) => {
   const router = useRouter()
   const deleteEventMutation = useDeleteEvent()
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [ showDeleteDialog, setShowDeleteDialog ] = useState(false)
 
   const { data: financialEvents, isLoading: isLoadingFinancialEvents } = useGetFinancialEvents()
 
@@ -147,10 +147,10 @@ export const columns: ColumnDef<Event>[] = [
   {
     cell: ({ row }) => {
       const event = row.original
-      const inventoryQuantity = event.variants[0]?.inventoryQuantity ?? 0
+      const inventoryQuantity = event.variants[ 0 ]?.inventoryQuantity ?? 0
       return <span>{inventoryQuantity}</span>
     },
-    header: 'Boletos Vendidos',
+    header: 'Boletos Disponibles',
     id: 'inventoryQuantity',
   },
   {
