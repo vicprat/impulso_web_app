@@ -7,9 +7,11 @@ import { getPrivateProductIds, shopifyService } from '@/modules/shopify/service'
 import { useAuth } from '@/src/modules/auth/context/useAuth'
 import { useGetEventByHandle } from '@/src/services/event/hook'
 
-import { EventClient } from './EventClient'
+import { EventClient, EventLoadingSkeleton } from './EventClient'
 
 import type { Product } from '@/src/modules/shopify/types'
+
+export const dynamic = 'force-dynamic'
 
 interface EventPageProps {
   params: Promise<{ handle: string }>
@@ -41,7 +43,7 @@ export default function EventPage({ params }: EventPageProps) {
       }
     }
 
-    initializePage()
+    void initializePage()
   }, [ params ])
 
   useEffect(() => {
@@ -59,13 +61,13 @@ export default function EventPage({ params }: EventPageProps) {
     }
 
     if (event) {
-      fetchRelatedEvents()
+      void fetchRelatedEvents()
     }
   }, [ event ])
 
   // Mostrar loading mientras se inicializa
   if (isLoading || eventLoading) {
-    return <div className='flex min-h-screen items-center justify-center'>Cargando...</div>
+    return <EventLoadingSkeleton />
   }
 
   // Mostrar error si ocurrió alguno

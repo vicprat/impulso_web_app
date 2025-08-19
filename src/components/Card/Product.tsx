@@ -18,7 +18,7 @@ export const Product: React.FC<Props> = ({ product }) => {
   const maxPrice = product.priceRange.maxVariantPrice
   const hasVariations = minPrice.amount !== maxPrice.amount || product.variants.length > 1
 
-  const variant = product.variants[0]
+  const variant = product.variants[ 0 ]
   const hasDiscount =
     variant.compareAtPrice &&
     parseFloat(variant.compareAtPrice.amount) > parseFloat(variant.price.amount)
@@ -26,11 +26,20 @@ export const Product: React.FC<Props> = ({ product }) => {
   const discountPercentage =
     hasDiscount && variant.compareAtPrice
       ? Math.round(
-          ((parseFloat(variant.compareAtPrice.amount) - parseFloat(variant.price.amount)) /
-            parseFloat(variant.compareAtPrice.amount)) *
-            100
-        )
+        ((parseFloat(variant.compareAtPrice.amount) - parseFloat(variant.price.amount)) /
+          parseFloat(variant.compareAtPrice.amount)) *
+        100
+      )
       : 0
+
+  // Función para formatear el precio
+  const formatPrice = (price: string, currencyCode: string) => {
+    const priceValue = parseFloat(price)
+    if (priceValue === 0) {
+      return 'Entrada gratuita'
+    }
+    return `$${price} ${currencyCode}`
+  }
 
   return (
     <Card
@@ -64,11 +73,11 @@ export const Product: React.FC<Props> = ({ product }) => {
         aria-label={`Ver detalles de ${product.title}`}
       >
         <div className='relative aspect-square overflow-hidden bg-muted'>
-          {product.images[0] ? (
+          {product.images[ 0 ] ? (
             <>
               <img
-                src={product.images[0].url}
-                alt={product.images[0].altText ?? product.title}
+                src={product.images[ 0 ].url}
+                alt={product.images[ 0 ].altText ?? product.title}
                 className='size-full object-cover transition-all duration-500 group-focus-within:scale-105 group-hover:scale-110'
                 loading='lazy'
                 style={{
@@ -107,7 +116,7 @@ export const Product: React.FC<Props> = ({ product }) => {
                 {product.title}
               </h3>
             </Link>
-            {product.vendor && (
+            {product.vendor && product.vendor !== 'Evento' && (
               <p className='text-sm font-normal uppercase tracking-wide text-muted-foreground'>
                 {product.vendor}
               </p>
@@ -124,28 +133,27 @@ export const Product: React.FC<Props> = ({ product }) => {
           <div className='flex flex-wrap items-baseline gap-2'>
             {hasVariations ? (
               <span className='text-lg font-semibold tracking-tight text-foreground'>
-                Desde ${minPrice.amount} {minPrice.currencyCode}
+                Desde {formatPrice(minPrice.amount, minPrice.currencyCode)}
               </span>
             ) : (
               <span className='text-lg font-semibold tracking-tight text-foreground'>
-                ${minPrice.amount} {minPrice.currencyCode}
+                {formatPrice(minPrice.amount, minPrice.currencyCode)}
               </span>
             )}
 
             {hasDiscount && variant.compareAtPrice && (
               <div className='flex items-center gap-2'>
                 <span className='text-sm text-muted-foreground line-through decoration-2'>
-                  ${variant.compareAtPrice.amount} {variant.compareAtPrice.currencyCode}
+                  {formatPrice(variant.compareAtPrice.amount, variant.compareAtPrice.currencyCode)}
                 </span>
                 <Badge
                   variant='outline'
                   className='border-success/20 bg-success-container px-2 py-0.5 text-xs text-success'
                 >
-                  Ahorro: $
-                  {(
-                    parseFloat(variant.compareAtPrice.amount) - parseFloat(variant.price.amount)
-                  ).toFixed(2)}{' '}
-                  {variant.compareAtPrice.currencyCode}
+                  Ahorro: {formatPrice(
+                    (parseFloat(variant.compareAtPrice.amount) - parseFloat(variant.price.amount)).toFixed(2),
+                    variant.compareAtPrice.currencyCode
+                  )}
                 </Badge>
               </div>
             )}
@@ -154,9 +162,8 @@ export const Product: React.FC<Props> = ({ product }) => {
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-1.5'>
               <div
-                className={`size-2 rounded-full transition-colors duration-200 ${
-                  product.availableForSale ? 'bg-success' : 'bg-error'
-                }`}
+                className={`size-2 rounded-full transition-colors duration-200 ${product.availableForSale ? 'bg-success' : 'bg-error'
+                  }`}
               />
               <span className='text-xs text-muted-foreground'>
                 {product.availableForSale ? 'Disponible' : 'Sin stock'}

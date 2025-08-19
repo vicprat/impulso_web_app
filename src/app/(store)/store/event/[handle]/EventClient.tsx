@@ -8,7 +8,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Copy,
   Gift,
   MapPin,
   Share2,
@@ -36,9 +35,9 @@ interface EventClientProps {
 }
 
 // Estado de carga específico para eventos
-const EventLoadingSkeleton = () => {
+export const EventLoadingSkeleton = () => {
   return (
-    <div className='min-h-screen bg-surface'>
+    <div className='min-h-screen'>
       <div className='mx-auto max-w-7xl px-3 py-6 sm:px-6 lg:px-8'>
         {/* Breadcrumb skeleton */}
         <div className='mb-6 flex items-center gap-2'>
@@ -148,7 +147,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
   const [ currentImageIndex, setCurrentImageIndex ] = useState(0)
   const [ lightboxOpen, setLightboxOpen ] = useState(false)
   const [ lightboxImageIndex, setLightboxImageIndex ] = useState(0)
-  const [ shareMenuOpen, setShareMenuOpen ] = useState(false)
 
   const eventDetails = extractEventDetails(event)
   const eventDate = eventDetails.date ? new Date(eventDetails.date) : null
@@ -181,12 +179,10 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
           url: window.location.href,
         })
       } catch {
-        // Fallback to copy
         await navigator.clipboard.writeText(window.location.href)
       }
     } else {
       await navigator.clipboard.writeText(window.location.href)
-      setShareMenuOpen(false)
     }
   }
 
@@ -248,7 +244,7 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                   <Button
                     variant='outline'
                     size='sm'
-                    onClick={() => setShareMenuOpen(true)}
+                    onClick={shareEvent}
                     className='border-white/20 bg-white/10 text-white shadow-elevation-2 backdrop-blur-sm hover:bg-white/20'
                   >
                     <Share2 className='size-4' />
@@ -581,39 +577,7 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
         )}
       </div>
 
-      {/* Share Menu Dialog */}
-      <Dialog open={shareMenuOpen} onOpenChange={setShareMenuOpen}>
-        <DialogContent className='sm:max-w-md'>
-          <div className='space-y-4'>
-            <div className='text-center'>
-              <h3 className='mb-2 text-lg font-semibold text-foreground'>Compartir Evento</h3>
-              <p className='text-sm text-muted-foreground'>Comparte este evento con tus amigos</p>
-            </div>
 
-            <div className='space-y-3'>
-              <Button
-                onClick={shareEvent}
-                className='hover:bg-primary/90 w-full justify-start gap-3 bg-primary text-on-primary'
-              >
-                <Share2 className='size-4' />
-                Compartir enlace
-              </Button>
-
-              <Button
-                onClick={async () => {
-                  await navigator.clipboard.writeText(window.location.href)
-                  setShareMenuOpen(false)
-                }}
-                variant='outline'
-                className='w-full justify-start gap-3'
-              >
-                <Copy className='size-4' />
-                Copiar enlace
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
