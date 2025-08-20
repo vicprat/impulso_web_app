@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
+import { storeClient } from '@/lib/shopify'
 import { getServerSession } from '@/modules/auth/server/server'
+import { CREATE_CHECKOUT_MUTATION } from '@/modules/checkout/queries'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,36 +11,54 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const { cartId } = await request.json()
+    const { cartId, email } = await request.json()
 
     if (!cartId) {
       return NextResponse.json({ error: 'Cart ID is required' }, { status: 400 })
     }
 
-    // Extraer solo el ID del carrito del GID completo
-    const cartIdClean = cartId.split('/').pop()?.split('?')[0]
+    const { data, errors } = await storeClient.request(CREATE_CHECKOUT_MUTATION, {
+      variables: {
+        buyerIdentity: {
+          countryCode: 'MX',
+          email: email ?? session.user.email,
+        },
+        cartId,
+      },
+    })
 
-    if (!cartIdClean) {
-      return NextResponse.json({ error: 'Invalid cart ID format' }, { status: 400 })
+    if (errors) {
+      console.error('Checkout creation errors:', errors)
+      return NextResponse.json(
+        { details: errors, error: 'Failed to create checkout' },
+        { status: 400 }
+      )
     }
 
-    // Limpiar el storeDomain removiendo el protocolo
-    let storeDomain = process.env.NEXT_PUBLIC_SHOPIFY_STORE || ''
-    if (storeDomain.startsWith('https://')) {
-      storeDomain = storeDomain.replace('https://', '')
-    } else if (storeDomain.startsWith('http://')) {
-      storeDomain = storeDomain.replace('http://', '')
+    if (data.cartBuyerIdentityUpdate.userErrors?.length > 0) {
+      return NextResponse.json(
+        {
+          details: data.cartBuyerIdentityUpdate.userErrors,
+          error: 'Checkout validation errors',
+        },
+        { status: 400 }
+      )
     }
-
-    // Construir URL de checkout estándar de Shopify
-    const checkoutUrl = `https://${storeDomain}/cart/${cartIdClean}/checkout`
 
     return NextResponse.json({
-      checkout: { webUrl: checkoutUrl },
+      checkout: {
+        webUrl: data.cartBuyerIdentityUpdate.cart.checkoutUrl,
+      },
       success: true,
     })
   } catch (error) {
-    console.error('Error in checkout API:', error)
-    return NextResponse.json({ error: 'Failed to create checkout' }, { status: 500 })
+    console.error('Error creating checkout:', error)
+    return NextResponse.json(
+      {
+        details: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Failed to create checkout',
+      },
+      { status: 500 }
+    )
   }
 }
