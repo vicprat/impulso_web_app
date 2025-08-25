@@ -186,3 +186,16 @@ export function useAllOrders(
     ...options,
   })
 }
+
+export function useOrdersByProduct(
+  productId: string,
+  params?: { first?: number; after?: string },
+  options?: Omit<UseQueryOptions<AllOrdersResult, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryFn: () => api.getOrdersByProduct(productId, params),
+    queryKey: [...orderManagementKeys.all, 'ordersByProduct', productId, params],
+    staleTime: 2 * 60 * 1000,
+    ...options,
+  })
+}

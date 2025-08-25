@@ -428,3 +428,87 @@ export const SET_DEFAULT_ADDRESS_MUTATION = `
     }
   }
 `
+
+export const GET_ORDERS_BY_PRODUCT_QUERY = `
+  query GetOrdersByProduct($first: Int!, $after: String, $query: String!) {
+    orders(first: $first, after: $after, query: $query) {
+      edges {
+        node {
+          id
+          name
+          processedAt
+          createdAt
+          updatedAt
+          displayFulfillmentStatus
+          displayFinancialStatus
+          currencyCode
+          totalPriceSet {
+            shopMoney {
+              amount
+              currencyCode
+            }
+          }
+          currentTotalPriceSet {
+            shopMoney {
+              amount
+              currencyCode
+            }
+          }
+          customer {
+            id
+            firstName
+            lastName
+            email
+          }
+          shippingAddress {
+            firstName
+            lastName
+            address1
+            city
+            province
+            country
+            zip
+          }
+          lineItems(first: 10) {
+            edges {
+              node {
+                id
+                title
+                quantity
+                currentQuantity
+                originalUnitPriceSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+                discountedUnitPriceSet {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+                variant {
+                  id
+                  title
+                  sku
+                }
+              }
+            }
+          }
+          fulfillments(first: 5) {
+            id
+            status
+          }
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+`

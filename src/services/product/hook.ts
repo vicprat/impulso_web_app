@@ -26,7 +26,7 @@ export const useGetProductsPaginated = (params: GetProductsParams = {}) => {
       const { data } = await axios.get(`/api/management/products?${searchParams.toString()}`)
       return data
     },
-    queryKey: [ PRODUCTS_QUERY_KEY, 'paginated', params ],
+    queryKey: [PRODUCTS_QUERY_KEY, 'paginated', JSON.stringify(params)],
     staleTime: 2 * 60 * 1000, // Reducido de 5 a 2 minutos para que se considere obsoleto más rápido
   })
 }
@@ -40,7 +40,7 @@ export const useGetProduct = (productId: string | null) => {
       const { data } = await axios.get(`/api/management/products/${productId}`)
       return data
     },
-    queryKey: [ PRODUCTS_QUERY_KEY, 'detail', productId ],
+    queryKey: [PRODUCTS_QUERY_KEY, 'detail', productId],
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -53,7 +53,7 @@ export const useCreateProduct = () => {
       return data
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [ PRODUCTS_QUERY_KEY ] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY] })
     },
   })
 }
@@ -72,24 +72,24 @@ export const useUpdateProduct = () => {
       const productId = updatedProduct.id.split('/').pop()
 
       // Invalidar todas las consultas relacionadas con productos
-      void queryClient.invalidateQueries({ queryKey: [ PRODUCTS_QUERY_KEY, 'paginated' ] })
-      void queryClient.invalidateQueries({ queryKey: [ PRODUCTS_QUERY_KEY, 'infinite' ] })
-      void queryClient.invalidateQueries({ queryKey: [ PRODUCTS_QUERY_KEY, 'stats' ] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'paginated'] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'infinite'] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'stats'] })
 
       // Si se agregaron imágenes, invalidar completamente el cache del producto
       if (variables.images && variables.images.length > 0) {
-        void queryClient.invalidateQueries({ queryKey: [ PRODUCTS_QUERY_KEY, 'detail', productId ] })
+        void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'detail', productId] })
       } else if (variables.imagesToDelete && variables.imagesToDelete.length > 0) {
         // Si se eliminaron imágenes, también invalidar el cache
-        void queryClient.invalidateQueries({ queryKey: [ PRODUCTS_QUERY_KEY, 'detail', productId ] })
+        void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'detail', productId] })
       } else {
         // Actualizar el producto específico en el caché solo si no se modificaron imágenes
-        queryClient.setQueryData([ PRODUCTS_QUERY_KEY, 'detail', productId ], updatedProduct)
+        queryClient.setQueryData([PRODUCTS_QUERY_KEY, 'detail', productId], updatedProduct)
       }
 
       // Actualizar el producto en las listas paginadas
       queryClient.setQueriesData(
-        { queryKey: [ PRODUCTS_QUERY_KEY, 'paginated' ] },
+        { queryKey: [PRODUCTS_QUERY_KEY, 'paginated'] },
         (oldData: PaginatedProductsResponse | undefined) => {
           if (!oldData) return oldData
 
@@ -104,14 +104,14 @@ export const useUpdateProduct = () => {
 
       // Solo invalidar stats si cambió algo que realmente afecte las estadísticas
       // como el status del producto o la cantidad de inventario
-      const oldProduct = queryClient.getQueryData([ PRODUCTS_QUERY_KEY, 'detail', productId ])
+      const oldProduct = queryClient.getQueryData([PRODUCTS_QUERY_KEY, 'detail', productId])
       if (oldProduct) {
         const oldStatus = (oldProduct as Product).status
-        const oldInventoryQuantity = (oldProduct as Product).variants[ 0 ]?.inventoryQuantity ?? 0
-        const newInventoryQuantity = updatedProduct.variants[ 0 ]?.inventoryQuantity ?? 0
+        const oldInventoryQuantity = (oldProduct as Product).variants[0]?.inventoryQuantity ?? 0
+        const newInventoryQuantity = updatedProduct.variants[0]?.inventoryQuantity ?? 0
 
         if (oldStatus !== updatedProduct.status || oldInventoryQuantity !== newInventoryQuantity) {
-          void queryClient.invalidateQueries({ queryKey: [ 'productStats' ] })
+          void queryClient.invalidateQueries({ queryKey: ['productStats'] })
         }
       }
     },
@@ -131,28 +131,35 @@ export const useDeleteProduct = () => {
     onSuccess: (_, deletedProductId) => {
       const numericId = deletedProductId.split('/').pop()
 
-      void queryClient.invalidateQueries({ queryKey: [ PRODUCTS_QUERY_KEY, 'paginated' ] })
-      void queryClient.invalidateQueries({ queryKey: [ PRODUCTS_QUERY_KEY, 'infinite' ] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'paginated'] })
+      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'infinite'] })
 
-      queryClient.removeQueries({ queryKey: [ PRODUCTS_QUERY_KEY, 'detail', numericId ] })
+      queryClient.removeQueries({ queryKey: [PRODUCTS_QUERY_KEY, 'detail', numericId] })
     },
   })
 }
 
-export const useProductStats = (params: Omit<GetProductsParams, 'cursor' | 'limit'> = {}) => {
+export const useProductStats = (
+  params: Omit<GetProductsParams, 'cursor' | 'limit'> = {},
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryFn: async () => {
       try {
         const searchParams = new URLSearchParams()
         if (params.search) searchParams.append('search', params.search)
 
-        const { data } = await axios.get(`/api/management/products/stats?${searchParams.toString()}`, {
-          timeout: 60000,
-        })
+        const { data } = await axios.get(
+          `/api/management/products/stats?${searchParams.toString()}`,
+          {
+            timeout: 60000,
+          }
+        )
 
         return data
       } catch (error) {
         console.error('Error fetching product stats:', error)
+        // Retornar valores por defecto en caso de error para no bloquear la UI
         return {
           active: 0,
           archived: 0,
@@ -163,10 +170,17 @@ export const useProductStats = (params: Omit<GetProductsParams, 'cursor' | 'limi
         }
       }
     },
-    queryKey: [ PRODUCTS_QUERY_KEY, 'stats', params ],
+    queryKey: [PRODUCTS_QUERY_KEY, 'stats', params],
+    enabled: options?.enabled ?? true,
     refetchOnWindowFocus: false,
-    retry: 1,
-    staleTime: 2 * 60 * 1000,
+    retry: 2, // Aumentar reintentos
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Backoff exponencial
+    staleTime: 5 * 60 * 1000, // Aumentar stale time para reducir llamadas
+    gcTime: 10 * 60 * 1000, // Mantener en caché por más tiempo
+    // No bloquear la UI si falla
+    throwOnError: false,
+    // Usar datos del caché si están disponibles
+    placeholderData: (previousData) => previousData,
   })
 }
 
@@ -179,7 +193,7 @@ export const useGetVendors = () => {
       }
       return response.json() as Promise<string[]>
     },
-    queryKey: [ 'vendors' ],
+    queryKey: ['vendors'],
   })
 }
 
@@ -189,7 +203,7 @@ export const useGetTechniques = () => {
       const { data } = await axios.get('/api/options/techniques')
       return data
     },
-    queryKey: [ 'techniques' ],
+    queryKey: ['techniques'],
     // 10 minutos
     retry: 1,
     staleTime: 10 * 60 * 1000,
@@ -202,7 +216,7 @@ export const useGetArtworkTypes = () => {
       const { data } = await axios.get('/api/options/artwork_types')
       return data
     },
-    queryKey: [ 'artwork_types' ],
+    queryKey: ['artwork_types'],
     // 10 minutos
     retry: 1,
     staleTime: 10 * 60 * 1000,
@@ -215,7 +229,7 @@ export const useGetLocations = () => {
       const { data } = await axios.get('/api/options/locations')
       return data
     },
-    queryKey: [ 'locations' ],
+    queryKey: ['locations'],
     // 10 minutos
     retry: 1,
     staleTime: 10 * 60 * 1000,
@@ -228,7 +242,7 @@ export const useGetCurrentUser = () => {
       const { data } = await axios.get('/api/auth/me')
       return data
     },
-    queryKey: [ 'currentUser' ],
+    queryKey: ['currentUser'],
     // 5 minutos
     retry: 1,
     staleTime: 5 * 60 * 1000,

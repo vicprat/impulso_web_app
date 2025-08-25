@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
@@ -7,10 +8,13 @@ import {
   Edit,
   ExternalLink,
   Eye,
+  Loader2,
+  Upload,
   X,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -40,6 +44,7 @@ declare module '@tanstack/react-table' {
       price?: string
       inventoryQuantity?: number
       status?: 'ACTIVE' | 'DRAFT'
+      images?: { mediaContentType: 'IMAGE'; originalSource: string }[]
       artworkDetails?: {
         medium?: string
         year?: string
@@ -67,6 +72,14 @@ declare module '@tanstack/react-table' {
     user?: any
     isAdmin?: boolean
     isArtist?: boolean
+    // Campos para bulk operations
+    isBulkMode?: boolean
+    selectedRows?: Set<string>
+    onRowSelectionChange?: (id: string, selected: boolean) => void
+    onSelectAllChange?: (selected: boolean) => void
+    bulkChanges?: Record<string, any>
+    onBulkChange?: (field: string, value: any) => void
+    onApplyBulkChanges?: () => void
   }
 }
 
@@ -490,30 +503,288 @@ const EditableLocationSelect = ({
   )
 }
 
-export const columns: ColumnDef<Product>[] = [
-  {
-    accessorKey: 'image',
-    cell: ({ row }) => {
-      const product = row.original
-      const image = product.images.length > 0 ? product.images[ 0 ] : undefined
+// Componente para reemplazar la imagen principal (solo para tabla)
+const ImageReplacer = ({
+  onUpdate,
+  product,
+}: {
+  product: Product
+  onUpdate: (productId: string, imageUrl: string | null) => void
+}) => {
+  const [ isEditing, setIsEditing ] = useState(false)
+  const [ currentImageUrl, setCurrentImageUrl ] = useState<string | null>(
+    product.images.length > 0 ? product.images[ 0 ].url : null
+  )
+  const [ isHovered, setIsHovered ] = useState(false)
+  const [ isUploading, setIsUploading ] = useState(false)
 
-      if (!image) {
-        return (
-          <div className='flex size-16  items-center justify-center rounded-md'>
-            <span className='text-xs '>Sin imagen</span>
-          </div>
-        )
+  useEffect(() => {
+    setCurrentImageUrl(product.images.length > 0 ? product.images[ 0 ].url : null)
+  }, [ product.images ])
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files || files.length === 0) return
+
+    const file = files[ 0 ]
+    await uploadFile(file)
+    event.target.value = '' // Limpiar input
+  }
+
+  const uploadFile = async (file: File) => {
+    setIsUploading(true)
+    const preview = URL.createObjectURL(file)
+
+    try {
+      // 1. Subir el archivo
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const uploadResponse = await fetch('/api/uploads', {
+        body: formData,
+        method: 'POST',
+      })
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json()
+        throw new Error(errorData.error ?? 'Error al subir el archivo')
       }
 
-      return (
-        <div className='relative size-16 overflow-hidden rounded-md'>
+      const uploadData = await uploadResponse.json()
+
+      // 2. Reemplazar la imagen principal usando la API de Shopify
+      const productId = product.id.split('/').pop()
+      if (!productId) throw new Error('ID de producto inválido')
+
+      const replaceResponse = await fetch(`/api/management/products/${productId}/replace-main-image`, {
+        body: JSON.stringify({
+          currentImageId: product.images[ 0 ]?.id || null,
+          newImageUrl: uploadData.resourceUrl
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'PUT'
+      })
+
+      if (!replaceResponse.ok) {
+        const errorData = await replaceResponse.json()
+        throw new Error(errorData.error ?? 'Error al reemplazar imagen')
+      }
+
+      const replaceData = await replaceResponse.json()
+
+      // 3. Actualizar el estado local
+      setCurrentImageUrl(uploadData.resourceUrl)
+      onUpdate(product.id, uploadData.resourceUrl)
+      setIsEditing(false)
+
+      toast.success(`Imagen principal actualizada`)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      toast.error(`Error al actualizar imagen: ${errorMessage}`)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <div className='w-32 space-y-2'>
+        <div className='flex items-center gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            disabled={isUploading}
+            onClick={() => document.getElementById(`image-input-${product.id}`)?.click()}
+            className='flex h-8 items-center gap-1 px-2 text-xs'
+          >
+            {isUploading ? (
+              <Loader2 className='size-3 animate-spin' />
+            ) : (
+              <Upload className='size-3' />
+            )}
+            {isUploading ? 'Subiendo...' : 'Reemplazar'}
+          </Button>
+
+          <Input
+            id={`image-input-${product.id}`}
+            type='file'
+            accept='image/*'
+            onChange={handleFileChange}
+            className='hidden'
+          />
+
+          {currentImageUrl && (
+            <Button
+              type='button'
+              variant='destructive'
+              size='sm'
+              onClick={() => {
+                setCurrentImageUrl(null)
+                onUpdate(product.id, null)
+                setIsEditing(false)
+              }}
+              className='h-8 px-2 text-xs'
+            >
+              <X className='size-3' />
+            </Button>
+          )}
+        </div>
+
+        {/* Preview compacto */}
+        {currentImageUrl && (
+          <div className='relative overflow-hidden rounded border'>
+            <div className='relative aspect-square w-16'>
+              <img
+                src={currentImageUrl}
+                alt={product.images[ 0 ]?.altText ?? product.title}
+                className='size-full object-cover'
+              />
+
+              {/* Overlay de estado */}
+              {isUploading && (
+                <div className='absolute inset-0 flex items-center justify-center bg-black/40'>
+                  <Loader2 className='size-4 animate-spin text-white' />
+                </div>
+              )}
+            </div>
+
+            {/* Información compacta */}
+            <div className='p-1 text-center'>
+              <p className='text-xs text-gray-600'>Imagen principal</p>
+            </div>
+          </div>
+        )}
+
+        {/* Placeholder compacto */}
+        {!currentImageUrl && (
+          <div className='flex size-16 items-center justify-center rounded border-2 border-dashed border-gray-300 text-center'>
+            <div className='flex flex-col items-center'>
+              <Upload className='size-4 text-gray-400' />
+              <span className='text-xs text-gray-500'>Sin imagen</span>
+            </div>
+          </div>
+        )}
+
+        <div className='flex justify-end space-x-1'>
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={() => setIsEditing(false)}
+            className='h-6 px-2 text-xs'
+          >
+            Cancelar
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className='group relative size-16 cursor-pointer overflow-hidden rounded-md'
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={() => setIsEditing(true)}
+    >
+      {currentImageUrl ? (
+        <>
           <img
-            src={image.url}
-            alt={image.altText ?? product.title}
-            className='object-cover'
+            src={currentImageUrl}
+            alt={product.images[ 0 ]?.altText ?? product.title}
+            className='size-full object-cover transition-all group-hover:brightness-75'
             sizes='64px'
           />
+          {/* Overlay con ícono de editar */}
+          {isHovered && (
+            <div className='absolute inset-0 flex items-center justify-center bg-black/50 transition-all'>
+              <Edit className='size-4 text-white' />
+            </div>
+          )}
+        </>
+      ) : (
+        <div className='flex size-16 items-center justify-center rounded-md border-2 border-dashed border-gray-300 transition-all hover:border-gray-400 hover:bg-gray-50'>
+          <div className='flex flex-col items-center'>
+            <Edit className='mb-1 size-4 text-gray-400' />
+            <span className='text-xs text-gray-500'>Agregar</span>
+          </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+export const columns: ColumnDef<Product>[] = [
+  {
+    cell: ({ row, table }) => {
+      const { isBulkMode, onRowSelectionChange, selectedRows } = table.options.meta ?? {}
+      const isSelected = selectedRows?.has(row.original.id) ?? false
+
+      if (!isBulkMode) return null
+
+      return (
+        <div className="flex items-center justify-center">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => onRowSelectionChange?.(row.original.id, e.target.checked)}
+            className="size-4 rounded border-gray-300 text-primary focus:ring-primary"
+          />
+        </div>
+      )
+    },
+    enableHiding: false,
+    enableSorting: false,
+    header: ({ table }) => {
+      const { isBulkMode, onSelectAllChange, selectedRows } = table.options.meta ?? {}
+      const allRows = table.getFilteredRowModel().rows
+      const selectedCount = selectedRows?.size ?? 0
+      const isAllSelected = allRows.length > 0 && selectedCount === allRows.length
+      const isIndeterminate = selectedCount > 0 && selectedCount < allRows.length
+
+      if (!isBulkMode) return null
+
+      return (
+        <div className="flex items-center justify-center">
+          <input
+            type="checkbox"
+            checked={isAllSelected}
+            ref={(el) => {
+              if (el) el.indeterminate = isIndeterminate
+            }}
+            onChange={(e) => onSelectAllChange?.(e.target.checked)}
+            className="size-4 rounded border-gray-300 text-primary focus:ring-primary"
+          />
+        </div>
+      )
+    },
+    id: 'select',
+  },
+  {
+    accessorKey: 'image',
+    cell: ({ row, table }) => {
+      const product = row.original
+      const { updateProduct } = table.options.meta ?? {}
+
+      return (
+        <ImageReplacer
+          product={product}
+          onUpdate={(productId: string, imageUrl: string | null) => {
+            // El componente ImageReplacer ahora maneja la lógica de reemplazo internamente
+            // Solo necesitamos invalidar el caché después de la actualización
+            if (imageUrl) {
+              console.log('Imagen principal actualizada:', {
+                newImageUrl: imageUrl,
+                productId
+              })
+
+              // Invalidar el caché para refrescar los datos
+              // No necesitamos llamar a updateProduct aquí
+            }
+          }}
+        />
       )
     },
     header: 'Imagen',

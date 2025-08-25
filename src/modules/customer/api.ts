@@ -56,6 +56,39 @@ export const api = {
 
     return response.json()
   },
+
+  getOrdersByProduct: async (
+    productId: string,
+    params?: {
+      first?: number
+      after?: string
+    }
+  ): Promise<AllOrdersResult> => {
+    const { after, first = 10 } = params ?? {}
+
+    const searchParams = new URLSearchParams()
+    searchParams.append('first', first.toString())
+    searchParams.append('productId', productId)
+    if (after) {
+      searchParams.append('after', after)
+    }
+
+    const response = await fetch(`/api/orders/by-product?${searchParams.toString()}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+      throw new Error(errorData.error ?? `HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    return response.json()
+  },
+
   getBasicInfo: () => makeCustomerRequest(GET_BASIC_INFO_QUERY),
   getOrder: (orderId: string) => makeCustomerRequest(GET_SINGLE_ORDER_QUERY, { id: orderId }),
   getOrders: (params: { first?: number; after?: string } = {}) => {

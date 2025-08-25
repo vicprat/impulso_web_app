@@ -117,10 +117,10 @@ export interface DeleteMutationResponse {
 
 export interface GetProductsApiResponse {
   products: {
-    edges: ({
+    edges: {
       node: ShopifyProductData
       cursor: string
-    })[]
+    }[]
     pageInfo: {
       hasNextPage: boolean
       endCursor: string | null

@@ -1,7 +1,7 @@
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
-import { BarChart3, Edit, Trash2 } from 'lucide-react'
+import { BarChart3, Edit, Ticket, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -25,6 +25,11 @@ const ActionsCell = ({ event }: { event: Event }) => {
     router.push(`/admin/events/${numericId}`)
   }
 
+  const handleOrders = () => {
+    const numericId = event.id.split('/').pop()
+    router.push(`/admin/events/${numericId}/tickets`)
+  }
+
   const handleFinancialManagement = () => {
     const shopifyId = event.id.split('/').pop()
 
@@ -43,6 +48,7 @@ const ActionsCell = ({ event }: { event: Event }) => {
     await deleteEventMutation.mutateAsync(event.id)
   }
 
+
   const handleDeleteCancel = () => {
     setShowDeleteDialog(false)
   }
@@ -50,6 +56,15 @@ const ActionsCell = ({ event }: { event: Event }) => {
   return (
     <>
       <div className='flex items-center gap-2'>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={handleOrders}
+          className='size-8 p-0'
+          title='Ver órdenes'
+        >
+          <Ticket className='size-4' />
+        </Button>
         <Button
           variant='ghost'
           size='sm'

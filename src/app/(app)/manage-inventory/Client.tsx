@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
-import { Filter, PlusCircle, RefreshCw, Search } from 'lucide-react'
+import { Check, CheckCircle, Filter, PlusCircle, RefreshCw, Search } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -18,16 +18,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useBulkUpdateQueue } from '@/hooks/useBulkUpdateQueue'
 import { useAuth } from '@/modules/auth/context/useAuth'
-import { useGetProductsPaginated, useProductStats, useUpdateProduct } from '@/services/product/hook'
+import { useGetArtworkTypes, useGetLocations, useGetProductsPaginated, useGetTechniques, useGetVendors, useProductStats, useUpdateProduct } from '@/services/product/hook'
 import { type UpdateProductPayload } from '@/services/product/types'
+import { BulkUpdateProgress } from '@/src/components/BulkUpdateProgress'
 import { Table } from '@/src/components/Table'
+import { Skeleton } from '@/src/components/ui/skeleton'
 import { ROUTES } from '@/src/config/routes'
 
-import { Skeleton } from '@/src/components/ui/skeleton'
 import { columns } from './columns'
 
-// Forzar que la página sea dinámica
 export const dynamic = 'force-dynamic'
 
 interface InventoryTableMeta {
@@ -55,11 +56,9 @@ interface InventoryTableMeta {
   handleSorting: (columnId: string) => void
   currentSortBy: string
   currentSortOrder: 'asc' | 'desc'
-  // Nuevos campos para manejo de cambios acumulados
   editingChanges?: Record<string, any>
   updateEditingChanges?: (changes: Record<string, any>) => void
   saveAllChanges?: () => void
-  // Información del usuario para las columnas
   user?: any
   isAdmin?: boolean
   isArtist?: boolean
@@ -72,7 +71,6 @@ export function Client() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  // Obtener parámetros de la URL
   const pageInUrl = parseInt(searchParams.get('page') ?? '1', 10)
   const afterCursorInUrl = searchParams.get('after') ?? null
   const pageSizeInUrl = parseInt(searchParams.get('pageSize') ?? defaultPageSize.toString(), 10)
@@ -86,20 +84,28 @@ export function Client() {
   const [ searchInput, setSearchInput ] = useState(searchInUrl)
   const [ historyCursors, setHistoryCursors ] = useState<Record<number, string | null>>({})
   const [ previousPageSize, setPreviousPageSize ] = useState(pageSizeInUrl)
+  const [ isBulkMode, setIsBulkMode ] = useState(false)
+  const [ selectedRows, setSelectedRows ] = useState<Set<string>>(new Set())
+  const [ bulkChanges, setBulkChanges ] = useState<Record<string, any>>({})
+  const [ hasInvalidatedCache, setHasInvalidatedCache ] = useState(false)
 
   const queryClient = useQueryClient()
   const { hasPermission, user } = useAuth()
 
-  // Determinar si el usuario es administrador o artista
   const isAdmin = hasPermission('manage_products')
   const isArtist = hasPermission('manage_own_products') && !isAdmin
 
+  const { data: vendors = [], isLoading: vendorsLoading } = useGetVendors()
+  const { data: techniques = [], isLoading: techniquesLoading } = useGetTechniques()
+  const { data: artworkTypes = [], isLoading: artworkTypesLoading } = useGetArtworkTypes()
+  const { data: locations = [], isLoading: locationsLoading } = useGetLocations()
+
+  const [ shouldUpdateStats, setShouldUpdateStats ] = useState(true)
+
   useEffect(() => {
-    // Invalidar caché de productos al cargar la página
     void queryClient.invalidateQueries({ queryKey: [ 'managementProducts' ] })
   }, [ queryClient ])
 
-  // Limpiar estado de edición cuando cambian los filtros
   useEffect(() => {
     setEditingRowId(null)
     setEditingChanges({})
@@ -122,26 +128,107 @@ export function Client() {
 
   const {
     data: statsData,
-    isLoading: isLoadingStats,
     isFetching: isFetchingStats,
-  } = useProductStats({
-    search: searchInUrl,
-    status: statusFilterInUrl !== 'all' ? statusFilterInUrl : undefined,
-  })
+    isLoading: isLoadingStats,
+  } = useProductStats(
+    {
+      search: searchInUrl,
+      status: statusFilterInUrl !== 'all' ? statusFilterInUrl : undefined,
+    },
+    {
+      enabled: shouldUpdateStats,
+    }
+  )
 
   const updateMutation = useUpdateProduct()
 
-  // Forzar actualización cuando se actualiza un producto
+  const bulkUpdateQueue = useBulkUpdateQueue(
+    async (payload: UpdateProductPayload) => {
+      const productId = payload.id.split('/').pop()
+      if (!productId) throw new Error('Invalid Product ID for update')
+
+      const response = await fetch(`/api/management/products/${productId}`, {
+        body: JSON.stringify(payload),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'PUT',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error ?? `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      return response.json()
+    },
+    {
+      delayBetweenUpdates: 200,
+      maxConcurrent: 3,
+      onComplete: (queue) => {
+        const successCount = queue.progress.success
+        const errorCount = queue.progress.error
+        const totalCount = queue.progress.total
+
+        if (errorCount === 0) {
+          toast.success(`✅ Actualización en lote completada: ${successCount} de ${totalCount} productos actualizados exitosamente`)
+        } else {
+          toast.warning(`⚠️ Actualización en lote completada: ${successCount} exitosos, ${errorCount} errores de ${totalCount} productos`)
+        }
+
+        setIsBulkMode(false)
+        setSelectedRows(new Set())
+        setBulkChanges({})
+
+        setTimeout(() => {
+          bulkUpdateQueue.clearQueue()
+          setHasInvalidatedCache(false)
+
+          setIsRefreshingAfterBulk(true)
+
+          void Promise.all([
+            queryClient.refetchQueries({ queryKey: [ 'managementProducts', 'paginated' ] }),
+            queryClient.refetchQueries({ queryKey: [ 'managementProducts', 'stats' ] })
+          ]).finally(() => {
+            setTimeout(() => setIsRefreshingAfterBulk(false), 1000)
+          })
+        }, 3000)
+
+        if (!hasInvalidatedCache) {
+          setHasInvalidatedCache(true)
+
+          setTimeout(() => {
+            void queryClient.invalidateQueries({ queryKey: [ 'managementProducts', 'paginated' ] })
+          }, 100)
+
+          setTimeout(() => {
+            void queryClient.invalidateQueries({ queryKey: [ 'managementProducts', 'stats' ] })
+          }, 200)
+
+          setTimeout(() => {
+            void queryClient.invalidateQueries({ queryKey: [ 'vendors' ] })
+            void queryClient.invalidateQueries({ queryKey: [ 'techniques' ] })
+            void queryClient.invalidateQueries({ queryKey: [ 'artworkTypes' ] })
+            void queryClient.invalidateQueries({ queryKey: [ 'locations' ] })
+          }, 300)
+        }
+      },
+    }
+  )
+
+  useEffect(() => {
+    setShouldUpdateStats(!isBulkMode && !bulkUpdateQueue.queue.isProcessing)
+  }, [ isBulkMode, bulkUpdateQueue.queue.isProcessing ])
+
+  const [ isRefreshingAfterBulk, setIsRefreshingAfterBulk ] = useState(false)
+
   useEffect(() => {
     if (updateMutation.isSuccess) {
-      // El hook useUpdateProduct ya maneja toda la invalidación necesaria
-      // Solo necesitamos limpiar el estado de edición
       setEditingRowId(null)
       setEditingChanges({})
     }
   }, [ updateMutation.isSuccess ])
 
-  // Sincronizar input de búsqueda con la URL
   useEffect(() => {
     setSearchInput(searchInUrl)
   }, [ searchInUrl ])
@@ -161,14 +248,10 @@ export function Client() {
     total: statsData?.total ?? (isLoadingStats ? '...' : 0),
   }
 
-
-
   const updateEditingChanges = useCallback((changes: Record<string, any>) => {
-    console.log('Updating editing changes:', changes) // Debug
     setEditingChanges(prev => {
       let newChanges = { ...prev }
 
-      // Si hay cambios en artworkDetails, fusionarlos correctamente
       if (changes.artworkDetails) {
         newChanges = {
           ...newChanges,
@@ -178,11 +261,9 @@ export function Client() {
           }
         }
       } else {
-        // Para otros campos, simplemente fusionar
         newChanges = { ...newChanges, ...changes }
       }
 
-      console.log('New editing changes:', newChanges) // Debug
       return newChanges
     })
   }, [])
@@ -192,7 +273,6 @@ export function Client() {
 
     toast.info('Guardando cambios...')
 
-    // Preparar el payload completo para la actualización usando el mismo patrón que Form.Product
     const updatePayload: UpdateProductPayload = {
       details: editingChanges.artworkDetails ? {
         artist: editingChanges.vendor ?? editingChanges.artworkDetails.artist,
@@ -205,6 +285,7 @@ export function Client() {
         year: editingChanges.artworkDetails.year,
       } : undefined,
       id: editingRowId,
+      images: editingChanges.images,
       inventoryQuantity: editingChanges.inventoryQuantity,
       price: editingChanges.price,
       productType: editingChanges.productType,
@@ -213,21 +294,14 @@ export function Client() {
       vendor: editingChanges.vendor,
     }
 
-    console.log('Saving changes:', updatePayload) // Debug
-
     updateMutation.mutate(updatePayload, {
       onError: (err) => {
-        console.error('Error updating product:', err) // Debug
         toast.error(`Error al actualizar: ${err.message}`)
       },
       onSuccess: (updatedProduct) => {
-        console.log('Product updated successfully:', updatedProduct) // Debug
         toast.success('Producto actualizado con éxito.')
         setEditingRowId(null)
         setEditingChanges({})
-
-        // El hook useUpdateProduct ya maneja toda la invalidación necesaria
-        // No necesitamos invalidar manualmente aquí
       },
     })
   }, [ editingRowId, editingChanges, updateMutation ])
@@ -241,6 +315,7 @@ export function Client() {
       price?: string
       inventoryQuantity?: number
       status?: 'ACTIVE' | 'DRAFT'
+      images?: { mediaContentType: 'IMAGE'; originalSource: string }[]
       artworkDetails?: {
         medium?: string
         year?: string
@@ -253,7 +328,6 @@ export function Client() {
     }) => {
       toast.info('Guardando cambios...')
 
-      // Preparar el payload completo para la actualización
       const updatePayload: UpdateProductPayload = {
         details: payload.artworkDetails ? {
           artist: payload.vendor ?? undefined,
@@ -266,6 +340,7 @@ export function Client() {
           year: payload.artworkDetails.year,
         } : undefined,
         id: payload.id,
+        images: payload.images,
         inventoryQuantity: payload.inventoryQuantity,
         price: payload.price,
         productType: payload.productType,
@@ -281,14 +356,7 @@ export function Client() {
         onSuccess: () => {
           toast.success('Producto actualizado con éxito.')
           setEditingRowId(null)
-
-          // Invalidar todos los cachés relacionados con productos
-          void queryClient.invalidateQueries({ queryKey: [ 'managementProducts' ] })
-          void queryClient.invalidateQueries({ queryKey: [ 'productStats' ] })
-          void queryClient.invalidateQueries({ queryKey: [ 'product' ] })
-
-          // Forzar un refresh de los datos para asegurar que estén actualizados
-          void refetch()
+          // No invalidar caché aquí - useUpdateProduct ya lo maneja
         },
       })
     },
@@ -296,7 +364,6 @@ export function Client() {
   )
 
   const handleRefresh = useCallback(() => {
-    // Limpiar caché y forzar actualización
     void queryClient.invalidateQueries({ queryKey: [ 'managementProducts' ] })
     void queryClient.invalidateQueries({ queryKey: [ 'productStats' ] })
     setEditingRowId(null)
@@ -347,9 +414,6 @@ export function Client() {
     } else if (targetCursor) {
       newUrlParams.set('after', targetCursor)
     } else {
-      // Si no tenemos cursor para esta página, intentar navegar sin cursor
-      // y dejar que el servidor maneje la paginación
-      console.warn(`Cursor para página ${newPage} no encontrado. Intentando navegar sin cursor.`)
       newUrlParams.delete('after')
     }
 
@@ -399,16 +463,98 @@ export function Client() {
   }, [ router, searchParams ])
 
   const handleClearAllFilters = useCallback(() => {
-    // Limpiar estado de edición
     setEditingRowId(null)
     setEditingChanges({})
     setHistoryCursors({})
 
-    // Navegar a la URL base sin parámetros
     router.replace('/manage-inventory', { scroll: false })
   }, [ router ])
 
-  // Manejar cambios de pageSize
+  const handleBulkModeToggle = useCallback(() => {
+    setIsBulkMode(!isBulkMode)
+    if (isBulkMode) {
+      setSelectedRows(new Set())
+      setBulkChanges({})
+      setHasInvalidatedCache(false)
+      if (bulkUpdateQueue.queue.items.length > 0) {
+        bulkUpdateQueue.clearQueue()
+      }
+      toast.info('Modo bulk desactivado. Selección y cambios limpiados.')
+    } else {
+      setHasInvalidatedCache(false)
+      toast.info('Modo bulk activado. Selecciona productos para editar en lote.')
+    }
+  }, [ isBulkMode, bulkUpdateQueue ])
+
+  const handleRowSelectionChange = useCallback((id: string, selected: boolean) => {
+    setSelectedRows(prev => {
+      const newSet = new Set(prev)
+      if (selected) {
+        newSet.add(id)
+      } else {
+        newSet.delete(id)
+      }
+      return newSet
+    })
+  }, [])
+
+  const handleSelectAllChange = useCallback((selected: boolean) => {
+    if (selected) {
+      setSelectedRows(new Set(filteredProducts.map(p => p.id)))
+    } else {
+      setSelectedRows(new Set())
+    }
+  }, [ filteredProducts ])
+
+  const handleBulkChange = useCallback((field: string, value: any) => {
+    setBulkChanges(prev => ({
+      ...prev,
+      [ field ]: value
+    }))
+  }, [])
+
+  const handleApplyBulkChanges = useCallback(() => {
+    if (selectedRows.size === 0) {
+      toast.warning('Selecciona productos antes de aplicar cambios')
+      return
+    }
+
+    if (Object.keys(bulkChanges).length === 0) {
+      toast.warning('Haz cambios en los campos antes de aplicar')
+      return
+    }
+
+    const selectedProducts = filteredProducts.filter(p => selectedRows.has(p.id))
+    const updatePayloads: UpdateProductPayload[] = selectedProducts.map(product => ({
+      id: product.id,
+      title: product.title,
+      ...bulkChanges,
+      details: bulkChanges.artworkDetails ? {
+        ...product.artworkDetails,
+        ...bulkChanges.artworkDetails,
+      } : undefined,
+    }))
+
+    bulkUpdateQueue.addItems(updatePayloads)
+
+    const changesSummary = Object.entries(bulkChanges)
+      .filter(([ key ]) => key !== 'artworkDetails')
+      .map(([ key, value ]) => `${key}: ${value}`)
+      .join(', ')
+
+    toast.success(
+      `✅ ${updatePayloads.length} productos agregados a la cola de actualizaciones`,
+      {
+        description: `Cambios: ${changesSummary}`,
+        duration: 4000,
+      }
+    )
+
+    setTimeout(() => {
+      void bulkUpdateQueue.processQueue()
+    }, 500)
+  }, [ selectedRows, bulkChanges, filteredProducts, bulkUpdateQueue ])
+
   useEffect(() => {
     if (pageSizeInUrl !== previousPageSize) {
       setPreviousPageSize(pageSizeInUrl)
@@ -422,7 +568,6 @@ export function Client() {
     }
   }, [ pageSizeInUrl, previousPageSize, pageInUrl, afterCursorInUrl, router, searchParams ])
 
-  // Actualizar historial de cursors
   useEffect(() => {
     setHistoryCursors((prev) => {
       const newCursors = { ...prev }
@@ -448,13 +593,12 @@ export function Client() {
     })
   }, [ pageInUrl, afterCursorInUrl, pageInfo ])
 
-
-
   const table = useReactTable({
     columns,
     data: products,
     getCoreRowModel: getCoreRowModel(),
     meta: {
+      bulkChanges,
       currentSortBy: sortByInUrl,
       currentSortOrder: sortOrderInUrl,
       editingChanges,
@@ -462,12 +606,17 @@ export function Client() {
       handleSorting,
       isAdmin,
       isArtist,
+      isBulkMode,
       isUpdating: updateMutation.isPending,
+      onApplyBulkChanges: handleApplyBulkChanges,
+      onBulkChange: handleBulkChange,
+      onRowSelectionChange: handleRowSelectionChange,
+      onSelectAllChange: handleSelectAllChange,
       saveAllChanges,
+      selectedRows,
       setEditingRowId,
       updateEditingChanges,
       updateProduct: handleUpdateProduct,
-      // Información del usuario para las columnas
       user,
     } as InventoryTableMeta,
   })
@@ -504,8 +653,8 @@ export function Client() {
   const totalPages = pageInfo?.hasNextPage ? pageInUrl + 1 : pageInUrl
 
   return (
-    <div className='space-y-4 p-2 md:p-4 min-w-0 max-w-full'>
-      <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 min-w-0'>
+    <div className='min-w-0 max-w-full space-y-4 p-2 md:p-4'>
+      <div className='flex min-w-0 flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0'>
         <div>
           <h1 className='text-2xl font-bold'>Gestión de Inventario</h1>
           <p className='text-muted-foreground'>Administra tu catálogo de obras de arte</p>
@@ -514,6 +663,24 @@ export function Client() {
           <Button variant='outline' onClick={handleRefresh} disabled={isFetching}>
             <RefreshCw className={`mr-2 size-4 ${isFetching ? 'animate-spin' : ''}`} />
             Actualizar
+          </Button>
+          <Button
+            variant={isBulkMode ? 'default' : 'outline'}
+            onClick={handleBulkModeToggle}
+            disabled={isFetching}
+          >
+            {isBulkMode ? (
+              <>
+                Salir del Modo Bulk
+                {selectedRows.size > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {selectedRows.size} seleccionados
+                  </Badge>
+                )}
+              </>
+            ) : (
+              'Modo Bulk'
+            )}
           </Button>
           <Link href={ROUTES.INVENTORY.CREATE.PATH}>
             <Button>
@@ -563,8 +730,8 @@ export function Client() {
         </div>
       </div>
 
-      <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0 min-w-0'>
-        <div className='relative max-w-sm flex-1 flex'>
+      <div className='flex min-w-0 flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0'>
+        <div className='relative flex max-w-sm flex-1'>
           <Input
             placeholder='Buscar por título, tipo, artista...'
             value={searchInput}
@@ -665,7 +832,336 @@ export function Client() {
         </div>
       </div>
 
-      {/* Botón para limpiar todos los filtros */}
+      {isBulkMode && (
+        <div className='bg-muted/50 rounded-lg border p-4'>
+          {selectedRows.size === 0 && (
+            <div className='mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-center'>
+              <p className='text-sm text-amber-800'>
+                💡 Selecciona productos de la tabla para comenzar la edición en lote
+              </p>
+            </div>
+          )}
+          {bulkUpdateQueue.queue.isProcessing && (
+            <div className='mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center space-x-2'>
+                  <RefreshCw className='size-4 animate-spin text-blue-600' />
+                  <span className='text-sm font-medium text-blue-800'>
+                    Operaciones en curso
+                  </span>
+                </div>
+                <Badge variant='outline' className='text-blue-600'>
+                  {bulkUpdateQueue.queue.progress.completed} de {bulkUpdateQueue.queue.progress.total}
+                </Badge>
+              </div>
+              <p className='mt-1 text-xs text-blue-600'>
+                Procesando actualizaciones en lote. No cierres esta página.
+              </p>
+            </div>
+          )}
+          <div className='mb-4 flex items-center justify-between'>
+            <div className='flex items-center space-x-3'>
+              <h3 className='text-lg font-semibold'>Edición en Lote</h3>
+              {(vendorsLoading || techniquesLoading || artworkTypesLoading || locationsLoading) && (
+                <Badge variant='outline' className='animate-pulse bg-blue-50 text-blue-700'>
+                  <RefreshCw className='mr-1 size-3 animate-spin' />
+                  Cargando opciones...
+                </Badge>
+              )}
+              {!(vendorsLoading || techniquesLoading || artworkTypesLoading || locationsLoading) && (
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => {
+                    void queryClient.invalidateQueries({ queryKey: [ 'vendors' ] })
+                    void queryClient.invalidateQueries({ queryKey: [ 'techniques' ] })
+                    void queryClient.invalidateQueries({ queryKey: [ 'artwork_types' ] })
+                    void queryClient.invalidateQueries({ queryKey: [ 'locations' ] })
+                  }}
+                  className='h-6 px-2 text-xs'
+                >
+                  <RefreshCw className='mr-1 size-3' />
+                  Refrescar
+                </Button>
+              )}
+            </div>
+            <div className='flex items-center space-x-2'>
+              <span className='text-sm text-muted-foreground'>
+                {selectedRows.size} productos seleccionados
+              </span>
+              {selectedRows.size > 0 && Object.keys(bulkChanges).length > 0 && (
+                <Button
+                  onClick={handleApplyBulkChanges}
+                  size='sm'
+                  disabled={bulkUpdateQueue.queue.isProcessing}
+                  className='min-w-[140px]'
+                >
+                  {bulkUpdateQueue.queue.isProcessing ? (
+                    <>
+                      <RefreshCw className='mr-2 size-4 animate-spin' />
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className='mr-2 size-4' />
+                      Aplicar Cambios
+                    </>
+                  )}
+                </Button>
+              )}
+              {Object.keys(bulkChanges).length > 0 && (
+                <Button
+                  onClick={() => setBulkChanges({})}
+                  variant='outline'
+                  size='sm'
+                  disabled={bulkUpdateQueue.queue.isProcessing}
+                >
+                  Limpiar Cambios
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
+            <div>
+              <label className='text-sm font-medium'>Estado</label>
+              <Select
+                value={bulkChanges.status || ''}
+                onValueChange={(value) => handleBulkChange('status', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Seleccionar estado' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='ACTIVE'>Activo</SelectItem>
+                  <SelectItem value='DRAFT'>Borrador</SelectItem>
+                  <SelectItem value='ARCHIVED'>Archivado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className='text-sm font-medium'>Precio</label>
+              <Input
+                placeholder='Nuevo precio'
+                value={bulkChanges.price || ''}
+                onChange={(e) => handleBulkChange('price', e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className='text-sm font-medium'>Cantidad en Inventario</label>
+              <Input
+                type='number'
+                placeholder='Nueva cantidad'
+                value={bulkChanges.inventoryQuantity || ''}
+                onChange={(e) => handleBulkChange('inventoryQuantity', parseInt(e.target.value) || 0)}
+              />
+            </div>
+
+            <div>
+              <label className='text-sm font-medium'>Año</label>
+              <Input
+                placeholder='Nuevo año'
+                value={bulkChanges.artworkDetails?.year || ''}
+                onChange={(e) => handleBulkChange('artworkDetails', {
+                  ...bulkChanges.artworkDetails,
+                  year: e.target.value
+                })}
+              />
+            </div>
+          </div>
+
+          <div className='mt-4 grid grid-cols-1 gap-4 md:grid-cols-4'>
+            <div>
+              <label className='text-sm font-medium'>Artista</label>
+              <Select
+                value={bulkChanges.vendor || ''}
+                onValueChange={(value) => handleBulkChange('vendor', value)}
+                disabled={vendorsLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={vendorsLoading ? 'Cargando...' : 'Seleccionar artista'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {vendorsLoading ? (
+                    <div className='p-2 text-center text-sm text-muted-foreground'>
+                      <RefreshCw className='mx-auto size-4 animate-spin' />
+                      Cargando artistas...
+                    </div>
+                  ) : vendors && vendors.length > 0 ? (
+                    vendors.map((vendor: string) => (
+                      <SelectItem key={vendor} value={vendor}>
+                        {vendor}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className='p-2 text-center text-sm text-muted-foreground'>
+                      No hay artistas disponibles
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className='text-sm font-medium'>Tipo de Obra</label>
+              <Select
+                value={bulkChanges.productType || ''}
+                onValueChange={(value) => handleBulkChange('productType', value)}
+                disabled={artworkTypesLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={artworkTypesLoading ? 'Cargando...' : 'Seleccionar tipo'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {artworkTypesLoading ? (
+                    <div className='p-2 text-center text-sm text-muted-foreground'>
+                      <RefreshCw className='mx-auto size-4 animate-spin' />
+                      Cargando tipos...
+                    </div>
+                  ) : artworkTypes && artworkTypes.length > 0 ? (
+                    artworkTypes.map((type: { id: string; name: string }) => (
+                      <SelectItem key={type.id} value={type.name}>
+                        {type.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className='p-2 text-center text-sm text-muted-foreground'>
+                      No hay tipos disponibles
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className='text-sm font-medium'>Técnica</label>
+              <Select
+                value={bulkChanges.artworkDetails?.medium || ''}
+                onValueChange={(value) => handleBulkChange('artworkDetails', {
+                  ...bulkChanges.artworkDetails,
+                  medium: value
+                })}
+                disabled={techniquesLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={techniquesLoading ? 'Cargando...' : 'Seleccionar técnica'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {techniquesLoading ? (
+                    <div className='p-2 text-center text-sm text-muted-foreground'>
+                      <RefreshCw className='mx-auto size-4 animate-spin' />
+                      Cargando técnicas...
+                    </div>
+                  ) : techniques && techniques.length > 0 ? (
+                    techniques.map((technique: { id: string; name: string }) => (
+                      <SelectItem key={technique.id} value={technique.name}>
+                        {technique.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className='p-2 text-center text-sm text-muted-foreground'>
+                      No hay técnicas disponibles
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className='text-sm font-medium'>Localización</label>
+              <Select
+                value={bulkChanges.artworkDetails?.location || ''}
+                onValueChange={(value) => handleBulkChange('artworkDetails', {
+                  ...bulkChanges.artworkDetails,
+                  location: value
+                })}
+                disabled={locationsLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={locationsLoading ? 'Cargando...' : 'Seleccionar localización'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {locationsLoading ? (
+                    <div className='p-2 text-center text-sm text-muted-foreground'>
+                      <RefreshCw className='mx-auto size-4 animate-spin' />
+                      Cargando localizaciones...
+                    </div>
+                  ) : locations && locations.length > 0 ? (
+                    locations.map((location: { id: string; name: string }) => (
+                      <SelectItem key={location.id} value={location.name}>
+                        {location.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className='p-2 text-center text-sm text-muted-foreground'>
+                      No hay localizaciones disponibles
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className='mt-4 grid grid-cols-1 gap-4 md:grid-cols-4'>
+            <div>
+              <label className='text-sm font-medium'>Serie</label>
+              <Input
+                placeholder='Nueva serie'
+                value={bulkChanges.artworkDetails?.serie || ''}
+                onChange={(e) => handleBulkChange('artworkDetails', {
+                  ...bulkChanges.artworkDetails,
+                  serie: e.target.value
+                })}
+              />
+            </div>
+
+            <div>
+              <label className='text-sm font-medium'>Alto (cm)</label>
+              <Input
+                type='number'
+                step='0.1'
+                placeholder='Alto'
+                value={bulkChanges.artworkDetails?.height || ''}
+                onChange={(e) => handleBulkChange('artworkDetails', {
+                  ...bulkChanges.artworkDetails,
+                  height: e.target.value
+                })}
+              />
+            </div>
+
+            <div>
+              <label className='text-sm font-medium'>Ancho (cm)</label>
+              <Input
+                type='number'
+                step='0.1'
+                placeholder='Ancho'
+                value={bulkChanges.artworkDetails?.width || ''}
+                onChange={(e) => handleBulkChange('artworkDetails', {
+                  ...bulkChanges.artworkDetails,
+                  width: e.target.value
+                })}
+              />
+            </div>
+
+            <div>
+              <label className='text-sm font-medium'>Profundidad (cm)</label>
+              <Input
+                type='number'
+                step='0.1'
+                placeholder='Profundidad'
+                value={bulkChanges.artworkDetails?.depth || ''}
+                onChange={(e) => handleBulkChange('artworkDetails', {
+                  ...bulkChanges.artworkDetails,
+                  depth: e.target.value
+                })}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {(searchInUrl || statusFilterInUrl !== 'all' || sortByInUrl !== 'title' || sortOrderInUrl !== 'asc') && (
         <div className='flex justify-end'>
           <Button
@@ -678,12 +1174,47 @@ export function Client() {
         </div>
       )}
 
-      {/* Mostrar loader cuando se están cargando datos inicialmente o cuando se están actualizando filtros */}
+      {bulkUpdateQueue.queue.items.length > 0 && !bulkUpdateQueue.queue.isProcessing && (
+        <BulkUpdateProgress
+          queue={bulkUpdateQueue.queue}
+          onRetryFailed={bulkUpdateQueue.retryFailedItems}
+          onClear={bulkUpdateQueue.clearQueue}
+          onProcess={bulkUpdateQueue.processQueue}
+        />
+      )}
+
+      {isRefreshingAfterBulk && (
+        <div className='mb-4 flex items-center space-x-2 rounded-md bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-950 dark:text-blue-300'>
+          <RefreshCw className='size-4 animate-spin' />
+          <span>Actualizando inventario después de las operaciones en lote...</span>
+        </div>
+      )}
+
+      {!isRefreshingAfterBulk && bulkUpdateQueue.queue.items.length === 0 && hasInvalidatedCache && (
+        <div className='mb-4 flex items-center justify-between rounded-md bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950 dark:text-green-300'>
+          <div className='flex items-center space-x-2'>
+            <CheckCircle className='size-4' />
+            <span>Operaciones en lote completadas. Los datos se han actualizado automáticamente.</span>
+          </div>
+          <Button
+            onClick={() => {
+              void queryClient.refetchQueries({ queryKey: [ 'managementProducts', 'paginated' ] })
+              void queryClient.refetchQueries({ queryKey: [ 'managementProducts', 'stats' ] })
+              toast.info('Refrescando inventario...')
+            }}
+            variant='outline'
+            size='sm'
+          >
+            <RefreshCw className='mr-2 size-4' />
+            Refrescar Inventario
+          </Button>
+        </div>
+      )}
+
       {isLoading ? (
         <Table.Loader />
       ) : (
         <>
-          {/* Indicador sutil de carga solo para productos */}
           {isFetching && (
             <div className='mb-4 flex items-center space-x-2 text-sm text-muted-foreground'>
               <RefreshCw className='size-4 animate-spin' />
