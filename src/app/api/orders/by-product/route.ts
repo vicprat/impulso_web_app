@@ -4,9 +4,93 @@ import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { requirePermission } from '@/modules/auth/server/server'
 import { PERMISSIONS } from '@/src/config/Permissions'
 import { GET_ORDERS_BY_PRODUCT_QUERY } from '@/src/modules/customer/queries'
+import { getUsersByShopifyCustomerIds } from '@/src/modules/user/user.service'
+
+interface OrderCustomer {
+  id: string
+  firstName?: string | null
+  lastName?: string | null
+  email?: string | null
+  localUserId?: string
+  profile?: {
+    bio?: string | null
+  } | null
+}
+
+interface OrderLineItem {
+  id: string
+  title: string
+  quantity: number
+  currentQuantity: number
+  originalUnitPriceSet: {
+    shopMoney: {
+      amount: string
+      currencyCode: string
+    }
+  }
+  discountedUnitPriceSet: {
+    shopMoney: {
+      amount: string
+      currencyCode: string
+    }
+  }
+  variant: {
+    id: string
+    title: string
+    sku: string | null
+  }
+}
+
+interface Order {
+  id: string
+  name: string
+  processedAt: string
+  createdAt: string
+  updatedAt: string
+  displayFulfillmentStatus: string
+  displayFinancialStatus: string
+  currencyCode: string
+  totalPriceSet: {
+    shopMoney: {
+      amount: string
+      currencyCode: string
+    }
+  }
+  currentTotalPriceSet: {
+    shopMoney: {
+      amount: string
+      currencyCode: string
+    }
+  }
+  customer?: OrderCustomer
+  lineItems: {
+    edges: {
+      node: OrderLineItem
+    }[]
+  }
+  fulfillments: {
+    id: string
+    status: string
+  }[]
+}
+
+interface OrdersData {
+  orders: {
+    edges: {
+      node: Order
+      cursor: string
+    }[]
+    pageInfo: {
+      hasNextPage: boolean
+      hasPreviousPage: boolean
+      startCursor: string
+      endCursor: string
+    }
+  }
+}
 
 interface GraphQLResponse {
-  data?: unknown
+  data?: OrdersData
   errors?: {
     message: string
     locations?: { line: number; column: number }[]
@@ -63,6 +147,50 @@ export async function GET(request: NextRequest) {
         },
         { status: 400 }
       )
+    }
+
+    // Enriquecer los datos con información local del usuario
+    if (data.data?.orders?.edges) {
+      const orders = data.data.orders.edges
+
+      // Extraer todos los shopifyCustomerIds únicos
+      const shopifyCustomerIds = orders
+        .map((order) => order.node.customer?.id)
+        .filter((id): id is string => !!id)
+        .map((id) => id.replace('gid://shopify/Customer/', ''))
+        .filter((id, index, array) => array.indexOf(id) === index) // Eliminar duplicados
+
+      if (shopifyCustomerIds.length > 0) {
+        // Obtener información local de los usuarios
+        const localUsers = await getUsersByShopifyCustomerIds(shopifyCustomerIds)
+
+        // Crear un mapa para acceso rápido
+        const userMap = new Map(localUsers.map((user) => [user.shopifyCustomerId, user]))
+
+        // Enriquecer cada orden con la información local del usuario
+        orders.forEach((order) => {
+          if (order.node.customer?.id) {
+            const shopifyId = order.node.customer.id.replace('gid://shopify/Customer/', '')
+            const localUser = userMap.get(shopifyId)
+
+            if (localUser) {
+              // Agregar información local del usuario a la orden
+              order.node.customer = {
+                ...order.node.customer,
+                email: localUser.email,
+                firstName: localUser.firstName || null,
+                lastName: localUser.lastName || null,
+                localUserId: localUser.id,
+                profile: localUser.profile
+                  ? {
+                      bio: localUser.profile.bio,
+                    }
+                  : null,
+              }
+            }
+          }
+        })
+      }
     }
 
     return NextResponse.json(data)

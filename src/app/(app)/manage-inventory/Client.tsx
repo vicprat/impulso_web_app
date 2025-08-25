@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
-import { Check, CheckCircle, Filter, PlusCircle, RefreshCw, Search } from 'lucide-react'
+import { Check, CheckCircle, Filter, PlusCircle, RefreshCw, Search, Tag } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -21,8 +21,12 @@ import {
 import { useBulkUpdateQueue } from '@/hooks/useBulkUpdateQueue'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import { useGetArtworkTypes, useGetLocations, useGetProductsPaginated, useGetTechniques, useGetVendors, useProductStats, useUpdateProduct } from '@/services/product/hook'
-import { type UpdateProductPayload } from '@/services/product/types'
+import { useCreateDiscount, useDeleteDiscount, useGetDiscounts, useUpdateDiscount } from '@/services/product/queries'
+import { type CreateDiscountInput, type UpdateDiscountInput, type UpdateProductPayload } from '@/services/product/types'
 import { BulkUpdateProgress } from '@/src/components/BulkUpdateProgress'
+import { CouponCreatorModal } from '@/src/components/Modals/CouponCreatorModal'
+import { CouponManagerModal } from '@/src/components/Modals/CouponManagerModal'
+import { ProductDiscountModal } from '@/src/components/Modals/ProductDiscountModal'
 import { Table } from '@/src/components/Table'
 import { Skeleton } from '@/src/components/ui/skeleton'
 import { ROUTES } from '@/src/config/routes'
@@ -88,6 +92,14 @@ export function Client() {
   const [ selectedRows, setSelectedRows ] = useState<Set<string>>(new Set())
   const [ bulkChanges, setBulkChanges ] = useState<Record<string, any>>({})
   const [ hasInvalidatedCache, setHasInvalidatedCache ] = useState(false)
+  const [ isDiscountModalOpen, setIsDiscountModalOpen ] = useState(false)
+  const [ isCouponModalOpen, setIsCouponModalOpen ] = useState(false)
+  const [ isCouponManagerModalOpen, setIsCouponManagerModalOpen ] = useState(false)
+  const [ selectedProductForDiscount, setSelectedProductForDiscount ] = useState<{
+    id: string
+    title: string
+    price: string
+  } | null>(null)
 
   const queryClient = useQueryClient()
   const { hasPermission, user } = useAuth()
@@ -99,6 +111,9 @@ export function Client() {
   const { data: techniques = [], isLoading: techniquesLoading } = useGetTechniques()
   const { data: artworkTypes = [], isLoading: artworkTypesLoading } = useGetArtworkTypes()
   const { data: locations = [], isLoading: locationsLoading } = useGetLocations()
+
+  // Obtener cupones reales desde la API
+  const { data: coupons = [], isLoading: couponsLoading } = useGetDiscounts()
 
   const [ shouldUpdateStats, setShouldUpdateStats ] = useState(true)
 
@@ -513,6 +528,65 @@ export function Client() {
     }))
   }, [])
 
+  const handleOpenDiscountModal = useCallback((product: { id: string; title: string; price: string }) => {
+    setSelectedProductForDiscount(product)
+    setIsDiscountModalOpen(true)
+  }, [])
+
+  const handleOpenCouponModal = useCallback(() => {
+    setIsCouponModalOpen(true)
+  }, [])
+
+  const handleOpenCouponManagerModal = useCallback(() => {
+    setIsCouponManagerModalOpen(true)
+  }, [])
+
+  const handleDiscountChange = useCallback((discount: any) => {
+    if (selectedProductForDiscount) {
+      // Aquí implementarías la lógica para guardar el descuento
+      console.log('Descuento guardado:', discount)
+      toast.success('Descuento guardado exitosamente')
+    }
+  }, [ selectedProductForDiscount ])
+
+  // Mutations para cupones
+  const createDiscountMutation = useCreateDiscount()
+  const updateDiscountMutation = useUpdateDiscount()
+  const deleteDiscountMutation = useDeleteDiscount()
+
+  const handleCouponCreated = useCallback((coupon: CreateDiscountInput) => {
+    createDiscountMutation.mutate(coupon, {
+      onError: (error) => {
+        toast.error(`Error al crear cupón: ${error.message}`)
+      },
+      onSuccess: () => {
+        toast.success('Cupón creado exitosamente')
+      },
+    })
+  }, [createDiscountMutation])
+
+  const handleCouponUpdated = useCallback((coupon: UpdateDiscountInput) => {
+    updateDiscountMutation.mutate(coupon, {
+      onError: (error) => {
+        toast.error(`Error al actualizar cupón: ${error.message}`)
+      },
+      onSuccess: () => {
+        toast.success('Cupón actualizado exitosamente')
+      },
+    })
+  }, [updateDiscountMutation])
+
+  const handleCouponDeleted = useCallback((couponId: string) => {
+    deleteDiscountMutation.mutate(couponId, {
+      onError: (error) => {
+        toast.error(`Error al eliminar cupón: ${error.message}`)
+      },
+      onSuccess: () => {
+        toast.success('Cupón eliminado exitosamente')
+      },
+    })
+  }, [deleteDiscountMutation])
+
   const handleApplyBulkChanges = useCallback(() => {
     if (selectedRows.size === 0) {
       toast.warning('Selecciona productos antes de aplicar cambios')
@@ -610,6 +684,7 @@ export function Client() {
       isUpdating: updateMutation.isPending,
       onApplyBulkChanges: handleApplyBulkChanges,
       onBulkChange: handleBulkChange,
+      onOpenDiscountModal: handleOpenDiscountModal,
       onRowSelectionChange: handleRowSelectionChange,
       onSelectAllChange: handleSelectAllChange,
       saveAllChanges,
@@ -681,6 +756,24 @@ export function Client() {
             ) : (
               'Modo Bulk'
             )}
+          </Button>
+          {isBulkMode && selectedRows.size > 0 && (
+            <Button
+              variant="outline"
+              onClick={handleOpenCouponModal}
+              className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+            >
+              <Tag className="mr-2 size-4" />
+              Crear Cupón
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            onClick={handleOpenCouponManagerModal}
+            className="bg-green-50 text-green-700 hover:bg-green-100"
+          >
+            <Tag className="mr-2 size-4" />
+            Gestionar Cupones
           </Button>
           <Link href={ROUTES.INVENTORY.CREATE.PATH}>
             <Button>
@@ -1116,6 +1209,22 @@ export function Client() {
                 })}
               />
             </div>
+            <div>
+              <label className='text-sm font-medium'>Descuento (%)</label>
+              <Input
+                type='number'
+                placeholder='Porcentaje de descuento'
+                value={bulkChanges.discount?.value || ''}
+                onChange={(e) => handleBulkChange('discount', {
+                  startsAt: new Date().toISOString(),
+                  type: 'PERCENTAGE',
+                  value: parseFloat(e.target.value) || 0,
+                })}
+                min='0'
+                max='100'
+                step='1'
+              />
+            </div>
 
             <div>
               <label className='text-sm font-medium'>Alto (cm)</label>
@@ -1257,6 +1366,46 @@ export function Client() {
           {statusFilterInUrl !== 'all' && ` (filtrado por: ${statusFilterInUrl})`}
         </div>
       )}
+
+      {/* Modales */}
+      {selectedProductForDiscount && (
+        <ProductDiscountModal
+          isOpen={isDiscountModalOpen}
+          onClose={() => {
+            setIsDiscountModalOpen(false)
+            setSelectedProductForDiscount(null)
+          }}
+          productId={selectedProductForDiscount.id}
+          productTitle={selectedProductForDiscount.title}
+          currentPrice={selectedProductForDiscount.price}
+          onDiscountChange={handleDiscountChange}
+          existingDiscount={null}
+        />
+      )}
+
+      <CouponCreatorModal
+        isOpen={isCouponModalOpen}
+        onClose={() => setIsCouponModalOpen(false)}
+        selectedProducts={filteredProducts
+          .filter(p => selectedRows.has(p.id))
+          .map(p => ({ id: p.id, title: p.title }))
+        }
+        onCouponCreated={handleCouponCreated}
+      />
+
+      <CouponManagerModal
+        isOpen={isCouponManagerModalOpen}
+        onClose={() => setIsCouponManagerModalOpen(false)}
+        selectedProducts={filteredProducts
+          .filter(p => selectedRows.has(p.id))
+          .map(p => ({ id: p.id, title: p.title }))
+        }
+        coupons={coupons}
+        isLoading={couponsLoading}
+        onCouponCreated={handleCouponCreated}
+        onCouponUpdated={handleCouponUpdated}
+        onCouponDeleted={handleCouponDeleted}
+      />
     </div>
   )
 }

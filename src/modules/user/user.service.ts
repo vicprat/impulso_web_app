@@ -401,3 +401,35 @@ export const getOrphanedArtists = async () => {
     },
   })
 }
+
+export const getUserByShopifyCustomerId = async (shopifyCustomerId: string) => {
+  return await prisma.user.findUnique({
+    include: {
+      UserRole: {
+        include: {
+          role: true,
+        },
+      },
+      profile: true,
+    },
+    where: { shopifyCustomerId },
+  })
+}
+
+export const getUsersByShopifyCustomerIds = async (shopifyCustomerIds: string[]) => {
+  return await prisma.user.findMany({
+    include: {
+      UserRole: {
+        include: {
+          role: true,
+        },
+      },
+      profile: true,
+    },
+    where: {
+      shopifyCustomerId: {
+        in: shopifyCustomerIds,
+      },
+    },
+  })
+}

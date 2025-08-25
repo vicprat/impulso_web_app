@@ -80,6 +80,7 @@ declare module '@tanstack/react-table' {
     bulkChanges?: Record<string, any>
     onBulkChange?: (field: string, value: any) => void
     onApplyBulkChanges?: () => void
+    onOpenDiscountModal?: (product: { id: string; title: string; price: string }) => void
   }
 }
 
@@ -1230,6 +1231,67 @@ export const columns: ColumnDef<Product>[] = [
 
       return <Badge variant={currentValue === 'ACTIVE' ? 'active' : 'archived'}>{statusOptions.find(option => option.value === currentValue)?.label}</Badge>
     },
+  },
+  {
+    accessorKey: 'discount',
+    cell: ({ row, table }) => {
+      const product = row.original
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const isEditing = editingRowId === product.id
+
+      // Obtener el descuento actual del producto
+      const currentDiscount = product.discount || null
+
+      if (isEditing) {
+        return (
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                // Aquí abrirías el modal para editar el descuento
+                // Necesitamos pasar la función desde el meta
+                const { onOpenDiscountModal } = table.options.meta ?? {}
+                if (onOpenDiscountModal) {
+                  onOpenDiscountModal({
+                    id: product.id,
+                    price: product.variants?.[ 0 ]?.price?.amount || '0',
+                    title: product.title
+                  })
+                }
+              }}
+              className="text-xs"
+            >
+              {currentDiscount ? 'Editar' : 'Agregar'} Descuento
+            </Button>
+          </div>
+        )
+      }
+
+      if (currentDiscount) {
+        const discountLabel = currentDiscount.type === 'PERCENTAGE'
+          ? `${currentDiscount.value}% OFF`
+          : `$${currentDiscount.value} OFF`
+
+        return (
+          <div className="flex items-center gap-2">
+            <Badge variant="destructive" className="text-xs">
+              {discountLabel}
+            </Badge>
+            {currentDiscount.endsAt && (
+              <span className="text-xs text-muted-foreground">
+                Hasta {new Date(currentDiscount.endsAt).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+        )
+      }
+
+      return (
+        <span className="text-xs text-muted-foreground">Sin descuento</span>
+      )
+    },
+    header: 'Descuento',
   },
   {
     cell: ({ row, table }) => {

@@ -42,6 +42,18 @@ export interface Variant {
   inventoryPolicy: 'DENY' | 'CONTINUE'
 }
 
+export interface ProductDiscount {
+  id: string
+  productId: string
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT'
+  value: number
+  startsAt: string
+  endsAt?: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 interface ShopifyMetafieldNode {
   namespace: string
   key: string
@@ -220,6 +232,7 @@ export class Product {
   manualTags: string[] = []
   autoTags: string[] = []
   artworkDetails: ArtworkDetails
+  discount?: ProductDiscount | null
   private primaryLocationId: string
 
   constructor(shopifyProductData: ShopifyProductData, primaryLocationId: string) {
@@ -240,8 +253,9 @@ export class Product {
 
     this.primaryLocationId = primaryLocationId
     this.artworkDetails = this._parseDetailsFromMetafields(shopifyProductData.metafields.edges)
+    this.discount = this._parseDiscountFromMetafields(shopifyProductData.metafields.edges)
     this._parseTags()
-    
+
     // Extraer información de los tags después de que se procesen
     this._extractInfoFromTags()
   }
@@ -268,31 +282,40 @@ export class Product {
     metafieldEdges: { node: ShopifyMetafieldNode }[]
   ): ArtworkDetails {
     const details: Partial<ArtworkDetails> = {}
-    
+
     for (const { node } of metafieldEdges) {
       // Procesar metafields con namespace art_details
       if (node.namespace === ARTWORK_METAFIELD_NAMESPACE) {
-        const validKeys = ['medium', 'year', 'height', 'width', 'depth', 'serie', 'location', 'artist']
+        const validKeys = [
+          'medium',
+          'year',
+          'height',
+          'width',
+          'depth',
+          'serie',
+          'location',
+          'artist',
+        ]
         const isValidKey = validKeys.includes(node.key)
-        
+
         if (isValidKey) {
           ;(details as Record<string, string | null>)[node.key] = node.value
         }
       }
-      
+
       // Procesar metafields con namespace global y clave description_tag
       if (node.namespace === 'global' && node.key === 'description_tag') {
         const parsedDetails = this._parseDescriptionTag(node.value)
         Object.assign(details, parsedDetails)
       }
     }
-    
+
     // Si no hay detalles de metafields, intentar extraer del descriptionHtml
     if (Object.keys(details).length === 0 && this.descriptionHtml) {
       const htmlDetails = this._parseDescriptionHtml()
       Object.assign(details, htmlDetails)
     }
-    
+
     const finalDetails = {
       artist: details.artist || null,
       depth: details.depth || null,
@@ -303,29 +326,59 @@ export class Product {
       width: details.width || null,
       year: details.year || null,
     }
-    
+
     return finalDetails
+  }
+
+  private _parseDiscountFromMetafields(
+    metafieldEdges: { node: ShopifyMetafieldNode }[]
+  ): ProductDiscount | null {
+    for (const { node } of metafieldEdges) {
+      // Procesar metafields con namespace discounts
+      if (node.namespace === 'discounts') {
+        try {
+          const discountData = JSON.parse(node.value)
+          if (discountData && typeof discountData === 'object') {
+            return {
+              id: discountData.id || `discount_${this.id}`,
+              productId: this.id,
+              type: discountData.type || 'PERCENTAGE',
+              value: discountData.value || 0,
+              startsAt: discountData.startsAt || new Date().toISOString(),
+              endsAt: discountData.endsAt,
+              isActive: discountData.isActive !== false,
+              createdAt: discountData.createdAt || new Date().toISOString(),
+              updatedAt: discountData.updatedAt || new Date().toISOString(),
+            }
+          }
+        } catch (error) {
+          console.warn('Error parsing discount metafield:', error)
+        }
+      }
+    }
+
+    return null
   }
 
   private _extractInfoFromTags(): void {
     // Extraer localización de los tags automáticos si no está en artworkDetails
     if (!this.artworkDetails.location && this.autoTags) {
-      const locationTag = this.autoTags.find(tag => tag.startsWith('locacion-'))
+      const locationTag = this.autoTags.find((tag) => tag.startsWith('locacion-'))
       if (locationTag) {
         // Convertir "locacion-impulso-galería" a "Impulso Galería"
         const locationName = locationTag
           .replace('locacion-', '')
           .split('-')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ')
-        
+
         this.artworkDetails.location = locationName
       }
     }
-    
+
     // Extraer año de los tags automáticos si no está en artworkDetails
     if (!this.artworkDetails.year && this.autoTags) {
-      const yearTag = this.autoTags.find(tag => /^\d{4}$/.test(tag))
+      const yearTag = this.autoTags.find((tag) => /^\d{4}$/.test(tag))
       if (yearTag) {
         this.artworkDetails.year = yearTag
       }
@@ -334,7 +387,7 @@ export class Product {
 
   private _parseDescriptionTag(descriptionTag: string): Partial<ArtworkDetails> {
     const details: Partial<ArtworkDetails> = {}
-    
+
     // Buscar patrones en el texto - mejorados para capturar correctamente
     const patterns = {
       artist: /Artist:\s*([^M]+?)(?=Medium|Dimensions|Year|Location|Serie|$)/i,
@@ -344,58 +397,58 @@ export class Product {
       serie: /Serie:\s*([^A-Z]+?)(?=$)/i,
       year: /Year:\s*(\d{4})/i,
     }
-    
+
     // Extraer artist
     const artistMatch = descriptionTag.match(patterns.artist)
     if (artistMatch) {
       details.artist = artistMatch[1].trim()
     }
-    
+
     // Extraer medium
     const mediumMatch = descriptionTag.match(patterns.medium)
     if (mediumMatch) {
       details.medium = mediumMatch[1].trim()
     }
-    
+
     // Extraer dimensions
     const dimensionsMatch = descriptionTag.match(patterns.dimensions)
     if (dimensionsMatch) {
       const dimensionsText = dimensionsMatch[1].trim()
-      
+
       // Parsear dimensiones (ej: "46.0h x 61.0w")
       const dimensionPattern = /(\d+(?:\.\d+)?)(?:h|H)\s*x\s*(\d+(?:\.\d+)?)(?:w|W)/
       const dimensionMatch = dimensionsText.match(dimensionPattern)
-      
+
       if (dimensionMatch) {
         details.height = dimensionMatch[1]
         details.width = dimensionMatch[2]
       }
     }
-    
+
     // Extraer year
     const yearMatch = descriptionTag.match(patterns.year)
     if (yearMatch) {
       details.year = yearMatch[1]
     }
-    
+
     // Extraer location
     const locationMatch = descriptionTag.match(patterns.location)
     if (locationMatch) {
       details.location = locationMatch[1].trim()
     }
-    
+
     // Extraer serie
     const serieMatch = descriptionTag.match(patterns.serie)
     if (serieMatch) {
       details.serie = serieMatch[1].trim()
     }
-    
+
     return details
   }
 
   private _parseDescriptionHtml(): Partial<ArtworkDetails> {
     const details: Partial<ArtworkDetails> = {}
-    
+
     // Buscar patrones en el HTML
     const patterns = {
       artist: /<strong>Artista:<\/strong>\s*([^<]+)/i,
@@ -405,52 +458,52 @@ export class Product {
       serie: /<strong>Serie:<\/strong>\s*([^<]+)/i,
       year: /<strong>Año:<\/strong>\s*(\d{4})/i,
     }
-    
+
     // Extraer artist
     const artistMatch = this.descriptionHtml.match(patterns.artist)
     if (artistMatch) {
       details.artist = artistMatch[1].trim()
     }
-    
+
     // Extraer medium
     const mediumMatch = this.descriptionHtml.match(patterns.medium)
     if (mediumMatch) {
       details.medium = mediumMatch[1].trim()
     }
-    
+
     // Extraer dimensions
     const dimensionsMatch = this.descriptionHtml.match(patterns.dimensions)
     if (dimensionsMatch) {
       const dimensionsText = dimensionsMatch[1].trim()
-      
+
       // Parsear dimensiones (ej: "46.0h x 61.0w" o "100 x 150")
       const dimensionPattern = /(\d+(?:\.\d+)?)(?:h|H)?\s*x\s*(\d+(?:\.\d+)?)(?:w|W)?/
       const dimensionMatch = dimensionsText.match(dimensionPattern)
-      
+
       if (dimensionMatch) {
         details.height = dimensionMatch[1]
         details.width = dimensionMatch[2]
       }
     }
-    
+
     // Extraer year
     const yearMatch = this.descriptionHtml.match(patterns.year)
     if (yearMatch) {
       details.year = yearMatch[1]
     }
-    
+
     // Extraer location
     const locationMatch = this.descriptionHtml.match(patterns.location)
     if (locationMatch) {
       details.location = locationMatch[1].trim()
     }
-    
+
     // Extraer serie
     const serieMatch = this.descriptionHtml.match(patterns.serie)
     if (serieMatch) {
       details.serie = serieMatch[1].trim()
     }
-    
+
     return details
   }
 
@@ -458,14 +511,14 @@ export class Product {
     // Siempre inicializar arrays, incluso si no hay tags
     this.autoTags = []
     this.manualTags = []
-    
+
     if (this.tags.length === 0) {
       return
     }
-    
+
     const artists = this.vendor ? [this.vendor] : []
     const types = this.productType ? [this.productType] : []
-    
+
     this.autoTags = this.tags.filter((tag) => isAutoTag(tag, artists, types))
     this.manualTags = this.tags.filter((tag) => !isAutoTag(tag, artists, types))
   }
@@ -556,6 +609,44 @@ export class Product {
     return `$${parseFloat(variant.price.amount).toLocaleString('es-MX')} ${variant.price.currencyCode}`
   }
 
+  public get priceWithDiscount(): string {
+    const variant = this.primaryVariant
+    if (!variant || !this.discount || !this.discount.isActive) {
+      return this.formattedPrice
+    }
+
+    const priceValue = parseFloat(variant.price.amount)
+    let discountedPrice = priceValue
+
+    if (this.discount.type === 'PERCENTAGE') {
+      const discountAmount = (priceValue * this.discount.value) / 100
+      discountedPrice = priceValue - discountAmount
+    } else {
+      discountedPrice = Math.max(0, priceValue - this.discount.value)
+    }
+
+    if (discountedPrice === 0) return 'Entrada gratuita'
+    return `$${discountedPrice.toLocaleString('es-MX')} ${variant.price.currencyCode}`
+  }
+
+  public get discountAmount(): string {
+    if (!this.discount || !this.discount.isActive) return ''
+
+    const variant = this.primaryVariant
+    if (!variant) return ''
+
+    const priceValue = parseFloat(variant.price.amount)
+    let discountAmount = 0
+
+    if (this.discount.type === 'PERCENTAGE') {
+      discountAmount = (priceValue * this.discount.value) / 100
+    } else {
+      discountAmount = this.discount.value
+    }
+
+    return `$${discountAmount.toLocaleString('es-MX')} ${variant.price.currencyCode}`
+  }
+
   public get isAvailable(): boolean {
     const variant = this.primaryVariant
     return variant ? variant.availableForSale && (variant.inventoryQuantity ?? 0) > 0 : false
@@ -630,6 +721,10 @@ export class Product {
     this.descriptionHtml = this._generateDescription()
   }
 
+  public updateDiscount(discount: ProductDiscount | null): void {
+    this.discount = discount
+  }
+
   public toShopifyInput(): ShopifyInputPayloads {
     const metafields = Object.entries(this.artworkDetails)
       .filter(([, value]) => value != null && value !== '')
@@ -639,6 +734,16 @@ export class Product {
         type: 'single_line_text_field',
         value: String(value),
       }))
+
+    // Agregar metafield de descuento si existe
+    if (this.discount && this.discount.isActive) {
+      metafields.push({
+        key: 'discount_info',
+        namespace: 'discounts',
+        type: 'json',
+        value: JSON.stringify(this.discount),
+      })
+    }
 
     const variantsInput: ShopifyVariantInput[] = this.variants.map((variant) => ({
       id: variant.id,
