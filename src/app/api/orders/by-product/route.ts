@@ -5,6 +5,16 @@ import { requirePermission } from '@/modules/auth/server/server'
 import { PERMISSIONS } from '@/src/config/Permissions'
 import { GET_ORDERS_BY_PRODUCT_QUERY } from '@/src/modules/customer/queries'
 
+interface GraphQLResponse {
+  data?: unknown
+  errors?: {
+    message: string
+    locations?: { line: number; column: number }[]
+    path?: string[]
+    extensions?: Record<string, unknown>
+  }[]
+}
+
 export async function GET(request: NextRequest) {
   try {
     await requirePermission(PERMISSIONS.VIEW_ALL_ORDERS)
@@ -36,11 +46,24 @@ export async function GET(request: NextRequest) {
     // Construir la query para filtrar por producto específico
     const query = `product_id:${productId}`
 
-    const data = await makeAdminApiRequest(GET_ORDERS_BY_PRODUCT_QUERY, {
+    const data = (await makeAdminApiRequest(GET_ORDERS_BY_PRODUCT_QUERY, {
       after,
       first,
       query: `product_id:${productId}`,
-    })
+    })) as GraphQLResponse
+
+    // Verificar si hay errores de GraphQL en la respuesta
+    if (data.errors && data.errors.length > 0) {
+      console.error('GraphQL errors:', data.errors)
+      return NextResponse.json(
+        {
+          details: data.errors,
+          error: 'GraphQL errors occurred',
+          message: 'Some data may be limited due to API permissions',
+        },
+        { status: 400 }
+      )
+    }
 
     return NextResponse.json(data)
   } catch (error) {
