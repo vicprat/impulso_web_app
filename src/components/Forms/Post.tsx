@@ -1,9 +1,11 @@
+
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 
+import { MultiSupabaseImageUploader } from '@/components/Forms/MultiSupabaseImageUploader'
 import { SupabaseImageUploader } from '@/components/Forms/SupabaseImageUploader'
 import { Tiptap } from '@/components/TipTap'
 import { Button } from '@/components/ui/button'
@@ -13,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useCategories, useCreatePost, useTags, useUpdatePost } from '@/modules/blog/hooks'
-import { postCreateSchema, postUpdateSchema, type CreatePostDto, type PostStatus, type UpdatePostDto } from '@/modules/blog/types'
+import { postCreateSchema, postUpdateSchema, type CreatePostDto, type PostStatus, type Tag, type UpdatePostDto } from '@/modules/blog/types'
 
 type Mode = 'create' | 'edit'
 
@@ -32,11 +34,14 @@ export const PostForm: React.FC<Props> = ({ defaultValues, mode = 'create', onSu
     defaultValues: {
       additionalImages: defaultValues?.additionalImages ?? [],
       content: defaultValues?.content ?? '',
+      date: defaultValues?.date ?? null,
       excerpt: defaultValues?.excerpt ?? '',
       featured: defaultValues?.featured ?? false,
       featuredImageUrl: defaultValues?.featuredImageUrl ?? '',
+      location: defaultValues?.location ?? '',
       metaDescription: defaultValues?.metaDescription ?? '',
       metaTitle: defaultValues?.metaTitle ?? '',
+      postType: defaultValues?.postType ?? 'BLOG',
       status: (defaultValues?.status ?? 'DRAFT') as PostStatus,
       title: defaultValues?.title ?? '',
     },
@@ -47,15 +52,23 @@ export const PostForm: React.FC<Props> = ({ defaultValues, mode = 'create', onSu
   const { data: tags } = useTags()
 
   const onSubmit = form.handleSubmit(async (values) => {
+    console.log('📝 Formulario enviado con valores:', values)
+
+    console.log('🔍 Valores originales - tipo de fecha:', typeof values.date, values.date)
+
     if (isEdit && defaultValues?.id) {
       const payload = values as UpdatePostDto
+      console.log('✏️ Actualizando post con payload:', payload)
       const res = await updateMutation.mutateAsync(payload)
       onSuccess?.(res.id)
     } else {
       const payload = values as CreatePostDto
+      console.log('🆕 Creando post con payload:', payload)
       const res = await createMutation.mutateAsync(payload)
       onSuccess?.(res.id)
     }
+  }, (errors) => {
+    console.error('❌ Errores de validación del formulario:', errors)
   })
 
   useEffect(() => {
@@ -65,6 +78,23 @@ export const PostForm: React.FC<Props> = ({ defaultValues, mode = 'create', onSu
 
   return (
     <form onSubmit={onSubmit} className='space-y-6'>
+      {/* Toggle de tipo de post */}
+      <div className='space-y-2'>
+        <Label htmlFor='postType'>Tipo de post</Label>
+        <Select
+          value={String(form.watch('postType') ?? 'BLOG')}
+          onValueChange={(v) => form.setValue('postType', v as 'BLOG' | 'EVENT')}
+        >
+          <SelectTrigger id='postType'>
+            <SelectValue placeholder='Selecciona tipo' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='BLOG'>Blog</SelectItem>
+            <SelectItem value='EVENT'>Evento</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className='grid gap-6 md:grid-cols-2'>
         <div className='space-y-4'>
           <div className='space-y-2'>
@@ -76,7 +106,10 @@ export const PostForm: React.FC<Props> = ({ defaultValues, mode = 'create', onSu
             <Label>Contenido</Label>
             <Tiptap.Editor
               content={String(form.getValues('content') ?? '')}
-              onChange={(content) => form.setValue('content', content, { shouldDirty: true })}
+              onChange={(content) => {
+                console.log('📝 Contenido cambiado:', content)
+                form.setValue('content', content, { shouldDirty: true })
+              }}
             />
           </div>
 
@@ -104,6 +137,22 @@ export const PostForm: React.FC<Props> = ({ defaultValues, mode = 'create', onSu
             />
           </div>
 
+          {/* Múltiples imágenes para eventos */}
+          {form.watch('postType') === 'EVENT' && (
+            <div className='space-y-2'>
+              <Label>Imágenes adicionales del evento</Label>
+              <MultiSupabaseImageUploader
+                existingImages={form.watch('additionalImages') as string[] || []}
+                maxImages={10}
+                onImagesChange={(images) => {
+                  console.log('🖼️ Imágenes actualizadas:', images)
+                  form.setValue('additionalImages', images, { shouldDirty: true, shouldValidate: true })
+                }}
+                type='blog'
+              />
+            </div>
+          )}
+
           <div className='space-y-2'>
             <Label htmlFor='status'>Estado</Label>
             <Select value={String(form.watch('status') ?? 'DRAFT')} onValueChange={(v) => form.setValue('status', v as PostStatus)}>
@@ -118,47 +167,82 @@ export const PostForm: React.FC<Props> = ({ defaultValues, mode = 'create', onSu
             </Select>
           </div>
 
-          <div className='space-y-2'>
-            <Label>Categorías</Label>
-            <div className='grid grid-cols-2 gap-2'>
-              {categories?.map((c) => (
-                <label key={c.id} className='flex items-center gap-2 text-sm'>
-                  <input
-                    checked={(form.watch('categoryIds') as string[] | undefined)?.includes(c.id) ?? false}
-                    className='size-4'
-                    onChange={(e) => {
-                      const current = (form.getValues('categoryIds') as string[] | undefined) ?? []
-                      const next = e.target.checked ? Array.from(new Set([ ...current, c.id ])) : current.filter((x) => x !== c.id)
-                      form.setValue('categoryIds', next)
-                    }}
-                    type='checkbox'
-                  />
-                  <span>{c.name}</span>
-                </label>
-              ))}
+          {/* Categorías solo para posts de blog */}
+          {form.watch('postType') === 'BLOG' && (
+            <div className='space-y-2'>
+              <Label>Categorías</Label>
+              <div className='grid grid-cols-2 gap-2'>
+                {categories?.map((c) => (
+                  <label key={c.id} className='flex items-center gap-2 text-sm'>
+                    <input
+                      checked={(form.watch('categoryIds') as string[] | undefined)?.includes(c.id) ?? false}
+                      className='size-4'
+                      onChange={(e) => {
+                        const current = (form.getValues('categoryIds') as string[] | undefined) ?? []
+                        const next = e.target.checked ? Array.from(new Set([ ...current, c.id ])) : current.filter((x) => x !== c.id)
+                        form.setValue('categoryIds', next)
+                      }}
+                      type='checkbox'
+                    />
+                    <span>{c.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className='space-y-2'>
-            <Label>Tags</Label>
-            <div className='grid grid-cols-2 gap-2'>
-              {tags?.map((t) => (
-                <label key={t.id} className='flex items-center gap-2 text-sm'>
-                  <input
-                    checked={(form.watch('tagIds') as string[] | undefined)?.includes(t.id) ?? false}
-                    className='size-4'
-                    onChange={(e) => {
-                      const current = (form.getValues('tagIds') as string[] | undefined) ?? []
-                      const next = e.target.checked ? Array.from(new Set([ ...current, t.id ])) : current.filter((x) => x !== t.id)
-                      form.setValue('tagIds', next)
-                    }}
-                    type='checkbox'
-                  />
-                  <span>{t.name}</span>
-                </label>
-              ))}
+          {/* Campos específicos para eventos */}
+          {form.watch('postType') === 'EVENT' && (
+            <>
+              <div className='space-y-2'>
+                <Label htmlFor='date'>Fecha del evento</Label>
+                <Input
+                  id='date'
+                  type='date'
+                  {...form.register('date', {
+                    setValueAs: (value) => {
+                      if (!value) return null
+                      const date = new Date(value)
+                      return isNaN(date.getTime()) ? null : date
+                    }
+                  })}
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='location'>Lugar del evento</Label>
+                <Input
+                  id='location'
+                  placeholder='Lugar del evento'
+                  {...form.register('location')}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Tags solo para posts de blog */}
+          {form.watch('postType') === 'BLOG' && (
+            <div className='space-y-2'>
+              <Label>Tags</Label>
+              <div className='grid grid-cols-2 gap-2'>
+                {tags?.map((t: Tag) => (
+                  <label key={t.id} className='flex items-center gap-2 text-sm'>
+                    <input
+                      checked={(form.watch('tagIds') as string[] | undefined)?.includes(t.id) ?? false}
+                      className='size-4'
+                      onChange={(e) => {
+                        const current = (form.getValues('tagIds') as string[] | undefined) ?? []
+                        const next = e.target.checked ? Array.from(new Set([ ...current, t.id ])) : current.filter((x) => x !== t.id)
+                        form.setValue('tagIds', next)
+                      }}
+                      type='checkbox'
+                    />
+                    <span>{t.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className='space-y-2'>
             <Label htmlFor='metaTitle'>Meta título</Label>

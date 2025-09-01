@@ -59,6 +59,7 @@ function buildPostWhere(filters: PostFilters) {
   if (filters.status) where.status = filters.status
   if (typeof filters.featured === 'boolean') where.featured = filters.featured
   if (filters.authorId) where.authorId = filters.authorId
+  if (filters.postType) where.postType = filters.postType
   if (filters.q) {
     where.OR = [
       { title: { contains: filters.q, mode: 'insensitive' as const } },
@@ -96,11 +97,14 @@ export const blogService = {
         additionalImages: data.additionalImages ?? [],
         authorId: session.user.id,
         content: data.content,
+        date: data.date ?? null,
         excerpt: data.excerpt ?? null,
         featured: data.featured ?? false,
         featuredImageUrl: data.featuredImageUrl ?? null,
+        location: data.location ?? null,
         metaDescription: data.metaDescription ?? null,
         metaTitle: data.metaTitle ?? null,
+        postType: data.postType ?? 'BLOG',
         slug,
         status: data.status ?? 'DRAFT',
         title: data.title,
@@ -267,11 +271,14 @@ export const blogService = {
       data: {
         additionalImages: data.additionalImages,
         content: data.content,
+        date: data.date,
         excerpt: data.excerpt,
         featured: data.featured,
         featuredImageUrl: data.featuredImageUrl,
+        location: data.location,
         metaDescription: data.metaDescription,
         metaTitle: data.metaTitle,
+        postType: data.postType,
         slug: newSlug,
         status: data.status,
         title: data.title,

@@ -71,7 +71,10 @@ export const BlogCard: React.FC<Props> = ({ post }) => {
       </div>
 
       <Link
-        href={ROUTES.PUBLIC.BLOG.DETAIL.PATH.replace(':slug', post.slug)}
+        href={ROUTES.PUBLIC.POSTS.DYNAMIC.DETAIL.PATH
+          .replace(':postType', post.postType.toLowerCase())
+          .replace(':slug', post.slug)
+        }
         className='block focus:outline-none'
         aria-label={`Leer artículo: ${post.title}`}
       >
@@ -120,7 +123,10 @@ export const BlogCard: React.FC<Props> = ({ post }) => {
         )}
 
         <div className='space-y-2'>
-          <Link href={ROUTES.PUBLIC.BLOG.DETAIL.PATH.replace(':slug', post.slug)} className='block'>
+          <Link href={ROUTES.PUBLIC.POSTS.DYNAMIC.DETAIL.PATH
+            .replace(':postType', post.postType.toLowerCase())
+            .replace(':slug', post.slug)
+          } className='block'>
             <h3 className='line-clamp-2 text-lg font-semibold leading-tight text-foreground transition-colors duration-200 hover:text-primary focus:text-primary focus:outline-none'>
               {post.title}
             </h3>

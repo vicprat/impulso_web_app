@@ -5,7 +5,6 @@ import { routeMetadata } from '@/lib/metadata'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = routeMetadata[ '/' ]
-export const dynamic = 'force-dynamic'
 
 export default function Page() {
   return <HomePageContent />

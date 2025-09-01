@@ -444,7 +444,7 @@ export function HomePageContent() {
             title='Últimos Artículos'
             subtitle='Explora las historias más recientes del mundo del arte y nuestra comunidad creativa'
             actionText='Ver todo el Blog'
-            actionHref={ROUTES.PUBLIC.BLOG.MAIN.PATH}
+            actionHref={ROUTES.PUBLIC.POSTS.DYNAMIC.MAIN.PATH.replace(':postType', 'blog')}
           />
 
           {blogLoading && (

@@ -30,11 +30,22 @@ export const postCreateSchema = z.object({
   additionalImages: z.array(urlSchema).optional().default([]),
   categoryIds: z.array(idSchema).optional().default([]),
   content: z.string().min(1, 'El contenido es requerido'),
+  date: z
+    .union([z.string(), z.date()])
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (!val) return null
+      if (val instanceof Date) return val
+      return new Date(val)
+    }),
   excerpt: z.string().max(600).optional().nullable(),
   featured: z.boolean().optional(),
   featuredImageUrl: urlSchema.optional().nullable(),
+  location: z.string().optional().nullable(),
   metaDescription: z.string().max(300).optional().nullable(),
   metaTitle: z.string().max(120).optional().nullable(),
+  postType: z.enum(['BLOG', 'EVENT']).optional().default('BLOG'),
   slug: z.string().optional(),
   status: z
     .enum(['DRAFT', 'PUBLISHED', 'ARCHIVED'] satisfies [PostStatus, PostStatus, PostStatus])
@@ -48,11 +59,22 @@ export const postUpdateSchema = z
     additionalImages: z.array(urlSchema).optional(),
     categoryIds: z.array(idSchema).optional(),
     content: z.string().min(1).optional(),
+    date: z
+      .union([z.string(), z.date()])
+      .optional()
+      .nullable()
+      .transform((val) => {
+        if (!val) return null
+        if (val instanceof Date) return val
+        return new Date(val)
+      }),
     excerpt: z.string().max(600).optional().nullable(),
     featured: z.boolean().optional(),
     featuredImageUrl: urlSchema.optional().nullable(),
+    location: z.string().optional().nullable(),
     metaDescription: z.string().max(300).optional().nullable(),
     metaTitle: z.string().max(120).optional().nullable(),
+    postType: z.enum(['BLOG', 'EVENT']).optional(),
     slug: z.string().optional(),
     status: z
       .enum(['DRAFT', 'PUBLISHED', 'ARCHIVED'] satisfies [PostStatus, PostStatus, PostStatus])
@@ -129,6 +151,7 @@ export const postFiltersSchema = z.object({
   featured: z.coerce.boolean().optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(10),
+  postType: z.enum(['BLOG', 'EVENT']).optional(),
   q: z.string().optional(),
   sortBy: PostSortFieldEnum.default('publishedAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),

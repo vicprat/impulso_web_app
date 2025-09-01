@@ -35,7 +35,7 @@ export const ROUTES = {
       MAIN: {
         DESCRIPTION: 'Gestionar entradas del blog',
         ICON: 'newspaper',
-        LABEL: 'Blog',
+        LABEL: 'Posts',
         PATH: '/posts',
         PERMISSIONS: [PERMISSIONS.MANAGE_ALL_BLOG_POSTS, PERMISSIONS.MANAGE_OWN_BLOG_POSTS],
         ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
@@ -320,28 +320,33 @@ export const ROUTES = {
       LABEL: 'Artistas',
       PATH: '/artists',
     },
-    BLOG: {
-      DETAIL: {
-        DESCRIPTION: 'Detalle de entrada del blog',
-        ICON: 'newspaper',
-        IS_PUBLIC: true,
-        LABEL: 'Entrada',
-        PATH: '/blog/:slug',
-      },
-      MAIN: {
-        DESCRIPTION: 'Listado del blog',
-        ICON: 'newspaper',
-        IS_PUBLIC: true,
-        LABEL: 'Blog',
-        PATH: '/blog',
-      },
-    },
+
     HOME: {
       DESCRIPTION: 'Página principal de la tienda',
       ICON: 'home',
       IS_PUBLIC: true,
       LABEL: 'Inicio',
       PATH: '/',
+    },
+    // Rutas dinámicas para posts por tipo
+    POSTS: {
+      // Rutas dinámicas que manejan ambos tipos
+      DYNAMIC: {
+        DETAIL: {
+          DESCRIPTION: 'Detalle de un post (blog o evento)',
+          ICON: 'file-text',
+          IS_PUBLIC: true,
+          LABEL: 'Detalle del Post',
+          PATH: '/:postType/:slug',
+        },
+        MAIN: {
+          DESCRIPTION: 'Listado de posts por tipo (blog o evento)',
+          ICON: 'list',
+          IS_PUBLIC: true,
+          LABEL: 'Posts',
+          PATH: '/:postType',
+        },
+      },
     },
     PROFILE_DETAIL: {
       DESCRIPTION: 'Perfil Público de un usuario',
@@ -575,9 +580,13 @@ export const getStoreNavRoutes = (): RouteConfig[] => {
   const publicStoreRoutes = [
     ROUTES.PUBLIC.HOME,
     ROUTES.STORE.MAIN,
-    ROUTES.STORE.EVENTS,
+    {
+      ...ROUTES.PUBLIC.POSTS.DYNAMIC.MAIN,
+      LABEL: 'Blog',
+      PATH: '/blog',
+    },
+    ROUTES.STORE.EVENTS, // Eventos del store
     ROUTES.PUBLIC.ARTISTS,
-    ROUTES.PUBLIC.BLOG.MAIN,
   ]
 
   return publicStoreRoutes.filter((route) => !('HIDE_IN_NAV' in route && route.HIDE_IN_NAV))
