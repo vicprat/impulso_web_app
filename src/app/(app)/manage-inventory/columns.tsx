@@ -9,13 +9,17 @@ import {
   ExternalLink,
   Eye,
   Loader2,
+  Percent,
+  Tag,
+  Trash2,
   Upload,
-  X,
+  X
 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
+import { Confirm } from '@/components/Dialog/Confirm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,6 +34,126 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { type Product } from '@/models/Product'
 import { useGetArtworkTypes, useGetLocations, useGetTechniques, useGetVendors } from '@/services/product/hook'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
+
+// Componente para la celda de descuentos con dialog de confirmación
+const DiscountCell = ({
+  product,
+  isAdmin,
+  onOpenAutomaticDiscountModal,
+  getProductDiscounts,
+  getDiscountProductCount,
+  onDeleteDiscount
+}: {
+  product: any
+  isAdmin: boolean
+  onOpenAutomaticDiscountModal?: (product: { id: string; title: string }) => void
+  getProductDiscounts?: (productId: string) => any[]
+  getDiscountProductCount?: (discount: any) => number
+  onDeleteDiscount?: (discountId: string) => Promise<void>
+}) => {
+  const [ isDeleteDialogOpen, setIsDeleteDialogOpen ] = useState(false)
+  const [ discountToDelete, setDiscountToDelete ] = useState<{ id: string; title: string; productCount: number } | null>(null)
+  const [ isDeleting, setIsDeleting ] = useState(false)
+
+  if (!isAdmin) return null
+
+  const productDiscounts = getProductDiscounts?.(product.id) ?? []
+  const activeDiscounts = productDiscounts.filter(discount => discount.isActive)
+
+  const handleDeleteClick = (discount: any) => {
+    // Contar cuántos productos tienen este descuento
+    const productCount = getDiscountProductCount?.(discount) ?? 1
+
+    setDiscountToDelete({
+      id: discount.id,
+      title: discount.title,
+      productCount: productCount
+    })
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!discountToDelete || !onDeleteDiscount) return
+
+    setIsDeleting(true)
+    try {
+      await onDeleteDiscount(discountToDelete.id)
+      toast.success('Descuento eliminado exitosamente')
+    } catch (error) {
+      toast.error('Error al eliminar el descuento')
+      console.error('Error al eliminar descuento:', error)
+    } finally {
+      setIsDeleting(false)
+      setIsDeleteDialogOpen(false)
+      setDiscountToDelete(null)
+    }
+  }
+
+  return (
+    <>
+      <div className='flex flex-col gap-2'>
+        {/* Mostrar descuentos activos */}
+        {activeDiscounts.length > 0 && (
+          <div className='flex flex-wrap gap-1'>
+            {activeDiscounts.map((discount, index) => (
+              <div key={index} className='flex items-center gap-1'>
+                <Badge
+                  variant='secondary'
+                  className='bg-green-100 text-green-800 hover:bg-green-200'
+                  title={`${discount.title} - ${discount.type === 'PERCENTAGE' ? `${discount.value}%` : `$${discount.value}`} OFF`}
+                >
+                  <Percent className='mr-1 size-3' />
+                  {discount.type === 'PERCENTAGE' ? `${discount.value}%` : `$${discount.value}`}
+                </Badge>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => handleDeleteClick(discount)}
+                  className='h-5 w-5 p-0 text-red-600 hover:bg-red-100 hover:text-red-700'
+                  title={`Eliminar descuento "${discount.title}"`}
+                >
+                  <Trash2 className='size-3' />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Botón para crear/editar descuentos */}
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => onOpenAutomaticDiscountModal?.({ id: product.id, title: product.title })}
+          className='bg-purple-50 text-purple-700 hover:bg-purple-100'
+          title={activeDiscounts.length > 0 ? 'Editar descuentos' : 'Crear descuento automático'}
+        >
+          <Tag className='mr-1 size-3' />
+          {activeDiscounts.length > 0 ? 'Editar' : 'Descuento'}
+        </Button>
+      </div>
+
+      {/* Dialog de confirmación */}
+      <Confirm
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false)
+          setDiscountToDelete(null)
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar Descuento"
+        message={
+          discountToDelete ?
+            `¿Estás seguro de que quieres eliminar el descuento "${discountToDelete.title}"?\n\n⚠️ Advertencia: Este descuento se eliminará de ${discountToDelete.productCount} producto${discountToDelete.productCount > 1 ? 's' : ''} que lo tengan aplicado.`
+            : ''
+        }
+        confirmButtonText="Eliminar"
+        cancelButtonText="Cancelar"
+        variant="destructive"
+        isLoading={isDeleting}
+      />
+    </>
+  )
+}
 
 
 declare module '@tanstack/react-table' {
@@ -80,7 +204,11 @@ declare module '@tanstack/react-table' {
     bulkChanges?: Record<string, any>
     onBulkChange?: (field: string, value: any) => void
     onApplyBulkChanges?: () => void
-    onOpenDiscountModal?: (product: { id: string; title: string; price: string }) => void
+    onOpenCouponModal?: (product: { id: string; title: string }) => void
+    onOpenAutomaticDiscountModal?: (product: { id: string; title: string }) => void
+    getProductDiscounts?: (productId: string) => any[]
+    getDiscountProductCount?: (discount: any) => number
+    onDeleteDiscount?: (discountId: string) => Promise<void>
   }
 }
 
@@ -1232,67 +1360,7 @@ export const columns: ColumnDef<Product>[] = [
       return <Badge variant={currentValue === 'ACTIVE' ? 'active' : 'archived'}>{statusOptions.find(option => option.value === currentValue)?.label}</Badge>
     },
   },
-  {
-    accessorKey: 'discount',
-    cell: ({ row, table }) => {
-      const product = row.original
-      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
-      const isEditing = editingRowId === product.id
 
-      // Obtener el descuento actual del producto
-      const currentDiscount = product.discount || null
-
-      if (isEditing) {
-        return (
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                // Aquí abrirías el modal para editar el descuento
-                // Necesitamos pasar la función desde el meta
-                const { onOpenDiscountModal } = table.options.meta ?? {}
-                if (onOpenDiscountModal) {
-                  onOpenDiscountModal({
-                    id: product.id,
-                    price: product.variants?.[ 0 ]?.price?.amount || '0',
-                    title: product.title
-                  })
-                }
-              }}
-              className="text-xs"
-            >
-              {currentDiscount ? 'Editar' : 'Agregar'} Descuento
-            </Button>
-          </div>
-        )
-      }
-
-      if (currentDiscount) {
-        const discountLabel = currentDiscount.type === 'PERCENTAGE'
-          ? `${currentDiscount.value}% OFF`
-          : `$${currentDiscount.value} OFF`
-
-        return (
-          <div className="flex items-center gap-2">
-            <Badge variant="destructive" className="text-xs">
-              {discountLabel}
-            </Badge>
-            {currentDiscount.endsAt && (
-              <span className="text-xs text-muted-foreground">
-                Hasta {new Date(currentDiscount.endsAt).toLocaleDateString()}
-              </span>
-            )}
-          </div>
-        )
-      }
-
-      return (
-        <span className="text-xs text-muted-foreground">Sin descuento</span>
-      )
-    },
-    header: 'Descuento',
-  },
   {
     cell: ({ row, table }) => {
       const product = row.original
@@ -1350,9 +1418,30 @@ export const columns: ColumnDef<Product>[] = [
               <ExternalLink className='size-4' />
             </Button>
           </Link>
+
         </div>
       )
     },
     id: 'actions',
+  },
+  {
+    accessorKey: 'automaticDiscount',
+    cell: ({ row, table }) => {
+      const product = row.original
+      const { isAdmin, onOpenAutomaticDiscountModal, getProductDiscounts, getDiscountProductCount, onDeleteDiscount } = table.options.meta ?? {}
+
+      return (
+        <DiscountCell
+          product={product}
+          isAdmin={isAdmin ?? false}
+          onOpenAutomaticDiscountModal={onOpenAutomaticDiscountModal}
+          getProductDiscounts={getProductDiscounts}
+          getDiscountProductCount={getDiscountProductCount}
+          onDeleteDiscount={onDeleteDiscount}
+        />
+      )
+    },
+    header: 'Descuentos',
+    id: 'automaticDiscount',
   },
 ]

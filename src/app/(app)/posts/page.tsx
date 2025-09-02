@@ -86,7 +86,7 @@ export default function BlogAdminPage() {
     },
     updateFeatured: async (id, featured) => {
       try {
-        await blogApi.posts.update(id, { featured })
+        await blogApi.posts.update(id, { featured: featured })
         toast.success('Post actualizado')
         void queryClient.invalidateQueries({ queryKey: BLOG_KEYS.posts() })
       } catch (e) {
@@ -96,7 +96,7 @@ export default function BlogAdminPage() {
     },
     updateStatus: async (id, status) => {
       try {
-        await blogApi.posts.update(id, { status })
+        await blogApi.posts.update(id, { status: status })
         toast.success('Estado del post actualizado')
         void queryClient.invalidateQueries({ queryKey: BLOG_KEYS.posts() })
       } catch (e) {

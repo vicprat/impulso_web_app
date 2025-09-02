@@ -1,15 +1,14 @@
 'use client'
 
-import { Calendar, CheckCircle, Edit, Tag, Trash2, XCircle } from 'lucide-react'
+import { CheckCircle, Edit, Tag, Trash2, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { CouponCreatorModal } from '@/components/Modals/CouponCreatorModal'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { type Discount, type UpdateDiscountInput } from '@/services/product/types'
 
 interface CouponListProps {
@@ -19,7 +18,7 @@ interface CouponListProps {
   onCouponDeleted: (couponId: string) => void
 }
 
-export function CouponList({ coupons, isLoading = false, onCouponUpdated, onCouponDeleted }: CouponListProps) {
+export function CouponList({ coupons, isLoading = false, onCouponDeleted, onCouponUpdated }: CouponListProps) {
   const [ editingCoupon, setEditingCoupon ] = useState<Discount | null>(null)
   const [ isEditModalOpen, setIsEditModalOpen ] = useState(false)
   const [ isDeleteModalOpen, setIsDeleteModalOpen ] = useState(false)
@@ -57,9 +56,9 @@ export function CouponList({ coupons, isLoading = false, onCouponUpdated, onCoup
       case 'ALL_PRODUCTS':
         return 'Todos los productos'
       case 'SPECIFIC_PRODUCTS':
-        return `${coupon.productIds?.length || 0} productos específicos`
-      case 'SPECIFIC_COLLECTIONS':
-        return `${coupon.collectionIds?.length || 0} colecciones`
+        return `${coupon.productIds?.length ?? 0} productos específicos`
+      case 'COLLECTIONS':
+        return `${coupon.collectionIds?.length ?? 0} colecciones`
       default:
         return 'Desconocido'
     }
@@ -87,9 +86,9 @@ export function CouponList({ coupons, isLoading = false, onCouponUpdated, onCoup
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-MX', {
-      year: 'numeric',
-      month: 'short',
       day: 'numeric',
+      month: 'short',
+      year: 'numeric',
     })
   }
 
@@ -97,9 +96,9 @@ export function CouponList({ coupons, isLoading = false, onCouponUpdated, onCoup
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Cargando cupones...</h3>
-          <p className="text-muted-foreground text-center">
+          <div className="mb-4 size-12 animate-spin rounded-full border-b-2 border-blue-500" />
+          <h3 className="mb-2 text-lg font-semibold">Cargando cupones...</h3>
+          <p className="text-center text-muted-foreground">
             Obteniendo información de cupones de descuento.
           </p>
         </CardContent>
@@ -111,9 +110,9 @@ export function CouponList({ coupons, isLoading = false, onCouponUpdated, onCoup
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <Tag className="size-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No hay cupones creados</h3>
-          <p className="text-muted-foreground text-center">
+          <Tag className="mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-semibold">No hay cupones creados</h3>
+          <p className="text-center text-muted-foreground">
             Los cupones que crees aparecerán aquí para que puedas gestionarlos.
           </p>
         </CardContent>
@@ -125,7 +124,7 @@ export function CouponList({ coupons, isLoading = false, onCouponUpdated, onCoup
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {coupons.map((coupon) => (
-          <Card key={coupon.id} className="hover:shadow-md transition-shadow">
+          <Card key={coupon.id} className="transition-shadow hover:shadow-md">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
@@ -166,9 +165,9 @@ export function CouponList({ coupons, isLoading = false, onCouponUpdated, onCoup
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Uso:</span>
+                <span className="text-sm font-medium">Aplicable a:</span>
                 <span className="text-sm text-muted-foreground">
-                  {coupon.usedCount} veces
+                  {getAppliesToLabel(coupon)}
                 </span>
               </div>
 
@@ -206,29 +205,25 @@ export function CouponList({ coupons, isLoading = false, onCouponUpdated, onCoup
         ))}
       </div>
 
-      {/* Modal de Edición */}
-      {editingCoupon && (
-        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Editar Cupón - {editingCoupon.code}</DialogTitle>
-            </DialogHeader>
-            <CouponEditForm
-              coupon={editingCoupon}
-              onSave={(updatedCoupon) => {
-                onCouponUpdated(updatedCoupon)
-                setIsEditModalOpen(false)
-                setEditingCoupon(null)
-                toast.success('Cupón actualizado exitosamente')
-              }}
-              onCancel={() => {
-                setIsEditModalOpen(false)
-                setEditingCoupon(null)
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* Modal de Edición Unificado */}
+      <CouponCreatorModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setEditingCoupon(null)
+        }}
+        selectedProducts={editingCoupon?.productIds?.map(id => ({
+          id,
+          title: `Producto ${id.split('/').pop()}` // Título temporal basado en el ID
+        })) ?? []}
+        mode="edit"
+        couponToEdit={editingCoupon ?? undefined}
+        onCouponUpdated={(updatedCoupon) => {
+          onCouponUpdated(updatedCoupon)
+          setIsEditModalOpen(false)
+          setEditingCoupon(null)
+        }}
+      />
 
       {/* Modal de Confirmación de Eliminación */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
@@ -267,69 +262,4 @@ export function CouponList({ coupons, isLoading = false, onCouponUpdated, onCoup
   )
 }
 
-// Componente interno para editar cupones
-interface CouponEditFormProps {
-  coupon: Discount
-  onSave: (coupon: UpdateDiscountInput) => void
-  onCancel: () => void
-}
 
-function CouponEditForm({ coupon, onSave, onCancel }: CouponEditFormProps) {
-  const [ isActive, setIsActive ] = useState(coupon.isActive)
-  const [ endsAt, setEndsAt ] = useState(
-    coupon.endsAt ? new Date(coupon.endsAt).toISOString().split('T')[ 0 ] : ''
-  )
-
-  const handleSave = () => {
-    const updatedCoupon: UpdateDiscountInput = {
-      id: coupon.id,
-      isActive,
-      endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
-    }
-    onSave(updatedCoupon)
-  }
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <Label className="text-sm font-medium">Estado del Cupón</Label>
-        <div className="flex items-center gap-2 mt-2">
-          <Badge variant={isActive ? 'default' : 'secondary'}>
-            {isActive ? 'Activo' : 'Inactivo'}
-          </Badge>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsActive(!isActive)}
-            className="h-6 px-2 text-xs"
-          >
-            {isActive ? 'Desactivar' : 'Activar'}
-          </Button>
-        </div>
-      </div>
-
-      <div>
-        <Label className="text-sm font-medium">Fecha de Fin (Opcional)</Label>
-        <div className="relative mt-2">
-          <Calendar className="absolute left-3 top-3 size-4 text-muted-foreground" />
-          <Input
-            type="date"
-            value={endsAt}
-            onChange={(e) => setEndsAt(e.target.value)}
-            className="pl-10"
-            min={new Date().toISOString().split('T')[ 0 ]}
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <Button onClick={handleSave} className="flex-1">
-          Guardar Cambios
-        </Button>
-        <Button variant="outline" onClick={onCancel} className="flex-1">
-          Cancelar
-        </Button>
-      </div>
-    </div>
-  )
-}

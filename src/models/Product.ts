@@ -42,18 +42,6 @@ export interface Variant {
   inventoryPolicy: 'DENY' | 'CONTINUE'
 }
 
-export interface ProductDiscount {
-  id: string
-  productId: string
-  type: 'PERCENTAGE' | 'FIXED_AMOUNT'
-  value: number
-  startsAt: string
-  endsAt?: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
-
 interface ShopifyMetafieldNode {
   namespace: string
   key: string
@@ -232,7 +220,6 @@ export class Product {
   manualTags: string[] = []
   autoTags: string[] = []
   artworkDetails: ArtworkDetails
-  discount?: ProductDiscount | null
   private primaryLocationId: string
 
   constructor(shopifyProductData: ShopifyProductData, primaryLocationId: string) {
@@ -253,7 +240,6 @@ export class Product {
 
     this.primaryLocationId = primaryLocationId
     this.artworkDetails = this._parseDetailsFromMetafields(shopifyProductData.metafields.edges)
-    this.discount = this._parseDiscountFromMetafields(shopifyProductData.metafields.edges)
     this._parseTags()
 
     // Extraer información de los tags después de que se procesen
@@ -328,36 +314,6 @@ export class Product {
     }
 
     return finalDetails
-  }
-
-  private _parseDiscountFromMetafields(
-    metafieldEdges: { node: ShopifyMetafieldNode }[]
-  ): ProductDiscount | null {
-    for (const { node } of metafieldEdges) {
-      // Procesar metafields con namespace discounts
-      if (node.namespace === 'discounts') {
-        try {
-          const discountData = JSON.parse(node.value)
-          if (discountData && typeof discountData === 'object') {
-            return {
-              id: discountData.id || `discount_${this.id}`,
-              productId: this.id,
-              type: discountData.type || 'PERCENTAGE',
-              value: discountData.value || 0,
-              startsAt: discountData.startsAt || new Date().toISOString(),
-              endsAt: discountData.endsAt,
-              isActive: discountData.isActive !== false,
-              createdAt: discountData.createdAt || new Date().toISOString(),
-              updatedAt: discountData.updatedAt || new Date().toISOString(),
-            }
-          }
-        } catch (error) {
-          console.warn('Error parsing discount metafield:', error)
-        }
-      }
-    }
-
-    return null
   }
 
   private _extractInfoFromTags(): void {
@@ -609,44 +565,6 @@ export class Product {
     return `$${parseFloat(variant.price.amount).toLocaleString('es-MX')} ${variant.price.currencyCode}`
   }
 
-  public get priceWithDiscount(): string {
-    const variant = this.primaryVariant
-    if (!variant || !this.discount || !this.discount.isActive) {
-      return this.formattedPrice
-    }
-
-    const priceValue = parseFloat(variant.price.amount)
-    let discountedPrice = priceValue
-
-    if (this.discount.type === 'PERCENTAGE') {
-      const discountAmount = (priceValue * this.discount.value) / 100
-      discountedPrice = priceValue - discountAmount
-    } else {
-      discountedPrice = Math.max(0, priceValue - this.discount.value)
-    }
-
-    if (discountedPrice === 0) return 'Entrada gratuita'
-    return `$${discountedPrice.toLocaleString('es-MX')} ${variant.price.currencyCode}`
-  }
-
-  public get discountAmount(): string {
-    if (!this.discount || !this.discount.isActive) return ''
-
-    const variant = this.primaryVariant
-    if (!variant) return ''
-
-    const priceValue = parseFloat(variant.price.amount)
-    let discountAmount = 0
-
-    if (this.discount.type === 'PERCENTAGE') {
-      discountAmount = (priceValue * this.discount.value) / 100
-    } else {
-      discountAmount = this.discount.value
-    }
-
-    return `$${discountAmount.toLocaleString('es-MX')} ${variant.price.currencyCode}`
-  }
-
   public get isAvailable(): boolean {
     const variant = this.primaryVariant
     return variant ? variant.availableForSale && (variant.inventoryQuantity ?? 0) > 0 : false
@@ -721,10 +639,6 @@ export class Product {
     this.descriptionHtml = this._generateDescription()
   }
 
-  public updateDiscount(discount: ProductDiscount | null): void {
-    this.discount = discount
-  }
-
   public toShopifyInput(): ShopifyInputPayloads {
     const metafields = Object.entries(this.artworkDetails)
       .filter(([, value]) => value != null && value !== '')
@@ -734,16 +648,6 @@ export class Product {
         type: 'single_line_text_field',
         value: String(value),
       }))
-
-    // Agregar metafield de descuento si existe
-    if (this.discount && this.discount.isActive) {
-      metafields.push({
-        key: 'discount_info',
-        namespace: 'discounts',
-        type: 'json',
-        value: JSON.stringify(this.discount),
-      })
-    }
 
     const variantsInput: ShopifyVariantInput[] = this.variants.map((variant) => ({
       id: variant.id,

@@ -7,7 +7,7 @@ export const CONTACT = {
   EMAIL_SUPPORT: 'soporte@impulsogaleria.com',
   PHONE: '4425826262',
   WHATSAPP: {
-    PHONE: '5214422059611',
-    URL: 'https://wa.me/5214422059611',
+    PHONE: '4425826262',
+    URL: 'https://wa.me/4425826262',
   },
 }

@@ -95,7 +95,7 @@ export const blogApi = {
       const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' })
       return handleApiResponse(res)
     },
-    async update(id: string, data: UpdatePostDto): Promise<PostWithRelations> {
+    async update(id: string, data: Partial<UpdatePostDto>): Promise<PostWithRelations> {
       const res = await fetch(`${API_BASE}/${id}`, {
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },

@@ -169,70 +169,16 @@ export interface ProductCreateMediaResponse {
   }
 }
 
-// Tipos para descuentos y cupones
-export interface Discount {
-  id: string
-  code: string
-  type: 'PERCENTAGE' | 'FIXED_AMOUNT'
-  value: number
-  usedCount: number
-  startsAt: string
-  endsAt?: string
-  isActive: boolean
-  appliesTo: 'ALL_PRODUCTS' | 'SPECIFIC_PRODUCTS' | 'SPECIFIC_COLLECTIONS'
-  productIds?: string[]
-  collectionIds?: string[]
-  createdAt: string
-  updatedAt: string
-}
-
-export interface CreateDiscountInput {
-  code: string
-  type: 'PERCENTAGE' | 'FIXED_AMOUNT'
-  value: number
-  startsAt: string
-  endsAt?: string
-  appliesTo: 'ALL_PRODUCTS' | 'SPECIFIC_PRODUCTS' | 'SPECIFIC_COLLECTIONS'
-  productIds?: string[]
-  collectionIds?: string[]
-}
-
-export interface UpdateDiscountInput {
-  id: string
-  isActive?: boolean
-  endsAt?: string
-  value?: number
-  type?: 'PERCENTAGE' | 'FIXED_AMOUNT'
-}
+// Re-exportar tipos de descuentos desde el módulo centralizado
+export type {
+  CreateShopifyDiscountInput as CreateDiscountInput,
+  ShopifyDiscount as Discount,
+  UpdateShopifyDiscountInput as UpdateDiscountInput,
+} from '@/modules/shopify/discounts'
 
 export interface DiscountFilters {
   isActive?: boolean
   type?: 'PERCENTAGE' | 'FIXED_AMOUNT'
-  appliesTo?: 'ALL_PRODUCTS' | 'SPECIFIC_PRODUCTS' | 'SPECIFIC_COLLECTIONS'
+  appliesTo?: 'ALL_PRODUCTS' | 'SPECIFIC_PRODUCTS' | 'COLLECTIONS'
   search?: string
-}
-
-export interface ProductDiscount {
-  id: string
-  productId: string
-  type: 'PERCENTAGE' | 'FIXED_AMOUNT'
-  value: number
-  startsAt: string
-  endsAt?: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export interface CreateProductDiscountInput {
-  productId: string
-  type: 'PERCENTAGE' | 'FIXED_AMOUNT'
-  value: number
-  startsAt: string
-  endsAt?: string
-}
-
-export interface UpdateProductDiscountInput extends Partial<CreateProductDiscountInput> {
-  id: string
-  isActive?: boolean
 }

@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
-  type CreateDiscountInput,
-  type Discount,
-  type DiscountFilters,
-  type UpdateDiscountInput,
-} from './types'
+  type CreateShopifyDiscountInput,
+  type UpdateShopifyDiscountInput,
+} from '@/modules/shopify/discounts'
+
+import { type DiscountFilters } from './types'
 
 export const PRODUCT_FRAGMENT = `
   fragment ProductFragment on Product {
@@ -495,35 +495,7 @@ export const GET_DISCOUNTS_QUERY = `
 }
 `
 
-export const GET_PRODUCT_DISCOUNTS_QUERY = `
-  query getProductDiscounts($productId: ID!) {
-    product(id: $productId) {
-      id
-      title
-      variants(first: 1) {
-        edges {
-          node {
-            id
-            price
-            compareAtPrice
-          }
-        }
-      }
-      metafields(first: 10, namespace: "discounts") {
-        edges {
-          node {
-            id
-            key
-            value
-            type
-          }
-        }
-      }
-    }
-  }
-`
-
-// Queries para cupones de descuento
+// Queries para cupones de descuento usando API routes
 export const useGetDiscounts = (filters?: DiscountFilters) => {
   return useQuery({
     queryFn: async () => {
@@ -533,11 +505,11 @@ export const useGetDiscounts = (filters?: DiscountFilters) => {
       if (filters?.appliesTo) params.append('appliesTo', filters.appliesTo)
       if (filters?.search) params.append('search', filters.search)
 
-      const response = await fetch(`/api/management/discounts?${params.toString()}`)
+      const response = await fetch(`/api/shopify/discounts?${params.toString()}`)
       if (!response.ok) {
         throw new Error('Error al obtener cupones')
       }
-      return response.json() as Promise<Discount[]>
+      return response.json()
     },
     queryKey: ['discounts', filters],
     staleTime: 5 * 60 * 1000, // 5 minutos
@@ -548,8 +520,8 @@ export const useCreateDiscount = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (discount: CreateDiscountInput) => {
-      const response = await fetch('/api/management/discounts', {
+    mutationFn: async (discount: CreateShopifyDiscountInput) => {
+      const response = await fetch('/api/shopify/discounts', {
         body: JSON.stringify(discount),
         headers: {
           'Content-Type': 'application/json',
@@ -559,10 +531,10 @@ export const useCreateDiscount = () => {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.message || 'Error al crear cupón')
+        throw new Error(error.error || 'Error al crear cupón')
       }
 
-      return response.json() as Promise<Discount>
+      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['discounts'] })
@@ -575,8 +547,9 @@ export const useUpdateDiscount = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (discount: UpdateDiscountInput) => {
-      const response = await fetch(`/api/management/discounts/${discount.id}`, {
+    mutationFn: async (discount: UpdateShopifyDiscountInput) => {
+      const encodedId = encodeURIComponent(discount.id)
+      const response = await fetch(`/api/shopify/discounts/${encodedId}`, {
         body: JSON.stringify(discount),
         headers: {
           'Content-Type': 'application/json',
@@ -586,10 +559,10 @@ export const useUpdateDiscount = () => {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.message || 'Error al actualizar cupón')
+        throw new Error(error.error || 'Error al actualizar cupón')
       }
 
-      return response.json() as Promise<Discount>
+      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['discounts'] })
@@ -603,16 +576,17 @@ export const useDeleteDiscount = () => {
 
   return useMutation({
     mutationFn: async (discountId: string) => {
-      const response = await fetch(`/api/management/discounts/${discountId}`, {
+      const encodedId = encodeURIComponent(discountId)
+      const response = await fetch(`/api/shopify/discounts/${encodedId}`, {
         method: 'DELETE',
       })
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.message || 'Error al eliminar cupón')
+        throw new Error(error.error || 'Error al eliminar cupón')
       }
 
-      return response.json() as Promise<{ success: boolean }>
+      return response.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['discounts'] })
