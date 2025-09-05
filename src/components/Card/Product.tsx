@@ -14,8 +14,8 @@ interface Props {
 }
 
 export const Product: React.FC<Props> = ({ product }) => {
-  const minPrice = product.priceRange.minVariantPrice
-  const maxPrice = product.priceRange.maxVariantPrice
+  const minPrice = product?.priceRange?.minVariantPrice ?? { amount: '0', currencyCode: 'MXN' }
+  const maxPrice = product?.priceRange?.maxVariantPrice ?? { amount: '0', currencyCode: 'MXN' }
   const hasVariations = minPrice.amount !== maxPrice.amount || product.variants.length > 1
 
   const variant = product.variants[ 0 ]
@@ -80,6 +80,8 @@ export const Product: React.FC<Props> = ({ product }) => {
                 alt={product.images[ 0 ].altText ?? product.title}
                 className='size-full object-cover transition-all duration-500 group-focus-within:scale-105 group-hover:scale-110'
                 loading='lazy'
+                decoding='async'
+                fetchPriority='low'
                 style={{
                   viewTransitionName: `product-image-${product.id}`,
                 }}

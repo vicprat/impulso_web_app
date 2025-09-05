@@ -58,7 +58,6 @@ export const BlogCard: React.FC<Props> = ({ post }) => {
     <Card
       className='focus-within:ring-primary/20 group relative overflow-hidden border bg-card shadow-elevation-1 transition-all duration-300 focus-within:shadow-elevation-4 focus-within:ring-2 hover:shadow-elevation-3'
       style={{
-        viewTransitionName: `blog-post-${post.id}`,
       }}
     >
       <div className='absolute inset-x-3 top-3 z-20 flex items-start justify-between'>
@@ -86,7 +85,6 @@ export const BlogCard: React.FC<Props> = ({ post }) => {
                 alt={post.title}
                 className='size-full object-cover transition-all duration-500 group-focus-within:scale-105 group-hover:scale-110'
                 loading='lazy'
-                style={{ viewTransitionName: `blog-image-${post.id}` }}
               />
               <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
             </>

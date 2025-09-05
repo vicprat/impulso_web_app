@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
+import { motion, useSpring, useTransform } from 'framer-motion'
 import { ArrowDown, Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { FloatingParticles } from '@/components/Animations'
 import { Button } from '@/components/ui/button'
 import { useMouseTracking } from '@/hooks/useMouseTracking'
+
+const FloatingParticles = lazy(() => import('@/components/Animations').then(module => ({ default: module.FloatingParticles })))
 
 interface YTPlayerEvent {
   target: any
@@ -33,7 +34,7 @@ const generateParticlePositions = (count: number) => {
   }))
 }
 
-export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' }) => {
+export const Hero: React.FC<Props> = ({ videoId = 'j5RAiTZ-w6E' }) => {
   const playerRef = useRef<any>(null)
   const containerRef = useRef<HTMLElement | null>(null)
   const [ isPlaying, setIsPlaying ] = useState(false)
@@ -43,21 +44,19 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   const [ showControls, setShowControls ] = useState(false)
   const [ isTabletOrMobile, setIsTabletOrMobile ] = useState(false)
   const [ isClient, setIsClient ] = useState(false)
+  const isInViewRef = useRef(isInView)
 
   const { setTheme, theme } = useTheme()
   const userPreferredThemeRef = useRef<string | undefined>(undefined)
 
-  const particlePositions = useMemo(() => generateParticlePositions(20), [])
+  const particlePositions = useMemo(() => generateParticlePositions(10), [])
 
   const { mousePosition } = useMouseTracking(containerRef as React.RefObject<HTMLElement>)
 
   const VIDEO_START = 10
   const VIDEO_END = 48
 
-  const { scrollY } = useScroll()
-  const y = useTransform(scrollY, [ 0, 1000 ], [ 0, -300 ])
-  const opacity = useTransform(scrollY, [ 0, 500 ], [ 1, 0 ])
-  const scale = useTransform(scrollY, [ 0, 500 ], [ 1, 1.1 ])
+
 
   const springConfig = { damping: 30, restDelta: 0.001, stiffness: 100 }
   const mouseX = useSpring(mousePosition.x, springConfig)
@@ -66,6 +65,10 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   useEffect(() => {
     setIsClient(true)
   }, [])
+
+  useEffect(() => {
+    isInViewRef.current = isInView
+  }, [ isInView ])
 
   useEffect(() => {
     const checkIsTabletOrMobile = () => {
@@ -81,86 +84,84 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   const initializePlayer = useCallback(() => {
     if (playerRef.current || !document.getElementById('enhanced-youtube-player')) return
 
-    try {
-      const YT = (window as any).YT
-      playerRef.current = new YT.Player('enhanced-youtube-player', {
-        events: {
-          onReady: (event: YTReadyEvent) => {
-            try {
-              setIsLoaded(true)
-              event.target.mute()
-              setIsMuted(true)
-              setTimeout(() => {
-                if (isInView && playerRef.current) {
-                  event.target.playVideo()
-                }
-              }, 1000)
-            } catch (error) {
-              console.warn('Error in onReady:', error)
+    const YT = (window as any).YT
+    playerRef.current = new YT.Player('enhanced-youtube-player', {
+      events: {
+        onReady: (event: YTReadyEvent) => {
+          setIsLoaded(true)
+          event.target.mute()
+          setIsMuted(true)
+          setTimeout(() => {
+            if (isInViewRef.current && playerRef.current) {
+              event.target.playVideo()
             }
-          },
-          onStateChange: (event: YTPlayerEvent) => {
-            try {
-              const YT = (window as any).YT
-              if (event.data === YT.PlayerState.PLAYING) {
-                setIsPlaying(true)
-              } else if (event.data === YT.PlayerState.PAUSED) {
-                setIsPlaying(false)
-              } else if (event.data === YT.PlayerState.ENDED) {
-                event.target.seekTo(VIDEO_START)
-                event.target.playVideo()
-              } else if (event.data === YT.PlayerState.BUFFERING) {
-                setIsPlaying(true)
-              }
-            } catch (error) {
-              console.warn('Error in onStateChange:', error)
-            }
-          },
+          }, 1000)
         },
-        height: '100%',
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          disablekb: 1,
-          enablejsapi: 1,
-          end: VIDEO_END,
-          fs: 0,
-          iv_load_policy: 3,
-          loop: 1,
-          modestbranding: 1,
-          mute: 1,
-          playsinline: 1,
-          rel: 0,
-          showinfo: 0,
-          start: VIDEO_START,
-          wmode: 'opaque',
+        onStateChange: (event: YTPlayerEvent) => {
+          const YT = (window as any).YT
+          if (event.data === YT.PlayerState.PLAYING) {
+            setIsPlaying(true)
+          } else if (event.data === YT.PlayerState.PAUSED) {
+            setIsPlaying(false)
+          } else if (event.data === YT.PlayerState.ENDED) {
+            event.target.seekTo(VIDEO_START)
+            event.target.playVideo()
+          } else if (event.data === YT.PlayerState.BUFFERING) {
+            setIsPlaying(true)
+          }
         },
-        videoId,
-        width: '100%',
-      })
-    } catch (error) {
-      console.error('Error initializing YouTube player:', error)
-    }
-  }, [ videoId, isInView ])
+      },
+      height: '100%',
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        disablekb: 1,
+        enablejsapi: 1,
+        end: VIDEO_END,
+        fs: 0,
+        iv_load_policy: 3,
+        loop: 1,
+        modestbranding: 1,
+        mute: 1,
+        playsinline: 1,
+        rel: 0,
+        showinfo: 0,
+        start: VIDEO_START,
+        wmode: 'opaque',
+      },
+      videoId,
+      width: '100%',
+    })
+  }, [ videoId, setIsLoaded, setIsMuted, setIsPlaying ])
 
   useEffect(() => {
-    const YT = (window as any).YT
-    if (!YT) {
-      const script = document.createElement('script')
-      script.src = 'https://www.youtube.com/iframe_api'
-      script.async = true
-      document.body.appendChild(script)
-        ; (window as any).onYouTubeIframeAPIReady = () => {
-          initializePlayer()
+    const initialize = () => {
+      if (document.getElementById('enhanced-youtube-player')) {
+        initializePlayer()
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      if ((window as any).YT?.Player) {
+        initialize()
+      } else {
+        (window as any).onYouTubeIframeAPIReady = initialize
+        if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+          const script = document.createElement('script')
+          script.src = 'https://www.youtube.com/iframe_api'
+          script.async = true
+          document.body.appendChild(script)
         }
-    } else {
-      initializePlayer()
+      }
     }
 
     return () => {
       if (playerRef.current && typeof playerRef.current.destroy === 'function') {
         playerRef.current.destroy()
         playerRef.current = null
+      }
+      if (typeof window !== 'undefined') {
+        (window as any).onYouTubeIframeAPIReady = undefined
       }
     }
   }, [ initializePlayer ])
@@ -237,6 +238,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
     let interval: NodeJS.Timeout
 
     if (playerRef.current && isLoaded) {
+      // Aumentar intervalo para reducir carga del hilo principal
       interval = setInterval(() => {
         try {
           if (
@@ -261,7 +263,7 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
         } catch (error) {
           console.warn('YouTube player not ready yet:', error)
         }
-      }, 250)
+      }, 500) // Reducir frecuencia de 250ms a 500ms
     }
 
     return () => {
@@ -315,12 +317,11 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
   return (
     <motion.section
       ref={containerRef}
-      style={{ opacity, y }}
       className={`relative ${isTabletOrMobile ? 'min-h-screen' : 'min-h-[90vh]'} overflow-hidden bg-black`}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
     >
-      <motion.div style={{ scale }} className='absolute inset-0 size-full'>
+      <motion.div className='absolute inset-0 size-full'>
         <motion.div
           style={{
             x: useTransform(mouseX, [ -1, 1 ], [ -20, 20 ]),
@@ -392,14 +393,16 @@ export const Hero: React.FC<Props> = ({ className = '', videoId = 'j5RAiTZ-w6E' 
           ))}
       </div>
 
-      <FloatingParticles
-        config={{
-          color: 'bg-white/30',
-          count: 150,
-          maxDuration: 8,
-          minDuration: 2,
-        }}
-      />
+      <Suspense fallback={null}>
+        <FloatingParticles
+          config={{
+            color: 'bg-white/30',
+            count: 50, // Reducir partículas para mejor rendimiento
+            maxDuration: 6,
+            minDuration: 2,
+          }}
+        />
+      </Suspense>
 
       <div
         className={`absolute inset-0 flex flex-col ${isTabletOrMobile

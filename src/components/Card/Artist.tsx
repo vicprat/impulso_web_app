@@ -184,7 +184,6 @@ export const Artist: React.FC<ArtistProps> = ({
                     className='size-full object-cover'
                     loading='lazy'
                     style={{
-                      viewTransitionName: `artist-avatar-${artist.id}`,
                     }}
                   />
                 ) : (

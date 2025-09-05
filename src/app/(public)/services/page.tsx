@@ -126,6 +126,8 @@ const ServiceCard = ({ index, service }: { service: Service; index: number }) =>
               alt={service.title}
               className="size-full object-cover transition-transform duration-700 group-hover:scale-110"
               loading="lazy"
+              decoding="async"
+              fetchPriority="low"
             />
             {/* Overlay para mejorar contraste */}
             <div className="absolute inset-0 bg-black/40 transition-opacity duration-500 group-hover:bg-black/30" />

@@ -113,6 +113,9 @@
     --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
 
+    /* Font display optimization */
+    font-display: swap;
+
     /* === Spacing & Layout === */
     --radius: 0.5rem;
     --radius-sm: calc(var(--radius) - 2px);
@@ -139,6 +142,21 @@
     --tracking-wide: 0.025em;
     --tracking-wider: 0.05em;
     --tracking-widest: 0.1em;
+  }
+
+  /* Optimizaciones de rendimiento */
+  img {
+    content-visibility: auto;
+    contain-intrinsic-size: 300px;
+  }
+
+  /* Prevenir layout shifts */
+  .aspect-square {
+    aspect-ratio: 1 / 1;
+  }
+
+  .aspect-video {
+    aspect-ratio: 16 / 9;
   }
 
   .dark {

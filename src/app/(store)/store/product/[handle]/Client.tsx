@@ -18,7 +18,7 @@ import {
   ZoomIn
 } from 'lucide-react'
 import Link from 'next/link'
-import { useCallback, useEffect, useState, unstable_ViewTransition as ViewTransition } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { AddToCartButton } from '@/components/Cart/AddToCartButton'
 import { Badge } from '@/components/ui/badge'
@@ -139,14 +139,14 @@ const adaptProductForCart = (product: ProductData): IProductForCart => ({
   id: product.id,
   images: product.images,
   // No tenemos esta info en el modelo Product
-priceRange: {
+  priceRange: {
     maxVariantPrice: product.primaryVariant?.price || { amount: '0', currencyCode: 'MXN' },
     minVariantPrice: product.primaryVariant?.price || { amount: '0', currencyCode: 'MXN' },
   },
-  
-title: product.title,
-  
-variants: product.variants, 
+
+  title: product.title,
+
+  variants: product.variants,
   vendor: product.vendor,
 })
 
@@ -196,7 +196,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
       )
       : null
 
-  const transitionName = `product-image-${product.id}`
 
   useEffect(() => {
     if (product.variants.length > 0 && !state.variant) {
@@ -270,15 +269,12 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
             {product.images.length > 0 ? (
               <div className='space-y-4'>
                 <div className='group relative aspect-square cursor-pointer overflow-hidden rounded-2xl bg-muted shadow-lg'>
-                  <ViewTransition name={transitionName}>
-                    <img
-                      src={product.images[ state.image ]?.url}
-                      alt={product.images[ state.image ]?.altText ?? product.title}
-                      className='size-full object-cover transition-transform duration-500 hover:scale-105'
-                      style={{ viewTransitionName: transitionName }}
-                      onClick={() => openLightbox(state.image)}
-                    />
-                  </ViewTransition>
+                  <img
+                    src={product.images[ state.image ]?.url}
+                    alt={product.images[ state.image ]?.altText ?? product.title}
+                    className='size-full object-cover transition-transform duration-500 hover:scale-105'
+                    onClick={() => openLightbox(state.image)}
+                  />
 
                   <div
                     className='absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100'

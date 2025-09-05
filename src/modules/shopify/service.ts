@@ -70,6 +70,67 @@ export const getPrivateRoomByUserId = async (userId: string) => {
 }
 
 export const shopifyService = {
+  getPublicEvents: async (params: ProductSearchParams = {}): Promise<any[]> => {
+    // Construir filtros específicos para eventos
+    const eventParams = {
+      ...params,
+      filters: {
+        ...params.filters,
+        query: "product_type:'Evento' OR product_type:'Event' OR product_type:'Events'",
+      },
+    }
+
+    const [allProductsResponse, privateProductIds] = await Promise.all([
+      api.getProducts(eventParams),
+      getPrivateProductIds(),
+    ])
+
+    // Filtrar solo eventos públicos
+    const eventProducts = allProductsResponse.data.products.filter(
+      (product: Product) => !privateProductIds.includes(product.id)
+    )
+
+    // Retornar objetos con estructura de Event (serializables para Server Components)
+    const events = eventProducts.map((product: Product) => {
+      // Adaptar Product a estructura de Event
+      return {
+        createdAt: product.createdAt,
+        descriptionHtml: product.descriptionHtml,
+        eventDetails: {
+          date: null,
+          endTime: null,
+          location: null,
+          organizer: null,
+          startTime: null,
+        },
+        handle: product.handle,
+        id: product.id,
+        images: product.images,
+        primaryLocationId: 'gid://shopify/Location/123456789',
+        productType: product.productType,
+        status: product.status ?? 'ACTIVE',
+        tags: product.tags ?? [],
+        title: product.title,
+        updatedAt: product.updatedAt,
+        variants: product.variants.map((variant) => ({
+          availableForSale: variant.availableForSale,
+          compareAtPrice: variant.compareAtPrice,
+          id: variant.id,
+          inventoryManagement: null,
+          inventoryPolicy: 'DENY' as const,
+          inventoryQuantity: null,
+          price: variant.price,
+          selectedOptions: variant.selectedOptions,
+          sku: variant.sku,
+          title: variant.title,
+        })),
+        vendor: product.vendor,
+      }
+    })
+
+    return events
+  },
+
   getPublicProducts: async (params: ProductSearchParams = {}): Promise<ProductsResponse> => {
     const [allProductsResponse, privateProductIds] = await Promise.all([
       api.getProducts(params),
