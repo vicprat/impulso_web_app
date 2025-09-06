@@ -86,10 +86,10 @@ interface EnrichedEvent {
 }
 
 const AccordionCard = ({
-  title,
   children,
   isExpanded,
   onToggle,
+  title,
   totalItems,
   visibleItems,
 }: {
@@ -237,15 +237,15 @@ export const Artist = () => {
   if (!data) return <div className='p-8 text-center'>No hay datos disponibles</div>
 
   const {
-    user,
-    artistProducts,
-    artistMetrics,
     artistEvents,
+    artistMetrics,
+    artistProducts,
     artistProductsByCategory,
-    artistProductsByMedium,
-    artistProductsByYear,
     artistProductsByLocation,
+    artistProductsByMedium,
     artistProductsBySerie,
+    artistProductsByYear,
+    user,
   } = data
 
   const currentArtist = user?.name || 'Artista'
@@ -300,9 +300,9 @@ export const Artist = () => {
                   data={Object.entries(artistProductsByCategory)
                     .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
                     .map(([ category, count ], index) => ({
+                      color: `hsl(${(index * 137.5) % 360}, 70%, 50%)`,
                       name: category,
-                      value: count,
-                      color: `hsl(${(index * 137.5) % 360}, 70%, 50%)`
+                      value: count
                     }))}
                   cx='50%'
                   cy='50%'
@@ -332,9 +332,9 @@ export const Artist = () => {
                 data={Object.entries(artistProductsByMedium)
                   .filter(([ medium ]) => medium !== 'Sin medio especificado')
                   .map(([ medium, count ]) => ({
+                    color: `hsl(${Math.random() * 360}, 70%, 50%)`,
                     name: medium,
-                    value: count,
-                    color: `hsl(${Math.random() * 360}, 70%, 50%)`
+                    value: count
                   }))}>
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='name' angle={-45} textAnchor='end' height={80} />
@@ -359,9 +359,9 @@ export const Artist = () => {
                   .filter(([ year ]) => year !== 'Sin año especificado')
                   .sort(([ a ], [ b ]) => parseInt(a as string) - parseInt(b as string))
                   .map(([ year, count ]) => ({
+                    color: `hsl(${Math.random() * 360}, 70%, 50%)`,
                     name: year,
-                    value: count,
-                    color: `hsl(${Math.random() * 360}, 70%, 50%)`
+                    value: count
                   }))}>
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='name' />

@@ -37,7 +37,7 @@ interface Props {
   } | null
 }
 
-export const Profile: React.FC<Props> = ({ isLoading, onSave, profile, compact = false }) => {
+export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, profile }) => {
   const [ formData, setFormData ] = useState<ProfileFormData>({
     avatarUrl: null,
     backgroundImageUrl: null,

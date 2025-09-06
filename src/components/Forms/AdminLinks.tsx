@@ -159,17 +159,17 @@ interface AdminLinksProps {
 }
 
 export const AdminLinks = ({
-  userId,
-  links,
-  isLoading,
   isCreating,
-  isUpdating,
   isDeleting,
+  isLoading,
+  isUpdating,
   isUpdatingOrder,
+  links,
   onCreateLink,
-  onUpdateLink,
   onDeleteLink,
+  onUpdateLink,
   onUpdateLinksOrder,
+  userId,
 }: AdminLinksProps) => {
   const [ newLinkUrl, setNewLinkUrl ] = useState('')
   const [ selectedPlatform, setSelectedPlatform ] = useState(PLATFORMS[ 0 ].id)

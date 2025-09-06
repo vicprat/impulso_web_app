@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     await requirePermission(PERMISSIONS.MANAGE_USERS)
 
     const body = await request.json()
-    const { vendorName, targetUserId } = body as { vendorName?: string; targetUserId?: string }
+    const { targetUserId, vendorName } = body as { vendorName?: string; targetUserId?: string }
 
     if (!vendorName || !targetUserId) {
       return NextResponse.json({ error: 'Faltan vendorName y targetUserId' }, { status: 400 })

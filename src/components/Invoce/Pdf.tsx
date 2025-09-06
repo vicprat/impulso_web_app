@@ -77,8 +77,8 @@ const pdfStyles = StyleSheet.create({
     width: 180
   },
   logoSection: {
-    flexDirection: 'column',
     alignItems: 'flex-start',
+    flexDirection: 'column',
   },
   logoSubtitle: {
     color: '#6b7280',

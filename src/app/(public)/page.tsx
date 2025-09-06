@@ -1,17 +1,15 @@
-
+import { BookOpen, DollarSign, Frame, Image, Printer, TrendingUp } from 'lucide-react'
 import { Suspense } from 'react'
 
-import { ArtistSkeleton, ArtistsSection } from '@/components/HomePageContent/ArtistsSection'
-import { Blog, BlogSkeleton } from '@/components/HomePageContent/BlogSection'
-import { Events } from '@/components/HomePageContent/EventsSection'
-import { EventsLoader } from '@/components/HomePageContent/Loaders/EventsLoader'
-import { ProductsLoader } from '@/components/HomePageContent/Loaders/ProductsLoader'
-import { ProductsSection } from '@/components/HomePageContent/ProductsSection'
 import { Landing } from '@/components/Landing'
-import { Membership } from '@/components/Membership'
-import { Services } from '@/components/Services'
-import { getBlogPosts, getPublicArtists, getPublicEvents, getPublicProducts } from '@/lib/landing-data'
+import {
+  getBlogPosts,
+  getPublicArtists,
+  getPublicEvents,
+  getPublicProducts,
+} from '@/lib/landing-data'
 import { routeMetadata } from '@/lib/metadata'
+import { Membership } from '@/src/components/Landing/Membership/Membership'
 import { ROUTES } from '@/src/config/routes'
 
 import type { Metadata } from 'next'
@@ -61,8 +59,88 @@ const slides: Slide[] = [
   },
 ]
 
-export default async function Page() {
+export interface Service {
+  id: string
+  title: string
+  description: string
+  icon: React.ComponentType<{ className?: string }>
+  features?: string[]
+  highlighted?: boolean
+}
 
+const services: Service[] = [
+  {
+    description:
+      'Desarrollamos artistas a través de la venta de obra original y gráfica con asesoría especializada.',
+    features: [ 'Obra original', 'Gráfica limitada', 'Asesoría de ventas', 'Promoción de artistas' ],
+    highlighted: true,
+    icon: DollarSign,
+    id: '1',
+    title: 'Venta de Obra Original',
+  },
+  {
+    description:
+      'Mantenemos altos estándares de calidad para la conservación profesional de obras de arte.',
+    features: [ 'Marcos personalizados', 'Conservación', 'Cristales UV', 'Montaje profesional' ],
+    icon: Frame,
+    id: '2',
+    title: 'Enmarcado Profesional',
+  },
+  {
+    description:
+      'Equipos de alta calidad para reproducciones de arte con variedad de papeles premium.',
+    features: [ 'Impresión Giclée', 'Papeles de arte', 'Ediciones limitadas', 'Control de calidad' ],
+    icon: Printer,
+    id: '3',
+    title: 'Estudio de Impresión',
+  },
+  {
+    description:
+      'El arte como inversión mantiene su valor y se comporta diferente a otros activos financieros.',
+    features: [ 'Asesoría especializada', 'Valuación', 'Portafolio de arte', 'Análisis de mercado' ],
+    highlighted: true,
+    icon: TrendingUp,
+    id: '4',
+    title: 'Inversión en Arte',
+  },
+  {
+    description: 'Facilita el colgado de cuadros con una gama completa de sistemas profesionales.',
+    features: [ 'Sistemas modulares', 'Hardware profesional', 'Instalación', 'Mantenimiento' ],
+    icon: Image,
+    id: '5',
+    title: 'Sistema de Colgajes',
+  },
+  {
+    description:
+      'Impresión especializada de revistas, folletos, catálogos y libros de arte de alta calidad.',
+    features: [
+      'Catálogos de arte',
+      'Libros especializados',
+      'Diseño editorial',
+      'Acabados premium',
+    ],
+    icon: BookOpen,
+    id: '6',
+    title: 'Fabricación de Catálogos',
+  },
+]
+
+export interface Benefit {
+  id: string
+  text: string
+}
+
+const benefits: Benefit[] = [
+  { id: '1', text: 'Venta de obras' },
+  { id: '2', text: 'Impresión digital para reproducciones giclée' },
+  { id: '3', text: 'Exposición internacional' },
+  { id: '4', text: 'Publicidad' },
+  { id: '5', text: 'Pagos seguros' },
+  { id: '6', text: 'Sin exclusividad' },
+  { id: '7', text: 'Nos encargamos de generar tus guías de envío' },
+]
+
+export default async function Page() {
   const events = await getPublicEvents()
   const blogPosts = await getBlogPosts()
   const artists = await getPublicArtists()
@@ -70,51 +148,49 @@ export default async function Page() {
 
   return (
     <main className='overflow-hidden bg-surface'>
-      <Landing.Hero videoId='j5RAiTZ-w6E' />
+      {/* <Landing.Hero videoId='j5RAiTZ-w6E' /> */}
 
       <Landing.Carousel slides={slides} />
 
       <Landing.Section
-        icon="Sparkles"
+        icon='Sparkles'
         title='Últimos Artículos'
         subtitle='Explora las historias más recientes del mundo del arte y nuestra comunidad creativa'
         actionText='Ver todo el Blog'
         actionHref={ROUTES.PUBLIC.POSTS.DYNAMIC.MAIN.PATH.replace(':postType', 'blog')}
         paddingY='py-12 lg:py-16'
       >
-        <Suspense fallback={Array.from({ length: 4 }).map((_, i) => (
-          <div key={i}>
-            <BlogSkeleton />
-          </div>
-        ))}>
-          <Blog blogData={blogPosts} />
+        <Suspense fallback={<Landing.Blog.Loader />}>
+          <Landing.Blog.Main data={blogPosts} />
         </Suspense>
       </Landing.Section>
 
       <Landing.Section
-        icon="Settings"
+        icon='Settings'
         title='Nuestros Servicios'
         subtitle='Ofrecemos una gama completa de servicios especializados para el mundo del arte, desde la venta de obra original hasta servicios técnicos de alta calidad'
         actionText='Ver Todos los Servicios'
         actionHref={ROUTES.STORE.SERVICES.PATH}
       >
-        <Services />
+        <Suspense fallback={<Landing.Services.Loader />}>
+          <Landing.Services.Main data={services} />
+        </Suspense>
       </Landing.Section>
 
       <Landing.Section
-        icon="Calendar"
+        icon='Calendar'
         title='Próximos Eventos'
         subtitle='Sumérgete en experiencias artísticas únicas que transformarán tu perspectiva del arte'
         actionText='Ver Todos los Eventos'
         actionHref={ROUTES.STORE.EVENTS.PATH}
       >
-        <Suspense fallback={<EventsLoader />}>
-          <Events events={events} />
+        <Suspense fallback={<Landing.Events.Loader />}>
+          <Landing.Events.Main data={events} />
         </Suspense>
       </Landing.Section>
 
       <Landing.Section
-        icon="Crown"
+        icon='Crown'
         title='Vende tus obras'
         subtitle='Adquiere un plan de membresía y disfruta de los grandes beneficios de vender tu arte con nosotros'
         actionText='Más información'
@@ -122,35 +198,31 @@ export default async function Page() {
         paddingY='py-20'
         containerClassName='container relative z-10 mx-auto px-6'
       >
-        <Membership />
+        <Membership data={benefits} />
       </Landing.Section>
 
       <Landing.Section
-        icon="Users"
+        icon='Users'
         title='Artistas Destacados'
         subtitle='Conoce el talento excepcional de nuestra comunidad de artistas emergentes y consagrados'
         actionText='Ver Todos los Artistas'
         actionHref={ROUTES.PUBLIC.ARTISTS.PATH}
         wrapperElement='section'
       >
-        <Suspense fallback={Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} >
-            <ArtistSkeleton />
-          </div>
-        ))}>
-          <ArtistsSection artists={artists} />
+        <Suspense fallback={<Landing.Artists.Loader />}>
+          <Landing.Artists.Main data={artists} />
         </Suspense>
       </Landing.Section>
 
       <Landing.Section
-        icon="Palette"
+        icon='Palette'
         title='Obras Seleccionadas'
         subtitle='Descubre piezas únicas cuidadosamente curadas que capturan la esencia del arte contemporáneo'
         actionText='Explorar Galería'
         actionHref={ROUTES.STORE.MAIN.PATH}
       >
-        <Suspense fallback={<ProductsLoader />}>
-          <ProductsSection products={products} />
+        <Suspense fallback={<Landing.Products.Loader />}>
+          <Landing.Products.Main data={products} />
         </Suspense>
       </Landing.Section>
     </main>

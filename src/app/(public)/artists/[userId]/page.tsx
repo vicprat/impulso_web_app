@@ -8,9 +8,9 @@ import { useParams } from 'next/navigation'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { postgresUserApi } from '@/modules/user/api'
+import { Carousel } from '@/src/components/Landing/Products/Carousel'
 import { PLATFORMS } from '@/src/config/platforms'
 
-import { ProductCarousel } from '@/src/components/ProductCarousel'
 import type { Link as LinkType } from '@/types/user'
 
 export const dynamic = 'force-dynamic'
@@ -33,7 +33,7 @@ export default function Page() {
     return (
       <div className='flex h-screen items-center justify-center bg-surface'>
         <div className='text-center'>
-          <div className='mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent'></div>
+          <div className='mx-auto size-8 animate-spin rounded-full border-4 border-primary border-t-transparent'></div>
         </div>
       </div>
     )
@@ -42,12 +42,14 @@ export default function Page() {
   if (isError || !userProfile) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-surface p-4'>
-        <div className='w-full max-w-md glass-card rounded-3xl p-8 text-center'>
-          <div className='mx-auto mb-6 h-16 w-16 rounded-full bg-error flex items-center justify-center'>
+        <div className='glass-card w-full max-w-md rounded-3xl p-8 text-center'>
+          <div className='mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-error'>
             <span className='text-2xl'></span>
           </div>
-          <h2 className='text-2xl font-bold text-on-error-container mb-3'>Perfil no encontrado</h2>
-          <p className='text-on-error-container/80'>El perfil solicitado no existe o no es público.</p>
+          <h2 className='mb-3 text-2xl font-bold text-on-error-container'>Perfil no encontrado</h2>
+          <p className='text-on-error-container/80'>
+            El perfil solicitado no existe o no es público.
+          </p>
         </div>
       </div>
     )
@@ -82,58 +84,56 @@ export default function Page() {
         glowColor: 'text-chart-1',
         iconBgClass: 'bg-chart-1',
         iconColorClass: 'text-on-primary',
-        linkClasses:
-          'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
-      },
-      instagram: {
-        glowColor: 'text-chart-3',
-        iconBgClass: 'bg-gradient-to-r from-chart-2 via-chart-3 to-warning',
-        iconColorClass: 'text-on-primary',
-        linkClasses:
-          'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
-      },
-      linkedin: {
-        glowColor: 'text-chart-1',
-        iconBgClass: 'bg-chart-1',
-        iconColorClass: 'text-on-primary',
-        linkClasses:
-          'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
-      },
-      github: {
-        glowColor: 'text-on-surface-variant',
-        iconBgClass: 'bg-surface-container-highest',
-        iconColorClass: 'text-on-surface',
-        linkClasses:
-          'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
-      },
-      twitter: {
-        glowColor: 'text-on-surface-variant',
-        iconBgClass: 'bg-surface-container-highest',
-        iconColorClass: 'text-on-surface',
-        linkClasses:
-          'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
-      },
-      youtube: {
-        glowColor: 'text-error',
-        iconBgClass: 'bg-error',
-        iconColorClass: 'text-on-error',
-        linkClasses:
-          'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
-      },
-      website: {
-        glowColor: 'text-on-surface-variant',
-        iconBgClass: 'bg-surface-container-high',
-        iconColorClass: 'text-on-surface',
-        linkClasses:
-          'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
+        linkClasses: 'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
       },
       // Agrega más plataformas según necesites...
       custom: {
         glowColor: 'text-on-surface-variant',
         iconBgClass: 'bg-surface-container-high',
         iconColorClass: 'text-on-surface',
-        linkClasses:
-          'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
+        linkClasses: 'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
+      },
+
+      github: {
+        glowColor: 'text-on-surface-variant',
+        iconBgClass: 'bg-surface-container-highest',
+        iconColorClass: 'text-on-surface',
+        linkClasses: 'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
+      },
+
+      instagram: {
+        glowColor: 'text-chart-3',
+        iconBgClass: 'bg-gradient-to-r from-chart-2 via-chart-3 to-warning',
+        iconColorClass: 'text-on-primary',
+        linkClasses: 'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
+      },
+
+      linkedin: {
+        glowColor: 'text-chart-1',
+        iconBgClass: 'bg-chart-1',
+        iconColorClass: 'text-on-primary',
+        linkClasses: 'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
+      },
+
+      twitter: {
+        glowColor: 'text-on-surface-variant',
+        iconBgClass: 'bg-surface-container-highest',
+        iconColorClass: 'text-on-surface',
+        linkClasses: 'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
+      },
+
+      website: {
+        glowColor: 'text-on-surface-variant',
+        iconBgClass: 'bg-surface-container-high',
+        iconColorClass: 'text-on-surface',
+        linkClasses: 'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
+      },
+
+      youtube: {
+        glowColor: 'text-error',
+        iconBgClass: 'bg-error',
+        iconColorClass: 'text-on-error',
+        linkClasses: 'bg-surface-container-low/50 hover:bg-surface-container/70 backdrop-blur-sm',
       },
     }
     return styles[ platformId.toLowerCase() ] || styles.custom
@@ -143,12 +143,19 @@ export default function Page() {
     <>
       <style jsx global>{`
         @keyframes glow-pulse {
-          0%, 100% {
-            box-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor;
+          0%,
+          100% {
+            box-shadow:
+              0 0 5px currentColor,
+              0 0 10px currentColor,
+              0 0 15px currentColor;
             opacity: 0.8;
           }
           50% {
-            box-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+            box-shadow:
+              0 0 10px currentColor,
+              0 0 20px currentColor,
+              0 0 30px currentColor;
             opacity: 1;
           }
         }
@@ -165,9 +172,13 @@ export default function Page() {
           border-radius: inherit;
           padding: 2px;
           background: linear-gradient(45deg, currentColor, transparent, currentColor);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
           -webkit-mask-composite: exclude;
-          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
           mask-composite: exclude;
           animation: glow-pulse 2s ease-in-out infinite;
           pointer-events: none;
@@ -214,22 +225,22 @@ export default function Page() {
             )}
 
             {/* Subtle overlay only at the bottom for text readability */}
-            <div className='absolute inset-0 bg-gradient-to-t from-surface/30 via-transparent to-transparent lg:from-surface/20'></div>
+            <div className='from-surface/30 lg:from-surface/20 absolute inset-0 bg-gradient-to-t via-transparent to-transparent'></div>
           </div>
 
           {/* Profile Content - Layout híbrido mejorado */}
-          <div className='relative -mt-20 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 lg:-mt-24'>
-            <div className='mx-auto max-w-7xl xl:max-w-none 2xl:max-w-8xl'>
+          <div className='relative -mt-20 px-4 sm:px-6 lg:-mt-24 lg:px-8 xl:px-12 2xl:px-16'>
+            <div className='2xl:max-w-8xl mx-auto max-w-7xl xl:max-w-none'>
               {/* Desktop Layout - Mejorado */}
               <div className='hidden lg:block'>
                 <div className='flex items-start space-x-8 xl:space-x-12 2xl:space-x-16'>
                   {/* Avatar */}
-                  <div className='flex-shrink-0'>
+                  <div className='shrink-0'>
                     <Avatar className='size-32 border-4 border-surface shadow-elevation-4 xl:size-40 2xl:size-48'>
                       {userProfile.profile?.avatarUrl ? (
                         <AvatarImage src={userProfile.profile.avatarUrl} alt='Avatar' />
                       ) : (
-                        <AvatarFallback className='text-4xl font-bold xl:text-5xl 2xl:text-6xl bg-primary-container text-on-primary-container'>
+                        <AvatarFallback className='bg-primary-container text-4xl font-bold text-on-primary-container xl:text-5xl 2xl:text-6xl'>
                           {userProfile.firstName.charAt(0).toUpperCase()}{' '}
                           {userProfile.lastName.charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -238,14 +249,14 @@ export default function Page() {
                   </div>
 
                   {/* Profile Info - Expandido para usar más espacio */}
-                  <div className='flex-1 max-w-2xl xl:max-w-3xl 2xl:max-w-4xl'>
-                    <div className='bg-surface-container rounded-3xl p-6 xl:p-8 2xl:p-10'>
+                  <div className='max-w-2xl flex-1 xl:max-w-3xl 2xl:max-w-4xl'>
+                    <div className='rounded-3xl bg-surface-container p-6 xl:p-8 2xl:p-10'>
                       <h1 className='text-3xl font-bold text-on-surface xl:text-4xl 2xl:text-5xl'>
                         {userProfile.firstName} {userProfile.lastName}
                       </h1>
 
                       {userProfile.artist?.name && (
-                        <p className='mt-2 text-base text-primary font-medium xl:text-lg 2xl:text-xl'>
+                        <p className='mt-2 text-base font-medium text-primary xl:text-lg 2xl:text-xl'>
                           Artista: {userProfile.artist.name}
                         </p>
                       )}
@@ -258,7 +269,9 @@ export default function Page() {
 
                       <div className='mt-4 flex items-center text-on-surface-variant'>
                         <Mail className='mr-2 size-4 xl:size-5' />
-                        <span className='text-sm xl:text-base 2xl:text-lg'>{userProfile.email}</span>
+                        <span className='text-sm xl:text-base 2xl:text-lg'>
+                          {userProfile.email}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -272,20 +285,20 @@ export default function Page() {
                     {userProfile.profile?.avatarUrl ? (
                       <AvatarImage src={userProfile.profile.avatarUrl} alt='Avatar' />
                     ) : (
-                      <AvatarFallback className='text-3xl font-bold sm:text-4xl bg-primary-container text-on-primary-container'>
+                      <AvatarFallback className='bg-primary-container text-3xl font-bold text-on-primary-container sm:text-4xl'>
                         {userProfile.firstName.charAt(0).toUpperCase()}{' '}
                         {userProfile.lastName.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     )}
                   </Avatar>
 
-                  <div className='mt-6 glass-hero rounded-3xl p-6 sm:p-8'>
+                  <div className='glass-hero mt-6 rounded-3xl p-6 sm:p-8'>
                     <h1 className='text-3xl font-bold text-on-surface sm:text-4xl'>
                       {userProfile.firstName} {userProfile.lastName}
                     </h1>
 
                     {userProfile.artist?.name && (
-                      <p className='mt-3 text-primary font-medium sm:text-lg'>
+                      <p className='mt-3 font-medium text-primary sm:text-lg'>
                         Artista: {userProfile.artist.name}
                       </p>
                     )}
@@ -308,7 +321,7 @@ export default function Page() {
         </div>
 
         {/* Main Content */}
-        <div className='mx-auto max-w-7xl xl:max-w-none 2xl:max-w-8xl px-4 py-8 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 lg:py-12'>
+        <div className='2xl:max-w-8xl mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12 xl:max-w-none xl:px-12 2xl:px-16'>
           <div className='grid gap-8 lg:grid-cols-3 lg:gap-10 xl:gap-12 2xl:gap-16'>
             {/* Left Column - Bio & Description */}
             <div className='lg:col-span-2'>
@@ -320,19 +333,17 @@ export default function Page() {
 
                   {userProfile.profile?.description && (
                     <div
-                      className='prose prose-lg mt-4 max-w-none dark:prose-invert xl:prose-xl 2xl:prose-2xl [&>*]:text-on-surface-variant [&_strong]:text-on-surface [&_h1]:text-on-surface [&_h2]:text-on-surface [&_h3]:text-on-surface'
+                      className='prose prose-lg mt-4 max-w-none dark:prose-invert xl:prose-xl 2xl:prose-2xl [&>*]:text-on-surface-variant [&_h1]:text-on-surface [&_h2]:text-on-surface [&_h3]:text-on-surface [&_strong]:text-on-surface'
                       dangerouslySetInnerHTML={{ __html: userProfile.profile.description }}
                     />
                   )}
 
                   {userProfile.profile?.bio && (
                     <div
-                      className='prose prose-lg max-w-none dark:prose-invert xl:prose-xl 2xl:prose-2xl [&>*]:text-on-surface-variant [&_strong]:text-on-surface [&_h1]:text-on-surface [&_h2]:text-on-surface [&_h3]:text-on-surface'
+                      className='prose prose-lg max-w-none dark:prose-invert xl:prose-xl 2xl:prose-2xl [&>*]:text-on-surface-variant [&_h1]:text-on-surface [&_h2]:text-on-surface [&_h3]:text-on-surface [&_strong]:text-on-surface'
                       dangerouslySetInnerHTML={{ __html: userProfile.profile.bio }}
                     />
                   )}
-
-
                 </div>
               )}
             </div>
@@ -360,10 +371,10 @@ export default function Page() {
                               href={link.url}
                               target='_blank'
                               rel='noopener noreferrer'
-                              className={`group flex items-center rounded-2xl p-3 xl:p-4 2xl:p-5 transition-all duration-300 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface ${linkClasses}`}
+                              className={`group flex items-center rounded-2xl p-3 transition-all duration-300 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface xl:p-4 2xl:p-5 ${linkClasses}`}
                             >
                               <div
-                                className={`mr-3 xl:mr-4 2xl:mr-5 flex items-center justify-center rounded-xl p-2 xl:p-3 2xl:p-4 transition-all duration-300 ${iconColorClass} ${iconBgClass}`}
+                                className={`mr-3 flex items-center justify-center rounded-xl p-2 transition-all duration-300 xl:mr-4 xl:p-3 2xl:mr-5 2xl:p-4 ${iconColorClass} ${iconBgClass}`}
                               >
                                 {platformData.icon}
                               </div>
@@ -372,7 +383,7 @@ export default function Page() {
                                 {platformData.name}
                               </span>
 
-                              <ChevronRight className='size-4 xl:size-5 2xl:size-6 text-on-surface-variant transition-all duration-300 group-hover:translate-x-1 group-hover:text-on-surface' />
+                              <ChevronRight className='size-4 text-on-surface-variant transition-all duration-300 group-hover:translate-x-1 group-hover:text-on-surface xl:size-5 2xl:size-6' />
                             </Link>
                           )
                         })}
@@ -387,12 +398,11 @@ export default function Page() {
 
       {/* Products Section */}
       {hasProducts && (
-        <div className='mx-auto max-w-7xl xl:max-w-none 2xl:max-w-8xl px-4 py-8 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 lg:py-12'>
-
-          <ProductCarousel
+        <div className='2xl:max-w-8xl mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12 xl:max-w-none xl:px-12 2xl:px-16'>
+          <Carousel
             products={userProfile.products}
-            title="Productos destacados"
-            subtitle="Descubre mis trabajos más recientes"
+            title='Productos destacados'
+            subtitle='Descubre mis trabajos más recientes'
             autoplay={true}
             scrollSpeed={1}
             stopOnInteraction={false}

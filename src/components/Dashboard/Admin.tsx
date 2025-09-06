@@ -94,10 +94,10 @@ interface EnrichedEvent {
 }
 
 const AccordionCard = ({
-  title,
   children,
   isExpanded,
   onToggle,
+  title,
   totalItems,
   visibleItems,
 }: {
@@ -537,11 +537,11 @@ export const Admin = () => {
                 .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
                 .slice(0, 10) // Top 10 artistas
                 .map(([ artist, count ], index) => ({
+                  color: `hsl(${(index * 137.5) % 360}, 70%, 50%)`,
                   name: artist,
-                  value: count as number,
-                  color: `hsl(${(index * 137.5) % 360}, 70%, 50%)`
+                  value: count as number
                 }))}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              margin={{ bottom: 5, left: 20, right: 30, top: 5 }}
             >
               <CartesianGrid strokeDasharray='3 3' />
               <XAxis

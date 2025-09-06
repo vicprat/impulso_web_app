@@ -16,6 +16,7 @@ interface Props {
 export const Product: React.FC<Props> = ({ product }) => {
   const minPrice = product?.priceRange?.minVariantPrice ?? { amount: '0', currencyCode: 'MXN' }
   const maxPrice = product?.priceRange?.maxVariantPrice ?? { amount: '0', currencyCode: 'MXN' }
+
   const hasVariations = minPrice.amount !== maxPrice.amount || product.variants.length > 1
 
   const variant = product.variants[ 0 ]
@@ -82,6 +83,7 @@ export const Product: React.FC<Props> = ({ product }) => {
                 loading='lazy'
                 decoding='async'
                 fetchPriority='low'
+                sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
                 style={{
                   viewTransitionName: `product-image-${product.id}`,
                 }}
@@ -90,7 +92,7 @@ export const Product: React.FC<Props> = ({ product }) => {
             </>
           ) : (
             <div className='group-hover:bg-muted/80 flex size-full items-center justify-center bg-muted transition-colors duration-300'>
-              <Logo />
+              <Logo asLink={false} />
             </div>
           )}
 

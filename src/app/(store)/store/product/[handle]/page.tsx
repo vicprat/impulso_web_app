@@ -66,31 +66,34 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
 
     // Convertir el modelo Product a un objeto plano para evitar problemas de serialización
     const productData = {
+      artworkDetails: product.artworkDetails,
+      autoTags: product.autoTags,
       descriptionHtml: product.descriptionHtml,
+      formattedPrice: product.formattedPrice,
       handle: product.handle,
       id: product.id,
-      autoTags: product.autoTags,
       images: product.images,
-      artworkDetails: product.artworkDetails,
-      media: product.media,
-      formattedPrice: product.formattedPrice,
-      productType: product.productType,
       isAvailable: product.isAvailable,
-      status: product.status,
       manualTags: product.manualTags,
-      title: product.title,
+      media: product.media,
       // Getters
 primaryImage: product.primaryImage,
       
-      
 primaryVariant: product.primaryVariant,
       
-
-vendor: product.vendor,
+productType: product.productType,
+      
+status: product.status,
+      
       
 statusLabel: product.statusLabel,
-      tags: product.tags,
+      
+
+tags: product.tags,
+      
+title: product.title,
       variants: product.variants,
+      vendor: product.vendor,
     }
 
     if (privateProductIds.includes(product.id)) {
@@ -195,31 +198,34 @@ statusLabel: product.statusLabel,
 
     // Convertir los productos relacionados a objetos planos
     const relatedProductsData = relatedProducts.map(product => ({
+      artworkDetails: product.artworkDetails,
+      autoTags: product.autoTags,
       descriptionHtml: product.descriptionHtml,
+      formattedPrice: product.formattedPrice,
       handle: product.handle,
       id: product.id,
-      autoTags: product.autoTags,
       images: product.images,
-      artworkDetails: product.artworkDetails,
-      media: product.media,
-      formattedPrice: product.formattedPrice,
-      productType: product.productType,
       isAvailable: product.isAvailable,
-      status: product.status,
       manualTags: product.manualTags,
-      title: product.title,
+      media: product.media,
       // Getters
 primaryImage: product.primaryImage,
       
-      
 primaryVariant: product.primaryVariant,
       
-
-vendor: product.vendor,
+productType: product.productType,
+      
+status: product.status,
+      
       
 statusLabel: product.statusLabel,
-      tags: product.tags,
+      
+
+tags: product.tags,
+      
+title: product.title,
       variants: product.variants,
+      vendor: product.vendor,
     }))
 
     return <Client product={productData} relatedProducts={relatedProductsData} />

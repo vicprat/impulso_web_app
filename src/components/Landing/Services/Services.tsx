@@ -1,69 +1,16 @@
-'use client'
-
-import { ArrowRight, BookOpen, DollarSign, Frame, Image, Printer, TrendingUp } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ROUTES } from '@/src/config/routes'
 
+import type { Service } from '@/app/(public)/page'
 
-interface Service {
-  id: string
-  title: string
-  description: string
-  icon: React.ComponentType<{ className?: string }>
-  features?: string[]
-  highlighted?: boolean
+
+interface Props {
+  data: Service[]
 }
-
-const services: Service[] = [
-  {
-    description: 'Desarrollamos artistas a través de la venta de obra original y gráfica con asesoría especializada.',
-    features: [ 'Obra original', 'Gráfica limitada', 'Asesoría de ventas', 'Promoción de artistas' ],
-    highlighted: true,
-    icon: DollarSign,
-    id: '1',
-    title: 'Venta de Obra Original'
-  },
-  {
-    description: 'Mantenemos altos estándares de calidad para la conservación profesional de obras de arte.',
-    features: [ 'Marcos personalizados', 'Conservación', 'Cristales UV', 'Montaje profesional' ],
-    icon: Frame,
-    id: '2',
-    title: 'Enmarcado Profesional'
-  },
-  {
-    description: 'Equipos de alta calidad para reproducciones de arte con variedad de papeles premium.',
-    features: [ 'Impresión Giclée', 'Papeles de arte', 'Ediciones limitadas', 'Control de calidad' ],
-    icon: Printer,
-    id: '3',
-    title: 'Estudio de Impresión'
-  },
-  {
-    description: 'El arte como inversión mantiene su valor y se comporta diferente a otros activos financieros.',
-    features: [ 'Asesoría especializada', 'Valuación', 'Portafolio de arte', 'Análisis de mercado' ],
-    highlighted: true,
-    icon: TrendingUp,
-    id: '4',
-    title: 'Inversión en Arte'
-  },
-  {
-    description: 'Facilita el colgado de cuadros con una gama completa de sistemas profesionales.',
-    features: [ 'Sistemas modulares', 'Hardware profesional', 'Instalación', 'Mantenimiento' ],
-    icon: Image,
-    id: '5',
-    title: 'Sistema de Colgajes'
-  },
-  {
-    description: 'Impresión especializada de revistas, folletos, catálogos y libros de arte de alta calidad.',
-    features: [ 'Catálogos de arte', 'Libros especializados', 'Diseño editorial', 'Acabados premium' ],
-    icon: BookOpen,
-    id: '6',
-    title: 'Fabricación de Catálogos'
-  }
-]
-
 
 
 const ServiceCard = ({ service }: { service: Service; _index: number }) => {
@@ -118,8 +65,8 @@ const ServiceCard = ({ service }: { service: Service; _index: number }) => {
                 {service.features.slice(0, 3).map((feature, idx) => (
                   <span
                     key={idx}
-                    className={`inline-flex items-center rounded-md px-2 py-1 text-xs transition-colors ${service.highlighted
-                      ? 'bg-primary/15 border-primary/20 border text-primary'
+                    className={`inline-flex items-center rounded-md border px-2 py-1 text-xs transition-colors ${service.highlighted
+                      ? 'border-primary/30 bg-primary/20 font-medium text-primary'
                       : 'bg-surface-container text-on-surface'
                       }`}
                   >
@@ -127,8 +74,8 @@ const ServiceCard = ({ service }: { service: Service; _index: number }) => {
                   </span>
                 ))}
                 {service.features.length > 3 && (
-                  <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs ${service.highlighted
-                    ? 'bg-primary/15 border-primary/20 border text-primary'
+                  <span className={`inline-flex items-center rounded-md border px-2 py-1 text-xs ${service.highlighted
+                    ? 'border-primary/30 bg-primary/20 font-medium text-primary'
                     : 'bg-surface-container text-on-surface'
                     }`}>
                     +{service.features.length - 3} más
@@ -151,11 +98,11 @@ const ServiceCard = ({ service }: { service: Service; _index: number }) => {
   )
 }
 
-export const Services: React.FC = () => {
+export const Services: React.FC<Props> = ({ data }) => {
   return (
     <>
       <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8'>
-        {services.map((service, _index) => (
+        {data.map((service, _index) => (
           <div
             key={service.id}
             className='animate-fade-in-up'

@@ -1,4 +1,3 @@
-import type { ApiResponse } from '@/src/types'
 import type {
   Category,
   CreateCategoryDto,
@@ -12,6 +11,7 @@ import type {
   UpdatePostDto,
   UpdateTagDto,
 } from './types'
+import type { ApiResponse } from '@/src/types'
 
 const API_BASE = '/api/blog'
 

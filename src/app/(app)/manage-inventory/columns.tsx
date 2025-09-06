@@ -37,12 +37,12 @@ import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 // Componente para la celda de descuentos con dialog de confirmación
 const DiscountCell = ({
-  product,
-  isAdmin,
-  onOpenAutomaticDiscountModal,
-  getProductDiscounts,
   getDiscountProductCount,
-  onDeleteDiscount
+  getProductDiscounts,
+  isAdmin,
+  onDeleteDiscount,
+  onOpenAutomaticDiscountModal,
+  product
 }: {
   product: any
   isAdmin: boolean
@@ -66,8 +66,8 @@ const DiscountCell = ({
 
     setDiscountToDelete({
       id: discount.id,
-      title: discount.title,
-      productCount: productCount
+      productCount,
+      title: discount.title
     })
     setIsDeleteDialogOpen(true)
   }
@@ -109,7 +109,7 @@ const DiscountCell = ({
                   variant='ghost'
                   size='sm'
                   onClick={() => handleDeleteClick(discount)}
-                  className='h-5 w-5 p-0 text-red-600 hover:bg-red-100 hover:text-red-700'
+                  className='size-5 p-0 text-red-600 hover:bg-red-100 hover:text-red-700'
                   title={`Eliminar descuento "${discount.title}"`}
                 >
                   <Trash2 className='size-3' />
@@ -1428,7 +1428,7 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'automaticDiscount',
     cell: ({ row, table }) => {
       const product = row.original
-      const { isAdmin, onOpenAutomaticDiscountModal, getProductDiscounts, getDiscountProductCount, onDeleteDiscount } = table.options.meta ?? {}
+      const { getDiscountProductCount, getProductDiscounts, isAdmin, onDeleteDiscount, onOpenAutomaticDiscountModal } = table.options.meta ?? {}
 
       return (
         <DiscountCell

@@ -56,21 +56,27 @@ export const Footer = () => {
                   <img
                     src='/assets/logo.png'
                     alt='Impulso Galería'
-                    className='max-h-12 max-w-full object-contain '
+                    className='max-h-12 max-w-full object-contain'
+                    width={200}
+                    height={48}
                   />
                 </div>
                 <div className='flex h-12 w-full items-center justify-center'>
                   <img
                     src='/assets/berraco.png'
                     alt='Berraco'
-                    className='max-h-12 max-w-full object-contain '
+                    className='max-h-12 max-w-full object-contain'
+                    width={200}
+                    height={48}
                   />
                 </div>
                 <div className='flex h-12 w-full items-center justify-center'>
                   <img
                     src='/assets/collective.png'
                     alt='Collective'
-                    className='max-h-12 max-w-full object-contain '
+                    className='max-h-12 max-w-full object-contain'
+                    width={200}
+                    height={48}
                   />
                 </div>
               </div>
@@ -84,6 +90,7 @@ export const Footer = () => {
                     target='_blank'
                     rel='noopener noreferrer'
                     className='mr-3 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gray-800 transition-all duration-300 hover:scale-110 hover:bg-primary hover:text-on-primary'
+                    aria-label={`Ver ubicación en Google Maps: ${CONTACT.ADDRESS}`}
                   >
                     <MapPin className='size-4 text-gray-400 group-hover:text-on-primary' />
                   </Link>
@@ -99,6 +106,7 @@ export const Footer = () => {
                   <Link
                     href={`mailto:${CONTACT.EMAIL_INFO}`}
                     className='mr-3 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gray-800 transition-all duration-300 hover:scale-110 hover:bg-primary hover:text-on-primary'
+                    aria-label={`Enviar email a: ${CONTACT.EMAIL_INFO}`}
                   >
                     <Mail className='size-4 text-gray-400 group-hover:text-on-primary' />
                   </Link>
@@ -117,6 +125,7 @@ export const Footer = () => {
                   <Link
                     href={`tel:${CONTACT.PHONE}`}
                     className='mr-3 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gray-800 transition-all duration-300 hover:scale-110 hover:bg-primary hover:text-on-primary'
+                    aria-label={`Llamar al teléfono: ${CONTACT.PHONE}`}
                   >
                     <Phone className='size-4 text-gray-400 group-hover:text-on-primary' />
                   </Link>
@@ -163,6 +172,7 @@ export const Footer = () => {
                       className='group flex items-center'
                       target='_blank'
                       rel='noopener noreferrer'
+                      aria-label={`Visitar ${social.name}: ${social.handle}`}
                     >
                       <div className='mr-3 flex size-10 shrink-0 items-center justify-center rounded-lg bg-gray-800 transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:shadow-elevation-2'>
                         <IconComponent className='size-4 text-gray-400 group-hover:text-on-primary' />

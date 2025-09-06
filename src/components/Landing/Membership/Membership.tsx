@@ -1,29 +1,18 @@
-'use client'
-
 import { Check } from 'lucide-react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/src/config/routes'
 
-interface Benefit {
-  id: string
-  text: string
+import type { Benefit } from '@/app/(public)/page'
+
+interface Props {
+  data: Benefit[]
 }
 
-const benefits: Benefit[] = [
-  { id: '1', text: 'Venta de obras' },
-  { id: '2', text: 'Impresión digital para reproducciones giclée' },
-  { id: '3', text: 'Exposición internacional' },
-  { id: '4', text: 'Publicidad' },
-  { id: '5', text: 'Pagos seguros' },
-  { id: '6', text: 'Sin exclusividad' },
-  { id: '7', text: 'Nos encargamos de generar tus guías de envío' }
-]
 
 
-
-export const Membership: React.FC = () => {
+export const Membership: React.FC<Props> = ({ data }) => {
   return (
     <div className='grid grid-cols-1 items-center gap-12 lg:grid-cols-2'>
       {/* Left Content - Benefits List */}
@@ -33,7 +22,7 @@ export const Membership: React.FC = () => {
             Beneficios para ti
           </h3>
           <div className='space-y-4'>
-            {benefits.map((benefit, index) => (
+            {data.map((benefit, index) => (
               <div
                 key={benefit.id}
                 className='flex animate-fade-in-up items-start gap-3'

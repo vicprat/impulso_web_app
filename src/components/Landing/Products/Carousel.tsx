@@ -6,7 +6,7 @@ import useEmblaCarousel from 'embla-carousel-react'
 import { Card } from '@/components/Card'
 import { type Product } from '@/modules/shopify/types'
 
-interface ProductCarouselProps {
+interface Props {
   products: Product[]
   title: string
   subtitle?: string
@@ -16,7 +16,7 @@ interface ProductCarouselProps {
   stopOnInteraction?: boolean
 }
 
-export const ProductCarousel: React.FC<ProductCarouselProps> = ({
+export const Carousel: React.FC<Props> = ({
   autoplay = true,
   products,
   scrollSpeed = 1,

@@ -80,7 +80,7 @@ export const Artist: React.FC<ArtistProps> = ({
       case 'logo':
         return (
           <div className='flex size-full items-center justify-center bg-muted'>
-            <Logo className='size-8' />
+            <Logo className='size-8' asLink={false} />
           </div>
         )
 

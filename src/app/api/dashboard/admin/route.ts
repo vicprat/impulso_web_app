@@ -214,41 +214,22 @@ export async function GET() {
           const productData = edge.node
 
           return {
-            id: productData.id,
-            handle: productData.handle,
-            title: productData.title,
             descriptionHtml: productData.descriptionHtml,
-            vendor: productData.vendor,
-            productType: productData.productType,
-            status: productData.status,
-            tags: productData.tags,
-            images: [], // Array vacío para evitar errores
-            media: [], // Array vacío para evitar errores
-            variants: productData.variants.edges.map((variantEdge: any) => ({
-              id: variantEdge.node.id,
-              title: variantEdge.node.title,
-              availableForSale: variantEdge.node.availableForSale,
-              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
-              sku: variantEdge.node.sku,
-              inventoryQuantity: variantEdge.node.inventoryQuantity,
-              inventoryPolicy: variantEdge.node.inventoryPolicy,
-              inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED'
-            })),
-            metafields: productData.metafields.edges,
-            // Métodos del modelo Product
-            get primaryVariant() {
-              return this.variants[ 0 ] || null
-            },
-            get formattedPrice() {
+            handle: productData.handle,
+            id: productData.id,
+            images: [],
+            // Array vacío para evitar errores
+media: [],
+            
+get formattedPrice() {
               const variant = this.primaryVariant
               return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
             },
-            get isAvailable() {
-              const variant = this.primaryVariant
-              return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
-            },
-            // Procesar artworkDetails desde metafields
-            get artworkDetails() {
+            
+metafields: productData.metafields.edges,
+            
+// Procesar artworkDetails desde metafields
+get artworkDetails() {
               const details: any = {}
               for (const { node } of this.metafields) {
                 if (node.namespace === 'art_details') {
@@ -260,22 +241,73 @@ export async function GET() {
               }
               return {
                 artist: details.artist || null,
-                medium: details.medium || null,
-                year: details.year || null,
                 height: details.height || null,
-                width: details.width || null,
+                medium: details.medium || null,
                 depth: details.depth || null,
-                serie: details.serie || null,
+                year: details.year || null,
                 location: details.location || null,
+                width: details.width || null,
+                serie: details.serie || null,
               }
             },
-            // Procesar tags
-            get manualTags() {
+            
+
+productType: productData.productType, 
+            
+get autoTags() {
+              return this.tags.filter((tag: string) => tag.startsWith('auto-'))
+            }, 
+            
+status: productData.status,
+            
+
+get isAvailable() {
+              const variant = this.primaryVariant
+              return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
+            },
+            
+            
+
+title: productData.title,
+            
+
+
+// Procesar tags
+get manualTags() {
               return this.tags.filter((tag: string) => !tag.startsWith('auto-'))
             },
-            get autoTags() {
-              return this.tags.filter((tag: string) => tag.startsWith('auto-'))
-            }
+            
+
+
+
+vendor: productData.vendor,
+            
+            
+
+
+// Métodos del modelo Product
+get primaryVariant() {
+              return this.variants[ 0 ] || null
+            },
+            
+            
+
+
+
+tags: productData.tags,
+            
+
+// Array vacío para evitar errores
+variants: productData.variants.edges.map((variantEdge: any) => ({
+              availableForSale: variantEdge.node.availableForSale,
+              id: variantEdge.node.id,
+              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
+              inventoryQuantity: variantEdge.node.inventoryQuantity,
+              title: variantEdge.node.title,
+              inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
+              inventoryPolicy: variantEdge.node.inventoryPolicy,
+              sku: variantEdge.node.sku
+            }))
           }
         })
         allProducts.push(...products)
@@ -377,44 +409,21 @@ export async function GET() {
           const eventData = edge.node
 
           return {
-            id: eventData.id,
-            handle: eventData.handle,
-            title: eventData.title,
             descriptionHtml: eventData.descriptionHtml,
-            vendor: eventData.vendor,
-            productType: eventData.productType,
-            status: eventData.status,
-            tags: eventData.tags,
-            images: [], // Array vacío para evitar errores
-            variants: eventData.variants.edges.map((variantEdge: any) => ({
-              id: variantEdge.node.id,
-              title: variantEdge.node.title,
-              availableForSale: variantEdge.node.availableForSale,
-              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
-              sku: variantEdge.node.sku,
-              inventoryQuantity: variantEdge.node.inventoryQuantity,
-              inventoryPolicy: variantEdge.node.inventoryPolicy,
-              inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED'
-            })),
-            metafields: eventData.metafields.edges,
-            // Métodos del modelo Event
-            get primaryVariant() {
-              return this.variants[ 0 ] || null
-            },
+            handle: eventData.handle,
+            id: eventData.id,
             get formattedPrice() {
               const variant = this.primaryVariant
               return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
             },
-            get isAvailable() {
-              const variant = this.primaryVariant
-              return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
-            },
+            images: [],
             get availableForSale() {
               const variant = this.primaryVariant
               return variant ? variant.availableForSale : false
             },
+            metafields: eventData.metafields.edges,
             // Procesar eventDetails desde metafields
-            get eventDetails() {
+get eventDetails() {
               const details: any = {}
               for (const { node } of this.metafields) {
                 if (node.namespace === 'event_details') {
@@ -426,13 +435,30 @@ export async function GET() {
               }
               return {
                 date: details.date || null,
-                location: details.location || null,
-                startTime: details.startTime || null,
                 endTime: details.endTime || null,
+                location: details.location || null,
                 organizer: details.organizer || null,
+                startTime: details.startTime || null,
               }
             },
-            get formattedEventDetails() {
+            
+productType: eventData.productType, 
+            
+get daysUntilEvent() {
+              if (!this.eventDetails.date) return null
+              const eventDate = new Date(this.eventDetails.date)
+              const today = new Date()
+              const diffTime = eventDate.getTime() - today.getTime()
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+              return diffDays
+            },
+            
+
+status: eventData.status,
+            
+            
+
+get formattedEventDetails() {
               const details = this.eventDetails
               const parts = []
               if (details.date) parts.push(`Fecha: ${details.date}`)
@@ -441,19 +467,51 @@ export async function GET() {
               if (details.organizer) parts.push(`Organizador: ${details.organizer}`)
               return parts.join(' | ')
             },
-            get isPastEvent() {
+            
+
+
+title: eventData.title,
+            
+
+
+get isAvailable() {
+              const variant = this.primaryVariant
+              return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
+            },
+            
+
+
+vendor: eventData.vendor,
+            
+            
+
+get isPastEvent() {
               if (!this.eventDetails.date) return false
               const eventDate = new Date(this.eventDetails.date)
               return eventDate < new Date()
             },
-            get daysUntilEvent() {
-              if (!this.eventDetails.date) return null
-              const eventDate = new Date(this.eventDetails.date)
-              const today = new Date()
-              const diffTime = eventDate.getTime() - today.getTime()
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-              return diffDays
-            }
+            
+
+// Métodos del modelo Event
+get primaryVariant() {
+              return this.variants[ 0 ] || null
+            },
+            
+
+
+tags: eventData.tags,
+            
+// Array vacío para evitar errores
+variants: eventData.variants.edges.map((variantEdge: any) => ({
+              id: variantEdge.node.id,
+              availableForSale: variantEdge.node.availableForSale,
+              title: variantEdge.node.title,
+              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
+              inventoryQuantity: variantEdge.node.inventoryQuantity,
+              sku: variantEdge.node.sku,
+              inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
+              inventoryPolicy: variantEdge.node.inventoryPolicy
+            }))
           }
         })
         allEvents.push(...events)
@@ -487,7 +545,7 @@ export async function GET() {
     let userHasMore = true
 
     while (userHasMore) {
-      const { users, total } = await getAllUsers({
+      const { total, users } = await getAllUsers({
         limit: 100,
         page: userPage
       })
@@ -571,19 +629,19 @@ export async function GET() {
         } else {
           productSalesMap.set(productName, {
             artist: artistName,
+            details: product || null,
             name: productName,
             sales: itemSales,
-            units: quantity,
-            details: product || null
+            units: quantity
           })
         }
 
         if (!artistsMap.has(artistName)) {
           artistsMap.set(artistName, {
+            details: [],
             name: artistName,
             products: 0,
-            sales: 0,
-            details: []
+            sales: 0
           })
         }
         const artist = artistsMap.get(artistName)!
@@ -595,22 +653,22 @@ export async function GET() {
       const artistName = product.vendor ?? 'Artista Desconocido'
       if (!artistsMap.has(artistName)) {
         artistsMap.set(artistName, {
+          details: [],
           name: artistName,
           products: 0,
-          sales: 0,
-          details: []
+          sales: 0
         })
       }
       const artist = artistsMap.get(artistName)!
       artist.products += 1
       artist.details.push({
-        id: product.id,
-        title: product.title,
-        status: product.status,
         artworkDetails: product.artworkDetails,
-        tags: product.tags,
+        autoTags: product.autoTags,
+        id: product.id,
         manualTags: product.manualTags,
-        autoTags: product.autoTags
+        status: product.status,
+        tags: product.tags,
+        title: product.title
       })
     })
 
@@ -653,16 +711,16 @@ export async function GET() {
 
     // Procesar detalles de eventos
     const eventDetails = events.map(event => ({
-      id: event.id,
-      title: event.title,
-      status: event.status,
+      availableForSale: event.availableForSale,
+      daysUntilEvent: event.daysUntilEvent,
       eventDetails: event.eventDetails,
       formattedEventDetails: event.formattedEventDetails,
+      id: event.id,
+      isAvailable: event.isAvailable,
       isPastEvent: event.isPastEvent,
-      daysUntilEvent: event.daysUntilEvent,
       price: event.formattedPrice,
-      availableForSale: event.availableForSale,
-      isAvailable: event.isAvailable
+      status: event.status,
+      title: event.title
     }))
 
     interface AdminRecentActivityItem {
@@ -802,10 +860,10 @@ export async function GET() {
 
       events: {
         active: activeEvents,
+        details: eventDetails,
         ticketsSold: pastEventsCount,
         totalTickets: totalEvents,
-        upcoming: upcomingEventsCount,
-        details: eventDetails
+        upcoming: upcomingEventsCount
       },
 
       financialSummary: {
@@ -818,11 +876,11 @@ export async function GET() {
       inventory: {
         lowStock,
         outOfStock,
-        totalValue: totalInventoryValue,
-        productsWithArtworkDetails,
+        productsByLocation,
         productsByMedium,
         productsByYear,
-        productsByLocation,
+        productsWithArtworkDetails,
+        totalValue: totalInventoryValue,
       },
 
       overview: {

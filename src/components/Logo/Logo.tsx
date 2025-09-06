@@ -13,13 +13,17 @@ export const Logo: React.FC<Props> = ({ asLink = true, className = 'flex items-c
     <>
       <img
         src='/assets/logo1.svg'
-        alt='Logo'
+        alt='Impulso Galería - Logo claro'
         className='h-full w-auto max-w-32 object-contain dark:hidden sm:max-w-40 lg:max-w-48'
+        width={192}
+        height={48}
       />
       <img
         src='/assets/logo2.svg'
-        alt='Logo'
+        alt='Impulso Galería - Logo oscuro'
         className='hidden h-full w-auto max-w-32 object-contain dark:block sm:max-w-40 lg:max-w-48'
+        width={192}
+        height={48}
       />
     </>
   )

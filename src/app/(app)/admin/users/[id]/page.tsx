@@ -53,21 +53,21 @@ export default function UserDetailPage() {
 
   // Hook para manejar el perfil del usuario por parte del admin
   const {
-    profile: userProfile,
-    isProfileLoading,
-    isUpdatingProfile,
-    updateProfile,
-    // Links functionality
-    links: userLinks,
-    isLinksLoading,
     createLink,
-    updateLink,
     deleteLink,
-    updateLinksOrder,
     isCreatingLink,
-    isUpdatingLink,
     isDeletingLink,
+    // Links functionality
+    isLinksLoading,
+    isProfileLoading,
+    isUpdatingLink,
     isUpdatingLinksOrder,
+    isUpdatingProfile,
+    links: userLinks,
+    profile: userProfile,
+    updateLink,
+    updateLinksOrder,
+    updateProfile,
   } = useAdminUserProfile(userId)
 
   if (isLoading) {
@@ -364,7 +364,7 @@ export default function UserDetailPage() {
           <div className='space-y-4 pr-2'>
             {isProfileLoading ? (
               <div className='flex items-center justify-center p-8'>
-                <div className='h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent'></div>
+                <div className='size-8 animate-spin rounded-full border-2 border-primary border-t-transparent'></div>
               </div>
             ) : (
               <Form.Profile
@@ -391,7 +391,7 @@ export default function UserDetailPage() {
           <div className='space-y-4 pr-2'>
             {isLinksLoading ? (
               <div className='flex items-center justify-center p-8'>
-                <div className='h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent'></div>
+                <div className='size-8 animate-spin rounded-full border-2 border-primary border-t-transparent'></div>
               </div>
             ) : (
               <Form.AdminLinks
@@ -403,7 +403,7 @@ export default function UserDetailPage() {
                 isDeleting={isDeletingLink}
                 isUpdatingOrder={isUpdatingLinksOrder}
                 onCreateLink={createLink}
-                onUpdateLink={(linkId, data) => updateLink({ linkId, data })}
+                onUpdateLink={(linkId, data) => updateLink({ data, linkId })}
                 onDeleteLink={deleteLink}
                 onUpdateLinksOrder={updateLinksOrder}
               />
@@ -659,9 +659,9 @@ function PartnerSection({ financeData, isLoading, user }: { user: any; financeDa
 function ArtistSection({
   financeData,
   isLoading,
-  user,
+  onEditLinks,
   onEditProfile,
-  onEditLinks
+  user
 }: {
   user: any;
   financeData: any;

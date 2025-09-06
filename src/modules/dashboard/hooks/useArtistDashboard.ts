@@ -27,15 +27,18 @@ interface ArtistDashboardData {
 
 export const useArtistDashboard = () => {
   return useQuery({
-    queryKey: [ 'artist-dashboard' ],
-    queryFn: async (): Promise<ArtistDashboardData> => {
+    // 5 minutos
+gcTime: 10 * 60 * 1000,
+    
+queryFn: async (): Promise<ArtistDashboardData> => {
       const response = await fetch('/api/dashboard/artist')
       if (!response.ok) {
         throw new Error('Error al obtener datos del dashboard del artista')
       }
       return response.json()
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
+    
+queryKey: [ 'artist-dashboard' ], 
+    staleTime: 5 * 60 * 1000, // 10 minutos
   })
 }

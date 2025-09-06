@@ -34,7 +34,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { id } = await params
     const body = await request.json()
 
-    console.log('🔍 DEBUG - PATCH endpoint recibido:', { id, body })
+    console.log('🔍 DEBUG - PATCH endpoint recibido:', { body, id })
 
     // Si se está actualizando isActive, usar el método separado
     if (body.isActive !== undefined) {

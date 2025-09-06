@@ -103,41 +103,22 @@ export async function GET() {
           const productData = edge.node
 
           return {
-            id: productData.id,
-            handle: productData.handle,
-            title: productData.title,
             descriptionHtml: productData.descriptionHtml,
-            vendor: productData.vendor,
-            productType: productData.productType,
-            status: productData.status,
-            tags: productData.tags,
-            images: [], // Array vacío para evitar errores
-            media: [], // Array vacío para evitar errores
-            variants: productData.variants.edges.map((variantEdge: any) => ({
-              id: variantEdge.node.id,
-              title: variantEdge.node.title,
-              availableForSale: variantEdge.node.availableForSale,
-              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
-              sku: variantEdge.node.sku,
-              inventoryQuantity: variantEdge.node.inventoryQuantity,
-              inventoryPolicy: variantEdge.node.inventoryPolicy,
-              inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED'
-            })),
-            metafields: productData.metafields.edges,
-            // Métodos del modelo Product
-            get primaryVariant() {
-              return this.variants[ 0 ] || null
-            },
-            get formattedPrice() {
+            handle: productData.handle,
+            id: productData.id,
+            images: [],
+            // Array vacío para evitar errores
+media: [],
+            
+get formattedPrice() {
               const variant = this.primaryVariant
               return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
             },
-            get isAvailable() {
-              const variant = this.primaryVariant
-              return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
-            },
-            // Procesar artworkDetails desde metafields
-            get artworkDetails() {
+            
+metafields: productData.metafields.edges,
+            
+// Procesar artworkDetails desde metafields
+get artworkDetails() {
               const details: any = {}
               for (const { node } of this.metafields) {
                 if (node.namespace === 'art_details') {
@@ -149,22 +130,73 @@ export async function GET() {
               }
               return {
                 artist: details.artist || null,
-                medium: details.medium || null,
-                year: details.year || null,
                 height: details.height || null,
-                width: details.width || null,
+                medium: details.medium || null,
                 depth: details.depth || null,
-                serie: details.serie || null,
+                year: details.year || null,
                 location: details.location || null,
+                width: details.width || null,
+                serie: details.serie || null,
               }
             },
-            // Procesar tags
-            get manualTags() {
+            
+
+productType: productData.productType, 
+            
+get autoTags() {
+              return this.tags.filter((tag: string) => tag.startsWith('auto-'))
+            }, 
+            
+status: productData.status,
+            
+
+get isAvailable() {
+              const variant = this.primaryVariant
+              return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
+            },
+            
+            
+
+title: productData.title,
+            
+
+
+// Procesar tags
+get manualTags() {
               return this.tags.filter((tag: string) => !tag.startsWith('auto-'))
             },
-            get autoTags() {
-              return this.tags.filter((tag: string) => tag.startsWith('auto-'))
-            }
+            
+
+
+
+vendor: productData.vendor,
+            
+            
+
+
+// Métodos del modelo Product
+get primaryVariant() {
+              return this.variants[ 0 ] || null
+            },
+            
+            
+
+
+
+tags: productData.tags,
+            
+
+// Array vacío para evitar errores
+variants: productData.variants.edges.map((variantEdge: any) => ({
+              availableForSale: variantEdge.node.availableForSale,
+              id: variantEdge.node.id,
+              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
+              inventoryQuantity: variantEdge.node.inventoryQuantity,
+              title: variantEdge.node.title,
+              inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
+              inventoryPolicy: variantEdge.node.inventoryPolicy,
+              sku: variantEdge.node.sku
+            }))
           }
         })
         allProducts.push(...products)
@@ -219,36 +251,8 @@ export async function GET() {
         },
         {} as Record<string, number>
       ),
-      totalInventoryValue: products.reduce(
-        (sum: number, p: any) => {
-          const price = parseFloat(p.primaryVariant?.price?.amount ?? '0')
-          const quantity = p.primaryVariant?.inventoryQuantity ?? 0
-          return sum + (price * quantity)
-        },
-        0
-      ),
-      totalProducts: products.length,
-      // Métricas enriquecidas con datos de artwork
-      productsWithArtworkDetails: products.filter(p =>
-        p.artworkDetails && Object.values(p.artworkDetails).some(value => value !== null)
-      ).length,
-      productsByMedium: products.reduce(
-        (acc: Record<string, number>, product: any) => {
-          const medium = product.artworkDetails?.medium || 'Sin medio especificado'
-          acc[ medium ] = (acc[ medium ] || 0) + 1
-          return acc
-        },
-        {} as Record<string, number>
-      ),
-      productsByYear: products.reduce(
-        (acc: Record<string, number>, product: any) => {
-          const year = product.artworkDetails?.year || 'Sin año especificado'
-          acc[ year ] = (acc[ year ] || 0) + 1
-          return acc
-        },
-        {} as Record<string, number>
-      ),
-      productsByLocation: products.reduce(
+      
+productsByLocation: products.reduce(
         (acc: Record<string, number>, product: any) => {
           const location = product.artworkDetails?.location || 'Sin ubicación especificada'
           acc[ location ] = (acc[ location ] || 0) + 1
@@ -256,7 +260,19 @@ export async function GET() {
         },
         {} as Record<string, number>
       ),
-      productsBySerie: products.reduce(
+      
+
+productsByMedium: products.reduce(
+        (acc: Record<string, number>, product: any) => {
+          const medium = product.artworkDetails?.medium || 'Sin medio especificado'
+          acc[ medium ] = (acc[ medium ] || 0) + 1
+          return acc
+        },
+        {} as Record<string, number>
+      ),
+      
+      
+productsBySerie: products.reduce(
         (acc: Record<string, number>, product: any) => {
           const serie = product.artworkDetails?.serie || 'Sin serie especificada'
           acc[ serie ] = (acc[ serie ] || 0) + 1
@@ -264,20 +280,46 @@ export async function GET() {
         },
         {} as Record<string, number>
       ),
-      // Información detallada de productos
-      productsDetails: products.map(product => ({
-        id: product.id,
-        title: product.title,
-        status: product.status,
-        vendor: product.vendor,
-        productType: product.productType,
+      
+productsByYear: products.reduce(
+        (acc: Record<string, number>, product: any) => {
+          const year = product.artworkDetails?.year || 'Sin año especificado'
+          acc[ year ] = (acc[ year ] || 0) + 1
+          return acc
+        },
+        {} as Record<string, number>
+      ),
+      
+// Información detallada de productos
+productsDetails: products.map(product => ({
         artworkDetails: product.artworkDetails,
-        tags: product.tags,
+        id: product.id,
         manualTags: product.manualTags,
         autoTags: product.autoTags,
+        productType: product.productType,
+        isAvailable: product.isAvailable,
+        status: product.status,
         price: product.formattedPrice,
-        isAvailable: product.isAvailable
-      }))
+        title: product.title,
+        tags: product.tags,
+        vendor: product.vendor
+      })),
+      
+// Métricas enriquecidas con datos de artwork
+productsWithArtworkDetails: products.filter(p =>
+        p.artworkDetails && Object.values(p.artworkDetails).some(value => value !== null)
+      ).length,
+      
+totalInventoryValue: products.reduce(
+        (sum: number, p: any) => {
+          const price = parseFloat(p.primaryVariant?.price?.amount ?? '0')
+          const quantity = p.primaryVariant?.inventoryQuantity ?? 0
+          return sum + (price * quantity)
+        },
+        0
+      ),
+      
+      totalProducts: products.length
     }
 
     return NextResponse.json({ data })

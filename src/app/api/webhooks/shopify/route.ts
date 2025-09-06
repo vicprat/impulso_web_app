@@ -170,8 +170,8 @@ export async function POST(request: Request) {
         const existingTicket = await prisma.ticket.findFirst({
           where: {
             eventId,
-            userId: user.id,
             orderId: order.id.toString(),
+            userId: user.id,
           },
         })
 
@@ -190,9 +190,9 @@ export async function POST(request: Request) {
           const ticket = await prisma.ticket.create({
             data: {
               eventId,
+              orderId: order.id.toString(),
               qrCode,
               quantity,
-              orderId: order.id.toString(),
               status: 'VALID',
               userId: user.id,
             },
@@ -203,8 +203,8 @@ export async function POST(request: Request) {
             eventTitle: lineItem.title,
             orderLineItem: i + 1,
             qrCode: ticket.qrCode,
-            ticketId: ticket.id,
             quantity: ticket.quantity,
+            ticketId: ticket.id,
           })
         } catch (ticketError) {
           errors.push({

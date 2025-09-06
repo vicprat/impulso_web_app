@@ -9,5 +9,7 @@ export const CarrouselNavigations: React.FC<Props> = ({ isSelected, onClick }) =
       : 'bg-surface-container hover:scale-110 hover:bg-surface-container-high'
       }`}
     onClick={onClick}
+    aria-label={isSelected ? 'Diapositiva actual' : 'Ir a diapositiva'}
+    aria-pressed={isSelected}
   />
 )

@@ -57,6 +57,13 @@ export const api = {
     return response.json()
   },
 
+  getBasicInfo: () => makeCustomerRequest(GET_BASIC_INFO_QUERY),
+
+  getOrder: (orderId: string) => makeCustomerRequest(GET_SINGLE_ORDER_QUERY, { id: orderId }),
+  getOrders: (params: { first?: number; after?: string } = {}) => {
+    const { after, first = 10 } = params
+    return makeCustomerRequest(GET_CUSTOMER_ORDERS_QUERY, { after, first })
+  },
   getOrdersByProduct: async (
     productId: string,
     params?: {
@@ -87,13 +94,6 @@ export const api = {
     }
 
     return response.json()
-  },
-
-  getBasicInfo: () => makeCustomerRequest(GET_BASIC_INFO_QUERY),
-  getOrder: (orderId: string) => makeCustomerRequest(GET_SINGLE_ORDER_QUERY, { id: orderId }),
-  getOrders: (params: { first?: number; after?: string } = {}) => {
-    const { after, first = 10 } = params
-    return makeCustomerRequest(GET_CUSTOMER_ORDERS_QUERY, { after, first })
   },
   getProfile: () => makeCustomerRequest(GET_CUSTOMER_PROFILE_QUERY),
   setDefaultAddress: (addressId: string) =>

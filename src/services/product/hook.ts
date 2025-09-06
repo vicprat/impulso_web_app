@@ -144,7 +144,15 @@ export const useProductStats = (
   options?: { enabled?: boolean }
 ) => {
   return useQuery({
-    queryFn: async () => {
+    enabled: options?.enabled ?? true,
+    // Aumentar stale time para reducir llamadas
+gcTime: 10 * 60 * 1000,
+    
+// Usar datos del caché si están disponibles
+placeholderData: (previousData) => previousData,
+    
+
+queryFn: async () => {
       try {
         const searchParams = new URLSearchParams()
         if (params.search) searchParams.append('search', params.search)
@@ -170,17 +178,28 @@ export const useProductStats = (
         }
       }
     },
-    queryKey: [PRODUCTS_QUERY_KEY, 'stats', params],
-    enabled: options?.enabled ?? true,
-    refetchOnWindowFocus: false,
-    retry: 2, // Aumentar reintentos
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Backoff exponencial
-    staleTime: 5 * 60 * 1000, // Aumentar stale time para reducir llamadas
-    gcTime: 10 * 60 * 1000, // Mantener en caché por más tiempo
-    // No bloquear la UI si falla
-    throwOnError: false,
-    // Usar datos del caché si están disponibles
-    placeholderData: (previousData) => previousData,
+    
+
+queryKey: [PRODUCTS_QUERY_KEY, 'stats', params], 
+    
+
+refetchOnWindowFocus: false, 
+    
+
+
+retry: 2, 
+    
+
+// Aumentar reintentos
+retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), 
+    
+    
+// Backoff exponencial
+staleTime: 5 * 60 * 1000,
+    
+    // Mantener en caché por más tiempo
+// No bloquear la UI si falla
+throwOnError: false,
   })
 }
 

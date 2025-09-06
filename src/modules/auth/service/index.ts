@@ -80,6 +80,7 @@ export class AuthService {
           refreshToken: tokenResponse.refresh_token,
         },
         user: {
+          artist: userWithPermissions.artist,
           email: user.email,
           firstName: user.firstName ?? undefined,
           id: user.id,
@@ -87,7 +88,6 @@ export class AuthService {
           permissions: effectivePermissions,
           roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
           shopifyCustomerId: user.shopifyCustomerId ?? undefined,
-          artist: userWithPermissions.artist,
         },
       }
     } catch (error) {
@@ -136,6 +136,7 @@ export class AuthService {
           refreshToken: tokenResponse.refresh_token,
         },
         user: {
+          artist: userWithPermissions.artist,
           email: existingSession.user.email,
           firstName: existingSession.user.firstName ?? undefined,
           id: existingSession.user.id,
@@ -143,7 +144,6 @@ export class AuthService {
           permissions: effectivePermissions,
           roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
           shopifyCustomerId: existingSession.user.shopifyCustomerId ?? undefined,
-          artist: userWithPermissions.artist,
         },
       }
     } catch (error) {
@@ -202,6 +202,7 @@ export class AuthService {
           refreshToken: session.refreshToken,
         },
         user: {
+          artist: userWithPermissions.artist,
           email: session.user.email,
           firstName: session.user.firstName ?? undefined,
           id: session.user.id,
@@ -209,7 +210,6 @@ export class AuthService {
           permissions: effectivePermissions,
           roles: userWithPermissions.UserRole.map((ur) => ur.role.name),
           shopifyCustomerId: session.user.shopifyCustomerId ?? undefined,
-          artist: userWithPermissions.artist,
         },
       }
     } catch (error) {
@@ -454,9 +454,9 @@ export class AuthService {
             },
           },
         },
+        artist: true,
         links: true,
         profile: true,
-        artist: true,
       },
       where: { id: userId },
     })
@@ -478,9 +478,9 @@ export class AuthService {
             },
           },
         },
+        artist: true,
         links: true,
         profile: true,
-        artist: true,
       },
       where: { id: userId },
     })

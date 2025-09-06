@@ -46,7 +46,7 @@ export const Carousel: React.FC<Props> = ({ options, slides }) => {
   const { onDotButtonClick, scrollSnaps, selectedIndex } = useNavigation(emblaApi)
 
   return (
-    <div className='relative h-[60vh] overflow-hidden lg:h-[70vh]'>
+    <div className='relative mt-6 h-[60vh] overflow-hidden lg:h-[70vh]'>
       <Card className='bg-card/95 mx-4 h-full overflow-hidden shadow-elevation-3 backdrop-blur-sm'>
         <div className='h-full overflow-hidden' ref={emblaRef}>
           <div className='flex h-full'>
@@ -63,6 +63,11 @@ export const Carousel: React.FC<Props> = ({ options, slides }) => {
                       alt={slide.alt}
                       className='size-full object-cover'
                       loading={index === 0 ? 'eager' : 'lazy'}
+                      decoding='async'
+                      fetchPriority={index === 0 ? 'high' : 'low'}
+                      sizes='100vw'
+                      width={1920}
+                      height={1080}
                     />
                   </div>
 
