@@ -1,8 +1,13 @@
 import { Users } from 'lucide-react'
 
 import { getPublicArtists } from '@/lib/landing-data'
+import { routeMetadata } from '@/lib/metadata'
 
 import { Grid } from './components/Grid'
+
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = routeMetadata['/artists']
 
 export default async function ArtistsPage() {
   try {

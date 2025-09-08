@@ -1,5 +1,11 @@
+import { routeMetadata } from '@/lib/metadata'
+
 import { CTA } from './components/CTA'
 import { Hero } from './components/Hero'
+
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = routeMetadata['/terms']
 
 interface TermsType {
   id: string

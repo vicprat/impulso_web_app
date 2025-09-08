@@ -63,6 +63,10 @@ function Calendar({
           "group/day relative aspect-square size-full select-none p-0 text-center [&:first-child[data-selected=true]_button]:rounded-l-md [&:last-child[data-selected=true]_button]:rounded-r-md",
           defaultClassNames.day
         ),
+        disabled: cn(
+          "text-muted-foreground opacity-50",
+          defaultClassNames.disabled
+        ),
         dropdown: cn(
           "absolute inset-0 bg-popover opacity-0",
           defaultClassNames.dropdown
@@ -75,12 +79,8 @@ function Calendar({
           "flex h-[--cell-size] w-full items-center justify-center gap-1.5 text-sm font-medium",
           defaultClassNames.dropdowns
         ),
-        disabled: cn(
-          "text-muted-foreground opacity-50",
-          defaultClassNames.disabled
-        ),
-        month: cn("flex w-full flex-col gap-4", defaultClassNames.month),
         hidden: cn("invisible", defaultClassNames.hidden),
+        month: cn("flex w-full flex-col gap-4", defaultClassNames.month),
         month_caption: cn(
           "flex h-[--cell-size] w-full items-center justify-center px-[--cell-size]",
           defaultClassNames.month_caption

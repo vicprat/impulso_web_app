@@ -2,6 +2,7 @@ import { BookOpen, DollarSign, Frame, Image, Printer, TrendingUp } from 'lucide-
 import { Suspense } from 'react'
 
 import { Landing } from '@/components/Landing'
+import { HomeStructuredData } from '@/components/StructuredData'
 import {
   getBlogPosts,
   getPublicArtists,
@@ -14,7 +15,7 @@ import { ROUTES } from '@/src/config/routes'
 
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = routeMetadata[ '/' ]
+export const metadata: Metadata = routeMetadata['/']
 
 interface Slide {
   imageUrl: string
@@ -72,7 +73,7 @@ const services: Service[] = [
   {
     description:
       'Desarrollamos artistas a través de la venta de obra original y gráfica con asesoría especializada.',
-    features: [ 'Obra original', 'Gráfica limitada', 'Asesoría de ventas', 'Promoción de artistas' ],
+    features: ['Obra original', 'Gráfica limitada', 'Asesoría de ventas', 'Promoción de artistas'],
     highlighted: true,
     icon: DollarSign,
     id: '1',
@@ -81,7 +82,7 @@ const services: Service[] = [
   {
     description:
       'Mantenemos altos estándares de calidad para la conservación profesional de obras de arte.',
-    features: [ 'Marcos personalizados', 'Conservación', 'Cristales UV', 'Montaje profesional' ],
+    features: ['Marcos personalizados', 'Conservación', 'Cristales UV', 'Montaje profesional'],
     icon: Frame,
     id: '2',
     title: 'Enmarcado Profesional',
@@ -89,7 +90,7 @@ const services: Service[] = [
   {
     description:
       'Equipos de alta calidad para reproducciones de arte con variedad de papeles premium.',
-    features: [ 'Impresión Giclée', 'Papeles de arte', 'Ediciones limitadas', 'Control de calidad' ],
+    features: ['Impresión Giclée', 'Papeles de arte', 'Ediciones limitadas', 'Control de calidad'],
     icon: Printer,
     id: '3',
     title: 'Estudio de Impresión',
@@ -97,7 +98,7 @@ const services: Service[] = [
   {
     description:
       'El arte como inversión mantiene su valor y se comporta diferente a otros activos financieros.',
-    features: [ 'Asesoría especializada', 'Valuación', 'Portafolio de arte', 'Análisis de mercado' ],
+    features: ['Asesoría especializada', 'Valuación', 'Portafolio de arte', 'Análisis de mercado'],
     highlighted: true,
     icon: TrendingUp,
     id: '4',
@@ -105,7 +106,7 @@ const services: Service[] = [
   },
   {
     description: 'Facilita el colgado de cuadros con una gama completa de sistemas profesionales.',
-    features: [ 'Sistemas modulares', 'Hardware profesional', 'Instalación', 'Mantenimiento' ],
+    features: ['Sistemas modulares', 'Hardware profesional', 'Instalación', 'Mantenimiento'],
     icon: Image,
     id: '5',
     title: 'Sistema de Colgajes',
@@ -148,6 +149,7 @@ export default async function Page() {
 
   return (
     <main className='overflow-hidden bg-surface'>
+      <HomeStructuredData />
       {/* <Landing.Hero videoId='j5RAiTZ-w6E' /> */}
 
       <Landing.Carousel slides={slides} />

@@ -1,7 +1,12 @@
+import { routeMetadata } from '@/lib/metadata'
 import { Card } from '@/src/components/Card'
 
 import { CTA } from './components/CTA'
 import { Hero } from './components/Hero'
+
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = routeMetadata['/services']
 
 export interface Service {
   id: string

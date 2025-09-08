@@ -1,11 +1,22 @@
 import { Suspense } from 'react'
 
+import { generatePostTypeMetadata } from '@/lib/metadata'
 import { blogService } from '@/modules/blog/service'
 
 import { Loader } from './components/Loader'
 import { PostTypePageClient } from './PostTypePageClient'
 
 import type { PostType } from '@prisma/client'
+import type { Metadata } from 'next'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ postType: string }>
+}): Promise<Metadata> {
+  const { postType } = await params
+  return generatePostTypeMetadata(postType)
+}
 
 export default async function Page({ params }: { params: Promise<{ postType: string }> }) {
   const { postType } = await params

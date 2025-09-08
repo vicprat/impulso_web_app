@@ -1,7 +1,13 @@
+import { routeMetadata } from '@/lib/metadata'
+
 import { CTA } from './components/CTA'
 import { Feature } from './components/Feature'
 import { Hero } from './components/Hero'
 import { MembershipCard } from './components/MembershipCard'
+
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = routeMetadata['/membership']
 
 interface Benefit {
   id: string

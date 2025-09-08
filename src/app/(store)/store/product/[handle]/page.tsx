@@ -1,15 +1,15 @@
 import { notFound } from 'next/navigation'
 
+import { generateProductMetadata } from '@/lib/metadata'
 import { Product } from '@/models/Product'
 import { getServerSession } from '@/modules/auth/server/server'
 import { api as shopifyApi } from '@/modules/shopify/api'
-import {
-  getPrivateProductIds,
-  getPrivateRoomByUserId,
-} from '@/modules/shopify/service'
+import { getPrivateProductIds, getPrivateRoomByUserId } from '@/modules/shopify/service'
 import { productService } from '@/services/product/service'
 
 import { Client } from './Client'
+
+import type { Metadata } from 'next'
 
 interface PrivateRoomProduct {
   id: string
@@ -19,6 +19,35 @@ interface PrivateRoomProduct {
 
 // Página dinámica - se actualiza en cada request
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ handle: string }>
+}): Promise<Metadata> {
+  const { handle } = await params
+
+  try {
+    const response = await shopifyApi.getProductByHandle(handle)
+
+    if (response.data) {
+      const product = response.data
+      return generateProductMetadata({
+        artist: product.vendor,
+        description: product.descriptionHtml,
+        images: product.images?.edges?.map((edge: { node: { url: string } }) => edge.node.url),
+        title: product.title,
+      })
+    }
+  } catch (error) {
+    console.error('Error generating product metadata:', error)
+  }
+
+  return {
+    description: 'El producto que buscas no está disponible en este momento.',
+    title: 'Producto no encontrado',
+  }
+}
 
 export default async function Page({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params
@@ -77,21 +106,19 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
       manualTags: product.manualTags,
       media: product.media,
       // Getters
-primaryImage: product.primaryImage,
-      
-primaryVariant: product.primaryVariant,
-      
-productType: product.productType,
-      
-status: product.status,
-      
-      
-statusLabel: product.statusLabel,
-      
+      primaryImage: product.primaryImage,
 
-tags: product.tags,
-      
-title: product.title,
+      primaryVariant: product.primaryVariant,
+
+      productType: product.productType,
+
+      status: product.status,
+
+      statusLabel: product.statusLabel,
+
+      tags: product.tags,
+
+      title: product.title,
       variants: product.variants,
       vendor: product.vendor,
     }
@@ -128,65 +155,67 @@ title: product.title,
     try {
       // Obtener productos relacionados usando nuestro servicio
       if (session) {
-        const relatedResponse = await productService.getProducts({
-          limit: 10,
-          status: 'ACTIVE',
-          vendor: product.vendor
-        }, session)
+        const relatedResponse = await productService.getProducts(
+          {
+            limit: 10,
+            status: 'ACTIVE',
+            vendor: product.vendor,
+          },
+          session
+        )
 
         // Filtrar el producto actual y limitar a 6 productos relacionados
-        relatedProducts = relatedResponse.products
-          .filter(p => p.id !== product.id)
-          .slice(0, 6)
+        relatedProducts = relatedResponse.products.filter((p) => p.id !== product.id).slice(0, 6)
       } else {
         // Si no hay sesión, usar el API público para productos relacionados
         const relatedResponse = await shopifyApi.getProducts({
           filters: {
-            vendor: [ product.vendor ]
+            vendor: [product.vendor],
           },
-          first: 10
+          first: 10,
         })
 
         if (relatedResponse.data.products) {
           relatedProducts = relatedResponse.data.products
-            .filter(p => p.id !== product.id)
+            .filter((p) => p.id !== product.id)
             .slice(0, 6)
-            .map(p => {
+            .map((p) => {
               // Convertir cada producto relacionado al formato correcto
               const shopifyData = {
                 descriptionHtml: p.descriptionHtml,
                 handle: p.handle,
                 id: p.id,
                 images: {
-                  edges: p.images?.map((image: any) => ({ node: image })) || []
+                  edges: p.images?.map((image: any) => ({ node: image })) || [],
                 },
                 media: {
-                  nodes: []
+                  nodes: [],
                 },
                 metafields: {
-                  edges: []
+                  edges: [],
                 },
                 productType: p.productType,
                 status: 'ACTIVE' as const,
                 tags: [],
                 title: p.title,
                 variants: {
-                  edges: p.variants?.map((variant: any) => ({
-                    node: {
-                      availableForSale: variant.availableForSale,
-                      id: variant.id,
-                      inventoryItem: {
-                        tracked: false
+                  edges:
+                    p.variants?.map((variant: any) => ({
+                      node: {
+                        availableForSale: variant.availableForSale,
+                        id: variant.id,
+                        inventoryItem: {
+                          tracked: false,
+                        },
+                        inventoryPolicy: 'DENY' as const,
+                        inventoryQuantity: null,
+                        price: variant.price.amount,
+                        sku: variant.sku,
+                        title: variant.title,
                       },
-                      inventoryPolicy: 'DENY' as const,
-                      inventoryQuantity: null,
-                      price: variant.price.amount,
-                      sku: variant.sku,
-                      title: variant.title
-                    }
-                  })) || []
+                    })) || [],
                 },
-                vendor: p.vendor
+                vendor: p.vendor,
               }
               return new Product(shopifyData, '')
             })
@@ -197,7 +226,7 @@ title: product.title,
     }
 
     // Convertir los productos relacionados a objetos planos
-    const relatedProductsData = relatedProducts.map(product => ({
+    const relatedProductsData = relatedProducts.map((product) => ({
       artworkDetails: product.artworkDetails,
       autoTags: product.autoTags,
       descriptionHtml: product.descriptionHtml,
@@ -209,21 +238,19 @@ title: product.title,
       manualTags: product.manualTags,
       media: product.media,
       // Getters
-primaryImage: product.primaryImage,
-      
-primaryVariant: product.primaryVariant,
-      
-productType: product.productType,
-      
-status: product.status,
-      
-      
-statusLabel: product.statusLabel,
-      
+      primaryImage: product.primaryImage,
 
-tags: product.tags,
-      
-title: product.title,
+      primaryVariant: product.primaryVariant,
+
+      productType: product.productType,
+
+      status: product.status,
+
+      statusLabel: product.statusLabel,
+
+      tags: product.tags,
+
+      title: product.title,
       variants: product.variants,
       vendor: product.vendor,
     }))
@@ -233,4 +260,3 @@ title: product.title,
     notFound()
   }
 }
-

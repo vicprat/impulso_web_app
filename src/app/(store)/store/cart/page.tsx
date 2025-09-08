@@ -28,25 +28,25 @@ export default function CartPage() {
   const { cart } = useAuth()
   const { cartSummary, isRemoving, isUpdating, removeProduct, updateQuantity } = useCartActions()
 
-  const [ localQuantities, setLocalQuantities ] = useState<Record<string, number>>({})
+  const [localQuantities, setLocalQuantities] = useState<Record<string, number>>({})
 
   const isEmpty = cartSummary?.isEmpty ?? true
   const itemCount = cartSummary?.itemCount ?? 0
 
   const handleQuantityChange = (lineId: string, newQuantity: number) => {
     if (newQuantity < 1) return
-    setLocalQuantities((prev) => ({ ...prev, [ lineId ]: newQuantity }))
+    setLocalQuantities((prev) => ({ ...prev, [lineId]: newQuantity }))
   }
 
   const handleUpdateQuantity = async (lineId: string) => {
-    const newQuantity = localQuantities[ lineId ]
+    const newQuantity = localQuantities[lineId]
     if (!newQuantity || newQuantity < 1) return
 
     try {
       await updateQuantity(lineId, newQuantity)
       setLocalQuantities((prev) => {
         const updated = { ...prev }
-        delete updated[ lineId ]
+        delete updated[lineId]
         return updated
       })
       toast.success('Cantidad actualizada')
@@ -111,7 +111,7 @@ export default function CartPage() {
           <div className='grid gap-8 lg:grid-cols-3'>
             <div className='space-y-4 lg:col-span-2'>
               {cartSummary?.lines.map((line) => {
-                const pendingQuantity = localQuantities[ line.id ]
+                const pendingQuantity = localQuantities[line.id]
                 const currentQuantity = line.quantity
                 const hasChanges = pendingQuantity && pendingQuantity !== line.quantity
 
@@ -178,7 +178,7 @@ export default function CartPage() {
 
                               {line.merchandise.compareAtPrice &&
                                 parseFloat(line.merchandise.compareAtPrice.amount) >
-                                parseFloat(line.merchandise.price.amount) && (
+                                  parseFloat(line.merchandise.price.amount) && (
                                   <p className='text-sm text-muted-foreground line-through'>
                                     {formatCurrency(
                                       line.merchandise.compareAtPrice.amount,
@@ -358,7 +358,6 @@ export default function CartPage() {
                   </Button>
                 </CardFooter>
               </Card>
-
             </div>
           </div>
         )}

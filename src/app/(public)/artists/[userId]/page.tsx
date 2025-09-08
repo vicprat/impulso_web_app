@@ -1,16 +1,41 @@
 import { Mail } from 'lucide-react'
 import { notFound } from 'next/navigation'
 
+import { ArtistStructuredData } from '@/components/StructuredData'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getPublicProfile } from '@/lib/landing-data'
+import { generateArtistMetadata } from '@/lib/metadata'
 import { Carrousel } from '@/src/components/Carrousel'
 
 import { List } from '../components/List'
+
+import type { Metadata } from 'next'
 
 interface Props {
   params: Promise<{
     userId: string
   }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { userId } = await params
+  const userProfile = await getPublicProfile(userId)
+
+  if (!userProfile) {
+    return {
+      description: 'El artista que buscas no está disponible en este momento.',
+      title: 'Artista no encontrado',
+    }
+  }
+
+  return generateArtistMetadata({
+    firstName: userProfile.firstName ?? '',
+    lastName: userProfile.lastName ?? '',
+    profile: {
+      avatarUrl: userProfile.profile?.avatarUrl ?? undefined,
+      occupation: userProfile.profile?.occupation ?? undefined,
+    },
+  })
 }
 
 export default async function Page({ params }: Props) {
@@ -32,6 +57,25 @@ export default async function Page({ params }: Props) {
 
   return (
     <div className='min-h-screen'>
+      <ArtistStructuredData
+        artist={{
+          email: userProfile.email,
+          firstName: userProfile.firstName ?? '',
+          lastName: userProfile.lastName ?? '',
+          products: userProfile.products?.map((product) => ({
+            description: product.description,
+            id: product.id,
+            images: product.images.map((img) => img.url),
+            price: parseFloat(product.priceRange.minVariantPrice.amount),
+            title: product.title,
+          })),
+          profile: {
+            avatarUrl: userProfile.profile?.avatarUrl ?? undefined,
+            bio: userProfile.profile?.bio ?? undefined,
+            occupation: userProfile.profile?.occupation ?? undefined,
+          },
+        }}
+      />
       <div className='relative'>
         <div className='relative h-64 w-full overflow-hidden md:h-80 lg:h-[32rem]'>
           {userProfile.profile?.backgroundImageUrl ? (
