@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { Loader2 } from 'lucide-react'
@@ -38,7 +37,7 @@ interface Props {
 }
 
 export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, profile }) => {
-  const [ formData, setFormData ] = useState<ProfileFormData>({
+  const [formData, setFormData] = useState<ProfileFormData>({
     avatarUrl: null,
     backgroundImageUrl: null,
     bio: '',
@@ -60,11 +59,11 @@ export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, p
         occupation: profile.occupation ?? '',
       })
     }
-  }, [ profile ])
+  }, [profile])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [ name ]: value }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleAvatarUpload = (url: string | null) => {
@@ -137,7 +136,12 @@ export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, p
             />
           </div>
         )}
-        <SupabaseImageUploader value={formData.avatarUrl} onChange={handleAvatarUpload} hidePreview type="profile" />
+        <SupabaseImageUploader
+          value={formData.avatarUrl}
+          onChange={handleAvatarUpload}
+          hidePreview
+          type='profile'
+        />
       </div>
 
       {/* Background Image Field */}
@@ -160,7 +164,7 @@ export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, p
           value={formData.backgroundImageUrl}
           onChange={handleBackgroundUpload}
           hidePreview
-          type="background"
+          type='background'
         />
       </div>
 

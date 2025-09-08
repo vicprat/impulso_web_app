@@ -1,5 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
-
 'use client'
 
 import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from 'lucide-react'
@@ -21,9 +19,24 @@ const navigationLinks = [
 ]
 
 const socialLinks = [
-  { handle: '@galeriaimpulso', href: 'https://twitter.com/galeriaimpulso', icon: Twitter, name: 'Twitter' },
-  { handle: '/impulsogaleria', href: 'https://facebook.com/impulsogaleria', icon: Facebook, name: 'Facebook' },
-  { handle: '@impulsogaleria', href: 'https://instagram.com/impulsogaleria', icon: Instagram, name: 'Instagram' },
+  {
+    handle: '@galeriaimpulso',
+    href: 'https://twitter.com/galeriaimpulso',
+    icon: Twitter,
+    name: 'Twitter',
+  },
+  {
+    handle: '/impulsogaleria',
+    href: 'https://facebook.com/impulsogaleria',
+    icon: Facebook,
+    name: 'Facebook',
+  },
+  {
+    handle: '@impulsogaleria',
+    href: 'https://instagram.com/impulsogaleria',
+    icon: Instagram,
+    name: 'Instagram',
+  },
 ]
 
 export const Footer = () => {
@@ -49,7 +62,6 @@ export const Footer = () => {
       <div className='relative z-10'>
         <div className='container mx-auto px-4 py-12 sm:px-6 lg:px-8'>
           <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4'>
-
             <div className='space-y-4'>
               <div className='flex flex-col items-center gap-4 space-y-6'>
                 <div className='flex h-16 w-full items-center justify-center'>
@@ -96,9 +108,7 @@ export const Footer = () => {
                   </Link>
                   <div>
                     <p className='mb-1 text-sm font-medium text-white'>Dirección</p>
-                    <p className='text-sm leading-relaxed text-gray-300'>
-                      {CONTACT.ADDRESS}
-                    </p>
+                    <p className='text-sm leading-relaxed text-gray-300'>{CONTACT.ADDRESS}</p>
                   </div>
                 </div>
 
@@ -146,11 +156,7 @@ export const Footer = () => {
               <h3 className='mb-6 text-lg font-semibold text-white'>Enlaces</h3>
               <div className='space-y-3'>
                 {navigationLinks.map((link) => (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    className='group flex items-center'
-                  >
+                  <Link key={link.name} href={link.href} className='group flex items-center'>
                     <div className='mr-3 size-2 rounded-full bg-primary transition-all duration-300 group-hover:scale-125 group-hover:bg-primary'></div>
                     <span className='text-sm text-gray-300 transition-colors duration-300 group-hover:text-white'>
                       {link.name}

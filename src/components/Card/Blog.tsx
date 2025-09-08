@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { CalendarDays, Clock, Eye, Tag, User } from 'lucide-react'
@@ -10,24 +9,25 @@ import { ROUTES } from '@/config/routes'
 
 import type { PostWithRelations } from '@/modules/blog/types'
 
-const Badge = ({ children, className = '', variant = 'default' }: {
+const Badge = ({
+  children,
+  className = '',
+  variant = 'default',
+}: {
   children: React.ReactNode
   variant?: 'default' | 'secondary' | 'category' | 'featured'
   className?: string
 }) => {
-  const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors'
+  const baseClasses =
+    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors'
   const variants = {
     category: 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest',
     default: 'bg-primary-container text-on-primary-container',
     featured: 'bg-primary text-on-primary shadow-elevation-1',
-    secondary: 'bg-surface-container text-on-surface'
+    secondary: 'bg-surface-container text-on-surface',
   }
 
-  return (
-    <span className={`${baseClasses} ${variants[ variant ]} ${className}`}>
-      {children}
-    </span>
-  )
+  return <span className={`${baseClasses} ${variants[variant]} ${className}`}>{children}</span>
 }
 
 const formatDate = (dateInput: string | Date) => {
@@ -35,7 +35,7 @@ const formatDate = (dateInput: string | Date) => {
   return new Intl.DateTimeFormat('es-ES', {
     day: 'numeric',
     month: 'short',
-    year: 'numeric'
+    year: 'numeric',
   }).format(date)
 }
 
@@ -57,8 +57,7 @@ export const BlogCard: React.FC<Props> = ({ post }) => {
   return (
     <Card
       className='focus-within:ring-primary/20 group relative overflow-hidden border bg-card shadow-elevation-1 transition-all duration-300 focus-within:shadow-elevation-4 focus-within:ring-2 hover:shadow-elevation-3'
-      style={{
-      }}
+      style={{}}
     >
       <div className='absolute inset-x-3 top-3 z-20 flex items-start justify-between'>
         {post.featured && (
@@ -70,10 +69,10 @@ export const BlogCard: React.FC<Props> = ({ post }) => {
       </div>
 
       <Link
-        href={ROUTES.PUBLIC.POSTS.DYNAMIC.DETAIL.PATH
-          .replace(':postType', post.postType.toLowerCase())
-          .replace(':slug', post.slug)
-        }
+        href={ROUTES.PUBLIC.POSTS.DYNAMIC.DETAIL.PATH.replace(
+          ':postType',
+          post.postType.toLowerCase()
+        ).replace(':slug', post.slug)}
         className='block focus:outline-none'
         aria-label={`Leer artículo: ${post.title}`}
       >
@@ -99,9 +98,7 @@ export const BlogCard: React.FC<Props> = ({ post }) => {
 
           <div className='absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-300 group-hover:translate-y-0'>
             <div className='bg-card/90 border-t border-border p-3 backdrop-blur-sm'>
-              <p className='text-center text-xs text-muted-foreground'>
-                Leer artículo completo
-              </p>
+              <p className='text-center text-xs text-muted-foreground'>Leer artículo completo</p>
             </div>
           </div>
         </div>
@@ -124,10 +121,13 @@ export const BlogCard: React.FC<Props> = ({ post }) => {
         )}
 
         <div className='space-y-2'>
-          <Link href={ROUTES.PUBLIC.POSTS.DYNAMIC.DETAIL.PATH
-            .replace(':postType', post.postType.toLowerCase())
-            .replace(':slug', post.slug)
-          } className='block'>
+          <Link
+            href={ROUTES.PUBLIC.POSTS.DYNAMIC.DETAIL.PATH.replace(
+              ':postType',
+              post.postType.toLowerCase()
+            ).replace(':slug', post.slug)}
+            className='block'
+          >
             <h3 className='line-clamp-2 text-lg font-semibold leading-tight text-foreground transition-colors duration-200 hover:text-primary focus:text-primary focus:outline-none'>
               {post.title}
             </h3>
@@ -176,5 +176,3 @@ export const BlogCard: React.FC<Props> = ({ post }) => {
     </Card>
   )
 }
-
-

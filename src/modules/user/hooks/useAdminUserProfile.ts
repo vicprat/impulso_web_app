@@ -145,16 +145,17 @@ isCreatingLink: createLinkMutation.isPending,
 isDeletingLink: deleteLinkMutation.isPending,
     
     
-isProfileLoading: profileQuery.isLoading,
-    
 isLinksLoading: linksQuery.isLoading,
     
-isUpdatingProfile: updateProfileMutation.isPending,
+isProfileLoading: profileQuery.isLoading,
     
 isUpdatingLink: updateLinkMutation.isPending,
+    
+isUpdatingLinksOrder: updateLinksOrderMutation.isPending,
+    
+isUpdatingProfile: updateProfileMutation.isPending,
     // Links functionality
 links: linksQuery.data,
-    isUpdatingLinksOrder: updateLinksOrderMutation.isPending,
     profile: profileQuery.data,
     updateLink: updateLinkMutation.mutateAsync,
     updateLinksOrder: updateLinksOrderMutation.mutateAsync,

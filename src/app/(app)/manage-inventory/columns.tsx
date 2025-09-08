@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
@@ -13,7 +12,7 @@ import {
   Tag,
   Trash2,
   Upload,
-  X
+  X,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -32,7 +31,12 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { type Product } from '@/models/Product'
-import { useGetArtworkTypes, useGetLocations, useGetTechniques, useGetVendors } from '@/services/product/hook'
+import {
+  useGetArtworkTypes,
+  useGetLocations,
+  useGetTechniques,
+  useGetVendors,
+} from '@/services/product/hook'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 // Componente para la celda de descuentos con dialog de confirmación
@@ -42,7 +46,7 @@ const DiscountCell = ({
   isAdmin,
   onDeleteDiscount,
   onOpenAutomaticDiscountModal,
-  product
+  product,
 }: {
   product: any
   isAdmin: boolean
@@ -51,14 +55,18 @@ const DiscountCell = ({
   getDiscountProductCount?: (discount: any) => number
   onDeleteDiscount?: (discountId: string) => Promise<void>
 }) => {
-  const [ isDeleteDialogOpen, setIsDeleteDialogOpen ] = useState(false)
-  const [ discountToDelete, setDiscountToDelete ] = useState<{ id: string; title: string; productCount: number } | null>(null)
-  const [ isDeleting, setIsDeleting ] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [discountToDelete, setDiscountToDelete] = useState<{
+    id: string
+    title: string
+    productCount: number
+  } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   if (!isAdmin) return null
 
   const productDiscounts = getProductDiscounts?.(product.id) ?? []
-  const activeDiscounts = productDiscounts.filter(discount => discount.isActive)
+  const activeDiscounts = productDiscounts.filter((discount) => discount.isActive)
 
   const handleDeleteClick = (discount: any) => {
     // Contar cuántos productos tienen este descuento
@@ -67,7 +75,7 @@ const DiscountCell = ({
     setDiscountToDelete({
       id: discount.id,
       productCount,
-      title: discount.title
+      title: discount.title,
     })
     setIsDeleteDialogOpen(true)
   }
@@ -140,21 +148,20 @@ const DiscountCell = ({
           setDiscountToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        title="Eliminar Descuento"
+        title='Eliminar Descuento'
         message={
-          discountToDelete ?
-            `¿Estás seguro de que quieres eliminar el descuento "${discountToDelete.title}"?\n\n⚠️ Advertencia: Este descuento se eliminará de ${discountToDelete.productCount} producto${discountToDelete.productCount > 1 ? 's' : ''} que lo tengan aplicado.`
+          discountToDelete
+            ? `¿Estás seguro de que quieres eliminar el descuento "${discountToDelete.title}"?\n\n⚠️ Advertencia: Este descuento se eliminará de ${discountToDelete.productCount} producto${discountToDelete.productCount > 1 ? 's' : ''} que lo tengan aplicado.`
             : ''
         }
-        confirmButtonText="Eliminar"
-        cancelButtonText="Cancelar"
-        variant="destructive"
+        confirmButtonText='Eliminar'
+        cancelButtonText='Cancelar'
+        variant='destructive'
         isLoading={isDeleting}
       />
     </>
   )
 }
-
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData> {
@@ -230,11 +237,11 @@ const EditableText = ({
   className?: string
   fieldName?: string
 }) => {
-  const [ editValue, setEditValue ] = useState(value || '')
+  const [editValue, setEditValue] = useState(value || '')
 
   useEffect(() => {
     setEditValue(value || '')
-  }, [ value, isEditing ])
+  }, [value, isEditing])
 
   if (!isEditing) {
     return <span className={className}>{value || '-'}</span>
@@ -279,11 +286,11 @@ const EditableNumber = ({
   step?: string
   fieldName?: string
 }) => {
-  const [ editValue, setEditValue ] = useState((value || '').toString())
+  const [editValue, setEditValue] = useState((value || '').toString())
 
   useEffect(() => {
     setEditValue((value || '').toString())
-  }, [ value, isEditing ])
+  }, [value, isEditing])
 
   if (!isEditing) {
     return <span className={className}>{value || '-'}</span>
@@ -370,18 +377,18 @@ const EditableDimensions = ({
   onCancel: () => void
   fieldName?: string
 }) => {
-  const [ editHeight, setEditHeight ] = useState(height || '')
-  const [ editWidth, setEditWidth ] = useState(width || '')
-  const [ editDepth, setEditDepth ] = useState(depth || '')
+  const [editHeight, setEditHeight] = useState(height || '')
+  const [editWidth, setEditWidth] = useState(width || '')
+  const [editDepth, setEditDepth] = useState(depth || '')
 
   useEffect(() => {
     setEditHeight(height || '')
     setEditWidth(width || '')
     setEditDepth(depth || '')
-  }, [ height, width, depth, isEditing ])
+  }, [height, width, depth, isEditing])
 
   if (!isEditing) {
-    const dimensions = [ height, width, depth ].filter(Boolean)
+    const dimensions = [height, width, depth].filter(Boolean)
     return <span className='text-sm'>{dimensions.length > 0 ? dimensions.join(' × ') : '-'}</span>
   }
 
@@ -465,10 +472,11 @@ const EditableVendorSelect = ({
   }
 
   // El endpoint /api/vendors devuelve un array de strings, no objetos
-  const vendorOptions = vendors?.map((vendor: string) => ({
-    label: vendor,
-    value: vendor,
-  })) || []
+  const vendorOptions =
+    vendors?.map((vendor: string) => ({
+      label: vendor,
+      value: vendor,
+    })) || []
 
   return (
     <div className='flex flex-col gap-1'>
@@ -515,10 +523,11 @@ const EditableTechniqueSelect = ({
     return <Skeleton className='h-8 w-32' />
   }
 
-  const techniqueOptions = techniques?.map((technique: { id: string; name: string }) => ({
-    label: technique.name,
-    value: technique.name,
-  })) || []
+  const techniqueOptions =
+    techniques?.map((technique: { id: string; name: string }) => ({
+      label: technique.name,
+      value: technique.name,
+    })) || []
 
   return (
     <Select value={value || ''} onValueChange={onUpdate}>
@@ -563,10 +572,11 @@ const EditableArtworkTypeSelect = ({
     return <Skeleton className='h-8 w-32' />
   }
 
-  const artworkTypeOptions = artworkTypes?.map((artworkType: { id: string; name: string }) => ({
-    label: artworkType.name,
-    value: artworkType.name,
-  })) || []
+  const artworkTypeOptions =
+    artworkTypes?.map((artworkType: { id: string; name: string }) => ({
+      label: artworkType.name,
+      value: artworkType.name,
+    })) || []
 
   return (
     <Select value={value || ''} onValueChange={onUpdate}>
@@ -611,10 +621,11 @@ const EditableLocationSelect = ({
     return <Skeleton className='h-8 w-32' />
   }
 
-  const locationOptions = locations?.map((location: { id: string; name: string }) => ({
-    label: location.name,
-    value: location.name,
-  })) || []
+  const locationOptions =
+    locations?.map((location: { id: string; name: string }) => ({
+      label: location.name,
+      value: location.name,
+    })) || []
 
   return (
     <Select value={value || ''} onValueChange={onUpdate}>
@@ -640,22 +651,22 @@ const ImageReplacer = ({
   product: Product
   onUpdate: (productId: string, imageUrl: string | null) => void
 }) => {
-  const [ isEditing, setIsEditing ] = useState(false)
-  const [ currentImageUrl, setCurrentImageUrl ] = useState<string | null>(
-    product.images.length > 0 ? product.images[ 0 ].url : null
+  const [isEditing, setIsEditing] = useState(false)
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(
+    product.images.length > 0 ? product.images[0].url : null
   )
-  const [ isHovered, setIsHovered ] = useState(false)
-  const [ isUploading, setIsUploading ] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
 
   useEffect(() => {
-    setCurrentImageUrl(product.images.length > 0 ? product.images[ 0 ].url : null)
-  }, [ product.images ])
+    setCurrentImageUrl(product.images.length > 0 ? product.images[0].url : null)
+  }, [product.images])
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
     if (!files || files.length === 0) return
 
-    const file = files[ 0 ]
+    const file = files[0]
     await uploadFile(file)
     event.target.value = '' // Limpiar input
   }
@@ -685,16 +696,19 @@ const ImageReplacer = ({
       const productId = product.id.split('/').pop()
       if (!productId) throw new Error('ID de producto inválido')
 
-      const replaceResponse = await fetch(`/api/management/products/${productId}/replace-main-image`, {
-        body: JSON.stringify({
-          currentImageId: product.images[ 0 ]?.id || null,
-          newImageUrl: uploadData.resourceUrl
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'PUT'
-      })
+      const replaceResponse = await fetch(
+        `/api/management/products/${productId}/replace-main-image`,
+        {
+          body: JSON.stringify({
+            currentImageId: product.images[0]?.id || null,
+            newImageUrl: uploadData.resourceUrl,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          method: 'PUT',
+        }
+      )
 
       if (!replaceResponse.ok) {
         const errorData = await replaceResponse.json()
@@ -768,7 +782,7 @@ const ImageReplacer = ({
             <div className='relative aspect-square w-16'>
               <img
                 src={currentImageUrl}
-                alt={product.images[ 0 ]?.altText ?? product.title}
+                alt={product.images[0]?.altText ?? product.title}
                 className='size-full object-cover'
               />
 
@@ -822,7 +836,7 @@ const ImageReplacer = ({
         <>
           <img
             src={currentImageUrl}
-            alt={product.images[ 0 ]?.altText ?? product.title}
+            alt={product.images[0]?.altText ?? product.title}
             className='size-full object-cover transition-all group-hover:brightness-75'
             sizes='64px'
           />
@@ -854,12 +868,12 @@ export const columns: ColumnDef<Product>[] = [
       if (!isBulkMode) return null
 
       return (
-        <div className="flex items-center justify-center">
+        <div className='flex items-center justify-center'>
           <input
-            type="checkbox"
+            type='checkbox'
             checked={isSelected}
             onChange={(e) => onRowSelectionChange?.(row.original.id, e.target.checked)}
-            className="size-4 rounded border-gray-300 text-primary focus:ring-primary"
+            className='size-4 rounded border-gray-300 text-primary focus:ring-primary'
           />
         </div>
       )
@@ -876,15 +890,15 @@ export const columns: ColumnDef<Product>[] = [
       if (!isBulkMode) return null
 
       return (
-        <div className="flex items-center justify-center">
+        <div className='flex items-center justify-center'>
           <input
-            type="checkbox"
+            type='checkbox'
             checked={isAllSelected}
             ref={(el) => {
               if (el) el.indeterminate = isIndeterminate
             }}
             onChange={(e) => onSelectAllChange?.(e.target.checked)}
-            className="size-4 rounded border-gray-300 text-primary focus:ring-primary"
+            className='size-4 rounded border-gray-300 text-primary focus:ring-primary'
           />
         </div>
       )
@@ -906,7 +920,7 @@ export const columns: ColumnDef<Product>[] = [
             if (imageUrl) {
               console.log('Imagen principal actualizada:', {
                 newImageUrl: imageUrl,
-                productId
+                productId,
               })
 
               // Invalidar el caché para refrescar los datos
@@ -922,11 +936,13 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'title',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } =
+        table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       // Usar el valor de editingChanges si está disponible, sino el valor original del producto
-      const currentValue = isEditing && editingChanges?.title !== undefined ? editingChanges.title : product.title
+      const currentValue =
+        isEditing && editingChanges?.title !== undefined ? editingChanges.title : product.title
 
       return (
         <div className='flex flex-col gap-2'>
@@ -965,14 +981,22 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'vendor',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingChanges, editingRowId, isAdmin, isArtist, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const {
+        editingChanges,
+        editingRowId,
+        isAdmin,
+        isArtist,
+        setEditingRowId,
+        updateEditingChanges,
+      } = table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       // Los artistas no pueden cambiar el vendor (solo pueden editar sus propios productos)
       const isVendorDisabled = isArtist
 
       // Usar el valor de editingChanges si está disponible, sino el valor original del producto
-      const currentValue = isEditing && editingChanges?.vendor !== undefined ? editingChanges.vendor : product.vendor
+      const currentValue =
+        isEditing && editingChanges?.vendor !== undefined ? editingChanges.vendor : product.vendor
 
       return (
         <EditableVendorSelect
@@ -1010,11 +1034,15 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'productType',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } =
+        table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       // Usar el valor de editingChanges si está disponible, sino el valor original del producto
-      const currentValue = isEditing && editingChanges?.productType !== undefined ? editingChanges.productType : product.productType
+      const currentValue =
+        isEditing && editingChanges?.productType !== undefined
+          ? editingChanges.productType
+          : product.productType
 
       if (!isEditing) {
         return <span className='text-sm'>{currentValue}</span>
@@ -1040,13 +1068,15 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'artworkDetails.medium',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } =
+        table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       // Usar el valor de editingChanges si está disponible, sino el valor original del producto
-      const currentValue = isEditing && editingChanges?.artworkDetails?.medium !== undefined
-        ? editingChanges.artworkDetails.medium
-        : product.artworkDetails.medium
+      const currentValue =
+        isEditing && editingChanges?.artworkDetails?.medium !== undefined
+          ? editingChanges.artworkDetails.medium
+          : product.artworkDetails.medium
 
       return (
         <EditableTechniqueSelect
@@ -1056,7 +1086,7 @@ export const columns: ColumnDef<Product>[] = [
             updateEditingChanges?.({
               artworkDetails: {
                 medium: value || undefined,
-              }
+              },
             })
           }}
           onCancel={() => setEditingRowId?.(null)}
@@ -1072,13 +1102,15 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'artworkDetails.year',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } =
+        table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       // Usar el valor de editingChanges si está disponible, sino el valor original del producto
-      const currentValue = isEditing && editingChanges?.artworkDetails?.year !== undefined
-        ? editingChanges.artworkDetails.year
-        : product.artworkDetails.year
+      const currentValue =
+        isEditing && editingChanges?.artworkDetails?.year !== undefined
+          ? editingChanges.artworkDetails.year
+          : product.artworkDetails.year
 
       return (
         <EditableNumber
@@ -1088,7 +1120,7 @@ export const columns: ColumnDef<Product>[] = [
             updateEditingChanges?.({
               artworkDetails: {
                 year: value || undefined,
-              }
+              },
             })
           }}
           onCancel={() => setEditingRowId?.(null)}
@@ -1104,19 +1136,23 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'dimensions',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } =
+        table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       // Usar el valor de editingChanges si está disponible, sino el valor original del producto
-      const currentHeight = isEditing && editingChanges?.artworkDetails?.height !== undefined
-        ? editingChanges.artworkDetails.height
-        : product.artworkDetails.height
-      const currentWidth = isEditing && editingChanges?.artworkDetails?.width !== undefined
-        ? editingChanges.artworkDetails.width
-        : product.artworkDetails.width
-      const currentDepth = isEditing && editingChanges?.artworkDetails?.depth !== undefined
-        ? editingChanges.artworkDetails.depth
-        : product.artworkDetails.depth
+      const currentHeight =
+        isEditing && editingChanges?.artworkDetails?.height !== undefined
+          ? editingChanges.artworkDetails.height
+          : product.artworkDetails.height
+      const currentWidth =
+        isEditing && editingChanges?.artworkDetails?.width !== undefined
+          ? editingChanges.artworkDetails.width
+          : product.artworkDetails.width
+      const currentDepth =
+        isEditing && editingChanges?.artworkDetails?.depth !== undefined
+          ? editingChanges.artworkDetails.depth
+          : product.artworkDetails.depth
 
       if (!isEditing) {
         const dimensions = []
@@ -1138,7 +1174,7 @@ export const columns: ColumnDef<Product>[] = [
                 depth: dimensions.depth || undefined,
                 height: dimensions.height || undefined,
                 width: dimensions.width || undefined,
-              }
+              },
             })
           }}
           onCancel={() => setEditingRowId?.(null)}
@@ -1153,13 +1189,15 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'artworkDetails.serie',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } =
+        table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       // Usar el valor de editingChanges si está disponible, sino el valor original del producto
-      const currentValue = isEditing && editingChanges?.artworkDetails?.serie !== undefined
-        ? editingChanges.artworkDetails.serie
-        : product.artworkDetails.serie
+      const currentValue =
+        isEditing && editingChanges?.artworkDetails?.serie !== undefined
+          ? editingChanges.artworkDetails.serie
+          : product.artworkDetails.serie
 
       return (
         <EditableText
@@ -1169,7 +1207,7 @@ export const columns: ColumnDef<Product>[] = [
             updateEditingChanges?.({
               artworkDetails: {
                 serie: value || undefined,
-              }
+              },
             })
           }}
           onCancel={() => setEditingRowId?.(null)}
@@ -1185,13 +1223,15 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'artworkDetails.location',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } =
+        table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       // Usar el valor de editingChanges si está disponible, sino el valor original del producto
-      const currentValue = isEditing && editingChanges?.artworkDetails?.location !== undefined
-        ? editingChanges.artworkDetails.location
-        : product.artworkDetails.location
+      const currentValue =
+        isEditing && editingChanges?.artworkDetails?.location !== undefined
+          ? editingChanges.artworkDetails.location
+          : product.artworkDetails.location
 
       return (
         <EditableLocationSelect
@@ -1201,7 +1241,7 @@ export const columns: ColumnDef<Product>[] = [
             updateEditingChanges?.({
               artworkDetails: {
                 location: value || undefined,
-              }
+              },
             })
           }}
           onCancel={() => setEditingRowId?.(null)}
@@ -1217,15 +1257,15 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'price',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } =
+        table.options.meta ?? {}
       const isEditing = editingRowId === product.id
-      const variant = product.variants[ 0 ]
+      const variant = product.variants[0]
       const currentPrice = variant.price.amount
 
       // Usar el valor de editingChanges si está disponible, sino el valor original del producto
-      const currentValue = isEditing && editingChanges?.price !== undefined
-        ? editingChanges.price
-        : currentPrice
+      const currentValue =
+        isEditing && editingChanges?.price !== undefined ? editingChanges.price : currentPrice
 
       if (!isEditing) {
         return <span className='font-semibold'>${parseFloat(currentValue).toLocaleString()}</span>
@@ -1268,15 +1308,17 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'inventory',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } =
+        table.options.meta ?? {}
       const isEditing = editingRowId === product.id
-      const variant = product.variants[ 0 ]
+      const variant = product.variants[0]
       const currentQuantity = variant.inventoryQuantity ?? 0
 
       // Usar el valor de editingChanges si está disponible, sino el valor original del producto
-      const currentValue = isEditing && editingChanges?.inventoryQuantity !== undefined
-        ? editingChanges.inventoryQuantity
-        : currentQuantity
+      const currentValue =
+        isEditing && editingChanges?.inventoryQuantity !== undefined
+          ? editingChanges.inventoryQuantity
+          : currentQuantity
 
       if (!isEditing) {
         return (
@@ -1326,18 +1368,18 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'Status',
     cell: ({ row, table }) => {
       const product = row.original
-      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } = table.options.meta ?? {}
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } =
+        table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
       // Usar el valor de editingChanges si está disponible, sino el valor original del producto
-      const currentValue = isEditing && editingChanges?.status !== undefined
-        ? editingChanges.status
-        : product.status
+      const currentValue =
+        isEditing && editingChanges?.status !== undefined ? editingChanges.status : product.status
 
       const statusOptions = [
         { label: 'Activo', value: 'ACTIVE' },
         { label: 'Borrador', value: 'DRAFT' },
-        { label: 'Archivado', value: 'ARCHIVED' }
+        { label: 'Archivado', value: 'ARCHIVED' },
       ]
 
       if (isEditing) {
@@ -1357,7 +1399,11 @@ export const columns: ColumnDef<Product>[] = [
         )
       }
 
-      return <Badge variant={currentValue === 'ACTIVE' ? 'active' : 'archived'}>{statusOptions.find(option => option.value === currentValue)?.label}</Badge>
+      return (
+        <Badge variant={currentValue === 'ACTIVE' ? 'active' : 'archived'}>
+          {statusOptions.find((option) => option.value === currentValue)?.label}
+        </Badge>
+      )
     },
   },
 
@@ -1411,14 +1457,10 @@ export const columns: ColumnDef<Product>[] = [
               handle: product.handle,
             })}
           >
-            <Button
-              variant='ghost'
-              title='Ver en la tienda'
-            >
+            <Button variant='ghost' title='Ver en la tienda'>
               <ExternalLink className='size-4' />
             </Button>
           </Link>
-
         </div>
       )
     },
@@ -1428,7 +1470,13 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: 'automaticDiscount',
     cell: ({ row, table }) => {
       const product = row.original
-      const { getDiscountProductCount, getProductDiscounts, isAdmin, onDeleteDiscount, onOpenAutomaticDiscountModal } = table.options.meta ?? {}
+      const {
+        getDiscountProductCount,
+        getProductDiscounts,
+        isAdmin,
+        onDeleteDiscount,
+        onOpenAutomaticDiscountModal,
+      } = table.options.meta ?? {}
 
       return (
         <DiscountCell

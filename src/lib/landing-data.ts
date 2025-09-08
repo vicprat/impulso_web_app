@@ -1,6 +1,13 @@
 import { prisma } from '@/lib/prisma'
 import { blogService } from '@/modules/blog/service'
-import { type PaginatedResult, type PostWithRelations } from '@/modules/blog/types'
+import {
+  type Category,
+  type PaginatedResult,
+  type PostFilters,
+  type PostWithRelations,
+  type Tag,
+} from '@/modules/blog/types'
+import { api as shopifyApi } from '@/modules/shopify/api'
 import { shopifyService } from '@/modules/shopify/service'
 import { type Product } from '@/modules/shopify/types'
 import { type PublicArtist } from '@/modules/user/types'
@@ -34,11 +41,59 @@ export async function getPublicArtists(): Promise<PublicArtist[]> {
       },
     })
 
-    // Filtrar artistas que tengan firstName y lastName válidos
     return artists.filter((artist) => artist.firstName && artist.lastName) as PublicArtist[]
   } catch (error) {
     console.error('Error fetching public artists:', error)
     return []
+  }
+}
+
+export async function getPublicProfile(userId: string) {
+  try {
+    const userProfile = await prisma.user.findUnique({
+      include: {
+        UserRole: {
+          include: {
+            role: true,
+          },
+        },
+        artist: true,
+        links: true,
+        profile: true,
+      },
+      where: {
+        id: userId,
+        isPublic: true,
+      },
+    })
+
+    if (!userProfile || !userProfile.firstName || !userProfile.lastName) {
+      return null
+    }
+
+    const roles = userProfile.UserRole.map((ur) => ur.role.name)
+
+    let products: Product[] = []
+    if (roles.includes('artist') && userProfile.artist?.name) {
+      try {
+        const productData = await shopifyApi.getProducts({
+          filters: { vendor: [userProfile.artist.name] },
+          first: 10,
+        })
+        products = productData.data.products
+      } catch (productError) {
+        console.error('Error fetching products for artist:', productError)
+      }
+    }
+
+    return {
+      ...userProfile,
+      products,
+      roles,
+    }
+  } catch (error) {
+    console.error('Error fetching public artist profile:', error)
+    return null
   }
 }
 
@@ -87,5 +142,51 @@ export async function getBlogPosts(): Promise<PaginatedResult<PostWithRelations>
       total: 0,
       totalPages: 0,
     }
+  }
+}
+
+export async function getPosts(
+  filters: Partial<PostFilters> = {}
+): Promise<PaginatedResult<PostWithRelations>> {
+  try {
+    return await blogService.listPosts(filters)
+  } catch (error) {
+    console.error('Error fetching blog posts:', error)
+    return {
+      hasNextPage: false,
+      hasPreviousPage: false,
+      items: [],
+      page: 1,
+      pageSize: 12,
+      total: 0,
+      totalPages: 0,
+    }
+  }
+}
+
+export async function getBlogCategories(): Promise<Category[]> {
+  try {
+    return await blogService.listCategories()
+  } catch (error) {
+    console.error('Error fetching blog categories:', error)
+    return []
+  }
+}
+
+export async function getBlogTags(): Promise<Tag[]> {
+  try {
+    return await blogService.listTags()
+  } catch (error) {
+    console.error('Error fetching blog tags:', error)
+    return []
+  }
+}
+
+export async function getBlogPostBySlug(slug: string): Promise<PostWithRelations | null> {
+  try {
+    return await blogService.getPostBySlug(slug)
+  } catch (error) {
+    console.error('Error fetching blog post by slug:', error)
+    return null
   }
 }

@@ -36,7 +36,7 @@ export const Loader = ({ count = 6 }) => (
           </div>
 
           {/* Footer */}
-          <div className='border-t border-border/50 pt-4'>
+          <div className='border-border/50 border-t pt-4'>
             <div className='h-4 w-24 animate-pulse rounded bg-muted' />
           </div>
         </CardContent>

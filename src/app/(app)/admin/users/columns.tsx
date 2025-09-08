@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { type UseMutationResult } from '@tanstack/react-query'
@@ -26,7 +25,7 @@ export const columns: ColumnDef<UserProfile>[] = [
     cell: ({ row }) => {
       const user = row.original
       const isArtist = user.roles.includes('artist')
-      
+
       return (
         <div className='flex items-center'>
           <div className='size-10 shrink-0'>
@@ -51,9 +50,7 @@ export const columns: ColumnDef<UserProfile>[] = [
             </div>
             <div className='text-sm text-gray-500'>ID: {user.id.slice(0, 8)}...</div>
             {isArtist && user.artist?.name && (
-              <div className='text-xs font-medium text-blue-600'>
-                Artista: {user.artist.name}
-              </div>
+              <div className='text-xs font-medium text-blue-600'>Artista: {user.artist.name}</div>
             )}
           </div>
         </div>

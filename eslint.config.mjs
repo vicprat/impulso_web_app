@@ -100,7 +100,7 @@ const config = tseslint.config(
     rules: {
       // Next.js rules
       '@next/next/no-html-link-for-pages': 'error',
-      '@next/next/no-img-element': 'warn',
+      '@next/next/no-img-element': 'off',
       '@next/next/no-sync-scripts': 'error',
       '@next/next/no-duplicate-head': 'error',
 
@@ -144,7 +144,6 @@ const config = tseslint.config(
         'error',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
-      '@typescript-eslint/no-unnecessary-condition': 'warn',
       '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       '@typescript-eslint/prefer-optional-chain': 'warn',
       '@typescript-eslint/no-floating-promises': ['warn', { ignoreVoid: true }],

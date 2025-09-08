@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { type EmblaOptionsType } from 'embla-carousel'
@@ -30,7 +29,7 @@ interface Props {
 }
 
 export const Carousel: React.FC<Props> = ({ options, slides }) => {
-  const [ emblaRef, emblaApi ] = useEmblaCarousel(
+  const [emblaRef, emblaApi] = useEmblaCarousel(
     {
       ...options,
       align: 'center',
@@ -38,7 +37,7 @@ export const Carousel: React.FC<Props> = ({ options, slides }) => {
       loop: true,
       skipSnaps: false,
     },
-    [ Autoplay({ delay: 8000, stopOnInteraction: true }) ]
+    [Autoplay({ delay: 8000, stopOnInteraction: true })]
   )
 
   useEmblaParallax(emblaApi)

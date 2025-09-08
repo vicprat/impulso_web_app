@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { CheckCircle, Loader2, Star, Upload, X } from 'lucide-react'
 import React, { useCallback, useId, useState } from 'react'
 import { toast } from 'sonner'
@@ -31,158 +30,169 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
   onImagesChange,
 }) => {
   const inputId = useId()
-  const [ isUploading, setIsUploading ] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
 
-  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files || files.length === 0) return
+  const handleFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files
+      if (!files || files.length === 0) return
 
-    // Verificar límite de imágenes
-    const remainingSlots = maxImages - existingImages.length
-    if (files.length > remainingSlots) {
-      toast.error(`Solo puedes agregar ${remainingSlots} imagen(es) más`)
-      return
-    }
-
-    // Convertir FileList a Array y subir en paralelo
-    const fileArray = Array.from(files)
-    await uploadMultipleFiles(fileArray)
-
-    event.target.value = '' // Clear the input
-  }, [ existingImages.length, maxImages ])
-
-  const uploadMultipleFiles = useCallback(async (files: File[]) => {
-    if (files.length === 0) return
-
-    setIsUploading(true)
-
-    // Crear previews para todas las imágenes
-    const newImages: ImageData[] = files.map((file, index) => {
-      const uploadId = Date.now().toString() + Math.random().toString(36).substr(2, 9) + index
-      const preview = URL.createObjectURL(file)
-
-      return {
-        filename: file.name,
-        id: uploadId,
-        isNew: true,
-        preview,
-        size: file.size,
-        status: 'uploading' as const,
-        url: preview,
+      // Verificar límite de imágenes
+      const remainingSlots = maxImages - existingImages.length
+      if (files.length > remainingSlots) {
+        toast.error(`Solo puedes agregar ${remainingSlots} imagen(es) más`)
+        return
       }
-    })
 
-    // Agregar todas las imágenes al estado
-    const updatedImages = [ ...existingImages, ...newImages ]
-    onImagesChange(updatedImages)
+      // Convertir FileList a Array y subir en paralelo
+      const fileArray = Array.from(files)
+      await uploadMultipleFiles(fileArray)
 
-    try {
-      // Subir archivos en paralelo
-      const uploadPromises = files.map(async (file, index) => {
-        const uploadId = newImages[ index ].id
+      event.target.value = '' // Clear the input
+    },
+    [existingImages.length, maxImages]
+  )
 
-        try {
-          const formData = new FormData()
-          formData.append('file', file)
+  const uploadMultipleFiles = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0) return
 
-          const response = await fetch('/api/uploads', {
-            body: formData,
-            method: 'POST',
-          })
+      setIsUploading(true)
 
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error ?? 'Error al subir el archivo')
-          }
+      // Crear previews para todas las imágenes
+      const newImages: ImageData[] = files.map((file, index) => {
+        const uploadId = Date.now().toString() + Math.random().toString(36).substr(2, 9) + index
+        const preview = URL.createObjectURL(file)
 
-          const data = await response.json()
-          return { filename: file.name, success: true, uploadId, url: data.resourceUrl }
-        } catch (error) {
-          return {
-            error: error instanceof Error ? error.message : 'Error desconocido',
-            filename: file.name,
-            success: false,
-            uploadId
-          }
+        return {
+          filename: file.name,
+          id: uploadId,
+          isNew: true,
+          preview,
+          size: file.size,
+          status: 'uploading' as const,
+          url: preview,
         }
       })
 
-      const results = await Promise.all(uploadPromises)
+      // Agregar todas las imágenes al estado
+      const updatedImages = [...existingImages, ...newImages]
+      onImagesChange(updatedImages)
 
-      // Actualizar estado con resultados
-      const finalImages = updatedImages.map(img => {
-        const result = results.find(r => r.uploadId === img.id)
-        if (result) {
-          if (result.success) {
-            return { ...img, status: 'completed' as const, url: result.url }
+      try {
+        // Subir archivos en paralelo
+        const uploadPromises = files.map(async (file, index) => {
+          const uploadId = newImages[index].id
+
+          try {
+            const formData = new FormData()
+            formData.append('file', file)
+
+            const response = await fetch('/api/uploads', {
+              body: formData,
+              method: 'POST',
+            })
+
+            if (!response.ok) {
+              const errorData = await response.json()
+              throw new Error(errorData.error ?? 'Error al subir el archivo')
+            }
+
+            const data = await response.json()
+            return { filename: file.name, success: true, uploadId, url: data.resourceUrl }
+          } catch (error) {
+            return {
+              error: error instanceof Error ? error.message : 'Error desconocido',
+              filename: file.name,
+              success: false,
+              uploadId,
+            }
+          }
+        })
+
+        const results = await Promise.all(uploadPromises)
+
+        // Actualizar estado con resultados
+        const finalImages = updatedImages.map((img) => {
+          const result = results.find((r) => r.uploadId === img.id)
+          if (result) {
+            if (result.success) {
+              return { ...img, status: 'completed' as const, url: result.url }
+            } else {
+              return { ...img, status: 'error' as const }
+            }
+          }
+          return img
+        })
+
+        onImagesChange(finalImages)
+
+        // Mostrar toasts de resultados
+        const successful = results.filter((r) => r.success)
+        const failed = results.filter((r) => !r.success)
+
+        if (successful.length > 0) {
+          if (successful.length === 1) {
+            toast.success(`Imagen "${successful[0].filename}" subida exitosamente`)
           } else {
-            return { ...img, status: 'error' as const }
+            toast.success(`${successful.length} imágenes subidas exitosamente`)
           }
         }
-        return img
-      })
 
-      onImagesChange(finalImages)
-
-      // Mostrar toasts de resultados
-      const successful = results.filter(r => r.success)
-      const failed = results.filter(r => !r.success)
-
-      if (successful.length > 0) {
-        if (successful.length === 1) {
-          toast.success(`Imagen "${successful[ 0 ].filename}" subida exitosamente`)
-        } else {
-          toast.success(`${successful.length} imágenes subidas exitosamente`)
+        if (failed.length > 0) {
+          if (failed.length === 1) {
+            toast.error(`Error al subir "${failed[0].filename}": ${failed[0].error}`)
+          } else {
+            toast.error(`${failed.length} imágenes no pudieron ser subidas`)
+          }
         }
+      } catch (error) {
+        console.error('Error en upload múltiple:', error)
+        toast.error('Error al subir las imágenes')
+      } finally {
+        setIsUploading(false)
+      }
+    },
+    [existingImages, onImagesChange]
+  )
+
+  const removeImage = useCallback(
+    (imageId: string) => {
+      const imageToRemove = existingImages.find((img) => img.id === imageId)
+      if (imageToRemove?.preview) {
+        URL.revokeObjectURL(imageToRemove.preview)
       }
 
-      if (failed.length > 0) {
-        if (failed.length === 1) {
-          toast.error(`Error al subir "${failed[ 0 ].filename}": ${failed[ 0 ].error}`)
-        } else {
-          toast.error(`${failed.length} imágenes no pudieron ser subidas`)
-        }
+      const updatedImages = existingImages.filter((img) => img.id !== imageId)
+
+      // Si se removió la imagen principal, hacer la primera imagen la principal
+      if (imageToRemove?.isPrimary && updatedImages.length > 0) {
+        updatedImages[0].isPrimary = true
       }
 
-    } catch (error) {
-      console.error('Error en upload múltiple:', error)
-      toast.error('Error al subir las imágenes')
-    } finally {
-      setIsUploading(false)
-    }
-  }, [ existingImages, onImagesChange ])
+      onImagesChange(updatedImages)
+    },
+    [existingImages, onImagesChange]
+  )
 
-  const removeImage = useCallback((imageId: string) => {
-    const imageToRemove = existingImages.find(img => img.id === imageId)
-    if (imageToRemove?.preview) {
-      URL.revokeObjectURL(imageToRemove.preview)
-    }
+  const setPrimaryImage = useCallback(
+    (imageId: string) => {
+      const updatedImages = existingImages.map((img) => ({
+        ...img,
+        isPrimary: img.id === imageId,
+      }))
 
-    const updatedImages = existingImages.filter(img => img.id !== imageId)
-
-    // Si se removió la imagen principal, hacer la primera imagen la principal
-    if (imageToRemove?.isPrimary && updatedImages.length > 0) {
-      updatedImages[ 0 ].isPrimary = true
-    }
-
-    onImagesChange(updatedImages)
-  }, [ existingImages, onImagesChange ])
-
-  const setPrimaryImage = useCallback((imageId: string) => {
-    const updatedImages = existingImages.map(img => ({
-      ...img,
-      isPrimary: img.id === imageId
-    }))
-
-    onImagesChange(updatedImages)
-  }, [ existingImages, onImagesChange ])
+      onImagesChange(updatedImages)
+    },
+    [existingImages, onImagesChange]
+  )
 
   const formatFileSize = useCallback((bytes: number): string => {
     if (bytes === 0) return '0 Bytes'
     const k = 1024
-    const sizes = [ 'Bytes', 'KB', 'MB', 'GB' ]
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[ i ]}`
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
   }, [])
 
   return (
@@ -222,12 +232,13 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
           {existingImages.map((image, index) => (
             <div
               key={image.id}
-              className={`group relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${image.status === 'completed'
-                ? 'border-green-200 bg-green-50'
-                : image.status === 'error'
-                  ? 'border-red-200 bg-red-50'
-                  : 'border-yellow-200 bg-yellow-50'
-                }`}
+              className={`group relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${
+                image.status === 'completed'
+                  ? 'border-green-200 bg-green-50'
+                  : image.status === 'error'
+                    ? 'border-red-200 bg-red-50'
+                    : 'border-yellow-200 bg-yellow-50'
+              }`}
             >
               <img
                 src={image.url}
@@ -240,9 +251,7 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
                 {image.status === 'uploading' && (
                   <Loader2 className='size-6 animate-spin text-white' />
                 )}
-                {image.status === 'completed' && (
-                  <CheckCircle className='size-6 text-green-400' />
-                )}
+                {image.status === 'completed' && <CheckCircle className='size-6 text-green-400' />}
                 {image.status === 'error' && <X className='size-6 text-red-400' />}
               </div>
 
@@ -321,4 +330,4 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
       )}
     </div>
   )
-} 
+}

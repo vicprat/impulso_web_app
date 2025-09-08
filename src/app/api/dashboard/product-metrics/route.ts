@@ -103,21 +103,7 @@ export async function GET() {
           const productData = edge.node
 
           return {
-            descriptionHtml: productData.descriptionHtml,
-            handle: productData.handle,
-            id: productData.id,
-            images: [],
-            // Array vacío para evitar errores
-media: [],
-            
-get formattedPrice() {
-              const variant = this.primaryVariant
-              return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
-            },
-            
-metafields: productData.metafields.edges,
-            
-// Procesar artworkDetails desde metafields
+            // Procesar artworkDetails desde metafields
 get artworkDetails() {
               const details: any = {}
               for (const { node } of this.metafields) {
@@ -130,47 +116,58 @@ get artworkDetails() {
               }
               return {
                 artist: details.artist || null,
-                height: details.height || null,
-                medium: details.medium || null,
                 depth: details.depth || null,
-                year: details.year || null,
+                height: details.height || null,
                 location: details.location || null,
-                width: details.width || null,
+                medium: details.medium || null,
                 serie: details.serie || null,
+                width: details.width || null,
+                year: details.year || null,
               }
             },
             
-
-productType: productData.productType, 
-            
 get autoTags() {
               return this.tags.filter((tag: string) => tag.startsWith('auto-'))
-            }, 
+            },
             
-status: productData.status,
+descriptionHtml: productData.descriptionHtml,
             
+get formattedPrice() {
+              const variant = this.primaryVariant
+              return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
+            },
+            
+
+handle: productData.handle,
+            
+
+
+id: productData.id,
+            
+
+
+images: [],
+            
+
 
 get isAvailable() {
               const variant = this.primaryVariant
               return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
             },
             
-            
-
-title: productData.title,
-            
 
 
 // Procesar tags
 get manualTags() {
               return this.tags.filter((tag: string) => !tag.startsWith('auto-'))
-            },
+            }, 
             
 
-
-
-vendor: productData.vendor,
+// Array vacío para evitar errores
+media: [], 
             
+
+metafields: productData.metafields.edges,
             
 
 
@@ -183,20 +180,45 @@ get primaryVariant() {
 
 
 
+productType: productData.productType,
+            
+
+
+
+
+status: productData.status,
+            
+
+
+
+
 tags: productData.tags,
             
+            
+
+
+
+title: productData.title,
+            
+            
+
+
 
 // Array vacío para evitar errores
 variants: productData.variants.edges.map((variantEdge: any) => ({
               availableForSale: variantEdge.node.availableForSale,
               id: variantEdge.node.id,
-              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
-              inventoryQuantity: variantEdge.node.inventoryQuantity,
-              title: variantEdge.node.title,
               inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
               inventoryPolicy: variantEdge.node.inventoryPolicy,
-              sku: variantEdge.node.sku
-            }))
+              inventoryQuantity: variantEdge.node.inventoryQuantity,
+              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
+              sku: variantEdge.node.sku,
+              title: variantEdge.node.title
+            })),
+            
+
+
+vendor: productData.vendor
           }
         })
         allProducts.push(...products)
@@ -293,15 +315,15 @@ productsByYear: products.reduce(
 // Información detallada de productos
 productsDetails: products.map(product => ({
         artworkDetails: product.artworkDetails,
-        id: product.id,
-        manualTags: product.manualTags,
         autoTags: product.autoTags,
-        productType: product.productType,
+        id: product.id,
         isAvailable: product.isAvailable,
-        status: product.status,
+        manualTags: product.manualTags,
         price: product.formattedPrice,
-        title: product.title,
+        productType: product.productType,
+        status: product.status,
         tags: product.tags,
+        title: product.title,
         vendor: product.vendor
       })),
       

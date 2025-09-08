@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { User } from 'lucide-react'
@@ -54,7 +53,7 @@ const getInitials = (firstName?: string, lastName?: string, email?: string) => {
 export const Artist: React.FC<ArtistProps> = ({
   artist,
   avatarFallback = 'initials',
-  backgroundFallback = 'dynamic'
+  backgroundFallback = 'dynamic',
 }) => {
   const artistName =
     artist.firstName || artist.lastName
@@ -107,40 +106,30 @@ export const Artist: React.FC<ArtistProps> = ({
   const renderBackgroundFallback = () => {
     switch (backgroundFallback) {
       case 'minimal':
-        return (
-          <div className='from-muted/30 to-muted/10 size-full bg-gradient-to-br' />
-        )
+        return <div className='from-muted/30 to-muted/10 size-full bg-gradient-to-br' />
 
       case 'pattern':
         return (
-          <div
-            className='relative size-full'
-            style={{ backgroundColor: `${userColor}20` }}
-          >
+          <div className='relative size-full' style={{ backgroundColor: `${userColor}20` }}>
             <div
               className='absolute inset-0 opacity-30'
               style={{
                 backgroundImage: `radial-gradient(circle, ${userColor} 1px, transparent 1px)`,
-                backgroundSize: '20px 20px'
+                backgroundSize: '20px 20px',
               }}
             />
           </div>
         )
 
       case 'solid':
-        return (
-          <div
-            className='size-full'
-            style={{ backgroundColor: `${userColor}15` }}
-          />
-        )
+        return <div className='size-full' style={{ backgroundColor: `${userColor}15` }} />
 
       default: // 'dynamic'
         return (
           <div
             className='size-full bg-gradient-to-br opacity-60'
             style={{
-              background: `linear-gradient(135deg, ${userColor}20, ${userColor}10, transparent)`
+              background: `linear-gradient(135deg, ${userColor}20, ${userColor}10, transparent)`,
             }}
           />
         )
@@ -148,7 +137,7 @@ export const Artist: React.FC<ArtistProps> = ({
   }
 
   return (
-    < Card className='to-card/80 group relative h-80 overflow-hidden border-0 bg-gradient-to-br from-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl' >
+    <Card className='to-card/80 group relative h-80 overflow-hidden border-0 bg-gradient-to-br from-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl'>
       <Link
         href={replaceRouteParams(ROUTES.PUBLIC.PROFILE_DETAIL.PATH, { userId: artist.id })}
         className='block h-full focus:outline-none'
@@ -162,7 +151,7 @@ export const Artist: React.FC<ArtistProps> = ({
               <>
                 <img
                   src={artist.profile.backgroundImageUrl}
-                  alt="Background"
+                  alt='Background'
                   className='size-full object-cover transition-transform duration-700 group-hover:scale-110'
                   loading='lazy'
                 />
@@ -183,8 +172,7 @@ export const Artist: React.FC<ArtistProps> = ({
                     alt={artistName}
                     className='size-full object-cover'
                     loading='lazy'
-                    style={{
-                    }}
+                    style={{}}
                   />
                 ) : (
                   renderAvatarFallback()
@@ -206,9 +194,7 @@ export const Artist: React.FC<ArtistProps> = ({
               {/* Ocupación con altura fija */}
               <div className='flex min-h-8 items-center justify-center'>
                 {artist.profile?.occupation && (
-                  <p className='text-sm text-muted-foreground'>
-                    {artist.profile.occupation}
-                  </p>
+                  <p className='text-sm text-muted-foreground'>{artist.profile.occupation}</p>
                 )}
               </div>
             </div>
@@ -217,8 +203,7 @@ export const Artist: React.FC<ArtistProps> = ({
 
         {/* Overlay de hover */}
         <div className='from-primary/5 pointer-events-none absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
-
       </Link>
-    </ Card >
+    </Card>
   )
 }

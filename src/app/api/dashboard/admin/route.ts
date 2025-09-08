@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+ 
 import { NextResponse } from 'next/server'
 
 import { PERMISSIONS } from '@/src/config/Permissions'
@@ -214,21 +214,7 @@ export async function GET() {
           const productData = edge.node
 
           return {
-            descriptionHtml: productData.descriptionHtml,
-            handle: productData.handle,
-            id: productData.id,
-            images: [],
-            // Array vacío para evitar errores
-media: [],
-            
-get formattedPrice() {
-              const variant = this.primaryVariant
-              return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
-            },
-            
-metafields: productData.metafields.edges,
-            
-// Procesar artworkDetails desde metafields
+            // Procesar artworkDetails desde metafields
 get artworkDetails() {
               const details: any = {}
               for (const { node } of this.metafields) {
@@ -241,47 +227,58 @@ get artworkDetails() {
               }
               return {
                 artist: details.artist || null,
-                height: details.height || null,
-                medium: details.medium || null,
                 depth: details.depth || null,
-                year: details.year || null,
+                height: details.height || null,
                 location: details.location || null,
-                width: details.width || null,
+                medium: details.medium || null,
                 serie: details.serie || null,
+                width: details.width || null,
+                year: details.year || null,
               }
             },
             
-
-productType: productData.productType, 
-            
 get autoTags() {
               return this.tags.filter((tag: string) => tag.startsWith('auto-'))
-            }, 
+            },
             
-status: productData.status,
+descriptionHtml: productData.descriptionHtml,
             
+get formattedPrice() {
+              const variant = this.primaryVariant
+              return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
+            },
+            
+
+handle: productData.handle,
+            
+
+
+id: productData.id,
+            
+
+
+images: [],
+            
+
 
 get isAvailable() {
               const variant = this.primaryVariant
               return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
             },
             
-            
-
-title: productData.title,
-            
 
 
 // Procesar tags
 get manualTags() {
               return this.tags.filter((tag: string) => !tag.startsWith('auto-'))
-            },
+            }, 
             
 
-
-
-vendor: productData.vendor,
+// Array vacío para evitar errores
+media: [], 
             
+
+metafields: productData.metafields.edges,
             
 
 
@@ -294,20 +291,45 @@ get primaryVariant() {
 
 
 
+productType: productData.productType,
+            
+
+
+
+
+status: productData.status,
+            
+
+
+
+
 tags: productData.tags,
             
+            
+
+
+
+title: productData.title,
+            
+            
+
+
 
 // Array vacío para evitar errores
 variants: productData.variants.edges.map((variantEdge: any) => ({
               availableForSale: variantEdge.node.availableForSale,
               id: variantEdge.node.id,
-              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
-              inventoryQuantity: variantEdge.node.inventoryQuantity,
-              title: variantEdge.node.title,
               inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
               inventoryPolicy: variantEdge.node.inventoryPolicy,
-              sku: variantEdge.node.sku
-            }))
+              inventoryQuantity: variantEdge.node.inventoryQuantity,
+              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
+              sku: variantEdge.node.sku,
+              title: variantEdge.node.title
+            })),
+            
+
+
+vendor: productData.vendor
           }
         })
         allProducts.push(...products)
@@ -409,20 +431,22 @@ variants: productData.variants.edges.map((variantEdge: any) => ({
           const eventData = edge.node
 
           return {
-            descriptionHtml: eventData.descriptionHtml,
-            handle: eventData.handle,
-            id: eventData.id,
-            get formattedPrice() {
-              const variant = this.primaryVariant
-              return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
-            },
-            images: [],
             get availableForSale() {
               const variant = this.primaryVariant
               return variant ? variant.availableForSale : false
             },
-            metafields: eventData.metafields.edges,
-            // Procesar eventDetails desde metafields
+            get daysUntilEvent() {
+              if (!this.eventDetails.date) return null
+              const eventDate = new Date(this.eventDetails.date)
+              const today = new Date()
+              const diffTime = eventDate.getTime() - today.getTime()
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+              return diffDays
+            },
+            
+descriptionHtml: eventData.descriptionHtml,
+            
+// Procesar eventDetails desde metafields
 get eventDetails() {
               const details: any = {}
               for (const { node } of this.metafields) {
@@ -442,22 +466,6 @@ get eventDetails() {
               }
             },
             
-productType: eventData.productType, 
-            
-get daysUntilEvent() {
-              if (!this.eventDetails.date) return null
-              const eventDate = new Date(this.eventDetails.date)
-              const today = new Date()
-              const diffTime = eventDate.getTime() - today.getTime()
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-              return diffDays
-            },
-            
-
-status: eventData.status,
-            
-            
-
 get formattedEventDetails() {
               const details = this.eventDetails
               const parts = []
@@ -468,21 +476,21 @@ get formattedEventDetails() {
               return parts.join(' | ')
             },
             
-
-
-title: eventData.title,
+get formattedPrice() {
+              const variant = this.primaryVariant
+              return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
+            },
             
-
-
+handle: eventData.handle,
+            
+id: eventData.id,
+            
+images: [], 
+            
 get isAvailable() {
               const variant = this.primaryVariant
               return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
             },
-            
-
-
-vendor: eventData.vendor,
-            
             
 
 get isPastEvent() {
@@ -491,6 +499,11 @@ get isPastEvent() {
               return eventDate < new Date()
             },
             
+            
+
+metafields: eventData.metafields.edges,
+            
+
 
 // Métodos del modelo Event
 get primaryVariant() {
@@ -499,19 +512,39 @@ get primaryVariant() {
             
 
 
+
+productType: eventData.productType,
+            
+
+
+
+status: eventData.status,
+            
+            
+
+
 tags: eventData.tags,
             
+
+
+title: eventData.title,
+            
+
+
 // Array vacío para evitar errores
 variants: eventData.variants.edges.map((variantEdge: any) => ({
-              id: variantEdge.node.id,
               availableForSale: variantEdge.node.availableForSale,
-              title: variantEdge.node.title,
-              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
-              inventoryQuantity: variantEdge.node.inventoryQuantity,
-              sku: variantEdge.node.sku,
+              id: variantEdge.node.id,
               inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
-              inventoryPolicy: variantEdge.node.inventoryPolicy
-            }))
+              inventoryPolicy: variantEdge.node.inventoryPolicy,
+              inventoryQuantity: variantEdge.node.inventoryQuantity,
+              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
+              sku: variantEdge.node.sku,
+              title: variantEdge.node.title
+            })),
+            
+
+vendor: eventData.vendor
           }
         })
         allEvents.push(...events)

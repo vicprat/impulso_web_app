@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { format } from 'date-fns'
@@ -13,7 +12,7 @@ import {
   Share2,
   Ticket,
   User,
-  Users
+  Users,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -144,9 +143,9 @@ const isEventFree = (event: Event): boolean => {
 }
 
 export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, session }) => {
-  const [ currentImageIndex, setCurrentImageIndex ] = useState(0)
-  const [ lightboxOpen, setLightboxOpen ] = useState(false)
-  const [ lightboxImageIndex, setLightboxImageIndex ] = useState(0)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxImageIndex, setLightboxImageIndex] = useState(0)
 
   const eventDetails = extractEventDetails(event)
   const eventDate = eventDetails.date ? new Date(eventDetails.date) : null
@@ -202,8 +201,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
   return (
     <div className='min-h-screen'>
       <div className='mx-auto max-w-7xl px-3 py-4 sm:px-6 lg:px-8'>
-
-
         {/* Hero Section - Completamente rediseñado para móvil */}
         <div className='mb-8'>
           <div className='lg:grid lg:grid-cols-12 lg:gap-8'>
@@ -213,8 +210,8 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
               <div className='group relative mb-4 aspect-[16/9] overflow-hidden rounded-2xl bg-muted shadow-elevation-2'>
                 {event.images.length > 0 ? (
                   <img
-                    src={event.images[ currentImageIndex ]?.url}
-                    alt={event.images[ currentImageIndex ]?.altText ?? event.title}
+                    src={event.images[currentImageIndex]?.url}
+                    alt={event.images[currentImageIndex]?.altText ?? event.title}
                     className='size-full object-cover transition-transform duration-700 group-hover:scale-105'
                     onClick={() => openLightbox(currentImageIndex)}
                   />
@@ -231,7 +228,10 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                 <div className='absolute right-4 top-4 flex gap-2'>
                   {/* Status badge */}
                   {isPastEvent ? (
-                    <Badge variant='destructive' className='bg-error-container text-on-error shadow-elevation-2'>
+                    <Badge
+                      variant='destructive'
+                      className='bg-error-container text-on-error shadow-elevation-2'
+                    >
                       Evento Pasado
                     </Badge>
                   ) : daysUntilEvent !== null && daysUntilEvent <= 7 ? (
@@ -259,7 +259,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                     <h1 className='mb-2 text-2xl font-bold leading-tight text-foreground sm:text-3xl lg:text-4xl'>
                       {event.title}
                     </h1>
-
                   </div>
 
                   {/* Quick Info Cards para móvil */}
@@ -290,7 +289,8 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                             <p className='text-xs text-muted-foreground'>Hora</p>
                             <p className='text-sm font-medium text-foreground'>
                               {formatEventTime(eventDetails.startTime)}
-                              {eventDetails.endTime && ` - ${formatEventTime(eventDetails.endTime)}`}
+                              {eventDetails.endTime &&
+                                ` - ${formatEventTime(eventDetails.endTime)}`}
                             </p>
                           </div>
                         </div>
@@ -323,10 +323,11 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                     <button
                       key={image.id ?? index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`aspect-square overflow-hidden rounded-lg border-2 transition-all ${currentImageIndex === index
-                        ? 'ring-primary/20 border-primary ring-2'
-                        : 'border-border hover:border-muted-foreground'
-                        }`}
+                      className={`aspect-square overflow-hidden rounded-lg border-2 transition-all ${
+                        currentImageIndex === index
+                          ? 'ring-primary/20 border-primary ring-2'
+                          : 'border-border hover:border-muted-foreground'
+                      }`}
                     >
                       <img
                         src={image.url}
@@ -342,7 +343,9 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
               {event.descriptionHtml && (
                 <Card className='mb-6 bg-card shadow-elevation-1'>
                   <CardHeader>
-                    <CardTitle className='text-xl text-foreground sm:text-2xl'>Sobre este Evento</CardTitle>
+                    <CardTitle className='text-xl text-foreground sm:text-2xl'>
+                      Sobre este Evento
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div
@@ -367,13 +370,16 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                   </div>
 
                   <div className='space-y-2'>
-                    <div className='text-2xl font-bold text-foreground sm:text-3xl'>{getEventPrice()}</div>
+                    <div className='text-2xl font-bold text-foreground sm:text-3xl'>
+                      {getEventPrice()}
+                    </div>
                     {!isFreeEvent && <p className='text-sm text-muted-foreground'>por entrada</p>}
 
                     <Badge
                       variant={eventStatus.variant}
-                      className={`${eventStatus.variant === 'default' ? 'bg-success-container text-success' : ''
-                        }`}
+                      className={`${
+                        eventStatus.variant === 'default' ? 'bg-success-container text-success' : ''
+                      }`}
                     >
                       {eventStatus.text}
                     </Badge>
@@ -395,10 +401,11 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                       }}
                       selectedVariant={primaryVariant || undefined}
                       size='lg'
-                      className={`w-full shadow-elevation-2 ${isFreeEvent
-                        ? 'hover:bg-success/90 bg-success text-on-primary'
-                        : 'hover:bg-primary/90 bg-primary text-on-primary'
-                        }`}
+                      className={`w-full shadow-elevation-2 ${
+                        isFreeEvent
+                          ? 'hover:bg-success/90 bg-success text-on-primary'
+                          : 'hover:bg-primary/90 bg-primary text-on-primary'
+                      }`}
                       disabled={!isAvailable}
                       showQuantitySelector={true}
                       title={{
@@ -519,9 +526,9 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                       })}
                     >
                       <div className='relative aspect-[4/3] overflow-hidden'>
-                        {relatedEvent.images[ 0 ] ? (
+                        {relatedEvent.images[0] ? (
                           <img
-                            src={relatedEvent.images[ 0 ].url}
+                            src={relatedEvent.images[0].url}
                             alt={relatedEvent.title}
                             className='size-full object-cover transition-transform duration-300 group-hover:scale-105'
                           />
@@ -534,10 +541,11 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                         {/* Overlay with price */}
                         <div className='absolute right-3 top-3'>
                           <Badge
-                            className={`${isRelatedFree
-                              ? 'bg-success-container text-success'
-                              : 'bg-surface-container text-on-surface'
-                              } shadow-elevation-1`}
+                            className={`${
+                              isRelatedFree
+                                ? 'bg-success-container text-success'
+                                : 'bg-surface-container text-on-surface'
+                            } shadow-elevation-1`}
                           >
                             {isRelatedFree ? 'Gratuito' : relatedEvent.formattedPrice}
                           </Badge>
@@ -577,16 +585,14 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
         )}
       </div>
 
-
-
       {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className='max-w-screen-xl border-none bg-black/95 p-0'>
           <div className='relative flex h-[90vh] items-center justify-center'>
             {event.images.length > 0 && (
               <img
-                src={event.images[ lightboxImageIndex ]?.url}
-                alt={event.images[ lightboxImageIndex ]?.altText ?? event.title}
+                src={event.images[lightboxImageIndex]?.url}
+                alt={event.images[lightboxImageIndex]?.altText ?? event.title}
                 className='max-h-full max-w-full object-contain'
               />
             )}

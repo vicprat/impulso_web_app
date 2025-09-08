@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { CheckCircle, Loader2, Upload, X } from 'lucide-react'
 import React, { useEffect, useId, useState } from 'react'
 import { toast } from 'sonner'
@@ -60,7 +59,7 @@ export const SupabaseImageUploader: React.FC<SupabaseImageUploaderProps> = ({
     if (!files || files.length === 0) return
 
     const file = files[0] // Only take the first file for single upload
-    
+
     // Validate file size
     if (file.size > maxFileSize) {
       toast.error(`El archivo es demasiado grande. Máximo ${formatFileSize(maxFileSize)}`)
@@ -258,4 +257,4 @@ export const SupabaseImageUploader: React.FC<SupabaseImageUploaderProps> = ({
       )}
     </div>
   )
-} 
+}

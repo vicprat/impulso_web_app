@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { Calendar, Eye, MapPin, QrCode, Ticket, User } from 'lucide-react'
@@ -52,14 +51,14 @@ export default function ManageTicketsPage() {
   const { isLoading: authLoading } = useAuth()
   const { data: tickets, error, isLoading } = useGetTicketsByUserId()
 
-  const [ ticketToShowQr, setTicketToShowQr ] = useState<TicketWithEvent | null>(null)
+  const [ticketToShowQr, setTicketToShowQr] = useState<TicketWithEvent | null>(null)
 
   if (authLoading || isLoading) {
     return (
       <div className='space-y-4 p-4 md:p-6'>
         <Skeleton className='h-8 w-64' />
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-          {[ 1, 2, 3 ].map((i) => (
+          {[1, 2, 3].map((i) => (
             <Skeleton key={i} className='h-64 w-full' />
           ))}
         </div>
@@ -97,8 +96,8 @@ export default function ManageTicketsPage() {
     }
 
     return (
-      <Badge variant={variants[ status as keyof typeof variants ]}>
-        {labels[ status as keyof typeof labels ] || status}
+      <Badge variant={variants[status as keyof typeof variants]}>
+        {labels[status as keyof typeof labels] || status}
       </Badge>
     )
   }

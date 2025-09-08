@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { CheckCircle, Loader2, Upload, X } from 'lucide-react'
 import React, { useEffect, useId, useState } from 'react'
 import { toast } from 'sonner'
@@ -31,8 +30,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   value,
 }) => {
   const inputId = useId()
-  const [ uploadedImage, setUploadedImage ] = useState<UploadedImage | null>(null)
-  const [ isUploading, setIsUploading ] = useState(false)
+  const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   useEffect(() => {
     if (value && !uploadedImage) {
@@ -54,13 +53,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       // Clear if value becomes null and it was an initial image
       setUploadedImage(null)
     }
-  }, [ value, uploadedImage ])
+  }, [value, uploadedImage])
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
     if (!files || files.length === 0) return
 
-    const file = files[ 0 ] // Only take the first file for single upload
+    const file = files[0] // Only take the first file for single upload
     await uploadFile(file)
 
     event.target.value = '' // Clear the input
@@ -127,9 +126,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes'
     const k = 1024
-    const sizes = [ 'Bytes', 'KB', 'MB', 'GB' ]
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[ i ]}`
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
   }
 
   // Modo compacto para uso en tablas
@@ -192,9 +191,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 {uploadedImage.status === 'completed' && (
                   <CheckCircle className='size-4 text-green-400' />
                 )}
-                {uploadedImage.status === 'error' && (
-                  <X className='size-4 text-red-400' />
-                )}
+                {uploadedImage.status === 'error' && <X className='size-4 text-red-400' />}
               </div>
             </div>
 
@@ -203,12 +200,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <p className='truncate text-xs' title={uploadedImage.filename}>
                 {uploadedImage.filename}
               </p>
-              {uploadedImage.status === 'completed' && (
-                <p className='text-xs text-green-600'>✅</p>
-              )}
-              {uploadedImage.status === 'error' && (
-                <p className='text-xs text-red-600'>❌</p>
-              )}
+              {uploadedImage.status === 'completed' && <p className='text-xs text-green-600'>✅</p>}
+              {uploadedImage.status === 'error' && <p className='text-xs text-red-600'>❌</p>}
             </div>
           </div>
         )}
@@ -259,12 +252,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         <div className='space-y-2'>
           <div
             key={uploadedImage.id}
-            className={`group relative overflow-hidden rounded-lg border-2 transition-all ${uploadedImage.status === 'completed'
-              ? 'border-green-200 bg-green-50'
-              : uploadedImage.status === 'error'
-                ? 'border-red-200 bg-red-50'
-                : 'border-yellow-200 bg-yellow-50'
-              }`}
+            className={`group relative overflow-hidden rounded-lg border-2 transition-all ${
+              uploadedImage.status === 'completed'
+                ? 'border-green-200 bg-green-50'
+                : uploadedImage.status === 'error'
+                  ? 'border-red-200 bg-red-50'
+                  : 'border-yellow-200 bg-yellow-50'
+            }`}
           >
             <div className='relative aspect-square'>
               <img

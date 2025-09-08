@@ -1,5 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
-
 'use client'
 
 import Autoplay from 'embla-carousel-autoplay'
@@ -15,7 +13,7 @@ import {
   Ruler,
   User,
   Warehouse,
-  ZoomIn
+  ZoomIn,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
@@ -165,43 +163,42 @@ const INITIAL_STATE: State = {
 }
 
 export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
-  const [ state, setState ] = useState(INITIAL_STATE)
+  const [state, setState] = useState(INITIAL_STATE)
 
-  const [ emblaRef, emblaApi ] = useEmblaCarousel(
+  const [emblaRef, emblaApi] = useEmblaCarousel(
     {
       align: 'start',
       dragFree: true,
       loop: true,
       skipSnaps: false,
     },
-    [ Autoplay({ delay: 4000, stopOnInteraction: true }) ]
+    [Autoplay({ delay: 4000, stopOnInteraction: true })]
   )
 
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev()
-  }, [ emblaApi ])
+  }, [emblaApi])
 
   const scrollNext = useCallback(() => {
     if (emblaApi) emblaApi.scrollNext()
-  }, [ emblaApi ])
+  }, [emblaApi])
 
   const currentPrice = state.variant?.price ?? product.primaryVariant?.price
   const comparePrice = state.variant?.compareAtPrice
   const discount =
     comparePrice && comparePrice.amount !== currentPrice?.amount
       ? Math.round(
-        ((parseFloat(comparePrice.amount) - parseFloat(currentPrice?.amount || '0')) /
-          parseFloat(comparePrice.amount)) *
-        100
-      )
+          ((parseFloat(comparePrice.amount) - parseFloat(currentPrice?.amount || '0')) /
+            parseFloat(comparePrice.amount)) *
+            100
+        )
       : null
-
 
   useEffect(() => {
     if (product.variants.length > 0 && !state.variant) {
-      setState((previous) => ({ ...previous, variant: product.variants[ 0 ] }))
+      setState((previous) => ({ ...previous, variant: product.variants[0] }))
     }
-  }, [ product.variants, state.variant ])
+  }, [product.variants, state.variant])
 
   const classNames = (...classes: string[]) => {
     return classes.filter(Boolean).join(' ')
@@ -256,7 +253,7 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ state.lightboxOpen ])
+  }, [state.lightboxOpen])
 
   return (
     <div className='min-h-screen'>
@@ -270,8 +267,8 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
               <div className='space-y-4'>
                 <div className='group relative aspect-square cursor-pointer overflow-hidden rounded-2xl bg-muted shadow-lg'>
                   <img
-                    src={product.images[ state.image ]?.url}
-                    alt={product.images[ state.image ]?.altText ?? product.title}
+                    src={product.images[state.image]?.url}
+                    alt={product.images[state.image]?.altText ?? product.title}
                     className='size-full object-cover transition-transform duration-500 hover:scale-105'
                     onClick={() => openLightbox(state.image)}
                   />
@@ -353,7 +350,9 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                         </span>
                       )}
                     </div>
-                    <p className='text-sm text-muted-foreground'>{currentPrice?.currencyCode || 'MXN'}</p>
+                    <p className='text-sm text-muted-foreground'>
+                      {currentPrice?.currencyCode || 'MXN'}
+                    </p>
                   </div>
                   {discount && (
                     <Badge className='bg-green-500 text-xs hover:bg-green-600'>
@@ -385,18 +384,17 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                       const optionGroups = product.variants.reduce(
                         (acc: Record<string, Set<string>>, variant) => {
                           variant.selectedOptions.forEach((option) => {
-                            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                            if (!acc[ option.name ]) {
-                              acc[ option.name ] = new Set()
+                            if (!acc[option.name]) {
+                              acc[option.name] = new Set()
                             }
-                            acc[ option.name ].add(option.value)
+                            acc[option.name].add(option.value)
                           })
                           return acc
                         },
                         {} as Record<string, Set<string>>
                       )
 
-                      return Object.entries(optionGroups).map(([ optionName, values ]) => (
+                      return Object.entries(optionGroups).map(([optionName, values]) => (
                         <div key={optionName} className='space-y-3'>
                           <h3 className='text-sm font-semibold uppercase tracking-wide text-foreground'>
                             {optionName}
@@ -485,13 +483,18 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                         </div>
                       </div>
                     )}
-                    {(product.artworkDetails.width || product.artworkDetails.height || product.artworkDetails.depth) && (
+                    {(product.artworkDetails.width ||
+                      product.artworkDetails.height ||
+                      product.artworkDetails.depth) && (
                       <div className='flex items-center gap-2'>
                         <Ruler className='size-4 text-muted-foreground' />
                         <div>
                           <p className='text-xs text-muted-foreground'>Medidas (cm)</p>
                           <p className='text-sm font-medium'>
-                            {product.artworkDetails.height} x {product.artworkDetails.width} {product.artworkDetails.depth ? `x ${product.artworkDetails.depth}` : ''}
+                            {product.artworkDetails.height} x {product.artworkDetails.width}{' '}
+                            {product.artworkDetails.depth
+                              ? `x ${product.artworkDetails.depth}`
+                              : ''}
                           </p>
                         </div>
                       </div>
@@ -534,7 +537,9 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                     </div>
                     <div className='flex justify-between text-sm'>
                       <span className='font-medium text-muted-foreground'>SKU:</span>
-                      <span className='font-mono text-foreground'>{state.variant?.sku ?? 'N/A'}</span>
+                      <span className='font-mono text-foreground'>
+                        {state.variant?.sku ?? 'N/A'}
+                      </span>
                     </div>
                   </div>
                   <div className='space-y-3'>
@@ -545,10 +550,11 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                     <div className='flex justify-between text-sm'>
                       <span className='font-medium text-muted-foreground'>Disponibilidad:</span>
                       <span
-                        className={`font-medium ${product.isAvailable
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
-                          }`}
+                        className={`font-medium ${
+                          product.isAvailable
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}
                       >
                         {product.isAvailable ? 'En stock' : 'Agotado'}
                       </span>
@@ -573,8 +579,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                   </CardContent>
                 </Card>
               )}
-
-
             </div>
           </div>
         </div>
@@ -605,14 +609,16 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                   <div key={relatedProduct.id} className='w-64 flex-none sm:w-72 md:w-80'>
                     <Card className='group relative overflow-hidden border bg-card shadow-sm transition-all duration-300 hover:shadow-md'>
                       <Link
-                        href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: relatedProduct.handle })}
+                        href={replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, {
+                          handle: relatedProduct.handle,
+                        })}
                         className='block focus:outline-none'
                       >
                         <div className='relative aspect-square overflow-hidden bg-muted'>
-                          {relatedProduct.images[ 0 ] ? (
+                          {relatedProduct.images[0] ? (
                             <img
-                              src={relatedProduct.images[ 0 ].url}
-                              alt={relatedProduct.images[ 0 ].altText ?? relatedProduct.title}
+                              src={relatedProduct.images[0].url}
+                              alt={relatedProduct.images[0].altText ?? relatedProduct.title}
                               className='size-full object-cover transition-all duration-500 group-hover:scale-105'
                               loading='lazy'
                             />
@@ -627,9 +633,7 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                             <h3 className='line-clamp-2 font-semibold text-foreground'>
                               {relatedProduct.title}
                             </h3>
-                            <p className='text-sm text-muted-foreground'>
-                              {relatedProduct.vendor}
-                            </p>
+                            <p className='text-sm text-muted-foreground'>{relatedProduct.vendor}</p>
                             <p className='font-medium text-foreground'>
                               {relatedProduct.formattedPrice}
                             </p>
@@ -662,8 +666,8 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
           <div className='relative flex size-full items-center justify-center'>
             <div className='relative flex size-full items-center justify-center p-4'>
               <img
-                src={product.images[ state.lightboxImage ]?.url}
-                alt={product.images[ state.lightboxImage ]?.altText ?? product.title}
+                src={product.images[state.lightboxImage]?.url}
+                alt={product.images[state.lightboxImage]?.altText ?? product.title}
                 className='max-h-full max-w-full rounded-lg object-cover shadow-lg'
               />
             </div>

@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { ArrowLeft, Calendar, Eye, MapPin, QrCode, Ticket, User } from 'lucide-react'
@@ -19,7 +18,7 @@ import { useAuth } from '@/src/modules/auth/context/useAuth'
 export default function TicketDetailPage({ params }: { params: { id: string } }) {
   const { isLoading: authLoading } = useAuth()
   const { data: ticket, error, isLoading } = useGetTicket(params.id)
-  const [ showQr, setShowQr ] = useState(false)
+  const [showQr, setShowQr] = useState(false)
 
   if (authLoading || isLoading) {
     return (
@@ -65,8 +64,8 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
     }
 
     return (
-      <Badge variant={variants[ status as keyof typeof variants ]}>
-        {labels[ status as keyof typeof labels ] || status}
+      <Badge variant={variants[status as keyof typeof variants]}>
+        {labels[status as keyof typeof labels] || status}
       </Badge>
     )
   }
@@ -186,7 +185,10 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
                   </div>
                   <div className='text-xs text-muted-foreground'>
                     <p>Event ID: {ticket.eventId}</p>
-                    <p>Esto puede suceder si el evento fue eliminado o si hay un problema de conexión.</p>
+                    <p>
+                      Esto puede suceder si el evento fue eliminado o si hay un problema de
+                      conexión.
+                    </p>
                   </div>
                 </div>
               )}
@@ -273,16 +275,9 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
           </DialogHeader>
 
           <div className='flex flex-col items-center justify-center gap-4 p-4'>
-            <QRCodeSVG
-              value={ticket.qrCode}
-              size={256}
-              bgColor='#ffffff'
-              fgColor='#000000'
-            />
+            <QRCodeSVG value={ticket.qrCode} size={256} bgColor='#ffffff' fgColor='#000000' />
 
-            <div className='rounded-md bg-muted p-2 font-mono text-sm'>
-              {ticket.qrCode}
-            </div>
+            <div className='rounded-md bg-muted p-2 font-mono text-sm'>{ticket.qrCode}</div>
 
             <p className='text-center text-sm text-muted-foreground'>
               Presenta este código QR en la entrada del evento.

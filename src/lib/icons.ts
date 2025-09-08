@@ -59,6 +59,6 @@ const iconMap: Record<string, FC<IconProps>> = {
 
 export const getIconComponent = (iconName?: string): FC<IconProps> => {
   if (!iconName) return () => null
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+   
   return iconMap[iconName] || Package
 }
