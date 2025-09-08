@@ -53,7 +53,7 @@ const slides: Slide[] = [
     actionUrl: ROUTES.STORE.SERVICES.PATH,
     alt: 'Detalle de una obra de arte',
     imageUrl:
-      'https://xhsidbbijujrdjjymhbs.supabase.co/storage/v1/object/public/images/general/IMG_3321-scaled.webp',
+      'https://xhsidbbijujrdjjymhbs.supabase.co/storage/v1/object/public/images/general/IMG_3321-scaled-16-9-rectangle.webp',
     parallaxFactor: 1.5,
     subtitle: 'Nuestra colección curada tiene algo especial para cada amante del arte.',
     title: 'Encuentra la Pieza Perfecta',

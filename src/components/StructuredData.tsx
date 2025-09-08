@@ -6,6 +6,7 @@ import {
   generateBreadcrumbStructuredData,
   generateEventStructuredData,
   generateProductStructuredData,
+  generateSiteNavigationStructuredData,
   organizationStructuredData,
   websiteStructuredData,
 } from '@/lib/structured-data'
@@ -47,6 +48,7 @@ export function HomeStructuredData() {
     <>
       <StructuredData type='organization' />
       <StructuredData type='website' />
+      <StructuredData data={generateSiteNavigationStructuredData()} />
     </>
   )
 }

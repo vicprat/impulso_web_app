@@ -414,6 +414,13 @@ export const ROUTES = {
       LABEL: 'Servicios',
       PATH: '/services',
     },
+    CONTACT: {
+      DESCRIPTION: 'Información de contacto y ubicación',
+      ICON: 'phone',
+      IS_PUBLIC: true,
+      LABEL: 'Contacto',
+      PATH: '/contact',
+    },
     TERMS: {
       DESCRIPTION: 'Términos y condiciones',
       ICON: 'file-text',

@@ -489,3 +489,33 @@ export const generatePostTypeMetadata = (postType: string): Metadata => {
 
   return postTypeMetadata[normalizedType] || postTypeMetadata.blog
 }
+
+// Agregar metadata para página de contacto
+export const contactMetadata: Metadata = {
+  title: 'Contacto | Impulso Galería',
+  description:
+    'Contacta con Impulso Galería en Querétaro. Información de ubicación, horarios, teléfono y formulario de contacto para consultas sobre arte contemporáneo.',
+  keywords: [
+    'contacto',
+    'impulso galería',
+    'querétaro',
+    'galería de arte',
+    'ubicación',
+    'teléfono',
+    'dirección',
+    'arte contemporáneo',
+  ],
+  openGraph: {
+    title: 'Contacto | Impulso Galería',
+    description:
+      'Contacta con Impulso Galería en Querétaro. Información de ubicación, horarios, teléfono y formulario de contacto.',
+    type: 'website',
+    url: 'https://impulsogaleria.com/contact',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Contacto | Impulso Galería',
+    description:
+      'Contacta con Impulso Galería en Querétaro. Información de ubicación, horarios, teléfono y formulario de contacto.',
+  },
+}

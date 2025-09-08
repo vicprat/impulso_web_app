@@ -299,3 +299,60 @@ export const generateArtCollectionStructuredData = (collection: {
     name: collection.name,
   }
 }
+
+// Structured data para navegación del sitio (ayuda con sitelinks)
+export const generateSiteNavigationStructuredData = () => {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: [
+        {
+          '@type': 'SiteNavigationElement',
+          name: 'Inicio',
+          position: 1,
+          url: 'https://impulsogaleria.com',
+        },
+        {
+          '@type': 'SiteNavigationElement',
+          name: 'Galería',
+          position: 2,
+          url: 'https://impulsogaleria.com/store',
+        },
+        {
+          '@type': 'SiteNavigationElement',
+          name: 'Artistas',
+          position: 3,
+          url: 'https://impulsogaleria.com/artists',
+        },
+        {
+          '@type': 'SiteNavigationElement',
+          name: 'Contacto',
+          position: 4,
+          url: 'https://impulsogaleria.com/contact',
+        },
+        {
+          '@type': 'SiteNavigationElement',
+          name: 'Membresía',
+          position: 5,
+          url: 'https://impulsogaleria.com/membership',
+        },
+        {
+          '@type': 'SiteNavigationElement',
+          name: 'Servicios',
+          position: 6,
+          url: 'https://impulsogaleria.com/services',
+        },
+      ],
+      name: 'Navegación Principal',
+    },
+    name: 'Impulso Galería',
+    potentialAction: {
+      '@type': 'SearchAction',
+      'query-input': 'required name=search_term_string',
+      target: 'https://impulsogaleria.com/store/search?q={search_term_string}',
+    },
+    url: 'https://impulsogaleria.com',
+  }
+}

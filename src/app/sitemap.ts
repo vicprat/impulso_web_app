@@ -35,6 +35,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       } else if (route === '/artists') {
         priority = 0.8
         changeFrequency = 'weekly'
+      } else if (route === '/contact') {
+        priority = 0.8
+        changeFrequency = 'monthly'
       } else if (route === '/blog' || route === '/events') {
         priority = 0.7
         changeFrequency = 'weekly'
