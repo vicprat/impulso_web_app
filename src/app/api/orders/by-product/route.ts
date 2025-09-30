@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Enriquecer los datos con información local del usuario
+    // Enriquecer los datos con información local del usuario (solo para usuarios registrados)
     if (data.data?.orders?.edges) {
       const orders = data.data.orders.edges
 
@@ -167,19 +167,16 @@ export async function GET(request: NextRequest) {
         // Crear un mapa para acceso rápido
         const userMap = new Map(localUsers.map((user) => [user.shopifyCustomerId, user]))
 
-        // Enriquecer cada orden con la información local del usuario
+        // Enriquecer cada orden con la información local del usuario (solo si existe)
         orders.forEach((order) => {
           if (order.node.customer?.id) {
             const shopifyId = order.node.customer.id.replace('gid://shopify/Customer/', '')
             const localUser = userMap.get(shopifyId)
 
             if (localUser) {
-              // Agregar información local del usuario a la orden
+              // Agregar información local del usuario a la orden sin sobrescribir datos de Shopify
               order.node.customer = {
                 ...order.node.customer,
-                email: localUser.email,
-                firstName: localUser.firstName || null,
-                lastName: localUser.lastName || null,
                 localUserId: localUser.id,
                 profile: localUser.profile
                   ? {

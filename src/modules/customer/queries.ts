@@ -456,6 +456,9 @@ export const GET_ORDERS_BY_PRODUCT_QUERY = `
           }
           customer {
             id
+            firstName
+            lastName
+            email
           }
           lineItems(first: 10) {
             edges {
