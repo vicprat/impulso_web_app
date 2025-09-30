@@ -41,6 +41,7 @@ import {
   type UpdateProductPayload,
 } from '@/services/product/types'
 import { BulkUpdateProgress } from '@/src/components/BulkUpdateProgress'
+import { CollectionManagerModal } from '@/src/components/Modals/CollectionManagerModal'
 import { CouponCreatorModal } from '@/src/components/Modals/CouponCreatorModal'
 import { CouponManagerModal } from '@/src/components/Modals/CouponManagerModal'
 import { ProductAutomaticDiscountModal } from '@/src/components/Modals/ProductAutomaticDiscountModal'
@@ -118,6 +119,7 @@ export function Client() {
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false)
   const [isCouponManagerModalOpen, setIsCouponManagerModalOpen] = useState(false)
   const [isAutomaticDiscountModalOpen, setIsAutomaticDiscountModalOpen] = useState(false)
+  const [isCollectionManagerModalOpen, setIsCollectionManagerModalOpen] = useState(false)
   const [selectedProductForDiscount, setSelectedProductForDiscount] = useState<{
     id: string
     title: string
@@ -679,6 +681,10 @@ export function Client() {
     setIsAutomaticDiscountModalOpen(true)
   }, [])
 
+  const handleOpenCollectionManagerModal = useCallback(() => {
+    setIsCollectionManagerModalOpen(true)
+  }, [])
+
   const handleOpenAutomaticDiscountModalForProduct = useCallback(
     (product: { id: string; title: string }) => {
       setSelectedProductForDiscount(product)
@@ -953,6 +959,14 @@ export function Client() {
           >
             <Tag className='mr-2 size-4' />
             Gestionar Cupones
+          </Button>
+          <Button
+            variant='outline'
+            onClick={handleOpenCollectionManagerModal}
+            className='bg-orange-50 text-orange-700 hover:bg-orange-100'
+          >
+            <Tag className='mr-2 size-4' />
+            Gestionar Colecciones
           </Button>
           <Link href={ROUTES.INVENTORY.CREATE.PATH}>
             <Button>
@@ -1695,6 +1709,11 @@ export function Client() {
           // Invalidar caché de cupones para refrescar la lista
           void queryClient.invalidateQueries({ queryKey: ['discounts'] })
         }}
+      />
+
+      <CollectionManagerModal
+        isOpen={isCollectionManagerModalOpen}
+        onClose={() => setIsCollectionManagerModalOpen(false)}
       />
     </div>
   )

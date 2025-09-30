@@ -2,8 +2,10 @@
 
 import Link from 'next/link'
 
-import { useCollections } from '@/modules/shopify/hooks'
+import { useCollections } from '@/services/collection/hooks'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
+
+import type { Collection } from '@/services/collection/types'
 
 export default function Page() {
   const {
@@ -11,7 +13,7 @@ export default function Page() {
     error,
     isLoading,
   } = useCollections({
-    first: 250,
+    limit: 250,
   })
 
   if (isLoading) {
@@ -36,11 +38,13 @@ export default function Page() {
     )
   }
 
+  const collections = collectionsData?.collections ?? []
+
   return (
     <div>
-      {collectionsData?.collections && collectionsData.collections.length > 0 ? (
+      {collections.length > 0 ? (
         <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
-          {collectionsData.collections.map((collection) => (
+          {collections.map((collection: Collection) => (
             <Link
               key={collection.id}
               href={replaceRouteParams(ROUTES.COLLECTIONS.DETAIL.PATH, {
@@ -63,8 +67,11 @@ export default function Page() {
                     {collection.title}
                   </h3>
                   <p className='line-clamp-3 text-gray-600'>{collection.description}</p>
-                  <div className='mt-4'>
+                  <div className='mt-4 flex items-center justify-between'>
                     <span className='font-medium text-blue-600'>Explorar colección →</span>
+                    <span className='text-sm text-gray-500'>
+                      {collection.productsCount} productos
+                    </span>
                   </div>
                 </div>
               </div>
