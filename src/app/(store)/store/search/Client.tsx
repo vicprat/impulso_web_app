@@ -267,7 +267,7 @@ export const Client = () => {
   if (error) {
     return (
       <div className='min-h-screen'>
-        <div className='mx-auto px-4 py-12'>
+        <div className='mx-auto py-12'>
           <Alert className='bg-error-container/10 mx-auto max-w-md border-error-container'>
             <RefreshCw className='size-4 text-error' />
             <AlertDescription className='text-on-error-container'>
@@ -293,7 +293,7 @@ export const Client = () => {
 
   return (
     <div className='min-h-screen'>
-      <div className='mx-auto px-4 py-6'>
+      <div className='mx-auto  py-6'>
         <div className='mb-8'>
           <h1 className='mb-4 text-3xl font-bold tracking-tight text-on-surface'>
             Resultados de búsqueda

@@ -72,7 +72,7 @@ export const Product: React.FC<Props> = ({ product }) => {
         className='block focus:outline-none'
         aria-label={`Ver detalles de ${product.title}`}
       >
-        <div className='relative aspect-square overflow-hidden bg-muted'>
+        <div className='relative aspect-[4/5] overflow-hidden bg-muted sm:aspect-square md:aspect-[4/5] lg:aspect-square'>
           {product.images[0] ? (
             <>
               <img
@@ -105,9 +105,9 @@ export const Product: React.FC<Props> = ({ product }) => {
         </div>
       </Link>
 
-      <CardContent className='space-y-4 bg-card p-4'>
-        <div className='space-y-2'>
-          <div className='space-y-1'>
+      <CardContent className='space-y-2 bg-card p-3'>
+        <div className='space-y-1'>
+          <div className='space-y-0.5'>
             <Link
               href={
                 product.vendor === 'Evento'
@@ -115,31 +115,31 @@ export const Product: React.FC<Props> = ({ product }) => {
                   : replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })
               }
             >
-              <h3 className='line-clamp-2 font-medium leading-tight text-foreground transition-colors duration-200 hover:text-primary focus:text-primary focus:outline-none'>
+              <h3 className='line-clamp-2 text-xs font-medium leading-tight text-foreground transition-colors duration-200 hover:text-primary focus:text-primary focus:outline-none sm:text-sm'>
                 {product.title}
               </h3>
             </Link>
             {product.vendor && product.vendor !== 'Evento' && (
-              <p className='text-sm font-normal uppercase tracking-wide text-muted-foreground'>
+              <p className='text-xs font-normal uppercase tracking-wide text-muted-foreground'>
                 {product.vendor}
               </p>
             )}
           </div>
 
           {product.description && (
-            <p className='line-clamp-2 text-xs leading-relaxed text-muted-foreground'>
+            <p className='line-clamp-2 text-xs leading-tight text-muted-foreground'>
               {product.description.replace(/(<([^>]+)>)/gi, '')}
             </p>
           )}
         </div>
-        <div className='space-y-2'>
+        <div className='space-y-1'>
           <div className='flex flex-wrap items-baseline gap-2'>
             {hasVariations ? (
-              <span className='text-lg font-semibold tracking-tight text-foreground'>
+              <span className='text-sm font-semibold tracking-tight text-foreground sm:text-base'>
                 Desde {formatPrice(minPrice.amount, minPrice.currencyCode)}
               </span>
             ) : (
-              <span className='text-lg font-semibold tracking-tight text-foreground'>
+              <span className='text-sm font-semibold tracking-tight text-foreground sm:text-base'>
                 {formatPrice(minPrice.amount, minPrice.currencyCode)}
               </span>
             )}

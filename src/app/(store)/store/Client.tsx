@@ -19,7 +19,7 @@ import { type ProductSearchParams } from '@/modules/shopify/types'
 import { Error } from './Error'
 
 const defaultLimit = 24
-const limitOptions = [ 12, 24, 36, 48 ]
+const limitOptions = [12, 24, 36, 48]
 
 export const Client = () => {
   const searchParams = useSearchParams()
@@ -29,8 +29,8 @@ export const Client = () => {
   const afterCursorInUrl = searchParams.get('after') ?? null
   const limitInUrl = parseInt(searchParams.get('limit') ?? defaultLimit.toString(), 10)
 
-  const [ historyCursors, setHistoryCursors ] = useState<Record<number, string | null>>({})
-  const [ previousLimit, setPreviousLimit ] = useState(limitInUrl)
+  const [historyCursors, setHistoryCursors] = useState<Record<number, string | null>>({})
+  const [previousLimit, setPreviousLimit] = useState(limitInUrl)
 
   const buildSearchParamsInternal = useCallback((): ProductSearchParams => {
     const params: ProductSearchParams = {
@@ -66,26 +66,26 @@ export const Client = () => {
 
     if (sort) {
       // Validar y mapear el valor de sort
-      const validSortKeys: Record<string, ProductSearchParams[ 'sortKey' ]> = {
-        'BEST_SELLING': 'BEST_SELLING',
-        'CREATED_AT': 'CREATED_AT',
-        'PRICE': 'PRICE',
-        'PRODUCT_TYPE': 'PRODUCT_TYPE',
-        'RELEVANCE': 'RELEVANCE',
-        'TITLE': 'TITLE',
-        'VENDOR': 'VENDOR',
-        
-        'created_at': 'CREATED_AT',
-        
-'price': 'PRICE',
-        
-'product_type': 'PRODUCT_TYPE',
+      const validSortKeys: Record<string, ProductSearchParams['sortKey']> = {
+        BEST_SELLING: 'BEST_SELLING',
+        CREATED_AT: 'CREATED_AT',
+        PRICE: 'PRICE',
+        PRODUCT_TYPE: 'PRODUCT_TYPE',
+        RELEVANCE: 'RELEVANCE',
+        TITLE: 'TITLE',
+        VENDOR: 'VENDOR',
+
+        created_at: 'CREATED_AT',
+
+        price: 'PRICE',
+
+        product_type: 'PRODUCT_TYPE',
         // Mapear valores legacy si existen
-'title': 'TITLE',
-        'vendor': 'VENDOR',
+        title: 'TITLE',
+        vendor: 'VENDOR',
       }
 
-      const validSortKey = validSortKeys[ sort ]
+      const validSortKey = validSortKeys[sort]
       if (validSortKey) {
         params.sortKey = validSortKey
       } else {
@@ -96,7 +96,7 @@ export const Client = () => {
 
     if (order === 'desc') params.reverse = true
     return params
-  }, [ afterCursorInUrl, limitInUrl, searchParams ])
+  }, [afterCursorInUrl, limitInUrl, searchParams])
 
   const { data: productsData, error, isLoading } = useProducts(buildSearchParamsInternal())
 
@@ -106,7 +106,7 @@ export const Client = () => {
     if (newPage === 1) {
       targetCursor = null
     } else {
-      targetCursor = historyCursors[ newPage ]
+      targetCursor = historyCursors[newPage]
     }
     if (newPage > pageInUrl && newPage === pageInUrl + 1) {
       if (productsData?.pageInfo.hasNextPage && productsData.pageInfo.endCursor) {
@@ -153,32 +153,32 @@ export const Client = () => {
         setHistoryCursors({})
       }
     }
-  }, [ limitInUrl, previousLimit, pageInUrl, afterCursorInUrl, router, searchParams ])
+  }, [limitInUrl, previousLimit, pageInUrl, afterCursorInUrl, router, searchParams])
 
   useEffect(() => {
     setHistoryCursors((prev) => {
       const newCursors = { ...prev }
       let changed = false
-      if (newCursors[ pageInUrl ] !== afterCursorInUrl) {
-        newCursors[ pageInUrl ] = afterCursorInUrl
+      if (newCursors[pageInUrl] !== afterCursorInUrl) {
+        newCursors[pageInUrl] = afterCursorInUrl
         changed = true
       }
       if (productsData?.pageInfo.hasNextPage && productsData.pageInfo.endCursor) {
         const nextPageNumber = pageInUrl + 1
-        if (newCursors[ nextPageNumber ] !== productsData.pageInfo.endCursor) {
-          newCursors[ nextPageNumber ] = productsData.pageInfo.endCursor
+        if (newCursors[nextPageNumber] !== productsData.pageInfo.endCursor) {
+          newCursors[nextPageNumber] = productsData.pageInfo.endCursor
           changed = true
         }
       } else if (productsData && !productsData.pageInfo.hasNextPage) {
         const nextPageNumber = pageInUrl + 1
         if (nextPageNumber in newCursors) {
-          delete newCursors[ nextPageNumber ]
+          delete newCursors[nextPageNumber]
           changed = true
         }
       }
       return changed ? newCursors : prev
     })
-  }, [ pageInUrl, afterCursorInUrl, productsData ])
+  }, [pageInUrl, afterCursorInUrl, productsData])
 
   useEffect(() => {
     const pageStr = searchParams.get('page')
@@ -194,7 +194,7 @@ export const Client = () => {
         }
       }
     }
-  }, [ searchParams, router, productsData, error ])
+  }, [searchParams, router, productsData, error])
 
   if (isLoading) {
     return <Card.Loader />
@@ -206,7 +206,7 @@ export const Client = () => {
 
   return (
     <div>
-      <div className='container mx-auto px-4 py-6'>
+      <div className='container mx-auto  py-4'>
         <div className='mb-8 flex flex-col items-center justify-between gap-4 sm:flex-row'>
           <h1 className='text-3xl font-bold tracking-tight text-on-surface'>Todos los productos</h1>
           <div className='flex items-center gap-4'>

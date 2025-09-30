@@ -156,14 +156,20 @@ export default async function Page() {
 
       <Landing.Section
         icon='Sparkles'
-        title='Últimos Artículos'
-        subtitle='Explora las historias más recientes del mundo del arte y nuestra comunidad creativa'
+        title=''
+        subtitle=''
         actionText='Ver todo el Blog'
         actionHref={ROUTES.PUBLIC.POSTS.DYNAMIC.MAIN.PATH.replace(':postType', 'blog')}
         paddingY='py-12 lg:py-16'
       >
         <Suspense fallback={<Landing.Blog.Loader />}>
-          <Landing.Blog.Main data={blogPosts} />
+          <Landing.Blog.Carousel
+            posts={blogPosts}
+            title='Últimos Artículos'
+            subtitle='Explora las historias más recientes del mundo del arte y nuestra comunidad creativa'
+            autoplay={true}
+            scrollSpeed={0.5}
+          />
         </Suspense>
       </Landing.Section>
 
@@ -205,14 +211,20 @@ export default async function Page() {
 
       <Landing.Section
         icon='Users'
-        title='Artistas Destacados'
-        subtitle='Conoce el talento excepcional de nuestra comunidad de artistas emergentes y consagrados'
+        title=''
+        subtitle=''
         actionText='Ver Todos los Artistas'
         actionHref={ROUTES.PUBLIC.ARTISTS.PATH}
         wrapperElement='section'
       >
         <Suspense fallback={<Landing.Artists.Loader />}>
-          <Landing.Artists.Main data={artists} />
+          <Landing.Artists.Carousel
+            artists={artists}
+            title='Artistas Destacados'
+            subtitle='Conoce el talento excepcional de nuestra comunidad de artistas emergentes y consagrados'
+            autoplay={true}
+            scrollSpeed={0.5}
+          />
         </Suspense>
       </Landing.Section>
 
