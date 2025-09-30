@@ -1,3 +1,4 @@
+import { RegistrationDialog } from '@/components/Dialog/RegistrationDialog'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { WhatsAppButton } from '@/components/WhatsAppButton'
@@ -17,6 +18,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </main>
       <Footer />
       <WhatsAppButton />
+
+      <RegistrationDialog />
     </div>
   )
 }
