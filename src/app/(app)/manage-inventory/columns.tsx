@@ -1062,7 +1062,22 @@ export const columns: ColumnDef<Product>[] = [
         />
       )
     },
-    header: 'Tipo de obra',
+    header: ({ column, table }) => {
+      const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'productType'
+      const isAsc = currentSortOrder === 'asc'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('productType')}
+          className='h-auto p-0 font-semibold'
+        >
+          Tipo de obra
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
   },
   {
     accessorKey: 'artworkDetails.medium',
@@ -1096,7 +1111,22 @@ export const columns: ColumnDef<Product>[] = [
         />
       )
     },
-    header: 'Técnica',
+    header: ({ column, table }) => {
+      const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'medium'
+      const isAsc = currentSortOrder === 'asc'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('medium')}
+          className='h-auto p-0 font-semibold'
+        >
+          Técnica
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
   },
   {
     accessorKey: 'artworkDetails.year',
@@ -1130,7 +1160,22 @@ export const columns: ColumnDef<Product>[] = [
         />
       )
     },
-    header: 'Año',
+    header: ({ column, table }) => {
+      const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'year'
+      const isAsc = currentSortOrder === 'asc'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('year')}
+          className='h-auto p-0 font-semibold'
+        >
+          Año
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
   },
   {
     accessorKey: 'dimensions',
@@ -1182,7 +1227,22 @@ export const columns: ColumnDef<Product>[] = [
         />
       )
     },
-    header: 'Medidas (cm)',
+    header: ({ column, table }) => {
+      const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'dimensions'
+      const isAsc = currentSortOrder === 'asc'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('dimensions')}
+          className='h-auto p-0 font-semibold'
+        >
+          Medidas (cm)
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
     id: 'dimensions',
   },
   {
@@ -1217,7 +1277,22 @@ export const columns: ColumnDef<Product>[] = [
         />
       )
     },
-    header: 'Serie',
+    header: ({ column, table }) => {
+      const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'serie'
+      const isAsc = currentSortOrder === 'asc'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('serie')}
+          className='h-auto p-0 font-semibold'
+        >
+          Serie
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
   },
   {
     accessorKey: 'artworkDetails.location',
@@ -1251,7 +1326,22 @@ export const columns: ColumnDef<Product>[] = [
         />
       )
     },
-    header: 'Localización',
+    header: ({ column, table }) => {
+      const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'location'
+      const isAsc = currentSortOrder === 'asc'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('location')}
+          className='h-auto p-0 font-semibold'
+        >
+          Localización
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
   },
   {
     accessorKey: 'price',

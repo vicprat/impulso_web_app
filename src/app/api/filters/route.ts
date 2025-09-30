@@ -69,10 +69,22 @@ export async function GET() {
       if (price > maxPrice) maxPrice = price
     })
 
+    const [techniquesRes, locationsRes] = await Promise.all([
+      fetch(`${process.env.NEXTAUTH_URL}/api/options/techniques`),
+      fetch(`${process.env.NEXTAUTH_URL}/api/options/locations`),
+    ])
+
+    const techniques = techniquesRes.ok ? await techniquesRes.json() : []
+    const locations = locationsRes.ok ? await locationsRes.json() : []
+
     const structuredFilters: EnrichedFilterOptions = {
       artists: [...allVendors].map((v) => ({ count: 0, input: v, label: v })),
       formats: [],
-      locations: [],
+      locations: locations.map((loc: { id: string; name: string }) => ({
+        count: 0,
+        input: loc.name,
+        label: loc.name,
+      })),
       otherTags: [],
       price: {
         max: Math.ceil(maxPrice === 0 ? 10000 : maxPrice),
@@ -80,7 +92,11 @@ export async function GET() {
       },
       productTypes: [...allProductTypes].map((pt) => ({ count: 0, input: pt, label: pt })),
       series: [],
-      techniques: [],
+      techniques: techniques.map((tech: { id: string; name: string }) => ({
+        count: 0,
+        input: tech.name,
+        label: tech.name,
+      })),
       years: [],
     }
 

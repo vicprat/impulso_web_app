@@ -13,7 +13,7 @@ const PRODUCTS_QUERY_KEY = 'managementProducts'
 
 export const useGetProductsPaginated = (params: GetProductsParams = {}) => {
   return useQuery<PaginatedProductsResponse>({
-    gcTime: 5 * 60 * 1000, // Reducido de 10 a 5 minutos
+    gcTime: 5 * 60 * 1000,
     queryFn: async () => {
       const searchParams = new URLSearchParams()
       if (params.search) searchParams.append('search', params.search)
@@ -22,12 +22,15 @@ export const useGetProductsPaginated = (params: GetProductsParams = {}) => {
       if (params.sortBy) searchParams.append('sortBy', params.sortBy)
       if (params.sortOrder) searchParams.append('sortOrder', params.sortOrder)
       if (params.status) searchParams.append('status', params.status)
+      if (params.artworkType) searchParams.append('artworkType', params.artworkType)
+      if (params.technique) searchParams.append('technique', params.technique)
+      if (params.location) searchParams.append('location', params.location)
 
       const { data } = await axios.get(`/api/management/products?${searchParams.toString()}`)
       return data
     },
     queryKey: [PRODUCTS_QUERY_KEY, 'paginated', JSON.stringify(params)],
-    staleTime: 2 * 60 * 1000, // Reducido de 5 a 2 minutos para que se considere obsoleto más rápido
+    staleTime: 2 * 60 * 1000,
   })
 }
 
@@ -146,13 +149,12 @@ export const useProductStats = (
   return useQuery({
     enabled: options?.enabled ?? true,
     // Aumentar stale time para reducir llamadas
-gcTime: 10 * 60 * 1000,
-    
-// Usar datos del caché si están disponibles
-placeholderData: (previousData) => previousData,
-    
+    gcTime: 10 * 60 * 1000,
 
-queryFn: async () => {
+    // Usar datos del caché si están disponibles
+    placeholderData: (previousData) => previousData,
+
+    queryFn: async () => {
       try {
         const searchParams = new URLSearchParams()
         if (params.search) searchParams.append('search', params.search)
@@ -178,28 +180,22 @@ queryFn: async () => {
         }
       }
     },
-    
 
-queryKey: [PRODUCTS_QUERY_KEY, 'stats', params], 
-    
+    queryKey: [PRODUCTS_QUERY_KEY, 'stats', params],
 
-refetchOnWindowFocus: false, 
-    
+    refetchOnWindowFocus: false,
 
+    retry: 2,
 
-retry: 2, 
-    
+    // Aumentar reintentos
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
 
-// Aumentar reintentos
-retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), 
-    
-    
-// Backoff exponencial
-staleTime: 5 * 60 * 1000,
-    
+    // Backoff exponencial
+    staleTime: 5 * 60 * 1000,
+
     // Mantener en caché por más tiempo
-// No bloquear la UI si falla
-throwOnError: false,
+    // No bloquear la UI si falla
+    throwOnError: false,
   })
 }
 

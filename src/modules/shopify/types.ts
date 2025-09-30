@@ -47,6 +47,16 @@ export interface Product {
   variants: Variant[]
   tags?: string[]
   status?: 'ACTIVE' | 'DRAFT' | 'ARCHIVED'
+  artworkDetails?: {
+    medium?: string
+    year?: string
+    serie?: string
+    location?: string
+    height?: string
+    width?: string
+    depth?: string
+    artist?: string
+  }
 }
 
 export interface IProductForCart {

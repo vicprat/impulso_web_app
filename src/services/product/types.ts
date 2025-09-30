@@ -9,6 +9,9 @@ export interface GetProductsParams {
   status?: string
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
+  artworkType?: string
+  technique?: string
+  location?: string
 }
 
 export interface CreateProductPayload {

@@ -15,7 +15,7 @@ import {
   PRODUCT_DELETE_MEDIA_MUTATION,
   PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
   PUBLISH_PRODUCT_MUTATION,
-  UPDATE_PRODUCT_MUTATION
+  UPDATE_PRODUCT_MUTATION,
 } from './queries'
 import {
   type CreateProductPayload,
@@ -58,7 +58,7 @@ async function getPrimaryLocationId(): Promise<string> {
     {}
   )
 
-  const locationId = response.locations.edges[ 0 ]?.node?.id
+  const locationId = response.locations.edges[0]?.node?.id
   if (!locationId) {
     throw new Error('No se pudo encontrar una ubicación de Shopify para gestionar el inventario.')
   }
@@ -69,9 +69,11 @@ async function getPrimaryLocationId(): Promise<string> {
 
 async function getProducts(
   params: GetProductsParams,
-  session: AuthSession
+  session?: AuthSession
 ): Promise<PaginatedProductsResponse> {
-  validateSession(session)
+  if (session) {
+    validateSession(session)
+  }
 
   let shopifyQuery = ''
 
@@ -96,9 +98,20 @@ async function getProducts(
     }
   }
 
+  if (params.artworkType?.trim()) {
+    if (shopifyQuery) {
+      shopifyQuery += ` AND product_type:"${params.artworkType}"`
+    } else {
+      shopifyQuery = `product_type:"${params.artworkType}"`
+    }
+  }
+
+  const hasMetafieldFilters = params.technique?.trim() || params.location?.trim()
+
   let sortKey = 'TITLE' // Default sort key
   let reverse = false // Default sort order
-  let useManualPriceSorting = false // Flag para usar sorting manual por precio
+  let useManualSorting = false // Flag para usar sorting manual
+  let manualSortField = '' // Campo para sorting manual
 
   if (params.sortBy) {
     switch (params.sortBy) {
@@ -121,9 +134,14 @@ async function getProducts(
         sortKey = 'INVENTORY_TOTAL'
         break
       case 'price':
-        // Para precio, usamos sorting manual ya que Shopify no soporta sorting por precio
-        useManualPriceSorting = true
-        sortKey = 'TITLE' // Usamos TITLE como base
+      case 'medium':
+      case 'year':
+      case 'serie':
+      case 'location':
+      case 'dimensions':
+        useManualSorting = true
+        manualSortField = params.sortBy
+        sortKey = 'TITLE'
         break
       default:
         sortKey = 'TITLE'
@@ -136,11 +154,9 @@ async function getProducts(
 
   const limit = params.limit ? parseInt(String(params.limit), 10) : 10
 
-  if (useManualPriceSorting) {
-    // Usar sorting manual por precio
-    return await getProductsWithManualPriceSorting(params, shopifyQuery, limit, reverse)
+  if (useManualSorting || hasMetafieldFilters) {
+    return await getProductsWithManualSorting(params, shopifyQuery, limit, reverse, manualSortField)
   } else {
-    // Usar la API normal de productos
     const variables = {
       after: params.cursor,
       first: limit,
@@ -149,7 +165,10 @@ async function getProducts(
       sortKey,
     }
 
-    const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
+    const response = await makeAdminApiRequest<GetProductsApiResponse>(
+      GET_PRODUCTS_QUERY,
+      variables
+    )
     const locationId = await getPrimaryLocationId()
     const products = response.products.edges.map((edge) => new Product(edge.node, locationId))
 
@@ -157,18 +176,18 @@ async function getProducts(
   }
 }
 
-async function getProductsWithManualPriceSorting(
+async function getProductsWithManualSorting(
   params: GetProductsParams,
   shopifyQuery: string,
   limit: number,
-  reverse: boolean
+  reverse: boolean,
+  sortField: string
 ): Promise<PaginatedProductsResponse> {
-  // Obtener todos los productos sin paginación para poder ordenarlos por precio
   const allProducts: Product[] = []
   let hasNextPage = true
   let cursor: string | undefined = undefined
   let pageCount = 0
-  const maxPages = 50 // Límite para evitar bucles infinitos
+  const maxPages = 50
 
   while (hasNextPage && pageCount < maxPages) {
     const variables: {
@@ -179,15 +198,20 @@ async function getProductsWithManualPriceSorting(
       sortKey: 'TITLE'
     } = {
       after: cursor,
-      first: 250, // Obtener más productos por página para reducir el número de requests
+      first: 250,
       query: shopifyQuery,
-      reverse: false, // Siempre false para obtener todos los productos
+      reverse: false,
       sortKey: 'TITLE',
     }
 
-    const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
+    const response = await makeAdminApiRequest<GetProductsApiResponse>(
+      GET_PRODUCTS_QUERY,
+      variables
+    )
     const locationId = await getPrimaryLocationId()
-    const products = response.products.edges.map((edge: { node: ShopifyProductData; cursor: string }) => new Product(edge.node, locationId))
+    const products = response.products.edges.map(
+      (edge: { node: ShopifyProductData; cursor: string }) => new Product(edge.node, locationId)
+    )
 
     allProducts.push(...products)
 
@@ -196,24 +220,72 @@ async function getProductsWithManualPriceSorting(
     pageCount++
   }
 
-  // Ordenar productos por precio
-  allProducts.sort((a, b) => {
-    const priceA = parseFloat(a.variants[ 0 ]?.price?.amount || '0')
-    const priceB = parseFloat(b.variants[ 0 ]?.price?.amount || '0')
+  let filteredProducts = allProducts
 
-    if (reverse) {
-      return priceB - priceA // Descendente
-    } else {
-      return priceA - priceB // Ascendente
-    }
-  })
+  if (params.technique?.trim()) {
+    filteredProducts = filteredProducts.filter((p) => p.artworkDetails.medium === params.technique)
+  }
 
-  // Implementar paginación manual
+  if (params.location?.trim()) {
+    filteredProducts = filteredProducts.filter((p) => p.artworkDetails.location === params.location)
+  }
+
+  if (sortField) {
+    filteredProducts.sort((a, b) => {
+      let valueA: string | number = ''
+      let valueB: string | number = ''
+
+      switch (sortField) {
+        case 'price':
+          valueA = parseFloat(a.variants[0]?.price?.amount ?? '0')
+          valueB = parseFloat(b.variants[0]?.price?.amount ?? '0')
+          break
+        case 'medium':
+          valueA = a.artworkDetails.medium ?? ''
+          valueB = b.artworkDetails.medium ?? ''
+          break
+        case 'year':
+          valueA = parseInt(a.artworkDetails.year ?? '0')
+          valueB = parseInt(b.artworkDetails.year ?? '0')
+          break
+        case 'serie':
+          valueA = a.artworkDetails.serie ?? ''
+          valueB = b.artworkDetails.serie ?? ''
+          break
+        case 'location':
+          valueA = a.artworkDetails.location ?? ''
+          valueB = b.artworkDetails.location ?? ''
+          break
+        case 'dimensions': {
+          const heightA = parseFloat(a.artworkDetails.height ?? '0')
+          const widthA = parseFloat(a.artworkDetails.width ?? '0')
+          const depthA = parseFloat(a.artworkDetails.depth ?? '0')
+          const heightB = parseFloat(b.artworkDetails.height ?? '0')
+          const widthB = parseFloat(b.artworkDetails.width ?? '0')
+          const depthB = parseFloat(b.artworkDetails.depth ?? '0')
+          valueA = heightA * widthA * depthA
+          valueB = heightB * widthB * depthB
+          break
+        }
+        default:
+          valueA = ''
+          valueB = ''
+      }
+
+      if (typeof valueA === 'number' && typeof valueB === 'number') {
+        return reverse ? valueB - valueA : valueA - valueB
+      } else {
+        const comparison = String(valueA).localeCompare(String(valueB))
+        return reverse ? -comparison : comparison
+      }
+    })
+  }
+
   const startIndex = params.cursor ? parseInt(params.cursor, 10) : 0
   const endIndex = startIndex + limit
-  const paginatedProducts = allProducts.slice(startIndex, endIndex)
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex)
 
-  const hasNextPageResult = endIndex < allProducts.length
+  const hasNextPageResult = endIndex < filteredProducts.length
   const endCursor = hasNextPageResult ? endIndex.toString() : null
 
   return {
@@ -251,7 +323,8 @@ async function getProductStats(search?: string, session?: AuthSession) {
   })
 
   // Si el usuario es artista, establecer automáticamente su vendor
-  const isArtist = user?.UserRole?.some(ur => ur.role.name === 'artist') || user?.role?.name === 'artist'
+  const isArtist =
+    user?.UserRole?.some((ur) => ur.role.name === 'artist') || user?.role?.name === 'artist'
 
   if (isArtist && user?.artist?.name) {
     if (shopifyQuery) {
@@ -284,8 +357,10 @@ async function getProductStats(search?: string, session?: AuthSession) {
       sortKey: 'TITLE',
     }
 
-
-    const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
+    const response = await makeAdminApiRequest<GetProductsApiResponse>(
+      GET_PRODUCTS_QUERY,
+      variables
+    )
 
     const locationId = await getPrimaryLocationId()
     const products = response.products.edges.map((edge: any) => new Product(edge.node, locationId))
@@ -341,7 +416,8 @@ async function getProductById(id: string, session: AuthSession): Promise<Product
   })
 
   // Si el usuario es artista, verificar que el producto sea suyo
-  const isArtist = user?.UserRole?.some(ur => ur.role.name === 'artist') || user?.role?.name === 'artist'
+  const isArtist =
+    user?.UserRole?.some((ur) => ur.role.name === 'artist') || user?.role?.name === 'artist'
 
   if (isArtist && user?.artist?.name) {
     if (product.vendor !== user.artist.name) {
@@ -365,11 +441,14 @@ async function getProductByHandle(handle: string, session: AuthSession): Promise
   }
 
   try {
-    const response = await makeAdminApiRequest<GetProductsApiResponse>(GET_PRODUCTS_QUERY, variables)
+    const response = await makeAdminApiRequest<GetProductsApiResponse>(
+      GET_PRODUCTS_QUERY,
+      variables
+    )
     const locationId = await getPrimaryLocationId()
 
     if (response.products.edges.length > 0) {
-      return new Product(response.products.edges[ 0 ].node, locationId)
+      return new Product(response.products.edges[0].node, locationId)
     }
 
     return null
@@ -400,18 +479,22 @@ async function getProductsFromRequest(
   })
 
   const params: GetProductsParams = {
+    artworkType: searchParams.get('artworkType') ?? undefined,
     cursor: searchParams.get('cursor') ?? undefined,
     limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
+    location: searchParams.get('location') ?? undefined,
     page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : undefined,
     search: searchParams.get('search') ?? undefined,
     sortBy: searchParams.get('sortBy') ?? undefined,
     sortOrder: searchParams.get('sortOrder') as 'asc' | 'desc' | undefined,
     status: searchParams.get('status') ?? undefined,
+    technique: searchParams.get('technique') ?? undefined,
     vendor: searchParams.get('vendor') ?? undefined,
   }
 
   // Si el usuario es artista, establecer automáticamente su vendor
-  const isArtist = user?.UserRole?.some(ur => ur.role.name === 'artist') || user?.role?.name === 'artist'
+  const isArtist =
+    user?.UserRole?.some((ur) => ur.role.name === 'artist') || user?.role?.name === 'artist'
 
   if (isArtist && user?.artist?.name) {
     params.vendor = user.artist.name
@@ -471,8 +554,8 @@ async function createProduct(
   if (payload.details) {
     try {
       const metafields = Object.entries(payload.details)
-        .filter(([ , value ]) => value != null && value !== undefined && value !== '')
-        .map(([ key, value ]) => ({
+        .filter(([, value]) => value != null && value !== undefined && value !== '')
+        .map(([key, value]) => ({
           key,
           namespace: 'art_details',
           type: 'single_line_text_field',
@@ -497,7 +580,7 @@ async function createProduct(
   }
 
   if (payload.price && parseFloat(payload.price) > 0) {
-    const defaultVariant = newProductData.variants.edges[ 0 ]?.node
+    const defaultVariant = newProductData.variants.edges[0]?.node
     try {
       const variantUpdatePayload = {
         productId: newProductData.id,
@@ -519,7 +602,7 @@ async function createProduct(
   }
 
   if (payload.inventoryQuantity && payload.inventoryQuantity > 0) {
-    const defaultVariant = newProductData.variants.edges[ 0 ]?.node
+    const defaultVariant = newProductData.variants.edges[0]?.node
     try {
       // Primero, activar el tracking de inventario para la variante
       const variantUpdatePayload = {
@@ -574,7 +657,7 @@ async function createProduct(
               type: 'inventory',
             }),
             headers: {
-              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+              Authorization: `Bearer ${process.env.REVALIDATION_SECRET}`,
               'Content-Type': 'application/json',
             },
             method: 'POST',
@@ -633,7 +716,7 @@ async function createMetafields(
   if (metafields.length === 0) return
 
   try {
-    const metafieldsInput = metafields.map(mf => ({
+    const metafieldsInput = metafields.map((mf) => ({
       key: mf.key,
       namespace: mf.namespace,
       ownerId: productId,
@@ -668,9 +751,8 @@ async function createMetafields(
 
     if (response.metafieldsSet.userErrors.length > 0) {
       console.error('Error al crear metafields:', response.metafieldsSet.userErrors)
-      throw new Error(response.metafieldsSet.userErrors.map(e => e.message).join(', '))
+      throw new Error(response.metafieldsSet.userErrors.map((e) => e.message).join(', '))
     }
-
   } catch (error) {
     console.error('Error al crear metafields:', error)
     throw error
@@ -709,10 +791,7 @@ async function addImagesToProduct(
   return response.productCreateMedia.media
 }
 
-async function deleteImagesFromProduct(
-  productId: string,
-  imageIds: string[]
-) {
+async function deleteImagesFromProduct(productId: string, imageIds: string[]) {
   if (imageIds.length === 0) return
 
   // Eliminar imágenes una por una para manejar errores individuales
@@ -737,37 +816,50 @@ async function deleteImagesFromProduct(
             }
           }
         }
-      }>(
-        PRODUCT_DELETE_MEDIA_MUTATION,
-        {
-          mediaIds: [ imageId ],
-          productId, // Solo una imagen a la vez
-        }
-      )
+      }>(PRODUCT_DELETE_MEDIA_MUTATION, {
+        mediaIds: [imageId],
+        productId, // Solo una imagen a la vez
+      })
 
       if (response.productDeleteMedia.mediaUserErrors.length > 0) {
-        console.warn(`Error al eliminar imagen ${imageId}:`, response.productDeleteMedia.mediaUserErrors)
-        results.push({ error: response.productDeleteMedia.mediaUserErrors, imageId, success: false })
+        console.warn(
+          `Error al eliminar imagen ${imageId}:`,
+          response.productDeleteMedia.mediaUserErrors
+        )
+        results.push({
+          error: response.productDeleteMedia.mediaUserErrors,
+          imageId,
+          success: false,
+        })
       } else {
         results.push({ imageId, success: true })
       }
     } catch (error) {
       console.warn(`Error al eliminar imagen ${imageId}:`, error)
-      results.push({ error: error instanceof Error ? error.message : 'Error desconocido', imageId, success: false })
+      results.push({
+        error: error instanceof Error ? error.message : 'Error desconocido',
+        imageId,
+        success: false,
+      })
     }
   }
 
   // Log de resultados
-  const successful = results.filter(r => r.success)
-  const failed = results.filter(r => !r.success)
+  const successful = results.filter((r) => r.success)
+  const failed = results.filter((r) => !r.success)
 
   if (failed.length > 0) {
-    console.warn(`${failed.length} imágenes no pudieron ser eliminadas:`, failed.map(f => f.imageId))
+    console.warn(
+      `${failed.length} imágenes no pudieron ser eliminadas:`,
+      failed.map((f) => f.imageId)
+    )
   }
 
   // No lanzar error si al menos algunas imágenes se eliminaron
   if (successful.length === 0 && failed.length > 0) {
-    throw new Error(`No se pudo eliminar ninguna imagen. Errores: ${failed.map(f => f.error).join(', ')}`)
+    throw new Error(
+      `No se pudo eliminar ninguna imagen. Errores: ${failed.map((f) => f.error).join(', ')}`
+    )
   }
 }
 
@@ -832,7 +924,7 @@ async function updateProduct(
   }
 
   if (variants.length > 0) {
-    const variant = variants[ 0 ]
+    const variant = variants[0]
 
     if (payload.price) {
       const priceUpdatePayload = {
@@ -921,7 +1013,7 @@ async function updateProduct(
                 type: 'inventory',
               }),
               headers: {
-                'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+                Authorization: `Bearer ${process.env.REVALIDATION_SECRET}`,
                 'Content-Type': 'application/json',
               },
               method: 'POST',

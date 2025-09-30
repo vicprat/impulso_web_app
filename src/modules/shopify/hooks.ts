@@ -13,7 +13,7 @@ import type {
   ProductSearchParams,
   ProductsResponse,
   ShopInfo,
-  ShopInfoResponse
+  ShopInfoResponse,
 } from './types'
 
 // Importar el tipo desde el API
@@ -125,5 +125,47 @@ export const useFilterOptions = () => {
     queryFn: getEnrichedFilters,
     queryKey: ['enriched-filters'],
     staleTime: 1000 * 60 * 10,
+  })
+}
+
+export const useStoreProducts = (
+  params: {
+    limit?: number
+    cursor?: string
+    search?: string
+    vendor?: string
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
+    artworkType?: string
+    technique?: string
+    location?: string
+  } = {},
+  options?: Omit<UseQueryOptions<any, Error, any>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery({
+    queryFn: async () => {
+      const searchParams = new URLSearchParams()
+
+      if (params.limit) searchParams.append('limit', params.limit.toString())
+      if (params.cursor) searchParams.append('cursor', params.cursor)
+      if (params.search) searchParams.append('search', params.search)
+      if (params.vendor) searchParams.append('vendor', params.vendor)
+      if (params.sortBy) searchParams.append('sortBy', params.sortBy)
+      if (params.sortOrder) searchParams.append('sortOrder', params.sortOrder)
+      if (params.artworkType) searchParams.append('artworkType', params.artworkType)
+      if (params.technique) searchParams.append('technique', params.technique)
+      if (params.location) searchParams.append('location', params.location)
+
+      const response = await fetch(`/api/store/products?${searchParams.toString()}`)
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch store products')
+      }
+
+      return response.json()
+    },
+    queryKey: ['store-products', params],
+    select: (response) => response.data,
+    ...options,
   })
 }

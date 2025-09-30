@@ -20,9 +20,26 @@ import {
 } from '@/components/ui/select'
 import { useBulkUpdateQueue } from '@/hooks/useBulkUpdateQueue'
 import { useAuth } from '@/modules/auth/context/useAuth'
-import { useGetArtworkTypes, useGetLocations, useGetProductsPaginated, useGetTechniques, useGetVendors, useProductStats, useUpdateProduct } from '@/services/product/hook'
-import { useCreateDiscount, useDeleteDiscount, useGetDiscounts, useUpdateDiscount } from '@/services/product/queries'
-import { type CreateDiscountInput, type UpdateDiscountInput, type UpdateProductPayload } from '@/services/product/types'
+import {
+  useGetArtworkTypes,
+  useGetLocations,
+  useGetProductsPaginated,
+  useGetTechniques,
+  useGetVendors,
+  useProductStats,
+  useUpdateProduct,
+} from '@/services/product/hook'
+import {
+  useCreateDiscount,
+  useDeleteDiscount,
+  useGetDiscounts,
+  useUpdateDiscount,
+} from '@/services/product/queries'
+import {
+  type CreateDiscountInput,
+  type UpdateDiscountInput,
+  type UpdateProductPayload,
+} from '@/services/product/types'
 import { BulkUpdateProgress } from '@/src/components/BulkUpdateProgress'
 import { CouponCreatorModal } from '@/src/components/Modals/CouponCreatorModal'
 import { CouponManagerModal } from '@/src/components/Modals/CouponManagerModal'
@@ -73,7 +90,6 @@ interface InventoryTableMeta {
 }
 
 const defaultPageSize = 50
-const pageSizeOptions = [ 25, 50, 100 ]
 
 export function Client() {
   const searchParams = useSearchParams()
@@ -84,22 +100,28 @@ export function Client() {
   const pageSizeInUrl = parseInt(searchParams.get('pageSize') ?? defaultPageSize.toString(), 10)
   const searchInUrl = searchParams.get('search') ?? ''
   const statusFilterInUrl = searchParams.get('status') ?? 'all'
+  const locationFilterInUrl = searchParams.get('location') ?? 'all'
+  const techniqueFilterInUrl = searchParams.get('technique') ?? 'all'
+  const artworkTypeFilterInUrl = searchParams.get('artworkType') ?? 'all'
   const sortByInUrl = searchParams.get('sortBy') ?? 'title'
   const sortOrderInUrl = (searchParams.get('sortOrder') ?? 'asc') as 'asc' | 'desc'
 
-  const [ editingRowId, setEditingRowId ] = useState<string | null>(null)
-  const [ editingChanges, setEditingChanges ] = useState<Record<string, any>>({})
-  const [ searchInput, setSearchInput ] = useState(searchInUrl)
-  const [ historyCursors, setHistoryCursors ] = useState<Record<number, string | null>>({})
-  const [ previousPageSize, setPreviousPageSize ] = useState(pageSizeInUrl)
-  const [ isBulkMode, setIsBulkMode ] = useState(false)
-  const [ selectedRows, setSelectedRows ] = useState<Set<string>>(new Set())
-  const [ bulkChanges, setBulkChanges ] = useState<Record<string, any>>({})
-  const [ hasInvalidatedCache, setHasInvalidatedCache ] = useState(false)
-  const [ isCouponModalOpen, setIsCouponModalOpen ] = useState(false)
-  const [ isCouponManagerModalOpen, setIsCouponManagerModalOpen ] = useState(false)
-  const [ isAutomaticDiscountModalOpen, setIsAutomaticDiscountModalOpen ] = useState(false)
-  const [ selectedProductForDiscount, setSelectedProductForDiscount ] = useState<{ id: string; title: string } | null>(null)
+  const [editingRowId, setEditingRowId] = useState<string | null>(null)
+  const [editingChanges, setEditingChanges] = useState<Record<string, any>>({})
+  const [searchInput, setSearchInput] = useState(searchInUrl)
+  const [historyCursors, setHistoryCursors] = useState<Record<number, string | null>>({})
+  const [previousPageSize, setPreviousPageSize] = useState(pageSizeInUrl)
+  const [isBulkMode, setIsBulkMode] = useState(false)
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
+  const [bulkChanges, setBulkChanges] = useState<Record<string, any>>({})
+  const [hasInvalidatedCache, setHasInvalidatedCache] = useState(false)
+  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false)
+  const [isCouponManagerModalOpen, setIsCouponManagerModalOpen] = useState(false)
+  const [isAutomaticDiscountModalOpen, setIsAutomaticDiscountModalOpen] = useState(false)
+  const [selectedProductForDiscount, setSelectedProductForDiscount] = useState<{
+    id: string
+    title: string
+  } | null>(null)
 
   const queryClient = useQueryClient()
   const { hasPermission, user } = useAuth()
@@ -116,32 +138,42 @@ export function Client() {
   const { data: coupons = [], isLoading: couponsLoading } = useGetDiscounts()
 
   // Función para verificar si un producto tiene descuentos aplicados
-  const getProductDiscounts = useCallback((productId: string) => {
-    return coupons.filter((coupon: any) => {
-      // Verificar si el cupón aplica a productos específicos
-      if (coupon.appliesTo === 'SPECIFIC_PRODUCTS' && coupon.productIds) {
-        return coupon.productIds.includes(productId)
-      }
-      // Verificar si aplica a todos los productos
-      if (coupon.appliesTo === 'ALL_PRODUCTS') {
-        return true
-      }
-      return false
-    })
-  }, [ coupons ])
+  const getProductDiscounts = useCallback(
+    (productId: string) => {
+      return coupons.filter((coupon: any) => {
+        // Verificar si el cupón aplica a productos específicos
+        if (coupon.appliesTo === 'SPECIFIC_PRODUCTS' && coupon.productIds) {
+          return coupon.productIds.includes(productId)
+        }
+        // Verificar si aplica a todos los productos
+        if (coupon.appliesTo === 'ALL_PRODUCTS') {
+          return true
+        }
+        return false
+      })
+    },
+    [coupons]
+  )
 
-
-
-  const [ shouldUpdateStats, setShouldUpdateStats ] = useState(true)
+  const [shouldUpdateStats, setShouldUpdateStats] = useState(true)
 
   useEffect(() => {
-    void queryClient.invalidateQueries({ queryKey: [ 'managementProducts' ] })
-  }, [ queryClient ])
+    void queryClient.invalidateQueries({ queryKey: ['managementProducts'] })
+  }, [queryClient])
 
   useEffect(() => {
     setEditingRowId(null)
     setEditingChanges({})
-  }, [ searchInUrl, statusFilterInUrl, sortByInUrl, sortOrderInUrl, pageInUrl ])
+  }, [
+    searchInUrl,
+    statusFilterInUrl,
+    locationFilterInUrl,
+    techniqueFilterInUrl,
+    artworkTypeFilterInUrl,
+    sortByInUrl,
+    sortOrderInUrl,
+    pageInUrl,
+  ])
 
   const {
     data: paginatedData,
@@ -150,12 +182,15 @@ export function Client() {
     isLoading,
     refetch,
   } = useGetProductsPaginated({
+    artworkType: artworkTypeFilterInUrl !== 'all' ? artworkTypeFilterInUrl : undefined,
     cursor: afterCursorInUrl || undefined,
     limit: pageSizeInUrl,
+    location: locationFilterInUrl !== 'all' ? locationFilterInUrl : undefined,
     search: searchInUrl,
     sortBy: sortByInUrl,
     sortOrder: sortOrderInUrl,
     status: statusFilterInUrl !== 'all' ? statusFilterInUrl : undefined,
+    technique: techniqueFilterInUrl !== 'all' ? techniqueFilterInUrl : undefined,
   })
 
   const {
@@ -203,9 +238,13 @@ export function Client() {
         const totalCount = queue.progress.total
 
         if (errorCount === 0) {
-          toast.success(`✅ Actualización en lote completada: ${successCount} de ${totalCount} productos actualizados exitosamente`)
+          toast.success(
+            `✅ Actualización en lote completada: ${successCount} de ${totalCount} productos actualizados exitosamente`
+          )
         } else {
-          toast.warning(`⚠️ Actualización en lote completada: ${successCount} exitosos, ${errorCount} errores de ${totalCount} productos`)
+          toast.warning(
+            `⚠️ Actualización en lote completada: ${successCount} exitosos, ${errorCount} errores de ${totalCount} productos`
+          )
         }
 
         setIsBulkMode(false)
@@ -219,8 +258,8 @@ export function Client() {
           setIsRefreshingAfterBulk(true)
 
           void Promise.all([
-            queryClient.refetchQueries({ queryKey: [ 'managementProducts', 'paginated' ] }),
-            queryClient.refetchQueries({ queryKey: [ 'managementProducts', 'stats' ] })
+            queryClient.refetchQueries({ queryKey: ['managementProducts', 'paginated'] }),
+            queryClient.refetchQueries({ queryKey: ['managementProducts', 'stats'] }),
           ]).finally(() => {
             setTimeout(() => setIsRefreshingAfterBulk(false), 1000)
           })
@@ -230,18 +269,18 @@ export function Client() {
           setHasInvalidatedCache(true)
 
           setTimeout(() => {
-            void queryClient.invalidateQueries({ queryKey: [ 'managementProducts', 'paginated' ] })
+            void queryClient.invalidateQueries({ queryKey: ['managementProducts', 'paginated'] })
           }, 100)
 
           setTimeout(() => {
-            void queryClient.invalidateQueries({ queryKey: [ 'managementProducts', 'stats' ] })
+            void queryClient.invalidateQueries({ queryKey: ['managementProducts', 'stats'] })
           }, 200)
 
           setTimeout(() => {
-            void queryClient.invalidateQueries({ queryKey: [ 'vendors' ] })
-            void queryClient.invalidateQueries({ queryKey: [ 'techniques' ] })
-            void queryClient.invalidateQueries({ queryKey: [ 'artworkTypes' ] })
-            void queryClient.invalidateQueries({ queryKey: [ 'locations' ] })
+            void queryClient.invalidateQueries({ queryKey: ['vendors'] })
+            void queryClient.invalidateQueries({ queryKey: ['techniques'] })
+            void queryClient.invalidateQueries({ queryKey: ['artworkTypes'] })
+            void queryClient.invalidateQueries({ queryKey: ['locations'] })
           }, 300)
         }
       },
@@ -250,41 +289,41 @@ export function Client() {
 
   useEffect(() => {
     setShouldUpdateStats(!isBulkMode && !bulkUpdateQueue.queue.isProcessing)
-  }, [ isBulkMode, bulkUpdateQueue.queue.isProcessing ])
+  }, [isBulkMode, bulkUpdateQueue.queue.isProcessing])
 
-  const [ isRefreshingAfterBulk, setIsRefreshingAfterBulk ] = useState(false)
+  const [isRefreshingAfterBulk, setIsRefreshingAfterBulk] = useState(false)
 
   useEffect(() => {
     if (updateMutation.isSuccess) {
       setEditingRowId(null)
       setEditingChanges({})
     }
-  }, [ updateMutation.isSuccess ])
+  }, [updateMutation.isSuccess])
 
   useEffect(() => {
     setSearchInput(searchInUrl)
-  }, [ searchInUrl ])
+  }, [searchInUrl])
 
   const products = paginatedData?.products ?? []
   const pageInfo = paginatedData?.pageInfo
 
   // Función para contar cuántos productos tienen un descuento específico
-  const getDiscountProductCount = useCallback((discount: any) => {
-    if (discount.appliesTo === 'ALL_PRODUCTS') {
-      // Si aplica a todos los productos, contar todos los productos en la tabla
-      return products.length
-    }
-    if (discount.appliesTo === 'SPECIFIC_PRODUCTS' && discount.productIds) {
-      // Si aplica a productos específicos, contar esos productos
-      return discount.productIds.length
-    }
-    return 1
-  }, [ products ])
+  const getDiscountProductCount = useCallback(
+    (discount: any) => {
+      if (discount.appliesTo === 'ALL_PRODUCTS') {
+        // Si aplica a todos los productos, contar todos los productos en la tabla
+        return products.length
+      }
+      if (discount.appliesTo === 'SPECIFIC_PRODUCTS' && discount.productIds) {
+        // Si aplica a productos específicos, contar esos productos
+        return discount.productIds.length
+      }
+      return 1
+    },
+    [products]
+  )
 
-  const filteredProducts =
-    statusFilterInUrl === 'all'
-      ? products
-      : products.filter((product) => product.status === statusFilterInUrl)
+  const filteredProducts = products
 
   const stats = {
     active: statsData?.active ?? (isLoadingStats ? '...' : 0),
@@ -294,7 +333,7 @@ export function Client() {
   }
 
   const updateEditingChanges = useCallback((changes: Record<string, any>) => {
-    setEditingChanges(prev => {
+    setEditingChanges((prev) => {
       let newChanges = { ...prev }
 
       if (changes.artworkDetails) {
@@ -302,8 +341,8 @@ export function Client() {
           ...newChanges,
           artworkDetails: {
             ...(newChanges.artworkDetails || {}),
-            ...changes.artworkDetails
-          }
+            ...changes.artworkDetails,
+          },
         }
       } else {
         newChanges = { ...newChanges, ...changes }
@@ -319,16 +358,18 @@ export function Client() {
     toast.info('Guardando cambios...')
 
     const updatePayload: UpdateProductPayload = {
-      details: editingChanges.artworkDetails ? {
-        artist: editingChanges.vendor ?? editingChanges.artworkDetails.artist,
-        depth: editingChanges.artworkDetails.depth,
-        height: editingChanges.artworkDetails.height,
-        location: editingChanges.artworkDetails.location,
-        medium: editingChanges.artworkDetails.medium,
-        serie: editingChanges.artworkDetails.serie,
-        width: editingChanges.artworkDetails.width,
-        year: editingChanges.artworkDetails.year,
-      } : undefined,
+      details: editingChanges.artworkDetails
+        ? {
+            artist: editingChanges.vendor ?? editingChanges.artworkDetails.artist,
+            depth: editingChanges.artworkDetails.depth,
+            height: editingChanges.artworkDetails.height,
+            location: editingChanges.artworkDetails.location,
+            medium: editingChanges.artworkDetails.medium,
+            serie: editingChanges.artworkDetails.serie,
+            width: editingChanges.artworkDetails.width,
+            year: editingChanges.artworkDetails.year,
+          }
+        : undefined,
       id: editingRowId,
       images: editingChanges.images,
       inventoryQuantity: editingChanges.inventoryQuantity,
@@ -349,7 +390,7 @@ export function Client() {
         setEditingChanges({})
       },
     })
-  }, [ editingRowId, editingChanges, updateMutation ])
+  }, [editingRowId, editingChanges, updateMutation])
 
   const handleUpdateProduct = useCallback(
     (payload: {
@@ -374,16 +415,18 @@ export function Client() {
       toast.info('Guardando cambios...')
 
       const updatePayload: UpdateProductPayload = {
-        details: payload.artworkDetails ? {
-          artist: payload.vendor ?? undefined,
-          depth: payload.artworkDetails.depth,
-          height: payload.artworkDetails.height,
-          location: payload.artworkDetails.location,
-          medium: payload.artworkDetails.medium,
-          serie: payload.artworkDetails.serie,
-          width: payload.artworkDetails.width,
-          year: payload.artworkDetails.year,
-        } : undefined,
+        details: payload.artworkDetails
+          ? {
+              artist: payload.vendor ?? undefined,
+              depth: payload.artworkDetails.depth,
+              height: payload.artworkDetails.height,
+              location: payload.artworkDetails.location,
+              medium: payload.artworkDetails.medium,
+              serie: payload.artworkDetails.serie,
+              width: payload.artworkDetails.width,
+              year: payload.artworkDetails.year,
+            }
+          : undefined,
         id: payload.id,
         images: payload.images,
         inventoryQuantity: payload.inventoryQuantity,
@@ -405,85 +448,147 @@ export function Client() {
         },
       })
     },
-    [ updateMutation, refetch, queryClient ]
+    [updateMutation, refetch, queryClient]
   )
 
   const handleRefresh = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: [ 'managementProducts' ] })
-    void queryClient.invalidateQueries({ queryKey: [ 'productStats' ] })
+    void queryClient.invalidateQueries({ queryKey: ['managementProducts'] })
+    void queryClient.invalidateQueries({ queryKey: ['productStats'] })
     setEditingRowId(null)
     void refetch()
     toast.info('Actualizando datos...')
-  }, [ refetch, queryClient ])
+  }, [refetch, queryClient])
 
-  const handleSorting = useCallback((columnId: string) => {
-    const sortMapping: Record<string, string> = {
-      inventory: 'inventoryQuantity',
-      price: 'price',
-      productType: 'productType',
-      status: 'status',
-      title: 'title',
-      vendor: 'vendor',
-    }
-
-    const newSortBy = sortMapping[ columnId ] || 'title'
-    const newSortOrder = sortByInUrl === newSortBy && sortOrderInUrl === 'asc' ? 'desc' : 'asc'
-
-    const newUrlParams = new URLSearchParams(searchParams.toString())
-    newUrlParams.set('sortBy', newSortBy)
-    newUrlParams.set('sortOrder', newSortOrder)
-    newUrlParams.set('page', '1')
-    newUrlParams.delete('after')
-    router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
-  }, [ sortByInUrl, sortOrderInUrl, router, searchParams ])
-
-  const handlePageChange = useCallback((newPage: number) => {
-    const newUrlParams = new URLSearchParams(searchParams.toString())
-    let targetCursor: string | null | undefined = undefined
-
-    if (newPage === 1) {
-      targetCursor = null
-    } else {
-      targetCursor = historyCursors[ newPage ]
-    }
-
-    if (newPage > pageInUrl && newPage === pageInUrl + 1) {
-      if (pageInfo?.hasNextPage && pageInfo.endCursor) {
-        targetCursor = pageInfo.endCursor
+  const handleSorting = useCallback(
+    (columnId: string) => {
+      const sortMapping: Record<string, string> = {
+        dimensions: 'dimensions',
+        inventory: 'inventoryQuantity',
+        location: 'location',
+        medium: 'medium',
+        price: 'price',
+        productType: 'productType',
+        serie: 'serie',
+        status: 'status',
+        title: 'title',
+        vendor: 'vendor',
+        year: 'year',
       }
-    }
 
-    newUrlParams.set('page', newPage.toString())
-    if (targetCursor === null) {
+      const newSortBy = sortMapping[columnId] || 'title'
+      const newSortOrder = sortByInUrl === newSortBy && sortOrderInUrl === 'asc' ? 'desc' : 'asc'
+
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      newUrlParams.set('sortBy', newSortBy)
+      newUrlParams.set('sortOrder', newSortOrder)
+      newUrlParams.set('page', '1')
       newUrlParams.delete('after')
-    } else if (targetCursor) {
-      newUrlParams.set('after', targetCursor)
-    } else {
+      router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [sortByInUrl, sortOrderInUrl, router, searchParams]
+  )
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      let targetCursor: string | null | undefined = undefined
+
+      if (newPage === 1) {
+        targetCursor = null
+      } else {
+        targetCursor = historyCursors[newPage]
+      }
+
+      if (newPage > pageInUrl && newPage === pageInUrl + 1) {
+        if (pageInfo?.hasNextPage && pageInfo.endCursor) {
+          targetCursor = pageInfo.endCursor
+        }
+      }
+
+      newUrlParams.set('page', newPage.toString())
+      if (targetCursor === null) {
+        newUrlParams.delete('after')
+      } else if (targetCursor) {
+        newUrlParams.set('after', targetCursor)
+      } else {
+        newUrlParams.delete('after')
+      }
+
+      router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [pageInUrl, historyCursors, pageInfo, router, searchParams]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      newUrlParams.set('pageSize', size.toString())
+      newUrlParams.set('page', '1')
       newUrlParams.delete('after')
-    }
+      router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
 
-    router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
-  }, [ pageInUrl, historyCursors, pageInfo, router, searchParams ])
+  const handleStatusFilterChange = useCallback(
+    (status: string) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      if (status === 'all') {
+        newUrlParams.delete('status')
+      } else {
+        newUrlParams.set('status', status)
+      }
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
 
-  const handlePageSizeChange = useCallback((size: number) => {
-    const newUrlParams = new URLSearchParams(searchParams.toString())
-    newUrlParams.set('pageSize', size.toString())
-    newUrlParams.set('page', '1')
-    newUrlParams.delete('after')
-    router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
-  }, [ router, searchParams ])
+  const handleLocationFilterChange = useCallback(
+    (location: string) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      if (location === 'all') {
+        newUrlParams.delete('location')
+      } else {
+        newUrlParams.set('location', location)
+      }
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
 
-  const handleStatusFilterChange = useCallback((status: string) => {
-    const newUrlParams = new URLSearchParams(searchParams.toString())
-    if (status === 'all') {
-      newUrlParams.delete('status')
-    } else {
-      newUrlParams.set('status', status)
-    }
-    newUrlParams.set('page', '1')
-    newUrlParams.delete('after')
-    router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
-  }, [ router, searchParams ])
+  const handleTechniqueFilterChange = useCallback(
+    (technique: string) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      if (technique === 'all') {
+        newUrlParams.delete('technique')
+      } else {
+        newUrlParams.set('technique', technique)
+      }
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
+
+  const handleArtworkTypeFilterChange = useCallback(
+    (artworkType: string) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      if (artworkType === 'all') {
+        newUrlParams.delete('artworkType')
+      } else {
+        newUrlParams.set('artworkType', artworkType)
+      }
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
 
   const handleSearchSubmit = useCallback(() => {
     if (!isFetching) {
@@ -497,7 +602,7 @@ export function Client() {
       }
       router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
     }
-  }, [ isFetching, searchInput, router, searchParams ])
+  }, [isFetching, searchInput, router, searchParams])
 
   const handleClearSearch = useCallback(() => {
     const newUrlParams = new URLSearchParams(searchParams.toString())
@@ -505,7 +610,7 @@ export function Client() {
     newUrlParams.set('page', '1')
     newUrlParams.delete('after')
     router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
-  }, [ router, searchParams ])
+  }, [router, searchParams])
 
   const handleClearAllFilters = useCallback(() => {
     setEditingRowId(null)
@@ -513,7 +618,7 @@ export function Client() {
     setHistoryCursors({})
 
     router.replace('/manage-inventory', { scroll: false })
-  }, [ router ])
+  }, [router])
 
   const handleBulkModeToggle = useCallback(() => {
     setIsBulkMode(!isBulkMode)
@@ -529,10 +634,10 @@ export function Client() {
       setHasInvalidatedCache(false)
       toast.info('Modo bulk activado. Selecciona productos para editar en lote.')
     }
-  }, [ isBulkMode, bulkUpdateQueue ])
+  }, [isBulkMode, bulkUpdateQueue])
 
   const handleRowSelectionChange = useCallback((id: string, selected: boolean) => {
-    setSelectedRows(prev => {
+    setSelectedRows((prev) => {
       const newSet = new Set(prev)
       if (selected) {
         newSet.add(id)
@@ -543,22 +648,23 @@ export function Client() {
     })
   }, [])
 
-  const handleSelectAllChange = useCallback((selected: boolean) => {
-    if (selected) {
-      setSelectedRows(new Set(filteredProducts.map(p => p.id)))
-    } else {
-      setSelectedRows(new Set())
-    }
-  }, [ filteredProducts ])
+  const handleSelectAllChange = useCallback(
+    (selected: boolean) => {
+      if (selected) {
+        setSelectedRows(new Set(filteredProducts.map((p) => p.id)))
+      } else {
+        setSelectedRows(new Set())
+      }
+    },
+    [filteredProducts]
+  )
 
   const handleBulkChange = useCallback((field: string, value: any) => {
-    setBulkChanges(prev => ({
+    setBulkChanges((prev) => ({
       ...prev,
-      [ field ]: value
+      [field]: value,
     }))
   }, [])
-
-
 
   const handleOpenCouponModal = useCallback(() => {
     setIsCouponModalOpen(true)
@@ -573,71 +679,82 @@ export function Client() {
     setIsAutomaticDiscountModalOpen(true)
   }, [])
 
-  const handleOpenAutomaticDiscountModalForProduct = useCallback((product: { id: string; title: string }) => {
-    setSelectedProductForDiscount(product)
-    setIsAutomaticDiscountModalOpen(true)
-  }, [])
+  const handleOpenAutomaticDiscountModalForProduct = useCallback(
+    (product: { id: string; title: string }) => {
+      setSelectedProductForDiscount(product)
+      setIsAutomaticDiscountModalOpen(true)
+    },
+    []
+  )
 
-  const handleDeleteDiscount = useCallback(async (discountId: string) => {
-    try {
-      const response = await fetch(`/api/shopify/discounts/${encodeURIComponent(discountId)}`, {
-        method: 'DELETE',
-      })
+  const handleDeleteDiscount = useCallback(
+    async (discountId: string) => {
+      try {
+        const response = await fetch(`/api/shopify/discounts/${encodeURIComponent(discountId)}`, {
+          method: 'DELETE',
+        })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Error al eliminar descuento')
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Error al eliminar descuento')
+        }
+
+        // Invalidar caché para refrescar la lista de cupones
+        void queryClient.invalidateQueries({ queryKey: ['discounts'] })
+      } catch (error) {
+        console.error('Error al eliminar descuento:', error)
+        throw error
       }
-
-      // Invalidar caché para refrescar la lista de cupones
-      void queryClient.invalidateQueries({ queryKey: [ 'discounts' ] })
-    } catch (error) {
-      console.error('Error al eliminar descuento:', error)
-      throw error
-    }
-  }, [ queryClient ])
-
-
-
-
+    },
+    [queryClient]
+  )
 
   // Mutations para cupones
   const createDiscountMutation = useCreateDiscount()
   const updateDiscountMutation = useUpdateDiscount()
   const deleteDiscountMutation = useDeleteDiscount()
 
-  const handleCouponCreated = useCallback((coupon: CreateDiscountInput) => {
-    createDiscountMutation.mutate(coupon, {
-      onError: (error) => {
-        toast.error(`Error al crear cupón: ${error.message}`)
-      },
-      onSuccess: () => {
-        toast.success('Cupón creado exitosamente')
-      },
-    })
-  }, [ createDiscountMutation ])
+  const handleCouponCreated = useCallback(
+    (coupon: CreateDiscountInput) => {
+      createDiscountMutation.mutate(coupon, {
+        onError: (error) => {
+          toast.error(`Error al crear cupón: ${error.message}`)
+        },
+        onSuccess: () => {
+          toast.success('Cupón creado exitosamente')
+        },
+      })
+    },
+    [createDiscountMutation]
+  )
 
-  const handleCouponUpdated = useCallback((coupon: UpdateDiscountInput) => {
-    updateDiscountMutation.mutate(coupon, {
-      onError: (error) => {
-        toast.error(`Error al actualizar cupón: ${error.message}`)
-      },
-      onSuccess: () => {
-        toast.success('Cupón actualizado exitosamente')
-      },
-    })
-  }, [ updateDiscountMutation ])
+  const handleCouponUpdated = useCallback(
+    (coupon: UpdateDiscountInput) => {
+      updateDiscountMutation.mutate(coupon, {
+        onError: (error) => {
+          toast.error(`Error al actualizar cupón: ${error.message}`)
+        },
+        onSuccess: () => {
+          toast.success('Cupón actualizado exitosamente')
+        },
+      })
+    },
+    [updateDiscountMutation]
+  )
 
-  const handleCouponDeleted = useCallback((couponId: string) => {
-    deleteDiscountMutation.mutate(couponId, {
-      onError: (error) => {
-        toast.error(`Error al eliminar cupón: ${error.message}`)
-      },
-      onSuccess: () => {
-        toast.success('Cupón eliminado exitosamente')
-      },
-    })
-  }, [ deleteDiscountMutation ])
+  const handleCouponDeleted = useCallback(
+    (couponId: string) => {
+      deleteDiscountMutation.mutate(couponId, {
+        onError: (error) => {
+          toast.error(`Error al eliminar cupón: ${error.message}`)
+        },
+        onSuccess: () => {
+          toast.success('Cupón eliminado exitosamente')
+        },
+      })
+    },
+    [deleteDiscountMutation]
+  )
 
   const handleApplyBulkChanges = useCallback(() => {
     if (selectedRows.size === 0) {
@@ -650,36 +767,35 @@ export function Client() {
       return
     }
 
-    const selectedProducts = filteredProducts.filter(p => selectedRows.has(p.id))
-    const updatePayloads: UpdateProductPayload[] = selectedProducts.map(product => ({
+    const selectedProducts = filteredProducts.filter((p) => selectedRows.has(p.id))
+    const updatePayloads: UpdateProductPayload[] = selectedProducts.map((product) => ({
       id: product.id,
       title: product.title,
       ...bulkChanges,
-      details: bulkChanges.artworkDetails ? {
-        ...product.artworkDetails,
-        ...bulkChanges.artworkDetails,
-      } : undefined,
+      details: bulkChanges.artworkDetails
+        ? {
+            ...product.artworkDetails,
+            ...bulkChanges.artworkDetails,
+          }
+        : undefined,
     }))
 
     bulkUpdateQueue.addItems(updatePayloads)
 
     const changesSummary = Object.entries(bulkChanges)
-      .filter(([ key ]) => key !== 'artworkDetails')
-      .map(([ key, value ]) => `${key}: ${value}`)
+      .filter(([key]) => key !== 'artworkDetails')
+      .map(([key, value]) => `${key}: ${value}`)
       .join(', ')
 
-    toast.success(
-      `✅ ${updatePayloads.length} productos agregados a la cola de actualizaciones`,
-      {
-        description: `Cambios: ${changesSummary}`,
-        duration: 4000,
-      }
-    )
+    toast.success(`✅ ${updatePayloads.length} productos agregados a la cola de actualizaciones`, {
+      description: `Cambios: ${changesSummary}`,
+      duration: 4000,
+    })
 
     setTimeout(() => {
       void bulkUpdateQueue.processQueue()
     }, 500)
-  }, [ selectedRows, bulkChanges, filteredProducts, bulkUpdateQueue ])
+  }, [selectedRows, bulkChanges, filteredProducts, bulkUpdateQueue])
 
   useEffect(() => {
     if (pageSizeInUrl !== previousPageSize) {
@@ -692,32 +808,32 @@ export function Client() {
         setHistoryCursors({})
       }
     }
-  }, [ pageSizeInUrl, previousPageSize, pageInUrl, afterCursorInUrl, router, searchParams ])
+  }, [pageSizeInUrl, previousPageSize, pageInUrl, afterCursorInUrl, router, searchParams])
 
   useEffect(() => {
     setHistoryCursors((prev) => {
       const newCursors = { ...prev }
       let changed = false
-      if (newCursors[ pageInUrl ] !== afterCursorInUrl) {
-        newCursors[ pageInUrl ] = afterCursorInUrl
+      if (newCursors[pageInUrl] !== afterCursorInUrl) {
+        newCursors[pageInUrl] = afterCursorInUrl
         changed = true
       }
       if (pageInfo?.hasNextPage && pageInfo.endCursor) {
         const nextPageNumber = pageInUrl + 1
-        if (newCursors[ nextPageNumber ] !== pageInfo.endCursor) {
-          newCursors[ nextPageNumber ] = pageInfo.endCursor
+        if (newCursors[nextPageNumber] !== pageInfo.endCursor) {
+          newCursors[nextPageNumber] = pageInfo.endCursor
           changed = true
         }
       } else if (pageInfo && !pageInfo.hasNextPage) {
         const nextPageNumber = pageInUrl + 1
         if (nextPageNumber in newCursors) {
-          delete newCursors[ nextPageNumber ]
+          delete newCursors[nextPageNumber]
           changed = true
         }
       }
       return changed ? newCursors : prev
     })
-  }, [ pageInUrl, afterCursorInUrl, pageInfo ])
+  }, [pageInUrl, afterCursorInUrl, pageInfo])
 
   const table = useReactTable({
     columns,
@@ -780,8 +896,6 @@ export function Client() {
     )
   }
 
-  const totalPages = pageInfo?.hasNextPage ? pageInUrl + 1 : pageInUrl
-
   return (
     <div className='min-w-0 max-w-full space-y-4 p-2 md:p-4'>
       <div className='flex min-w-0 flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0'>
@@ -803,7 +917,7 @@ export function Client() {
               <>
                 Salir del Modo Bulk
                 {selectedRows.size > 0 && (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant='secondary' className='ml-2'>
                     {selectedRows.size} seleccionados
                   </Badge>
                 )}
@@ -815,29 +929,29 @@ export function Client() {
           {selectedRows.size > 0 && (
             <>
               <Button
-                variant="outline"
+                variant='outline'
                 onClick={handleOpenCouponModal}
-                className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+                className='bg-blue-50 text-blue-700 hover:bg-blue-100'
               >
-                <Tag className="mr-2 size-4" />
+                <Tag className='mr-2 size-4' />
                 Crear Cupón ({selectedRows.size})
               </Button>
               <Button
-                variant="outline"
+                variant='outline'
                 onClick={handleOpenAutomaticDiscountModal}
-                className="bg-purple-50 text-purple-700 hover:bg-purple-100"
+                className='bg-purple-50 text-purple-700 hover:bg-purple-100'
               >
-                <Tag className="mr-2 size-4" />
+                <Tag className='mr-2 size-4' />
                 Descuento Automático ({selectedRows.size})
               </Button>
             </>
           )}
           <Button
-            variant="outline"
+            variant='outline'
             onClick={handleOpenCouponManagerModal}
-            className="bg-green-50 text-green-700 hover:bg-green-100"
+            className='bg-green-50 text-green-700 hover:bg-green-100'
           >
-            <Tag className="mr-2 size-4" />
+            <Tag className='mr-2 size-4' />
             Gestionar Cupones
           </Button>
           <Link href={ROUTES.INVENTORY.CREATE.PATH}>
@@ -891,7 +1005,7 @@ export function Client() {
       <div className='flex min-w-0 flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0'>
         <div className='relative flex max-w-sm flex-1'>
           <Input
-            placeholder='Buscar por título, tipo, artista...'
+            placeholder='Buscar por título, artista, tipo, técnica, localización...'
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -950,19 +1064,96 @@ export function Client() {
         </div>
 
         <div className='flex items-center space-x-1'>
-          <Select value={sortByInUrl} onValueChange={(value) => {
-            const newUrlParams = new URLSearchParams(searchParams.toString())
-            newUrlParams.set('sortBy', value)
-            newUrlParams.set('page', '1')
-            newUrlParams.delete('after')
-            router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
-          }}>
+          <Select value={artworkTypeFilterInUrl} onValueChange={handleArtworkTypeFilterChange}>
+            <SelectTrigger className='w-44'>
+              <Filter className='mr-2 size-4' />
+              <SelectValue placeholder='Filtrar por tipo' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>Todos los tipos</SelectItem>
+              {artworkTypes && artworkTypes.length > 0 ? (
+                artworkTypes.map((type: { id: string; name: string }) => (
+                  <SelectItem key={type.id} value={type.name}>
+                    {type.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value='all' disabled>
+                  Cargando...
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='flex items-center space-x-1'>
+          <Select value={techniqueFilterInUrl} onValueChange={handleTechniqueFilterChange}>
+            <SelectTrigger className='w-44'>
+              <Filter className='mr-2 size-4' />
+              <SelectValue placeholder='Filtrar por técnica' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>Todas las técnicas</SelectItem>
+              {techniques && techniques.length > 0 ? (
+                techniques.map((technique: { id: string; name: string }) => (
+                  <SelectItem key={technique.id} value={technique.name}>
+                    {technique.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value='all' disabled>
+                  Cargando...
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='flex items-center space-x-1'>
+          <Select value={locationFilterInUrl} onValueChange={handleLocationFilterChange}>
+            <SelectTrigger className='w-44'>
+              <Filter className='mr-2 size-4' />
+              <SelectValue placeholder='Filtrar por localización' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>Todas las localizaciones</SelectItem>
+              {locations && locations.length > 0 ? (
+                locations.map((location: { id: string; name: string }) => (
+                  <SelectItem key={location.id} value={location.name}>
+                    {location.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value='all' disabled>
+                  Cargando...
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='flex items-center space-x-1'>
+          <Select
+            value={sortByInUrl}
+            onValueChange={(value) => {
+              const newUrlParams = new URLSearchParams(searchParams.toString())
+              newUrlParams.set('sortBy', value)
+              newUrlParams.set('page', '1')
+              newUrlParams.delete('after')
+              router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+            }}
+          >
             <SelectTrigger className='w-36'>
               <SelectValue placeholder='Ordenar por' />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='title'>Título</SelectItem>
               <SelectItem value='vendor'>Artista</SelectItem>
+              <SelectItem value='productType'>Tipo de obra</SelectItem>
+              <SelectItem value='medium'>Técnica</SelectItem>
+              <SelectItem value='year'>Año</SelectItem>
+              <SelectItem value='serie'>Serie</SelectItem>
+              <SelectItem value='location'>Localización</SelectItem>
               <SelectItem value='price'>Precio</SelectItem>
               <SelectItem value='createdAt'>Fecha de creación</SelectItem>
               <SelectItem value='updatedAt'>Fecha de actualización</SelectItem>
@@ -972,13 +1163,16 @@ export function Client() {
         </div>
 
         <div className='flex items-center space-x-1'>
-          <Select value={sortOrderInUrl} onValueChange={(value) => {
-            const newUrlParams = new URLSearchParams(searchParams.toString())
-            newUrlParams.set('sortOrder', value)
-            newUrlParams.set('page', '1')
-            newUrlParams.delete('after')
-            router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
-          }}>
+          <Select
+            value={sortOrderInUrl}
+            onValueChange={(value) => {
+              const newUrlParams = new URLSearchParams(searchParams.toString())
+              newUrlParams.set('sortOrder', value)
+              newUrlParams.set('page', '1')
+              newUrlParams.delete('after')
+              router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+            }}
+          >
             <SelectTrigger className='w-28'>
               <SelectValue placeholder='Orden' />
             </SelectTrigger>
@@ -1004,12 +1198,11 @@ export function Client() {
               <div className='flex items-center justify-between'>
                 <div className='flex items-center space-x-2'>
                   <RefreshCw className='size-4 animate-spin text-blue-600' />
-                  <span className='text-sm font-medium text-blue-800'>
-                    Operaciones en curso
-                  </span>
+                  <span className='text-sm font-medium text-blue-800'>Operaciones en curso</span>
                 </div>
                 <Badge variant='outline' className='text-blue-600'>
-                  {bulkUpdateQueue.queue.progress.completed} de {bulkUpdateQueue.queue.progress.total}
+                  {bulkUpdateQueue.queue.progress.completed} de{' '}
+                  {bulkUpdateQueue.queue.progress.total}
                 </Badge>
               </div>
               <p className='mt-1 text-xs text-blue-600'>
@@ -1026,15 +1219,20 @@ export function Client() {
                   Cargando opciones...
                 </Badge>
               )}
-              {!(vendorsLoading || techniquesLoading || artworkTypesLoading || locationsLoading) && (
+              {!(
+                vendorsLoading ||
+                techniquesLoading ||
+                artworkTypesLoading ||
+                locationsLoading
+              ) && (
                 <Button
                   variant='ghost'
                   size='sm'
                   onClick={() => {
-                    void queryClient.invalidateQueries({ queryKey: [ 'vendors' ] })
-                    void queryClient.invalidateQueries({ queryKey: [ 'techniques' ] })
-                    void queryClient.invalidateQueries({ queryKey: [ 'artwork_types' ] })
-                    void queryClient.invalidateQueries({ queryKey: [ 'locations' ] })
+                    void queryClient.invalidateQueries({ queryKey: ['vendors'] })
+                    void queryClient.invalidateQueries({ queryKey: ['techniques'] })
+                    void queryClient.invalidateQueries({ queryKey: ['artwork_types'] })
+                    void queryClient.invalidateQueries({ queryKey: ['locations'] })
                   }}
                   className='h-6 px-2 text-xs'
                 >
@@ -1113,7 +1311,9 @@ export function Client() {
                 type='number'
                 placeholder='Nueva cantidad'
                 value={bulkChanges.inventoryQuantity || ''}
-                onChange={(e) => handleBulkChange('inventoryQuantity', parseInt(e.target.value) || 0)}
+                onChange={(e) =>
+                  handleBulkChange('inventoryQuantity', parseInt(e.target.value) || 0)
+                }
               />
             </div>
 
@@ -1122,10 +1322,12 @@ export function Client() {
               <Input
                 placeholder='Nuevo año'
                 value={bulkChanges.artworkDetails?.year || ''}
-                onChange={(e) => handleBulkChange('artworkDetails', {
-                  ...bulkChanges.artworkDetails,
-                  year: e.target.value
-                })}
+                onChange={(e) =>
+                  handleBulkChange('artworkDetails', {
+                    ...bulkChanges.artworkDetails,
+                    year: e.target.value,
+                  })
+                }
               />
             </div>
           </div>
@@ -1139,7 +1341,9 @@ export function Client() {
                 disabled={vendorsLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={vendorsLoading ? 'Cargando...' : 'Seleccionar artista'} />
+                  <SelectValue
+                    placeholder={vendorsLoading ? 'Cargando...' : 'Seleccionar artista'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {vendorsLoading ? (
@@ -1170,7 +1374,9 @@ export function Client() {
                 disabled={artworkTypesLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={artworkTypesLoading ? 'Cargando...' : 'Seleccionar tipo'} />
+                  <SelectValue
+                    placeholder={artworkTypesLoading ? 'Cargando...' : 'Seleccionar tipo'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {artworkTypesLoading ? (
@@ -1197,14 +1403,18 @@ export function Client() {
               <label className='text-sm font-medium'>Técnica</label>
               <Select
                 value={bulkChanges.artworkDetails?.medium || ''}
-                onValueChange={(value) => handleBulkChange('artworkDetails', {
-                  ...bulkChanges.artworkDetails,
-                  medium: value
-                })}
+                onValueChange={(value) =>
+                  handleBulkChange('artworkDetails', {
+                    ...bulkChanges.artworkDetails,
+                    medium: value,
+                  })
+                }
                 disabled={techniquesLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={techniquesLoading ? 'Cargando...' : 'Seleccionar técnica'} />
+                  <SelectValue
+                    placeholder={techniquesLoading ? 'Cargando...' : 'Seleccionar técnica'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {techniquesLoading ? (
@@ -1231,14 +1441,18 @@ export function Client() {
               <label className='text-sm font-medium'>Localización</label>
               <Select
                 value={bulkChanges.artworkDetails?.location || ''}
-                onValueChange={(value) => handleBulkChange('artworkDetails', {
-                  ...bulkChanges.artworkDetails,
-                  location: value
-                })}
+                onValueChange={(value) =>
+                  handleBulkChange('artworkDetails', {
+                    ...bulkChanges.artworkDetails,
+                    location: value,
+                  })
+                }
                 disabled={locationsLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={locationsLoading ? 'Cargando...' : 'Seleccionar localización'} />
+                  <SelectValue
+                    placeholder={locationsLoading ? 'Cargando...' : 'Seleccionar localización'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {locationsLoading ? (
@@ -1268,13 +1482,14 @@ export function Client() {
               <Input
                 placeholder='Nueva serie'
                 value={bulkChanges.artworkDetails?.serie || ''}
-                onChange={(e) => handleBulkChange('artworkDetails', {
-                  ...bulkChanges.artworkDetails,
-                  serie: e.target.value
-                })}
+                onChange={(e) =>
+                  handleBulkChange('artworkDetails', {
+                    ...bulkChanges.artworkDetails,
+                    serie: e.target.value,
+                  })
+                }
               />
             </div>
-
 
             <div>
               <label className='text-sm font-medium'>Alto (cm)</label>
@@ -1283,10 +1498,12 @@ export function Client() {
                 step='0.1'
                 placeholder='Alto'
                 value={bulkChanges.artworkDetails?.height || ''}
-                onChange={(e) => handleBulkChange('artworkDetails', {
-                  ...bulkChanges.artworkDetails,
-                  height: e.target.value
-                })}
+                onChange={(e) =>
+                  handleBulkChange('artworkDetails', {
+                    ...bulkChanges.artworkDetails,
+                    height: e.target.value,
+                  })
+                }
               />
             </div>
 
@@ -1297,10 +1514,12 @@ export function Client() {
                 step='0.1'
                 placeholder='Ancho'
                 value={bulkChanges.artworkDetails?.width || ''}
-                onChange={(e) => handleBulkChange('artworkDetails', {
-                  ...bulkChanges.artworkDetails,
-                  width: e.target.value
-                })}
+                onChange={(e) =>
+                  handleBulkChange('artworkDetails', {
+                    ...bulkChanges.artworkDetails,
+                    width: e.target.value,
+                  })
+                }
               />
             </div>
 
@@ -1311,17 +1530,25 @@ export function Client() {
                 step='0.1'
                 placeholder='Profundidad'
                 value={bulkChanges.artworkDetails?.depth || ''}
-                onChange={(e) => handleBulkChange('artworkDetails', {
-                  ...bulkChanges.artworkDetails,
-                  depth: e.target.value
-                })}
+                onChange={(e) =>
+                  handleBulkChange('artworkDetails', {
+                    ...bulkChanges.artworkDetails,
+                    depth: e.target.value,
+                  })
+                }
               />
             </div>
           </div>
         </div>
       )}
 
-      {(searchInUrl || statusFilterInUrl !== 'all' || sortByInUrl !== 'title' || sortOrderInUrl !== 'asc') && (
+      {(searchInUrl ||
+        statusFilterInUrl !== 'all' ||
+        locationFilterInUrl !== 'all' ||
+        techniqueFilterInUrl !== 'all' ||
+        artworkTypeFilterInUrl !== 'all' ||
+        sortByInUrl !== 'title' ||
+        sortOrderInUrl !== 'asc') && (
         <div className='flex justify-end'>
           <Button
             onClick={handleClearAllFilters}
@@ -1349,26 +1576,30 @@ export function Client() {
         </div>
       )}
 
-      {!isRefreshingAfterBulk && bulkUpdateQueue.queue.items.length === 0 && hasInvalidatedCache && (
-        <div className='mb-4 flex items-center justify-between rounded-md bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950 dark:text-green-300'>
-          <div className='flex items-center space-x-2'>
-            <CheckCircle className='size-4' />
-            <span>Operaciones en lote completadas. Los datos se han actualizado automáticamente.</span>
+      {!isRefreshingAfterBulk &&
+        bulkUpdateQueue.queue.items.length === 0 &&
+        hasInvalidatedCache && (
+          <div className='mb-4 flex items-center justify-between rounded-md bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950 dark:text-green-300'>
+            <div className='flex items-center space-x-2'>
+              <CheckCircle className='size-4' />
+              <span>
+                Operaciones en lote completadas. Los datos se han actualizado automáticamente.
+              </span>
+            </div>
+            <Button
+              onClick={() => {
+                void queryClient.refetchQueries({ queryKey: ['managementProducts', 'paginated'] })
+                void queryClient.refetchQueries({ queryKey: ['managementProducts', 'stats'] })
+                toast.info('Refrescando inventario...')
+              }}
+              variant='outline'
+              size='sm'
+            >
+              <RefreshCw className='mr-2 size-4' />
+              Refrescar Inventario
+            </Button>
           </div>
-          <Button
-            onClick={() => {
-              void queryClient.refetchQueries({ queryKey: [ 'managementProducts', 'paginated' ] })
-              void queryClient.refetchQueries({ queryKey: [ 'managementProducts', 'stats' ] })
-              toast.info('Refrescando inventario...')
-            }}
-            variant='outline'
-            size='sm'
-          >
-            <RefreshCw className='mr-2 size-4' />
-            Refrescar Inventario
-          </Button>
-        </div>
-      )}
+        )}
 
       {isLoading ? (
         <Table.Loader />
@@ -1380,8 +1611,7 @@ export function Client() {
               <span>
                 {searchInUrl
                   ? `Buscando productos que coincidan con "${searchInUrl}"...`
-                  : 'Actualizando productos...'
-                }
+                  : 'Actualizando productos...'}
               </span>
             </div>
           )}
@@ -1413,7 +1643,11 @@ export function Client() {
       {filteredProducts.length > 0 && (
         <div className='text-center text-sm text-muted-foreground'>
           Mostrando {filteredProducts.length} de {stats.total} productos
-          {statusFilterInUrl !== 'all' && ` (filtrado por: ${statusFilterInUrl})`}
+          {(statusFilterInUrl !== 'all' ||
+            locationFilterInUrl !== 'all' ||
+            techniqueFilterInUrl !== 'all' ||
+            artworkTypeFilterInUrl !== 'all') &&
+            ' (con filtros aplicados)'}
         </div>
       )}
 
@@ -1425,9 +1659,8 @@ export function Client() {
           setIsCouponModalOpen(false)
         }}
         selectedProducts={filteredProducts
-          .filter(p => selectedRows.has(p.id))
-          .map(p => ({ id: p.id, title: p.title }))
-        }
+          .filter((p) => selectedRows.has(p.id))
+          .map((p) => ({ id: p.id, title: p.title }))}
         onCouponCreated={handleCouponCreated}
       />
 
@@ -1435,9 +1668,8 @@ export function Client() {
         isOpen={isCouponManagerModalOpen}
         onClose={() => setIsCouponManagerModalOpen(false)}
         selectedProducts={filteredProducts
-          .filter(p => selectedRows.has(p.id))
-          .map(p => ({ id: p.id, title: p.title }))
-        }
+          .filter((p) => selectedRows.has(p.id))
+          .map((p) => ({ id: p.id, title: p.title }))}
         coupons={coupons}
         isLoading={couponsLoading}
         onCouponCreated={handleCouponCreated}
@@ -1451,14 +1683,17 @@ export function Client() {
           setIsAutomaticDiscountModalOpen(false)
           setSelectedProductForDiscount(null)
         }}
-        selectedProducts={selectedProductForDiscount ? undefined : filteredProducts
-          .filter(p => selectedRows.has(p.id))
-          .map(p => ({ id: p.id, title: p.title }))
+        selectedProducts={
+          selectedProductForDiscount
+            ? undefined
+            : filteredProducts
+                .filter((p) => selectedRows.has(p.id))
+                .map((p) => ({ id: p.id, title: p.title }))
         }
         singleProduct={selectedProductForDiscount ?? undefined}
         onDiscountCreated={() => {
           // Invalidar caché de cupones para refrescar la lista
-          void queryClient.invalidateQueries({ queryKey: [ 'discounts' ] })
+          void queryClient.invalidateQueries({ queryKey: ['discounts'] })
         }}
       />
     </div>

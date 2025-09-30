@@ -16,8 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useCollections, useFilterOptions, useProducts } from '@/modules/shopify/hooks'
-import { type ProductSearchFilters, type ProductSearchParams } from '@/modules/shopify/types'
+import { useCollections, useFilterOptions, useStoreProducts } from '@/modules/shopify/hooks'
+import {
+  type Product,
+  type ProductSearchFilters,
+  type ProductSearchParams,
+} from '@/modules/shopify/types'
 
 const sortOptions = [
   { label: 'Relevancia', supportsOrder: false, value: 'RELEVANCE' },
@@ -32,13 +36,13 @@ export const Client = () => {
   const searchParams = useSearchParams()
 
   // Gestión de la paginación con cursores
-  const [ pageHistory, setPageHistory ] = useState<(string | null)[]>([ null ])
+  const [pageHistory, setPageHistory] = useState<(string | null)[]>([null])
   const currentPage = useMemo(() => {
     const page = searchParams.get('page')
     return page ? parseInt(page, 10) : 1
-  }, [ searchParams ])
+  }, [searchParams])
 
-  const cursor = useMemo(() => pageHistory[ currentPage - 1 ], [ pageHistory, currentPage ])
+  const cursor = useMemo(() => pageHistory[currentPage - 1], [pageHistory, currentPage])
 
   const searchFilters: ProductSearchFilters = useMemo(() => {
     const filters: ProductSearchFilters = {}
@@ -64,48 +68,60 @@ export const Client = () => {
       }
     }
     return filters
-  }, [ searchParams ])
+  }, [searchParams])
 
   const currentSort = (() => {
     const sort = searchParams.get('sort')
     if (!sort) return 'RELEVANCE'
 
     // Validar y mapear el valor de sort
-    const validSortKeys: Record<string, ProductSearchParams[ 'sortKey' ]> = {
-      'BEST_SELLING': 'BEST_SELLING',
-      'CREATED_AT': 'CREATED_AT',
-      'PRICE': 'PRICE',
-      'PRODUCT_TYPE': 'PRODUCT_TYPE',
-      'RELEVANCE': 'RELEVANCE',
-      'TITLE': 'TITLE',
-      'VENDOR': 'VENDOR',
-      
-      'created_at': 'CREATED_AT',
-      
-'price': 'PRICE',
-      
-'product_type': 'PRODUCT_TYPE',
+    const validSortKeys: Record<string, ProductSearchParams['sortKey']> = {
+      BEST_SELLING: 'BEST_SELLING',
+      CREATED_AT: 'CREATED_AT',
+      PRICE: 'PRICE',
+      PRODUCT_TYPE: 'PRODUCT_TYPE',
+      RELEVANCE: 'RELEVANCE',
+      TITLE: 'TITLE',
+      VENDOR: 'VENDOR',
+
+      created_at: 'CREATED_AT',
+
+      price: 'PRICE',
+
+      product_type: 'PRODUCT_TYPE',
       // Mapear valores legacy si existen
-'title': 'TITLE',
-      'vendor': 'VENDOR',
+      title: 'TITLE',
+      vendor: 'VENDOR',
     }
 
-    const validSortKey = validSortKeys[ sort ]
+    const validSortKey = validSortKeys[sort]
     return validSortKey || 'RELEVANCE'
   })()
   const currentOrder = searchParams.get('order')
 
-  const {
-    data: productsData,
-    error,
-    isLoading,
-  } = useProducts({
-    after: cursor,
-    filters: searchFilters,
-    first: 24,
-    reverse: currentOrder === 'desc',
-    sortKey: currentSort,
-  })
+  const locations = searchParams.get('locations')?.split(',') ?? []
+  const techniques = searchParams.get('techniques')?.split(',') ?? []
+
+  const storeParams = {
+    artworkType: searchFilters.productType?.[0],
+    cursor: cursor ?? undefined,
+    limit: 24,
+    location: locations[0],
+    search: searchFilters.query,
+    sortBy:
+      currentSort === 'PRICE'
+        ? 'price'
+        : currentSort === 'TITLE'
+          ? 'title'
+          : currentSort === 'CREATED_AT'
+            ? 'createdAt'
+            : undefined,
+    sortOrder: currentOrder === 'desc' ? ('desc' as const) : ('asc' as const),
+    technique: techniques[0],
+    vendor: searchFilters.vendor?.[0],
+  }
+
+  const { data: productsData, error, isLoading } = useStoreProducts(storeParams)
 
   const { data: filterOptions } = useFilterOptions()
   const { data: collectionsData } = useCollections()
@@ -116,8 +132,8 @@ export const Client = () => {
       const nextCursor = productsData?.pageInfo.endCursor
       if (nextCursor) {
         setPageHistory((prev) => {
-          const newHistory = [ ...prev ]
-          newHistory[ newPage ] = nextCursor
+          const newHistory = [...prev]
+          newHistory[newPage] = nextCursor
           return newHistory
         })
         newParams.set('page', newPage.toString())
@@ -227,7 +243,7 @@ export const Client = () => {
     newParams.delete('page')
 
     const hasRemainingFilters = Array.from(newParams.entries()).some(
-      ([ key ]) => ![ 'sort', 'order', 'page', 'after' ].includes(key)
+      ([key]) => !['sort', 'order', 'page', 'after'].includes(key)
     )
 
     const path = hasRemainingFilters ? `/store/search?${newParams.toString()}` : '/store'
@@ -370,7 +386,7 @@ export const Client = () => {
         {productsData?.products && productsData.products.length > 0 ? (
           <>
             <Card.Container>
-              {productsData.products.map((product) => (
+              {productsData.products.map((product: Product) => (
                 <Card.Product key={product.id} product={product} />
               ))}
             </Card.Container>
