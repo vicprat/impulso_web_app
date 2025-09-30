@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server'
 import { requireAuth } from '@/modules/auth/server/server'
 import { getUserById, updateUserAndRelatedData } from '@/modules/user/user.service'
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: userId } = await Promise.resolve(params)
+    const { id: userId } = await params
     const user = await getUserById(userId)
 
     if (!user) {
@@ -19,10 +19,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAuth()
-    const targetUserId = params.id
+    const { id: targetUserId } = await params
 
     if (session.user.id !== targetUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })

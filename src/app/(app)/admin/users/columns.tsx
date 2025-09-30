@@ -50,7 +50,12 @@ export const columns: ColumnDef<UserProfile>[] = [
             </div>
             <div className='text-sm text-gray-500'>ID: {user.id.slice(0, 8)}...</div>
             {isArtist && user.artist?.name && (
-              <div className='text-xs font-medium text-blue-600'>Artista: {user.artist.name}</div>
+              <div className='text-xs font-medium text-blue-600'>
+                Artista: {user.artist.name}
+                {user.artist.artistType && (
+                  <span className='ml-1 text-xs text-gray-500'>({user.artist.artistType})</span>
+                )}
+              </div>
             )}
           </div>
         </div>

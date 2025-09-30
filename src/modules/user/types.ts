@@ -23,6 +23,7 @@ export interface UserProfile {
     name: string
     bio?: string | null
     portfolioUrl?: string | null
+    artistType?: 'IMPULSO' | 'COLLECTIVE'
   } | null
 
   // Estado de sincronización

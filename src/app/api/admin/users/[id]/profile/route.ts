@@ -20,10 +20,10 @@ const ProfileUpdateSchema = z.object({
 
 const CombinedUpdateSchema = UserUpdateSchema.merge(ProfileUpdateSchema)
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requirePermission(PERMISSIONS.MANAGE_USERS)
-    const userId = params.id
+    const { id: userId } = await params
 
     const user = await getUserById(userId)
 
@@ -54,10 +54,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requirePermission(PERMISSIONS.MANAGE_USERS)
-    const userId = params.id
+    const { id: userId } = await params
 
     const json = await request.json()
     const validatedData = CombinedUpdateSchema.parse(json)

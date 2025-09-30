@@ -12,10 +12,17 @@ import { shopifyService } from '@/modules/shopify/service'
 import { type Product } from '@/modules/shopify/types'
 import { type PublicArtist } from '@/modules/user/types'
 
-export async function getPublicArtists(): Promise<PublicArtist[]> {
+export async function getPublicArtists(
+  artistType?: 'IMPULSO' | 'COLLECTIVE'
+): Promise<PublicArtist[]> {
   try {
     const artists = await prisma.user.findMany({
       select: {
+        artist: {
+          select: {
+            artistType: true,
+          },
+        },
         email: true,
         firstName: true,
         id: true,
@@ -41,7 +48,21 @@ export async function getPublicArtists(): Promise<PublicArtist[]> {
       },
     })
 
-    return artists.filter((artist) => artist.firstName && artist.lastName) as PublicArtist[]
+    const filteredArtists = artists.filter((artist) => {
+      // Solo filtrar por firstName (debe tener valor no vacío)
+      if (!artist.firstName?.trim()) {
+        return false
+      }
+
+      // Si se especifica artistType, filtrar por ese tipo
+      if (artistType && artist.artist?.artistType !== artistType) {
+        return false
+      }
+
+      return true
+    })
+
+    return filteredArtists as PublicArtist[]
   } catch (error) {
     console.error('Error fetching public artists:', error)
     return []

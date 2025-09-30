@@ -14,7 +14,15 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -22,6 +30,8 @@ import { cn } from '@/lib/utils'
 import { useUpdateUserRoles } from '@/modules/user/hooks/management'
 import { type UserProfile } from '@/modules/user/types'
 import { availableRoles } from '@/src/config/Roles'
+
+export const dynamic = 'force-dynamic'
 
 interface UserRoleFormProps {
   user?: UserProfile // Opcional para crear nuevos usuarios
@@ -32,16 +42,20 @@ interface UserRoleFormProps {
 
 export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserRoleFormProps) {
   const queryClient = useQueryClient()
-  const [ selectedRole, setSelectedRole ] = useState<string>(user?.roles[ 0 ] ?? 'customer')
-  const [ vendorName, setVendorName ] = useState('')
-  const [ popoverOpen, setPopoverOpen ] = useState(false)
-  const [ isNewVendor, setIsNewVendor ] = useState(false)
-  const [ confirmReassignOpen, setConfirmReassignOpen ] = useState(false)
-  const [ conflictInfo, setConflictInfo ] = useState<{ vendorName: string; assignedTo?: { id: string; email: string; firstName: string | null; lastName: string | null } } | null>(null)
-  const [ reassignTargetUserId, setReassignTargetUserId ] = useState<string | null>(null)
+  const [selectedRole, setSelectedRole] = useState<string>(user?.roles[0] ?? 'customer')
+  const [vendorName, setVendorName] = useState('')
+  const [artistType, setArtistType] = useState<'IMPULSO' | 'COLLECTIVE'>('IMPULSO')
+  const [popoverOpen, setPopoverOpen] = useState(false)
+  const [isNewVendor, setIsNewVendor] = useState(false)
+  const [confirmReassignOpen, setConfirmReassignOpen] = useState(false)
+  const [conflictInfo, setConflictInfo] = useState<{
+    vendorName: string
+    assignedTo?: { id: string; email: string; firstName: string | null; lastName: string | null }
+  } | null>(null)
+  const [reassignTargetUserId, setReassignTargetUserId] = useState<string | null>(null)
 
   // Campos para crear nuevo usuario
-  const [ formData, setFormData ] = useState({
+  const [formData, setFormData] = useState({
     email: user?.email ?? '',
     firstName: user?.firstName ?? '',
     isActive: user?.isActive ?? true,
@@ -53,29 +67,36 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
   const { data: vendors, isLoading: vendorsLoading } = useQuery<string[]>({
     enabled: selectedRole === 'artist',
     queryFn: () => fetch('/api/vendors').then((res) => res.json()),
-    queryKey: [ 'vendors' ],
+    queryKey: ['vendors'],
   })
 
-  // Si el usuario ya es artista, obtener el nombre del vendor
+  // Si el usuario ya es artista, obtener el nombre del vendor y tipo
   useEffect(() => {
     if (user?.artist?.name) {
       setVendorName(user.artist.name)
       setIsNewVendor(false)
     }
-  }, [ user ])
+    if (user?.artist?.artistType) {
+      setArtistType(user.artist.artistType)
+    }
+  }, [user])
 
   // Actualizar el estado isNewVendor cuando cambie vendorName
   useEffect(() => {
     if (vendorName.trim() && vendors) {
-      const isExisting = vendors.some(v => v.toLowerCase() === vendorName.toLowerCase())
+      const isExisting = vendors.some((v) => v.toLowerCase() === vendorName.toLowerCase())
       setIsNewVendor(!isExisting)
     } else {
       setIsNewVendor(false)
     }
-  }, [ vendorName, vendors ])
+  }, [vendorName, vendors])
 
   const createArtistMutation = useMutation({
-    mutationFn: (data: { userId: string; vendorName: string }) => {
+    mutationFn: (data: {
+      userId: string
+      vendorName: string
+      artistType: 'IMPULSO' | 'COLLECTIVE'
+    }) => {
       return fetch('/api/artists', {
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
@@ -100,13 +121,19 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
     },
     onSuccess: () => {
       toast.success('Artista creado exitosamente')
-      void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
+      void queryClient.invalidateQueries({ queryKey: ['users'] })
       onSuccess()
     },
   })
 
   const reassignArtistMutation = useMutation({
-    mutationFn: async ({ targetUserId, vendorName }: { targetUserId: string; vendorName: string }) => {
+    mutationFn: async ({
+      targetUserId,
+      vendorName,
+    }: {
+      targetUserId: string
+      vendorName: string
+    }) => {
       const res = await fetch('/api/artists/reassign', {
         body: JSON.stringify({ targetUserId, vendorName }),
         headers: { 'Content-Type': 'application/json' },
@@ -126,13 +153,19 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
       setConfirmReassignOpen(false)
       setConflictInfo(null)
       setReassignTargetUserId(null)
-      void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
+      void queryClient.invalidateQueries({ queryKey: ['users'] })
       onSuccess()
     },
   })
 
   const createUserMutation = useMutation({
-    mutationFn: (data: { email: string; firstName?: string; lastName?: string; role: string; isActive: boolean }) => {
+    mutationFn: (data: {
+      email: string
+      firstName?: string
+      lastName?: string
+      role: string
+      isActive: boolean
+    }) => {
       return fetch('/api/users', {
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
@@ -150,7 +183,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
     },
     onSuccess: () => {
       toast.success('Usuario creado exitosamente')
-      void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
+      void queryClient.invalidateQueries({ queryKey: ['users'] })
       onSuccess()
     },
   })
@@ -164,9 +197,9 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
   }
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [ field ]: value
+      [field]: value,
     }))
   }
 
@@ -200,6 +233,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
           setReassignTargetUserId(userResponse.user.id)
           try {
             await createArtistMutation.mutateAsync({
+              artistType,
               userId: userResponse.user.id,
               vendorName: vendorName.trim(),
             })
@@ -228,6 +262,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
           setReassignTargetUserId(user.id)
           try {
             await createArtistMutation.mutateAsync({
+              artistType,
               userId: user.id,
               vendorName: vendorName.trim(),
             })
@@ -244,6 +279,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
             setReassignTargetUserId(user.id)
             try {
               await createArtistMutation.mutateAsync({
+                artistType,
                 userId: user.id,
                 vendorName: vendorName.trim(),
               })
@@ -269,7 +305,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
     }
   }
 
-  const _isBecomingArtist = selectedRole === 'artist' && (!user?.roles.includes('artist'))
+  const _isBecomingArtist = selectedRole === 'artist' && !user?.roles.includes('artist')
 
   return (
     <div className='space-y-6'>
@@ -360,15 +396,19 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
             Asignar Vendor para Artista
           </h4>
           <p className='text-on-primary-container/80 mb-3 text-xs'>
-            Escribe el nombre de un artista existente para seleccionarlo, o escribe un nuevo nombre para crear un vendor nuevo.
+            Escribe el nombre de un artista existente para seleccionarlo, o escribe un nuevo nombre
+            para crear un vendor nuevo.
           </p>
 
-          <Popover open={popoverOpen} onOpenChange={(open) => {
-            setPopoverOpen(open)
-            if (!open && !vendorName.trim()) {
-              setIsNewVendor(false)
-            }
-          }}>
+          <Popover
+            open={popoverOpen}
+            onOpenChange={(open) => {
+              setPopoverOpen(open)
+              if (!open && !vendorName.trim()) {
+                setIsNewVendor(false)
+              }
+            }}
+          >
             <PopoverTrigger asChild>
               <Button
                 variant='outline'
@@ -377,16 +417,16 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
                 className={`w-full justify-between ${isNewVendor ? 'border-primary text-primary' : ''}`}
               >
                 {vendorName
-                  ? (isNewVendor
+                  ? isNewVendor
                     ? `Crear nuevo artista: "${vendorName}"`
-                    : vendorName)
+                    : vendorName
                   : 'Selecciona un artista existente o escribe para crear uno nuevo...'}
                 <ChevronsUpDown className='ml-2 size-4 shrink-0 opacity-50' />
               </Button>
             </PopoverTrigger>
             {isNewVendor && vendorName.trim() && (
-              <div className="mt-2 text-xs text-primary">
-                <Plus className="mr-1 inline size-3" />
+              <div className='mt-2 text-xs text-primary'>
+                <Plus className='mr-1 inline size-3' />
                 Se creará un nuevo vendor llamado "{vendorName}"
               </div>
             )}
@@ -427,18 +467,18 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
 
                     {/* Opción para crear nuevo vendor si el texto no coincide exactamente con ningún vendor existente */}
                     {vendorName.trim() &&
-                      !vendors?.some(v => v.toLowerCase() === vendorName.toLowerCase()) && (
+                      !vendors?.some((v) => v.toLowerCase() === vendorName.toLowerCase()) && (
                         <CommandItem
                           value={`create:${vendorName}`}
                           onSelect={() => {
                             // Mantener el vendorName actual para crear el nuevo vendor
                             setPopoverOpen(false)
                           }}
-                          className="bg-primary/5 border-t text-primary"
+                          className='bg-primary/5 border-t text-primary'
                         >
-                          <Check className="mr-2 size-4 opacity-0" />
-                          <span className="flex items-center font-medium">
-                            <Plus className="mr-2 size-4" />
+                          <Check className='mr-2 size-4 opacity-0' />
+                          <span className='flex items-center font-medium'>
+                            <Plus className='mr-2 size-4' />
                             Crear nuevo artista: "{vendorName}"
                           </span>
                         </CommandItem>
@@ -448,6 +488,43 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
               </Command>
             </PopoverContent>
           </Popover>
+
+          {/* Selector de tipo de artista */}
+          <div className='mt-4'>
+            <Label className='text-sm font-medium text-on-primary-container'>Tipo de Artista</Label>
+            <div className='mt-2 space-y-2'>
+              <label className='flex cursor-pointer items-center space-x-3'>
+                <input
+                  type='radio'
+                  name='artistType'
+                  value='IMPULSO'
+                  checked={artistType === 'IMPULSO'}
+                  onChange={(e) => setArtistType(e.target.value as 'IMPULSO' | 'COLLECTIVE')}
+                  className='size-4 border-input bg-background text-primary focus:ring-ring'
+                />
+                <div>
+                  <div className='text-sm font-medium text-on-primary-container'>Impulso</div>
+                  <div className='text-on-primary-container/80 text-xs'>
+                    Artista interno de Impulso
+                  </div>
+                </div>
+              </label>
+              <label className='flex cursor-pointer items-center space-x-3'>
+                <input
+                  type='radio'
+                  name='artistType'
+                  value='COLLECTIVE'
+                  checked={artistType === 'COLLECTIVE'}
+                  onChange={(e) => setArtistType(e.target.value as 'IMPULSO' | 'COLLECTIVE')}
+                  className='size-4 border-input bg-background text-primary focus:ring-ring'
+                />
+                <div>
+                  <div className='text-sm font-medium text-on-primary-container'>Collective</div>
+                  <div className='text-on-primary-container/80 text-xs'>Artista del colectivo</div>
+                </div>
+              </label>
+            </div>
+          </div>
         </div>
       )}
 
@@ -457,11 +534,15 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
         </Button>
         <Button
           onClick={handleSaveRoles}
-          disabled={updateRoles.isPending || createArtistMutation.isPending || createUserMutation.isPending}
+          disabled={
+            updateRoles.isPending || createArtistMutation.isPending || createUserMutation.isPending
+          }
         >
           {updateRoles.isPending || createArtistMutation.isPending || createUserMutation.isPending
             ? 'Guardando...'
-            : mode === 'create' ? 'Crear Usuario' : 'Guardar'}
+            : mode === 'create'
+              ? 'Crear Usuario'
+              : 'Guardar'}
         </Button>
       </div>
 
@@ -471,7 +552,12 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
             <DialogTitle>Reasignar artista</DialogTitle>
             <DialogDescription>
               {conflictInfo?.vendorName ? (
-                <>El artista "{conflictInfo.vendorName}" ya está asignado a {conflictInfo.assignedTo?.firstName ?? ''} {conflictInfo.assignedTo?.lastName ?? ''} ({conflictInfo.assignedTo?.email}). ¿Deseas reasignarlo a este usuario?</>
+                <>
+                  El artista "{conflictInfo.vendorName}" ya está asignado a{' '}
+                  {conflictInfo.assignedTo?.firstName ?? ''}{' '}
+                  {conflictInfo.assignedTo?.lastName ?? ''} ({conflictInfo.assignedTo?.email}).
+                  ¿Deseas reasignarlo a este usuario?
+                </>
               ) : (
                 <>Este artista ya está asignado a otro usuario. ¿Deseas reasignarlo?</>
               )}
@@ -479,12 +565,23 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant='outline' onClick={() => { setConfirmReassignOpen(false); setConflictInfo(null) }}>Cancelar</Button>
+              <Button
+                variant='outline'
+                onClick={() => {
+                  setConfirmReassignOpen(false)
+                  setConflictInfo(null)
+                }}
+              >
+                Cancelar
+              </Button>
             </DialogClose>
             <Button
               onClick={() => {
                 if (!reassignTargetUserId || !conflictInfo?.vendorName) return
-                void reassignArtistMutation.mutate({ targetUserId: reassignTargetUserId, vendorName: conflictInfo.vendorName })
+                void reassignArtistMutation.mutate({
+                  targetUserId: reassignTargetUserId,
+                  vendorName: conflictInfo.vendorName,
+                })
               }}
             >
               Confirmar reasignación

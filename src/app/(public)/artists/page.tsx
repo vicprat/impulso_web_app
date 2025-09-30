@@ -9,9 +9,22 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = routeMetadata['/artists']
 
-export default async function ArtistsPage() {
+export default async function ArtistsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>
+}) {
   try {
-    const artists = await getPublicArtists()
+    const params = await searchParams
+
+    const artistType =
+      params.type === 'collective'
+        ? 'COLLECTIVE'
+        : params.type === 'impulso'
+          ? 'IMPULSO'
+          : undefined
+
+    const artists = await getPublicArtists(artistType)
 
     return <Grid artists={artists} />
   } catch {

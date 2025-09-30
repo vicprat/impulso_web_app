@@ -1,38 +1,21 @@
-import { NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
-import { prisma } from '@/lib/prisma'
+import { getPublicArtists } from '@/lib/landing-data'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const artists = await prisma.user.findMany({
-      select: {
-        email: true,
-        firstName: true,
-        id: true,
-        lastName: true,
-        profile: {
-          select: {
-            avatarUrl: true,
-            backgroundImageUrl: true,
-            bio: true,
-            occupation: true,
-          },
-        },
-      },
-      where: {
-        UserRole: {
-          some: {
-            role: {
-              name: 'artist',
-            },
-          },
-        },
-        isPublic: true,
-      },
-    })
-    return NextResponse.json(artists)
+    const searchParams = request.nextUrl.searchParams
+    const artistType = searchParams.get('type') as 'IMPULSO' | 'COLLECTIVE' | null
+
+    if (artistType && !['IMPULSO', 'COLLECTIVE'].includes(artistType)) {
+      return NextResponse.json({ error: 'Tipo de artista inválido' }, { status: 400 })
+    }
+
+    const artists = await getPublicArtists(artistType || undefined)
+
+    return NextResponse.json({ artists })
   } catch (error) {
-    console.error('[API/public-profiles/artists GET]', error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    console.error('Error fetching public artists:', error)
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

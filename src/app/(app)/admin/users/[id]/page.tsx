@@ -15,7 +15,7 @@ import {
   Tag,
   TrendingUp,
   User,
-  Users
+  Users,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -37,18 +37,22 @@ import { ROUTES } from '@/src/config/routes'
 export default function UserDetailPage() {
   const params = useParams()
   const userId = params.id as string
-  const [ editDialogOpen, setEditDialogOpen ] = useState(false)
-  const [ profileEditDialogOpen, setProfileEditDialogOpen ] = useState(false)
-  const [ linksEditDialogOpen, setLinksEditDialogOpen ] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [profileEditDialogOpen, setProfileEditDialogOpen] = useState(false)
+  const [linksEditDialogOpen, setLinksEditDialogOpen] = useState(false)
+  const [artistTypeEditDialogOpen, setArtistTypeEditDialogOpen] = useState(false)
 
   const { data: user, isError, isLoading } = useUserById(userId)
-  const primaryRole = user?.roles[ 0 ] || 'customer'
+  const primaryRole = user?.roles[0] || 'customer'
 
   console.log('User data:', user)
   console.log('Primary role:', primaryRole)
   console.log('User ID:', userId)
 
-  const { data: financeData, isLoading: financeLoading } = useUserFinance(userId, user ? primaryRole : undefined)
+  const { data: financeData, isLoading: financeLoading } = useUserFinance(
+    userId,
+    user ? primaryRole : undefined
+  )
   const { data: bankAccountsData, isLoading: bankAccountsLoading } = useUserBankAccounts(userId)
 
   // Hook para manejar el perfil del usuario por parte del admin
@@ -105,7 +109,7 @@ export default function UserDetailPage() {
   }
 
   const getInitials = (firstName?: string, lastName?: string) => {
-    return `${firstName?.[ 0 ] ?? ''}${lastName?.[ 0 ] ?? ''}`.toUpperCase()
+    return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase()
   }
 
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Sin nombre'
@@ -120,13 +124,16 @@ export default function UserDetailPage() {
       case 'partner':
         return <PartnerSection user={user} financeData={financeData} isLoading={financeLoading} />
       case 'artist':
-        return <ArtistSection
-          user={user}
-          financeData={financeData}
-          isLoading={financeLoading}
-          onEditProfile={() => setProfileEditDialogOpen(true)}
-          onEditLinks={() => setLinksEditDialogOpen(true)}
-        />
+        return (
+          <ArtistSection
+            user={user}
+            financeData={financeData}
+            isLoading={financeLoading}
+            onEditProfile={() => setProfileEditDialogOpen(true)}
+            onEditLinks={() => setLinksEditDialogOpen(true)}
+            onEditArtistType={() => setArtistTypeEditDialogOpen(true)}
+          />
+        )
       case 'customer':
       case 'vip_customer':
         return <CustomerSection user={user} financeData={financeData} isLoading={financeLoading} />
@@ -411,12 +418,39 @@ export default function UserDetailPage() {
           </div>
         </Dialog.Form>
       )}
+
+      {/* Edit Artist Type Dialog - Only for Artists */}
+      {primaryRole === 'artist' && (
+        <Dialog.Form
+          open={artistTypeEditDialogOpen}
+          onOpenChange={setArtistTypeEditDialogOpen}
+          title={`Editar Tipo de Artista - ${fullName}`}
+          description='Modifica el tipo de artista.'
+        >
+          <ArtistTypeEditForm
+            user={user}
+            onSuccess={() => {
+              setArtistTypeEditDialogOpen(false)
+              window.location.reload()
+            }}
+            onCancel={() => setArtistTypeEditDialogOpen(false)}
+          />
+        </Dialog.Form>
+      )}
     </div>
   )
 }
 
 // Componentes específicos por rol
-function ProviderSection({ financeData, isLoading, user }: { user: any; financeData: any; isLoading: boolean }) {
+function ProviderSection({
+  financeData,
+  isLoading,
+  user,
+}: {
+  user: any
+  financeData: any
+  isLoading: boolean
+}) {
   const metrics = financeData?.financialMetrics
 
   return (
@@ -496,7 +530,15 @@ function ProviderSection({ financeData, isLoading, user }: { user: any; financeD
   )
 }
 
-function EmployeeSection({ financeData, isLoading, user }: { user: any; financeData: any; isLoading: boolean }) {
+function EmployeeSection({
+  financeData,
+  isLoading,
+  user,
+}: {
+  user: any
+  financeData: any
+  isLoading: boolean
+}) {
   const metrics = financeData?.financialMetrics
 
   return (
@@ -576,7 +618,15 @@ function EmployeeSection({ financeData, isLoading, user }: { user: any; financeD
   )
 }
 
-function PartnerSection({ financeData, isLoading, user }: { user: any; financeData: any; isLoading: boolean }) {
+function PartnerSection({
+  financeData,
+  isLoading,
+  user,
+}: {
+  user: any
+  financeData: any
+  isLoading: boolean
+}) {
   const metrics = financeData?.financialMetrics
 
   return (
@@ -659,15 +709,17 @@ function PartnerSection({ financeData, isLoading, user }: { user: any; financeDa
 function ArtistSection({
   financeData,
   isLoading,
+  onEditArtistType,
   onEditLinks,
   onEditProfile,
-  user
+  user,
 }: {
-  user: any;
-  financeData: any;
-  isLoading: boolean;
-  onEditProfile: () => void;
-  onEditLinks: () => void;
+  user: any
+  financeData: any
+  isLoading: boolean
+  onEditProfile: () => void
+  onEditLinks: () => void
+  onEditArtistType: () => void
 }) {
   const metrics = financeData?.financialMetrics
   const artistInfo = financeData?.artistInfo
@@ -680,6 +732,18 @@ function ArtistSection({
         </CardTitle>
       </CardHeader>
       <CardContent className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
+        <div>
+          <p className='font-medium text-muted-foreground'>Tipo de Artista</p>
+          <p className='text-sm text-foreground'>
+            {user.artist?.artistType ? (
+              <Badge variant='secondary' className='capitalize'>
+                {user.artist.artistType.toLowerCase()}
+              </Badge>
+            ) : (
+              <span className='text-muted-foreground'>No especificado</span>
+            )}
+          </p>
+        </div>
         <div>
           <p className='font-medium text-muted-foreground'>Movimientos Relacionados</p>
           <p className='text-sm text-foreground'>
@@ -743,19 +807,17 @@ function ArtistSection({
               Crear Movimiento
             </Button>
           </Link>
-          <Button
-            onClick={onEditProfile}
-            className='ml-auto'
-          >
+          <Button onClick={onEditProfile} className='ml-auto'>
             <Edit className='mr-2 size-4' />
             Editar Perfil
           </Button>
-          <Button
-            onClick={onEditLinks}
-            variant='outline'
-          >
+          <Button onClick={onEditLinks} variant='outline'>
             <Edit className='mr-2 size-4' />
             Editar Links
+          </Button>
+          <Button onClick={onEditArtistType} variant='outline'>
+            <Edit className='mr-2 size-4' />
+            Editar Tipo
           </Button>
         </div>
       </CardContent>
@@ -763,7 +825,15 @@ function ArtistSection({
   )
 }
 
-function CustomerSection({ financeData, isLoading, user }: { user: any; financeData: any; isLoading: boolean }) {
+function CustomerSection({
+  financeData,
+  isLoading,
+  user,
+}: {
+  user: any
+  financeData: any
+  isLoading: boolean
+}) {
   const customerInfo = financeData?.customerInfo
   const metrics = financeData?.financialMetrics
 
@@ -852,5 +922,91 @@ function DefaultSection({ user }: { user: any }) {
         </p>
       </CardContent>
     </Card>
+  )
+}
+
+function ArtistTypeEditForm({
+  onCancel,
+  onSuccess,
+  user,
+}: {
+  user: any
+  onSuccess: () => void
+  onCancel: () => void
+}) {
+  const [artistType, setArtistType] = useState<'IMPULSO' | 'COLLECTIVE'>(
+    user?.artist?.artistType || 'IMPULSO'
+  )
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSave = async () => {
+    if (!user?.artist?.id) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/artists/${user.artist.id}`, {
+        body: JSON.stringify({ artistType }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH',
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar el tipo de artista')
+      }
+
+      onSuccess()
+    } catch (error) {
+      console.error('Error updating artist type:', error)
+      // Aquí podrías agregar un toast de error
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className='space-y-4'>
+      <div className='space-y-3'>
+        <h3 className='text-lg font-medium'>Tipo de Artista</h3>
+        <div className='space-y-2'>
+          <label className='flex cursor-pointer items-center space-x-3'>
+            <input
+              type='radio'
+              name='artistType'
+              value='IMPULSO'
+              checked={artistType === 'IMPULSO'}
+              onChange={(e) => setArtistType(e.target.value as 'IMPULSO' | 'COLLECTIVE')}
+              className='size-4 border-input bg-background text-primary focus:ring-ring'
+            />
+            <div>
+              <div className='text-sm font-medium'>Impulso</div>
+              <div className='text-xs text-muted-foreground'>Artista interno de Impulso</div>
+            </div>
+          </label>
+          <label className='flex cursor-pointer items-center space-x-3'>
+            <input
+              type='radio'
+              name='artistType'
+              value='COLLECTIVE'
+              checked={artistType === 'COLLECTIVE'}
+              onChange={(e) => setArtistType(e.target.value as 'IMPULSO' | 'COLLECTIVE')}
+              className='size-4 border-input bg-background text-primary focus:ring-ring'
+            />
+            <div>
+              <div className='text-sm font-medium'>Collective</div>
+              <div className='text-xs text-muted-foreground'>Artista del colectivo</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div className='flex justify-end space-x-3'>
+        <Button variant='outline' onClick={onCancel} disabled={isLoading}>
+          Cancelar
+        </Button>
+        <Button onClick={handleSave} disabled={isLoading}>
+          {isLoading ? 'Guardando...' : 'Guardar'}
+        </Button>
+      </div>
+    </div>
   )
 }

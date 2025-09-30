@@ -9,10 +9,17 @@ export async function POST(request: NextRequest) {
     const session = await requirePermission(PERMISSIONS.MANAGE_USERS)
 
     const body = await request.json()
-    const { userId, vendorName } = body
+    const { artistType = 'IMPULSO', userId, vendorName } = body
 
     if (!userId || !vendorName) {
       return NextResponse.json({ error: 'Faltan userId y vendorName' }, { status: 400 })
+    }
+
+    if (!['IMPULSO', 'COLLECTIVE'].includes(artistType)) {
+      return NextResponse.json(
+        { error: 'Tipo de artista inválido. Debe ser IMPULSO o COLLECTIVE' },
+        { status: 400 }
+      )
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -68,6 +75,7 @@ export async function POST(request: NextRequest) {
         // Crear nuevo artista
         artistToUse = await tx.artist.create({
           data: {
+            artistType: artistType as 'IMPULSO' | 'COLLECTIVE',
             name: vendorName,
           },
         })

@@ -7,6 +7,8 @@ import { Artist } from '@/components/Card/Artist'
 import { fadeIn, slideUp, staggerContainer } from '@/src/helpers/animations'
 import { type PublicArtist } from '@/src/modules/user/types'
 
+import { ArtistTypeFilter } from './ArtistTypeFilter'
+
 interface Props {
   artists: PublicArtist[]
 }
@@ -39,9 +41,12 @@ export const Grid: React.FC<Props> = ({ artists }) => {
         <p className='mx-auto max-w-2xl text-lg text-muted-foreground'>
           Conoce el talento excepcional de nuestra comunidad creativa
         </p>
-        <div className='mt-4 inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-primary'>
-          <Users className='size-4' />
-          <span className='text-sm font-medium'>{artists.length} artistas</span>
+        <div className='mt-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-center'>
+          <div className='inline-flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-primary'>
+            <Users className='size-4' />
+            <span className='text-sm font-medium'>{artists.length} artistas</span>
+          </div>
+          <ArtistTypeFilter />
         </div>
       </motion.div>
 
