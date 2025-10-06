@@ -202,7 +202,7 @@ export const Client = () => {
       const allTagOptions = [
         ...filterOptions.techniques,
         ...filterOptions.formats,
-        ...filterOptions.locations,
+        ...filterOptions.dimensions,
         ...filterOptions.years,
         ...filterOptions.series,
         ...filterOptions.otherTags,

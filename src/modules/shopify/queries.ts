@@ -415,8 +415,17 @@ export const COLLECTION_BY_HANDLE_QUERY = `
             id
             title
             handle
+            availableForSale
+            productType
+            vendor
+            createdAt
+            updatedAt
             priceRange {
               minVariantPrice {
+                amount
+                currencyCode
+              }
+              maxVariantPrice {
                 amount
                 currencyCode
               }
@@ -427,6 +436,30 @@ export const COLLECTION_BY_HANDLE_QUERY = `
                   id
                   url
                   altText
+                  width
+                  height
+                }
+              }
+            }
+            variants(first: 20) {
+              edges {
+                node {
+                  id
+                  title
+                  availableForSale
+                  price {
+                    amount
+                    currencyCode
+                  }
+                  compareAtPrice {
+                    amount
+                    currencyCode
+                  }
+                  sku
+                  selectedOptions {
+                    name
+                    value
+                  }
                 }
               }
             }
