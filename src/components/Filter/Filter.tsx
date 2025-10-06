@@ -5,9 +5,9 @@ import {
   ChevronDown,
   DollarSign,
   Filter as FilterIcon,
-  MapPin,
   Package,
   Palette,
+  Ruler,
   Square,
   Tag,
   User,
@@ -39,7 +39,7 @@ interface State {
   techniques: string[]
   formats: string[]
   years: string[]
-  locations: string[]
+  dimensions: string[]
   priceRange: {
     min: string
     max: string
@@ -49,8 +49,8 @@ interface State {
 }
 
 const defaultFilters: State = {
+  dimensions: [],
   formats: [],
-  locations: [],
   priceRange: { max: '', min: '' },
   productTypes: [],
   sortBy: 'TITLE',
@@ -107,7 +107,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
   }
 
   const handleOptionToggle = (
-    key: 'productTypes' | 'vendors' | 'tags' | 'techniques' | 'formats' | 'years' | 'locations',
+    key: 'productTypes' | 'vendors' | 'tags' | 'techniques' | 'formats' | 'years' | 'dimensions',
     value: string
   ) => {
     const currentValues = filters[key]
@@ -118,7 +118,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
   }
 
   const removeFilter = (
-    key: 'productTypes' | 'vendors' | 'tags' | 'techniques' | 'formats' | 'years' | 'locations',
+    key: 'productTypes' | 'vendors' | 'tags' | 'techniques' | 'formats' | 'years' | 'dimensions',
     value: string
   ) => {
     setFilters((prev) => ({
@@ -142,7 +142,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       'techniques',
       'formats',
       'years',
-      'locations',
+      'dimensions',
       'price_min',
       'price_max',
       'sort',
@@ -158,7 +158,8 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       newSearchParams.set('techniques', filters.techniques.join(','))
     if (filters.formats.length > 0) newSearchParams.set('formats', filters.formats.join(','))
     if (filters.years.length > 0) newSearchParams.set('years', filters.years.join(','))
-    if (filters.locations.length > 0) newSearchParams.set('locations', filters.locations.join(','))
+    if (filters.dimensions.length > 0)
+      newSearchParams.set('dimensions', filters.dimensions.join(','))
 
     if (filters.priceRange.min) newSearchParams.set('price_min', filters.priceRange.min)
     if (filters.priceRange.max) newSearchParams.set('price_max', filters.priceRange.max)
@@ -203,9 +204,9 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
         .sort((a, b) => a.label.localeCompare(b.label)) ?? [],
     [filterOptions]
   )
-  const locationOptions = useMemo(
+  const dimensionOptions = useMemo(
     () =>
-      filterOptions?.locations
+      filterOptions?.dimensions
         .map((o) => ({ label: o.label, value: o.input }))
         .sort((a, b) => a.label.localeCompare(b.label)) ?? [],
     [filterOptions]
@@ -251,7 +252,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     count += filters.techniques.length
     count += filters.formats.length
     count += filters.years.length
-    count += filters.locations.length
+    count += filters.dimensions.length
     if (filters.priceRange.min || filters.priceRange.max) count++
     if (filters.sortBy !== 'TITLE' || filters.sortOrder !== 'asc') count++
     return count
@@ -269,15 +270,15 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     const techniques = searchParams.get('techniques')?.split(',').filter(Boolean) ?? []
     const formats = searchParams.get('formats')?.split(',').filter(Boolean) ?? []
     const years = searchParams.get('years')?.split(',').filter(Boolean) ?? []
-    const locations = searchParams.get('locations')?.split(',').filter(Boolean) ?? []
+    const dimensions = searchParams.get('dimensions')?.split(',').filter(Boolean) ?? []
     const priceMin = searchParams.get('price_min') ?? ''
     const priceMax = searchParams.get('price_max') ?? ''
     const sortBy = (searchParams.get('sort') as State['sortBy']) || 'TITLE'
     const sortOrder = (searchParams.get('order') as State['sortOrder']) || 'asc'
 
     setFilters({
+      dimensions,
       formats,
-      locations,
       priceRange: { max: priceMax, min: priceMin },
       productTypes,
       sortBy,
@@ -310,7 +311,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       | 'techniques'
       | 'formats'
       | 'years'
-      | 'locations'
+      | 'dimensions'
     showSearch?: boolean
   }) => {
     const searchTerm = searchTerms[sectionKey] || ''
@@ -566,15 +567,17 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                 filterKey='techniques'
                 showSearch
               />
-              <FilterSection
-                title='Formatos'
-                icon={Square}
-                sectionKey='formats'
-                options={formatOptions}
-                selectedValues={filters.formats}
-                filterKey='formats'
-                showSearch
-              />
+              {dimensionOptions.length === 0 && (
+                <FilterSection
+                  title='Formatos'
+                  icon={Square}
+                  sectionKey='formats'
+                  options={formatOptions}
+                  selectedValues={filters.formats}
+                  filterKey='formats'
+                  showSearch
+                />
+              )}
               <FilterSection
                 title='Año'
                 icon={CalendarDays}
@@ -585,12 +588,12 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                 showSearch
               />
               <FilterSection
-                title='Ubicaciones'
-                icon={MapPin}
-                sectionKey='locations'
-                options={locationOptions}
-                selectedValues={filters.locations}
-                filterKey='locations'
+                title='Dimensiones'
+                icon={Ruler}
+                sectionKey='dimensions'
+                options={dimensionOptions}
+                selectedValues={filters.dimensions}
+                filterKey='dimensions'
                 showSearch
               />
               <FilterSection

@@ -106,7 +106,7 @@ async function getProducts(
     }
   }
 
-  const hasMetafieldFilters = params.technique?.trim() || params.location?.trim()
+  const hasMetafieldFilters = params.technique?.trim() ?? params.dimensions?.trim()
 
   let sortKey = 'TITLE' // Default sort key
   let reverse = false // Default sort order
@@ -226,8 +226,18 @@ async function getProductsWithManualSorting(
     filteredProducts = filteredProducts.filter((p) => p.artworkDetails.medium === params.technique)
   }
 
-  if (params.location?.trim()) {
-    filteredProducts = filteredProducts.filter((p) => p.artworkDetails.location === params.location)
+  if (params.dimensions?.trim()) {
+    const dimensionFilters = params.dimensions.split(',')
+    filteredProducts = filteredProducts.filter((p) => {
+      const height = p.artworkDetails.height
+      const width = p.artworkDetails.width
+      const depth = p.artworkDetails.depth
+
+      if (!height || !width) return false
+
+      const dimensionText = depth ? `${height} x ${width} x ${depth} cm` : `${height} x ${width} cm`
+      return dimensionFilters.some((filter) => dimensionText.trim() === filter.trim())
+    })
   }
 
   if (sortField) {
@@ -481,8 +491,8 @@ async function getProductsFromRequest(
   const params: GetProductsParams = {
     artworkType: searchParams.get('artworkType') ?? undefined,
     cursor: searchParams.get('cursor') ?? undefined,
+    dimensions: searchParams.get('dimensions') ?? undefined,
     limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
-    location: searchParams.get('location') ?? undefined,
     page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : undefined,
     search: searchParams.get('search') ?? undefined,
     sortBy: searchParams.get('sortBy') ?? undefined,
@@ -1069,6 +1079,107 @@ async function deleteProduct(id: string, session: AuthSession): Promise<string> 
   return response.productDelete.deletedProductId!
 }
 
+async function getProductsPublic(params: GetProductsParams): Promise<PaginatedProductsResponse> {
+  let shopifyQuery = ''
+
+  if (params.search?.trim()) {
+    shopifyQuery = `(title:*${params.search}* OR product_type:*${params.search}* OR vendor:*${params.search}*)`
+  }
+
+  if (params.vendor?.trim()) {
+    if (shopifyQuery) {
+      shopifyQuery += ` AND vendor:"${params.vendor}"`
+    } else {
+      shopifyQuery = `vendor:"${params.vendor}"`
+    }
+  }
+
+  if (params.status?.trim()) {
+    if (shopifyQuery) {
+      shopifyQuery += ` AND status:${params.status}`
+    } else {
+      shopifyQuery = `status:${params.status}`
+    }
+  }
+
+  if (params.artworkType?.trim()) {
+    if (shopifyQuery) {
+      shopifyQuery += ` AND product_type:"${params.artworkType}"`
+    } else {
+      shopifyQuery = `product_type:"${params.artworkType}"`
+    }
+  }
+
+  const hasMetafieldFilters = params.technique?.trim() ?? params.dimensions?.trim()
+
+  let sortKey = 'TITLE' // Default sort key
+  let reverse = false // Default sort order
+  let useManualSorting = false // Flag para usar sorting manual
+  let manualSortField = '' // Campo para sorting manual
+
+  if (params.sortBy) {
+    switch (params.sortBy) {
+      case 'title':
+        sortKey = 'TITLE'
+        break
+      case 'vendor':
+        sortKey = 'VENDOR'
+        break
+      case 'productType':
+        sortKey = 'PRODUCT_TYPE'
+        break
+      case 'createdAt':
+        sortKey = 'CREATED_AT'
+        break
+      case 'updatedAt':
+        sortKey = 'UPDATED_AT'
+        break
+      case 'inventoryQuantity':
+        sortKey = 'INVENTORY_TOTAL'
+        break
+      case 'price':
+      case 'medium':
+      case 'year':
+      case 'serie':
+      case 'location':
+      case 'dimensions':
+        useManualSorting = true
+        manualSortField = params.sortBy
+        sortKey = 'TITLE'
+        break
+      default:
+        sortKey = 'TITLE'
+    }
+  }
+
+  if (params.sortOrder === 'desc') {
+    reverse = true
+  }
+
+  const limit = params.limit ? parseInt(String(params.limit), 10) : 10
+
+  if (useManualSorting || hasMetafieldFilters) {
+    return await getProductsWithManualSorting(params, shopifyQuery, limit, reverse, manualSortField)
+  } else {
+    const variables = {
+      after: params.cursor,
+      first: limit,
+      query: shopifyQuery,
+      reverse,
+      sortKey,
+    }
+
+    const response = await makeAdminApiRequest<GetProductsApiResponse>(
+      GET_PRODUCTS_QUERY,
+      variables
+    )
+    const locationId = await getPrimaryLocationId()
+    const products = response.products.edges.map((edge) => new Product(edge.node, locationId))
+
+    return { pageInfo: response.products.pageInfo, products }
+  }
+}
+
 export const productService = {
   createProduct,
   createProductFromRequest,
@@ -1078,5 +1189,6 @@ export const productService = {
   getProductStats,
   getProducts,
   getProductsFromRequest,
+  getProductsPublic,
   updateProduct,
 }

@@ -11,7 +11,7 @@ export interface GetProductsParams {
   sortOrder?: 'asc' | 'desc'
   artworkType?: string
   technique?: string
-  location?: string
+  dimensions?: string
 }
 
 export interface CreateProductPayload {

@@ -138,7 +138,7 @@ export const useStoreProducts = (
     sortOrder?: 'asc' | 'desc'
     artworkType?: string
     technique?: string
-    location?: string
+    dimensions?: string
   } = {},
   options?: Omit<UseQueryOptions<any, Error, any>, 'queryKey' | 'queryFn'>
 ) => {
@@ -154,7 +154,7 @@ export const useStoreProducts = (
       if (params.sortOrder) searchParams.append('sortOrder', params.sortOrder)
       if (params.artworkType) searchParams.append('artworkType', params.artworkType)
       if (params.technique) searchParams.append('technique', params.technique)
-      if (params.location) searchParams.append('location', params.location)
+      if (params.dimensions) searchParams.append('dimensions', params.dimensions)
 
       const response = await fetch(`/api/store/products?${searchParams.toString()}`)
 

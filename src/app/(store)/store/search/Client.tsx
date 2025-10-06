@@ -99,14 +99,14 @@ export const Client = () => {
   })()
   const currentOrder = searchParams.get('order')
 
-  const locations = searchParams.get('locations')?.split(',') ?? []
+  const dimensions = searchParams.get('dimensions')?.split(',') ?? []
   const techniques = searchParams.get('techniques')?.split(',') ?? []
 
   const storeParams = {
     artworkType: searchFilters.productType?.[0],
     cursor: cursor ?? undefined,
+    dimensions: dimensions[0],
     limit: 24,
-    location: locations[0],
     search: searchFilters.query,
     sortBy:
       currentSort === 'PRICE'

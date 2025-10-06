@@ -1,17 +1,48 @@
 import { NextResponse } from 'next/server'
 
-import { api } from '@/modules/shopify/api'
-import { type EnrichedFilterOptions, type FilterValue, type Product } from '@/modules/shopify/types'
+import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
+import { type EnrichedFilterOptions, type FilterValue } from '@/modules/shopify/types'
 
-const categorizeTag = (tag: string): { category: keyof EnrichedFilterOptions; label: string } => {
+const GET_PRODUCTS_WITH_METAFIELDS_QUERY = `
+  query GetProductsWithMetafields($first: Int!) {
+    products(first: $first) {
+      edges {
+        node {
+          id
+          title
+          handle
+          tags
+          productType
+          vendor
+          priceRange {
+            minVariantPrice {
+              amount
+              currencyCode
+            }
+          }
+          metafields(first: 50, namespace: "art_details") {
+            edges {
+              node {
+                namespace
+                key
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+const categorizeTag = (
+  tag: string,
+  hasDimensions: boolean
+): { category: keyof EnrichedFilterOptions; label: string } => {
   const trimmedTag = tag.trim()
 
-  if (trimmedTag.startsWith('locacion-')) {
-    const label = trimmedTag.replace('locacion-', '').replace(/-/g, ' ')
-    return { category: 'locations', label: label.charAt(0).toUpperCase() + label.slice(1) }
-  }
-
-  if (/^Formato (Grande|Mediano|Pequeño|Miniatura)$/.test(trimmedTag)) {
+  // Si hay dimensiones disponibles, no categorizar como formato
+  if (!hasDimensions && /^Formato (Grande|Mediano|Pequeño|Miniatura)$/.test(trimmedTag)) {
     return { category: 'formats', label: trimmedTag }
   }
   if (/^\d{4}$/.test(trimmedTag)) {
@@ -51,40 +82,78 @@ const categorizeTag = (tag: string): { category: keyof EnrichedFilterOptions; la
 
 export async function GET() {
   try {
-    const shopifyResponse = await api.getProducts({ first: 250 })
-    const products = shopifyResponse.data.products
+    const response = await makeAdminApiRequest<{
+      products: {
+        edges: {
+          node: {
+            id: string
+            title: string
+            handle: string
+            tags: string[]
+            productType: string
+            vendor: string
+            priceRange: {
+              minVariantPrice: {
+                amount: string
+                currencyCode: string
+              }
+            }
+            metafields: {
+              edges: {
+                node: {
+                  namespace: string
+                  key: string
+                  value: string
+                }
+              }[]
+            }
+          }
+        }[]
+      }
+    }>(GET_PRODUCTS_WITH_METAFIELDS_QUERY, { first: 250 })
+
+    const products = response.products.edges.map((edge) => ({
+      ...edge.node,
+      metafields: edge.node.metafields.edges.map((metafieldEdge) => metafieldEdge.node),
+    }))
 
     const allTags = new Set<string>()
     const allVendors = new Set<string>()
     const allProductTypes = new Set<string>()
+    const allDimensions = new Set<string>()
     let minPrice = Infinity
     let maxPrice = 0
 
-    products.forEach((product: Product) => {
+    products.forEach((product) => {
       product.tags?.forEach((tag) => allTags.add(tag))
       if (product.vendor) allVendors.add(product.vendor)
       if (product.productType) allProductTypes.add(product.productType)
       const price = parseFloat(product.priceRange.minVariantPrice.amount)
       if (price < minPrice) minPrice = price
       if (price > maxPrice) maxPrice = price
+
+      // Extraer dimensiones de los metafields
+      if (product.metafields) {
+        const height = product.metafields.find((mf) => mf.key === 'height')?.value
+        const width = product.metafields.find((mf) => mf.key === 'width')?.value
+        const depth = product.metafields.find((mf) => mf.key === 'depth')?.value
+
+        if (height && width) {
+          const dimensionText = depth
+            ? `${height} x ${width} x ${depth} cm`
+            : `${height} x ${width} cm`
+          allDimensions.add(dimensionText)
+        }
+      }
     })
 
-    const [techniquesRes, locationsRes] = await Promise.all([
-      fetch(`${process.env.NEXTAUTH_URL}/api/options/techniques`),
-      fetch(`${process.env.NEXTAUTH_URL}/api/options/locations`),
-    ])
-
+    const techniquesRes = await fetch(`${process.env.NEXTAUTH_URL}/api/options/techniques`)
     const techniques = techniquesRes.ok ? await techniquesRes.json() : []
-    const locations = locationsRes.ok ? await locationsRes.json() : []
 
     const structuredFilters: EnrichedFilterOptions = {
       artists: [...allVendors].map((v) => ({ count: 0, input: v, label: v })),
-      formats: [],
-      locations: locations.map((loc: { id: string; name: string }) => ({
-        count: 0,
-        input: loc.name,
-        label: loc.name,
-      })),
+      dimensions: [...allDimensions].map((d) => ({ count: 0, input: d, label: d })),
+      formats: allDimensions.size > 0 ? [] : [],
       otherTags: [],
       price: {
         max: Math.ceil(maxPrice === 0 ? 10000 : maxPrice),
@@ -101,7 +170,7 @@ export async function GET() {
     }
 
     allTags.forEach((tag) => {
-      const { category, label } = categorizeTag(tag)
+      const { category, label } = categorizeTag(tag, allDimensions.size > 0)
       const categoryArray = structuredFilters[category] as FilterValue[]
       if (!categoryArray.some((item) => item.input === tag)) {
         categoryArray.push({ count: 0, input: tag, label })

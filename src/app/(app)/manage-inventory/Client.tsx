@@ -22,7 +22,6 @@ import { useBulkUpdateQueue } from '@/hooks/useBulkUpdateQueue'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import {
   useGetArtworkTypes,
-  useGetLocations,
   useGetProductsPaginated,
   useGetTechniques,
   useGetVendors,
@@ -101,7 +100,7 @@ export function Client() {
   const pageSizeInUrl = parseInt(searchParams.get('pageSize') ?? defaultPageSize.toString(), 10)
   const searchInUrl = searchParams.get('search') ?? ''
   const statusFilterInUrl = searchParams.get('status') ?? 'all'
-  const locationFilterInUrl = searchParams.get('location') ?? 'all'
+  const dimensionsFilterInUrl = searchParams.get('dimensions') ?? 'all'
   const techniqueFilterInUrl = searchParams.get('technique') ?? 'all'
   const artworkTypeFilterInUrl = searchParams.get('artworkType') ?? 'all'
   const sortByInUrl = searchParams.get('sortBy') ?? 'title'
@@ -134,7 +133,7 @@ export function Client() {
   const { data: vendors = [], isLoading: vendorsLoading } = useGetVendors()
   const { data: techniques = [], isLoading: techniquesLoading } = useGetTechniques()
   const { data: artworkTypes = [], isLoading: artworkTypesLoading } = useGetArtworkTypes()
-  const { data: locations = [], isLoading: locationsLoading } = useGetLocations()
+  // const { data: locations = [], isLoading: locationsLoading } = useGetLocations()
 
   // Obtener cupones reales desde la API
   const { data: coupons = [], isLoading: couponsLoading } = useGetDiscounts()
@@ -169,7 +168,7 @@ export function Client() {
   }, [
     searchInUrl,
     statusFilterInUrl,
-    locationFilterInUrl,
+    dimensionsFilterInUrl,
     techniqueFilterInUrl,
     artworkTypeFilterInUrl,
     sortByInUrl,
@@ -186,8 +185,8 @@ export function Client() {
   } = useGetProductsPaginated({
     artworkType: artworkTypeFilterInUrl !== 'all' ? artworkTypeFilterInUrl : undefined,
     cursor: afterCursorInUrl || undefined,
+    dimensions: dimensionsFilterInUrl !== 'all' ? dimensionsFilterInUrl : undefined,
     limit: pageSizeInUrl,
-    location: locationFilterInUrl !== 'all' ? locationFilterInUrl : undefined,
     search: searchInUrl,
     sortBy: sortByInUrl,
     sortOrder: sortOrderInUrl,
@@ -282,7 +281,6 @@ export function Client() {
             void queryClient.invalidateQueries({ queryKey: ['vendors'] })
             void queryClient.invalidateQueries({ queryKey: ['techniques'] })
             void queryClient.invalidateQueries({ queryKey: ['artworkTypes'] })
-            void queryClient.invalidateQueries({ queryKey: ['locations'] })
           }, 300)
         }
       },
@@ -547,13 +545,13 @@ export function Client() {
     [router, searchParams]
   )
 
-  const handleLocationFilterChange = useCallback(
-    (location: string) => {
+  const handleDimensionsFilterChange = useCallback(
+    (dimensions: string) => {
       const newUrlParams = new URLSearchParams(searchParams.toString())
-      if (location === 'all') {
-        newUrlParams.delete('location')
+      if (dimensions === 'all') {
+        newUrlParams.delete('dimensions')
       } else {
-        newUrlParams.set('location', location)
+        newUrlParams.set('dimensions', dimensions)
       }
       newUrlParams.set('page', '1')
       newUrlParams.delete('after')
@@ -1124,24 +1122,14 @@ export function Client() {
         </div>
 
         <div className='flex items-center space-x-1'>
-          <Select value={locationFilterInUrl} onValueChange={handleLocationFilterChange}>
+          <Select value={dimensionsFilterInUrl} onValueChange={handleDimensionsFilterChange}>
             <SelectTrigger className='w-44'>
               <Filter className='mr-2 size-4' />
-              <SelectValue placeholder='Filtrar por localización' />
+              <SelectValue placeholder='Filtrar por dimensiones' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='all'>Todas las localizaciones</SelectItem>
-              {locations && locations.length > 0 ? (
-                locations.map((location: { id: string; name: string }) => (
-                  <SelectItem key={location.id} value={location.name}>
-                    {location.name}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value='all' disabled>
-                  Cargando...
-                </SelectItem>
-              )}
+              <SelectItem value='all'>Todas las dimensiones</SelectItem>
+              {/* Las opciones de dimensiones se cargarán dinámicamente desde la API */}
             </SelectContent>
           </Select>
         </div>
@@ -1227,18 +1215,13 @@ export function Client() {
           <div className='mb-4 flex items-center justify-between'>
             <div className='flex items-center space-x-3'>
               <h3 className='text-lg font-semibold'>Edición en Lote</h3>
-              {(vendorsLoading || techniquesLoading || artworkTypesLoading || locationsLoading) && (
+              {(vendorsLoading || techniquesLoading || artworkTypesLoading) && (
                 <Badge variant='outline' className='animate-pulse bg-blue-50 text-blue-700'>
                   <RefreshCw className='mr-1 size-3 animate-spin' />
                   Cargando opciones...
                 </Badge>
               )}
-              {!(
-                vendorsLoading ||
-                techniquesLoading ||
-                artworkTypesLoading ||
-                locationsLoading
-              ) && (
+              {!(vendorsLoading || techniquesLoading || artworkTypesLoading) && (
                 <Button
                   variant='ghost'
                   size='sm'
@@ -1246,7 +1229,6 @@ export function Client() {
                     void queryClient.invalidateQueries({ queryKey: ['vendors'] })
                     void queryClient.invalidateQueries({ queryKey: ['techniques'] })
                     void queryClient.invalidateQueries({ queryKey: ['artwork_types'] })
-                    void queryClient.invalidateQueries({ queryKey: ['locations'] })
                   }}
                   className='h-6 px-2 text-xs'
                 >
@@ -1453,40 +1435,16 @@ export function Client() {
 
             <div>
               <label className='text-sm font-medium'>Localización</label>
-              <Select
+              <Input
+                placeholder='Nueva localización'
                 value={bulkChanges.artworkDetails?.location || ''}
-                onValueChange={(value) =>
+                onChange={(e) =>
                   handleBulkChange('artworkDetails', {
                     ...bulkChanges.artworkDetails,
-                    location: value,
+                    location: e.target.value,
                   })
                 }
-                disabled={locationsLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={locationsLoading ? 'Cargando...' : 'Seleccionar localización'}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {locationsLoading ? (
-                    <div className='p-2 text-center text-sm text-muted-foreground'>
-                      <RefreshCw className='mx-auto size-4 animate-spin' />
-                      Cargando localizaciones...
-                    </div>
-                  ) : locations && locations.length > 0 ? (
-                    locations.map((location: { id: string; name: string }) => (
-                      <SelectItem key={location.id} value={location.name}>
-                        {location.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className='p-2 text-center text-sm text-muted-foreground'>
-                      No hay localizaciones disponibles
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
+              />
             </div>
           </div>
 
@@ -1558,7 +1516,7 @@ export function Client() {
 
       {(searchInUrl ||
         statusFilterInUrl !== 'all' ||
-        locationFilterInUrl !== 'all' ||
+        dimensionsFilterInUrl !== 'all' ||
         techniqueFilterInUrl !== 'all' ||
         artworkTypeFilterInUrl !== 'all' ||
         sortByInUrl !== 'title' ||
@@ -1658,7 +1616,7 @@ export function Client() {
         <div className='text-center text-sm text-muted-foreground'>
           Mostrando {filteredProducts.length} de {stats.total} productos
           {(statusFilterInUrl !== 'all' ||
-            locationFilterInUrl !== 'all' ||
+            dimensionsFilterInUrl !== 'all' ||
             techniqueFilterInUrl !== 'all' ||
             artworkTypeFilterInUrl !== 'all') &&
             ' (con filtros aplicados)'}

@@ -24,7 +24,7 @@ export const useGetProductsPaginated = (params: GetProductsParams = {}) => {
       if (params.status) searchParams.append('status', params.status)
       if (params.artworkType) searchParams.append('artworkType', params.artworkType)
       if (params.technique) searchParams.append('technique', params.technique)
-      if (params.location) searchParams.append('location', params.location)
+      if (params.dimensions) searchParams.append('dimensions', params.dimensions)
 
       const { data } = await axios.get(`/api/management/products?${searchParams.toString()}`)
       return data

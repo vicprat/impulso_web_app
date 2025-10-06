@@ -58,8 +58,8 @@ export async function GET(req: NextRequest) {
     const params: GetProductsParams = {
       artworkType: searchParams.get('artworkType') ?? undefined,
       cursor: searchParams.get('cursor') ?? undefined,
+      dimensions: searchParams.get('dimensions') ?? undefined,
       limit: parseInt(searchParams.get('limit') ?? '20', 10),
-      location: searchParams.get('location') ?? undefined,
       search: searchParams.get('search') ?? undefined,
       sortBy: searchParams.get('sortBy') ?? undefined,
       sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') ?? 'asc',
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
       vendor: searchParams.get('vendor') ?? undefined,
     }
 
-    const result = await productService.getProducts(params)
+    const result = await productService.getProductsPublic(params)
 
     const transformedProducts = result.products.map(transformToStorefrontProduct)
 

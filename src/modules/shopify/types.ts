@@ -230,7 +230,7 @@ export interface EnrichedFilterOptions {
   price: { min: number; max: number }
   techniques: FilterValue[]
   formats: FilterValue[]
-  locations: FilterValue[]
+  dimensions: FilterValue[]
   years: FilterValue[]
   series: FilterValue[]
   otherTags: FilterValue[]
