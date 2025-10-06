@@ -61,7 +61,8 @@ export const useCollection = (
   return useQuery({
     enabled: !!id,
     queryFn: async () => {
-      const response = await fetch(`/api/shopify/collections/${id}`)
+      const encodedId = encodeURIComponent(id)
+      const response = await fetch(`/api/shopify/collections/${encodedId}`)
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
         throw new Error(errorData.error ?? `HTTP ${response.status}: ${response.statusText}`)
@@ -110,7 +111,8 @@ export const useUpdateCollection = (
 
   return useMutation({
     mutationFn: async ({ id, ...input }: UpdateCollectionInput) => {
-      const response = await fetch(`/api/shopify/collections/${id}`, {
+      const encodedId = encodeURIComponent(id)
+      const response = await fetch(`/api/shopify/collections/${encodedId}`, {
         body: JSON.stringify(input),
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +140,8 @@ export const useDeleteCollection = (options?: UseMutationOptions<any, Error, str
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/shopify/collections/${id}`, {
+      const encodedId = encodeURIComponent(id)
+      const response = await fetch(`/api/shopify/collections/${encodedId}`, {
         method: 'DELETE',
       })
 
@@ -163,7 +166,8 @@ export function useAddProductsToCollection(
 
   return useMutation({
     mutationFn: async ({ collectionId, productIds }) => {
-      const response = await fetch(`/api/shopify/collections/${collectionId}/products`, {
+      const encodedId = encodeURIComponent(collectionId)
+      const response = await fetch(`/api/shopify/collections/${encodedId}/products`, {
         body: JSON.stringify({ productIds }),
         headers: {
           'Content-Type': 'application/json',
@@ -193,7 +197,8 @@ export function useRemoveProductsFromCollection(
 
   return useMutation({
     mutationFn: async ({ collectionId, productIds }) => {
-      const response = await fetch(`/api/shopify/collections/${collectionId}/products`, {
+      const encodedId = encodeURIComponent(collectionId)
+      const response = await fetch(`/api/shopify/collections/${encodedId}/products`, {
         body: JSON.stringify({ productIds }),
         headers: {
           'Content-Type': 'application/json',

@@ -2,9 +2,10 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id: encodedId } = await params
+    const id = decodeURIComponent(encodedId)
 
     const QUERY = `
       query getCollection($id: ID!) {
@@ -47,8 +48,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     `
 
     const response = (await makeAdminApiRequest(QUERY, {
-      id: `gid://shopify/Collection/${id}`,
-    })) as any
+      id: id.startsWith('gid://shopify/Collection/') ? id : `gid://shopify/Collection/${id}`,
+    })) as { collection?: any }
 
     if (!response.collection) {
       return NextResponse.json({ error: 'Collection not found' }, { status: 404 })
@@ -57,8 +58,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const collection = {
       ...response.collection,
       description: response.collection.descriptionHtml,
-      products: response.collection.products.edges.map((edge: any) => edge.node),
-      productsCount: response.collection.productsCount?.count || 0,
+      products: response.collection.products.edges.map((edge: { node: any }) => edge.node),
+      productsCount: response.collection.productsCount?.count ?? 0,
     }
 
     return NextResponse.json({
@@ -77,14 +78,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id: encodedId } = await params
+    const id = decodeURIComponent(encodedId)
     const body = await request.json()
     const { description, handle, image, ruleSet, title } = body
 
     const input: Record<string, unknown> = {
-      id: `gid://shopify/Collection/${id}`,
+      id: id.startsWith('gid://shopify/Collection/') ? id : `gid://shopify/Collection/${id}`,
     }
 
     if (title) {
@@ -143,7 +145,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       }
     `
 
-    const response = (await makeAdminApiRequest(MUTATION, { input })) as any
+    const response = (await makeAdminApiRequest(MUTATION, { input })) as { collectionUpdate: any }
 
     if (response.collectionUpdate.userErrors.length > 0) {
       return NextResponse.json(
@@ -156,7 +158,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       data: {
         ...response.collectionUpdate.collection,
         description: response.collectionUpdate.collection.descriptionHtml,
-        productsCount: response.collectionUpdate.collection.productsCount?.count || 0,
+        productsCount: response.collectionUpdate.collection.productsCount?.count ?? 0,
       },
       statusCode: 200,
     })
@@ -172,9 +174,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } = params
+    const { id: encodedId } = await params
+    const id = decodeURIComponent(encodedId)
 
     const MUTATION = `
       mutation collectionDelete($input: CollectionDeleteInput!) {
@@ -190,9 +196,9 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     const response = (await makeAdminApiRequest(MUTATION, {
       input: {
-        id: `gid://shopify/Collection/${id}`,
+        id: id.startsWith('gid://shopify/Collection/') ? id : `gid://shopify/Collection/${id}`,
       },
-    })) as any
+    })) as { collectionDelete: any }
 
     if (response.collectionDelete.userErrors.length > 0) {
       return NextResponse.json(

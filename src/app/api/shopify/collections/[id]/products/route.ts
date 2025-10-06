@@ -4,7 +4,8 @@ import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
+    const { id: encodedId } = await params
+    const id = decodeURIComponent(encodedId)
     const body = await request.json()
     const { productIds } = body
 
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     `
 
     const response = (await makeAdminApiRequest(MUTATION, {
-      id: `gid://shopify/Collection/${id}`,
+      id: id.startsWith('gid://shopify/Collection/') ? id : `gid://shopify/Collection/${id}`,
       productIds: productIds.map((productId: string) =>
         productId.startsWith('gid://shopify/Product/')
           ? productId
@@ -67,7 +68,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const { id: encodedId } = await params
+    const id = decodeURIComponent(encodedId)
     const body = await request.json()
     const { productIds } = body
 
@@ -94,7 +96,7 @@ export async function DELETE(
     `
 
     const response = (await makeAdminApiRequest(MUTATION, {
-      id: `gid://shopify/Collection/${id}`,
+      id: id.startsWith('gid://shopify/Collection/') ? id : `gid://shopify/Collection/${id}`,
       productIds: productIds.map((productId: string) =>
         productId.startsWith('gid://shopify/Product/')
           ? productId
