@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
-import type { Order } from '@/src/modules/customer/types'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { JSX } from 'react'
 
@@ -30,7 +29,7 @@ interface TableMeta {
   handleSorting: (columnId: string) => void
 }
 
-export const columns: ColumnDef<Order, TableMeta>[] = [
+export const columns: ColumnDef<any, TableMeta>[] = [
   {
     accessorKey: 'name',
     cell: ({ row }) => <span className='font-medium'>{row.original.name}</span>,
@@ -60,13 +59,13 @@ export const columns: ColumnDef<Order, TableMeta>[] = [
     ),
   },
   {
-    accessorKey: 'customer',
+    accessorKey: 'customerName',
     cell: ({ row }) => {
-      const { customer } = row.original
-      if (!customer || (!customer.firstName && !customer.lastName)) {
-        return <span className='text-muted-foreground'>N/A</span>
+      const customerName = (row.original as any).customerName
+      if (!customerName || customerName === 'Cliente no disponible') {
+        return <span className='text-muted-foreground'>Cliente no disponible</span>
       }
-      return `${customer.firstName ?? ''} ${customer.lastName ?? ''}`.trim()
+      return <span className='font-medium'>{customerName}</span>
     },
     header: ({ column, table }) => (
       <Button
@@ -75,23 +74,6 @@ export const columns: ColumnDef<Order, TableMeta>[] = [
         className='h-auto p-0 font-semibold'
       >
         Cliente
-        <ArrowUpDown className='ml-2 size-4' />
-      </Button>
-    ),
-  },
-  {
-    accessorKey: 'email',
-    cell: ({ row }) => {
-      const { customer } = row.original
-      return <span className='font-medium'>{customer?.email}</span>
-    },
-    header: ({ column, table }) => (
-      <Button
-        variant='ghost'
-        onClick={() => table.options.meta?.handleSorting?.('email')}
-        className='h-auto p-0 font-semibold'
-      >
-        Email
         <ArrowUpDown className='ml-2 size-4' />
       </Button>
     ),
@@ -132,7 +114,7 @@ export const columns: ColumnDef<Order, TableMeta>[] = [
         REFUNDED: <Badge variant='outline'>Reembolsado</Badge>,
       }
       return (
-        statusMap[ status as keyof typeof statusMap ] ?? <Badge variant='secondary'>{status}</Badge>
+        statusMap[status as keyof typeof statusMap] ?? <Badge variant='secondary'>{status}</Badge>
       )
     },
     header: ({ column, table }) => (

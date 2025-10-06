@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useFinancialEntries } from '@/modules/finance/hooks'
 import { useGetEvent } from '@/services/event/hook'
 import { Table } from '@/src/components/Table'
 import { Skeleton } from '@/src/components/ui/skeleton'
@@ -28,7 +29,6 @@ import { columns } from './columns'
 export const dynamic = 'force-dynamic'
 
 const defaultPageSize = 50
-const pageSizeOptions = [ 25, 50, 100 ]
 
 export function Client() {
   const params = useParams()
@@ -47,9 +47,9 @@ export function Client() {
   const sortByInUrl = searchParams.get('sortBy') ?? 'processedAt'
   const sortOrderInUrl = (searchParams.get('sortOrder') ?? 'desc') as 'asc' | 'desc'
 
-  const [ searchInput, setSearchInput ] = useState(searchInUrl)
-  const [ historyCursors, setHistoryCursors ] = useState<Record<number, string | null>>({})
-  const [ previousPageSize, setPreviousPageSize ] = useState(pageSizeInUrl)
+  const [searchInput, setSearchInput] = useState(searchInUrl)
+  const [historyCursors, setHistoryCursors] = useState<Record<number, string | null>>({})
+  const [previousPageSize, setPreviousPageSize] = useState(pageSizeInUrl)
 
   // Obtener información del evento
   const { data: event, isLoading: isLoadingEvent } = useGetEvent(eventId)
@@ -62,39 +62,72 @@ export function Client() {
     isLoading,
     refetch,
   } = useOrdersByProduct(eventId, {
-    after: afterCursorInUrl || undefined,
+    after: afterCursorInUrl ?? undefined,
     first: pageSizeInUrl,
   })
 
+  // Obtener entradas financieras para mapear información del cliente
+  const { data: financialEntries } = useFinancialEntries({ eventId })
+
+  // Función para obtener el nombre del cliente desde las entradas financieras
+  const getCustomerNameFromFinancialEntries = (orderId: string): string => {
+    if (!financialEntries) return 'Cliente no disponible'
+
+    // Buscar la entrada financiera que coincida con el orderId
+    const entry = financialEntries.find(
+      (entry) =>
+        entry.source === 'Shopify Order' && entry.sourceId === orderId && entry.relatedParty
+    )
+
+    return entry?.relatedParty ?? 'Cliente no disponible'
+  }
+
   // Limpiar caché cuando cambian los filtros
   useEffect(() => {
-    void queryClient.invalidateQueries({ queryKey: [ 'orderManagement', 'ordersByProduct', eventId ] })
-  }, [ queryClient, eventId, searchInUrl, statusFilterInUrl, sortByInUrl, sortOrderInUrl ])
+    void queryClient.invalidateQueries({
+      queryKey: ['orderManagement', 'ordersByProduct', eventId],
+    })
+  }, [queryClient, eventId, searchInUrl, statusFilterInUrl, sortByInUrl, sortOrderInUrl])
 
   // Sincronizar input de búsqueda con la URL
   useEffect(() => {
     setSearchInput(searchInUrl)
-  }, [ searchInUrl ])
+  }, [searchInUrl])
 
-  const orders = ordersData?.orders.edges.map((edge) => ({
-    customer: edge.node.customer,
-    displayFinancialStatus: edge.node.displayFinancialStatus,
-    displayFulfillmentStatus: edge.node.displayFulfillmentStatus,
-    id: edge.node.id,
-    lineItemsCount: edge.node.lineItems.edges.length,
-    name: edge.node.name,
-    processedAt: edge.node.processedAt,
-    totalPrice: {
-      amount:
-        edge.node.currentTotalPriceSet?.shopMoney.amount ??
-        edge.node.totalPriceSet?.shopMoney.amount ??
-        '0',
-      currencyCode:
-        edge.node.currentTotalPriceSet?.shopMoney.currencyCode ??
-        edge.node.totalPriceSet?.shopMoney.currencyCode ??
-        'USD',
-    },
-  })) ?? []
+  const orders =
+    ordersData?.orders.edges.map((edge) => {
+      // Extraer el orderId de Shopify para buscar en las entradas financieras
+      const orderId = edge.node.id.replace('gid://shopify/Order/', '')
+
+      return {
+        customer: edge.node.customer,
+        // Obtener información del cliente desde entradas financieras
+        customerName: getCustomerNameFromFinancialEntries(orderId),
+
+        displayFinancialStatus: edge.node.displayFinancialStatus,
+
+        displayFulfillmentStatus: edge.node.displayFulfillmentStatus,
+
+        id: edge.node.id,
+
+        lineItemsCount: edge.node.lineItems.edges.length,
+
+        name: edge.node.name,
+
+        processedAt: edge.node.processedAt,
+
+        totalPrice: {
+          amount:
+            edge.node.currentTotalPriceSet?.shopMoney.amount ??
+            edge.node.totalPriceSet?.shopMoney.amount ??
+            '0',
+          currencyCode:
+            edge.node.currentTotalPriceSet?.shopMoney.currencyCode ??
+            edge.node.totalPriceSet?.shopMoney.currencyCode ??
+            'USD',
+        },
+      }
+    }) ?? []
 
   const pageInfo = ordersData?.orders.pageInfo
 
@@ -115,80 +148,94 @@ export function Client() {
   }
 
   const handleRefresh = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: [ 'orderManagement', 'ordersByProduct', eventId ] })
+    void queryClient.invalidateQueries({
+      queryKey: ['orderManagement', 'ordersByProduct', eventId],
+    })
     void refetch()
     toast.info('Actualizando datos...')
-  }, [ refetch, queryClient, eventId ])
+  }, [refetch, queryClient, eventId])
 
-  const handleSorting = useCallback((columnId: string) => {
-    const sortMapping: Record<string, string> = {
-      customer: 'customer',
-      displayFinancialStatus: 'displayFinancialStatus',
-      displayFulfillmentStatus: 'displayFulfillmentStatus',
-      lineItemsCount: 'lineItemsCount',
-      name: 'name',
-      processedAt: 'processedAt',
-      totalPrice: 'totalPrice',
-    }
-
-    const newSortBy = sortMapping[ columnId ] || 'processedAt'
-    const newSortOrder = sortByInUrl === newSortBy && sortOrderInUrl === 'asc' ? 'desc' : 'asc'
-
-    const newUrlParams = new URLSearchParams(searchParams.toString())
-    newUrlParams.set('sortBy', newSortBy)
-    newUrlParams.set('sortOrder', newSortOrder)
-    newUrlParams.set('page', '1')
-    newUrlParams.delete('after')
-    router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
-  }, [ sortByInUrl, sortOrderInUrl, router, searchParams, eventId ])
-
-  const handlePageChange = useCallback((newPage: number) => {
-    const newUrlParams = new URLSearchParams(searchParams.toString())
-    let targetCursor: string | null | undefined = undefined
-
-    if (newPage === 1) {
-      targetCursor = null
-    } else {
-      targetCursor = historyCursors[ newPage ]
-    }
-
-    if (newPage > pageInUrl && newPage === pageInUrl + 1) {
-      if (pageInfo?.hasNextPage && pageInfo.endCursor) {
-        targetCursor = pageInfo.endCursor
+  const handleSorting = useCallback(
+    (columnId: string) => {
+      const sortMapping: Record<string, string> = {
+        customer: 'customer',
+        displayFinancialStatus: 'displayFinancialStatus',
+        displayFulfillmentStatus: 'displayFulfillmentStatus',
+        lineItemsCount: 'lineItemsCount',
+        name: 'name',
+        processedAt: 'processedAt',
+        totalPrice: 'totalPrice',
       }
-    }
 
-    newUrlParams.set('page', newPage.toString())
-    if (targetCursor === null) {
+      const newSortBy = sortMapping[columnId] || 'processedAt'
+      const newSortOrder = sortByInUrl === newSortBy && sortOrderInUrl === 'asc' ? 'desc' : 'asc'
+
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      newUrlParams.set('sortBy', newSortBy)
+      newUrlParams.set('sortOrder', newSortOrder)
+      newUrlParams.set('page', '1')
       newUrlParams.delete('after')
-    } else if (targetCursor) {
-      newUrlParams.set('after', targetCursor)
-    } else {
+      router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [sortByInUrl, sortOrderInUrl, router, searchParams, eventId]
+  )
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      let targetCursor: string | null | undefined = undefined
+
+      if (newPage === 1) {
+        targetCursor = null
+      } else {
+        targetCursor = historyCursors[newPage]
+      }
+
+      if (newPage > pageInUrl && newPage === pageInUrl + 1) {
+        if (pageInfo?.hasNextPage && pageInfo.endCursor) {
+          targetCursor = pageInfo.endCursor
+        }
+      }
+
+      newUrlParams.set('page', newPage.toString())
+      if (targetCursor === null) {
+        newUrlParams.delete('after')
+      } else if (targetCursor) {
+        newUrlParams.set('after', targetCursor)
+      } else {
+        newUrlParams.delete('after')
+      }
+
+      router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [pageInUrl, historyCursors, pageInfo, router, searchParams, eventId]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      newUrlParams.set('pageSize', size.toString())
+      newUrlParams.set('page', '1')
       newUrlParams.delete('after')
-    }
+      router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams, eventId]
+  )
 
-    router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
-  }, [ pageInUrl, historyCursors, pageInfo, router, searchParams, eventId ])
-
-  const handlePageSizeChange = useCallback((size: number) => {
-    const newUrlParams = new URLSearchParams(searchParams.toString())
-    newUrlParams.set('pageSize', size.toString())
-    newUrlParams.set('page', '1')
-    newUrlParams.delete('after')
-    router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
-  }, [ router, searchParams, eventId ])
-
-  const handleStatusFilterChange = useCallback((status: string) => {
-    const newUrlParams = new URLSearchParams(searchParams.toString())
-    if (status === 'all') {
-      newUrlParams.delete('status')
-    } else {
-      newUrlParams.set('status', status)
-    }
-    newUrlParams.set('page', '1')
-    newUrlParams.delete('after')
-    router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
-  }, [ router, searchParams, eventId ])
+  const handleStatusFilterChange = useCallback(
+    (status: string) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      if (status === 'all') {
+        newUrlParams.delete('status')
+      } else {
+        newUrlParams.set('status', status)
+      }
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams, eventId]
+  )
 
   const handleSearchSubmit = useCallback(() => {
     if (!isFetching) {
@@ -202,7 +249,7 @@ export function Client() {
       }
       router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
     }
-  }, [ isFetching, searchInput, router, searchParams, eventId ])
+  }, [isFetching, searchInput, router, searchParams, eventId])
 
   const handleClearSearch = useCallback(() => {
     const newUrlParams = new URLSearchParams(searchParams.toString())
@@ -210,12 +257,12 @@ export function Client() {
     newUrlParams.set('page', '1')
     newUrlParams.delete('after')
     router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
-  }, [ router, searchParams, eventId ])
+  }, [router, searchParams, eventId])
 
   const handleClearAllFilters = useCallback(() => {
     setHistoryCursors({})
     router.replace(`/admin/events/${eventId}/tickets`, { scroll: false })
-  }, [ router, eventId ])
+  }, [router, eventId])
 
   // Manejar cambios de pageSize
   useEffect(() => {
@@ -225,37 +272,39 @@ export function Client() {
         const newUrlParams = new URLSearchParams(searchParams.toString())
         newUrlParams.set('page', '1')
         newUrlParams.delete('after')
-        router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
+        router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, {
+          scroll: false,
+        })
         setHistoryCursors({})
       }
     }
-  }, [ pageSizeInUrl, previousPageSize, pageInUrl, afterCursorInUrl, router, searchParams, eventId ])
+  }, [pageSizeInUrl, previousPageSize, pageInUrl, afterCursorInUrl, router, searchParams, eventId])
 
   // Actualizar historial de cursors
   useEffect(() => {
     setHistoryCursors((prev) => {
       const newCursors = { ...prev }
       let changed = false
-      if (newCursors[ pageInUrl ] !== afterCursorInUrl) {
-        newCursors[ pageInUrl ] = afterCursorInUrl
+      if (newCursors[pageInUrl] !== afterCursorInUrl) {
+        newCursors[pageInUrl] = afterCursorInUrl
         changed = true
       }
       if (pageInfo?.hasNextPage && pageInfo.endCursor) {
         const nextPageNumber = pageInUrl + 1
-        if (newCursors[ nextPageNumber ] !== pageInfo.endCursor) {
-          newCursors[ nextPageNumber ] = pageInfo.endCursor
+        if (newCursors[nextPageNumber] !== pageInfo.endCursor) {
+          newCursors[nextPageNumber] = pageInfo.endCursor
           changed = true
         }
       } else if (pageInfo && !pageInfo.hasNextPage) {
         const nextPageNumber = pageInUrl + 1
         if (nextPageNumber in newCursors) {
-          delete newCursors[ nextPageNumber ]
+          delete newCursors[nextPageNumber]
           changed = true
         }
       }
       return changed ? newCursors : prev
     })
-  }, [ pageInUrl, afterCursorInUrl, pageInfo ])
+  }, [pageInUrl, afterCursorInUrl, pageInfo])
 
   const table = useReactTable<any>({
     columns,
@@ -286,7 +335,9 @@ export function Client() {
         <div className='flex min-h-96 items-center justify-center'>
           <div className='text-center'>
             <h3 className='text-lg font-semibold text-red-600'>Evento no encontrado</h3>
-            <p className='mt-2 text-muted-foreground'>El evento que buscas no existe o no tienes permisos para verlo.</p>
+            <p className='mt-2 text-muted-foreground'>
+              El evento que buscas no existe o no tienes permisos para verlo.
+            </p>
             <Button onClick={() => router.push('/admin/events')} className='mt-4'>
               Volver a Eventos
             </Button>
@@ -296,7 +347,7 @@ export function Client() {
     )
   }
 
-  if ((isLoading) && !orders.length) {
+  if (isLoading && !orders.length) {
     return (
       <div className='space-y-4 p-4 md:p-6'>
         <div className='flex items-center justify-between'>
@@ -448,13 +499,18 @@ export function Client() {
         </div>
 
         <div className='flex items-center space-x-1'>
-          <Select value={sortByInUrl} onValueChange={(value) => {
-            const newUrlParams = new URLSearchParams(searchParams.toString())
-            newUrlParams.set('sortBy', value)
-            newUrlParams.set('page', '1')
-            newUrlParams.delete('after')
-            router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
-          }}>
+          <Select
+            value={sortByInUrl}
+            onValueChange={(value) => {
+              const newUrlParams = new URLSearchParams(searchParams.toString())
+              newUrlParams.set('sortBy', value)
+              newUrlParams.set('page', '1')
+              newUrlParams.delete('after')
+              router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, {
+                scroll: false,
+              })
+            }}
+          >
             <SelectTrigger className='w-36'>
               <SelectValue placeholder='Ordenar por' />
             </SelectTrigger>
@@ -469,13 +525,18 @@ export function Client() {
         </div>
 
         <div className='flex items-center space-x-1'>
-          <Select value={sortOrderInUrl} onValueChange={(value) => {
-            const newUrlParams = new URLSearchParams(searchParams.toString())
-            newUrlParams.set('sortOrder', value)
-            newUrlParams.set('page', '1')
-            newUrlParams.delete('after')
-            router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, { scroll: false })
-          }}>
+          <Select
+            value={sortOrderInUrl}
+            onValueChange={(value) => {
+              const newUrlParams = new URLSearchParams(searchParams.toString())
+              newUrlParams.set('sortOrder', value)
+              newUrlParams.set('page', '1')
+              newUrlParams.delete('after')
+              router.push(`/admin/events/${eventId}/tickets?${newUrlParams.toString()}`, {
+                scroll: false,
+              })
+            }}
+          >
             <SelectTrigger className='w-28'>
               <SelectValue placeholder='Orden' />
             </SelectTrigger>
@@ -488,7 +549,10 @@ export function Client() {
       </div>
 
       {/* Botón para limpiar todos los filtros */}
-      {(searchInUrl || statusFilterInUrl !== 'all' || sortByInUrl !== 'processedAt' || sortOrderInUrl !== 'desc') && (
+      {(searchInUrl ||
+        statusFilterInUrl !== 'all' ||
+        sortByInUrl !== 'processedAt' ||
+        sortOrderInUrl !== 'desc') && (
         <div className='flex justify-end'>
           <Button
             onClick={handleClearAllFilters}
@@ -512,8 +576,7 @@ export function Client() {
               <span>
                 {searchInUrl
                   ? `Buscando órdenes que coincidan con "${searchInUrl}"...`
-                  : 'Actualizando órdenes...'
-                }
+                  : 'Actualizando órdenes...'}
               </span>
             </div>
           )}
