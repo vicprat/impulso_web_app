@@ -44,15 +44,29 @@ export default function EventFinancePage() {
   const pendingEntries = entries?.filter((entry) => entry.status !== 'COMPLETED') || []
 
   // Calcular totales
-  const totalIncome = incomeEntries.reduce((sum, entry) => sum + entry.amount, 0)
-  const totalExpense = expenseEntries.reduce((sum, entry) => sum + entry.amount, 0)
-  const totalPaidIncome = incomeEntries.reduce((sum, entry) => sum + entry.amountPaid, 0)
-  const totalPaidExpense = expenseEntries.reduce((sum, entry) => sum + entry.amountPaid, 0)
+  const totalIncome = incomeEntries.reduce(
+    (sum, entry) => sum + parseFloat(entry.amount.toString()),
+    0
+  )
+  const totalExpense = expenseEntries.reduce(
+    (sum, entry) => sum + parseFloat(entry.amount.toString()),
+    0
+  )
+  const totalPaidIncome = incomeEntries.reduce(
+    (sum, entry) => sum + parseFloat(entry.amountPaid.toString()),
+    0
+  )
+  const totalPaidExpense = expenseEntries.reduce(
+    (sum, entry) => sum + parseFloat(entry.amountPaid.toString()),
+    0
+  )
   const pendingIncome = totalIncome - totalPaidIncome
   const pendingExpense = totalExpense - totalPaidExpense
   const netBalance = totalIncome - totalExpense
 
-  const getStatusBadge = (status: string, amount: number, amountPaid: number) => {
+  const getStatusBadge = (status: string, amount: number | string, amountPaid: number | string) => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+    const numAmountPaid = typeof amountPaid === 'string' ? parseFloat(amountPaid) : amountPaid
     if (status === 'COMPLETED') {
       return (
         <Badge variant='default' className='bg-green-100 text-green-800'>
@@ -65,7 +79,7 @@ export default function EventFinancePage() {
           Parcial
         </Badge>
       )
-    } else if (amountPaid > 0) {
+    } else if (numAmountPaid > 0) {
       return (
         <Badge variant='outline' className='bg-blue-100 text-blue-800'>
           Parcial
@@ -80,9 +94,11 @@ export default function EventFinancePage() {
     }
   }
 
-  const getProgressPercentage = (amount: number, amountPaid: number) => {
-    if (amount === 0) return 0
-    return Math.min((amountPaid / amount) * 100, 100)
+  const getProgressPercentage = (amount: number | string, amountPaid: number | string) => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+    const numAmountPaid = typeof amountPaid === 'string' ? parseFloat(amountPaid) : amountPaid
+    if (numAmount === 0) return 0
+    return Math.min((numAmountPaid / numAmount) * 100, 100)
   }
 
   const handleQuickCreate = (type: 'INCOME' | 'EXPENSE') => {
@@ -246,7 +262,11 @@ export default function EventFinancePage() {
                   <h3 className='mb-3 font-semibold text-green-700'>Ingresos Pendientes</h3>
                   <div className='space-y-3'>
                     {incomeEntries
-                      .filter((entry) => entry.amountPaid < entry.amount)
+                      .filter(
+                        (entry) =>
+                          parseFloat(entry.amountPaid.toString()) <
+                          parseFloat(entry.amount.toString())
+                      )
                       .map((entry) => (
                         <div key={entry.id} className='rounded-lg border p-3'>
                           <div className='mb-2 flex items-start justify-between'>
@@ -280,8 +300,11 @@ export default function EventFinancePage() {
                           {getStatusBadge(entry.status, entry.amount, entry.amountPaid)}
                         </div>
                       ))}
-                    {incomeEntries.filter((entry) => entry.amountPaid < entry.amount).length ===
-                      0 && (
+                    {incomeEntries.filter(
+                      (entry) =>
+                        parseFloat(entry.amountPaid.toString()) <
+                        parseFloat(entry.amount.toString())
+                    ).length === 0 && (
                       <p className='py-4 text-center text-muted-foreground'>
                         No hay ingresos pendientes
                       </p>
@@ -294,7 +317,11 @@ export default function EventFinancePage() {
                   <h3 className='mb-3 font-semibold text-red-700'>Gastos Pendientes</h3>
                   <div className='space-y-3'>
                     {expenseEntries
-                      .filter((entry) => entry.amountPaid < entry.amount)
+                      .filter(
+                        (entry) =>
+                          parseFloat(entry.amountPaid.toString()) <
+                          parseFloat(entry.amount.toString())
+                      )
                       .map((entry) => (
                         <div key={entry.id} className='rounded-lg border p-3'>
                           <div className='mb-2 flex items-start justify-between'>
@@ -328,8 +355,11 @@ export default function EventFinancePage() {
                           {getStatusBadge(entry.status, entry.amount, entry.amountPaid)}
                         </div>
                       ))}
-                    {expenseEntries.filter((entry) => entry.amountPaid < entry.amount).length ===
-                      0 && (
+                    {expenseEntries.filter(
+                      (entry) =>
+                        parseFloat(entry.amountPaid.toString()) <
+                        parseFloat(entry.amount.toString())
+                    ).length === 0 && (
                       <p className='py-4 text-center text-muted-foreground'>
                         No hay gastos pendientes
                       </p>
@@ -377,7 +407,7 @@ export default function EventFinancePage() {
                       <p className='text-lg font-bold text-green-600'>
                         {formatCurrency(entry.amount.toString(), 'MXN')}
                       </p>
-                      {entry.amountPaid > 0 && (
+                      {parseFloat(entry.amountPaid.toString()) > 0 && (
                         <p className='text-sm text-muted-foreground'>
                           Cobrado: {formatCurrency(entry.amountPaid.toString(), 'MXN')}
                         </p>
@@ -431,7 +461,7 @@ export default function EventFinancePage() {
                       <p className='text-lg font-bold text-red-600'>
                         {formatCurrency(entry.amount.toString(), 'MXN')}
                       </p>
-                      {entry.amountPaid > 0 && (
+                      {parseFloat(entry.amountPaid.toString()) > 0 && (
                         <p className='text-sm text-muted-foreground'>
                           Pagado: {formatCurrency(entry.amountPaid.toString(), 'MXN')}
                         </p>
@@ -515,7 +545,9 @@ export default function EventFinancePage() {
                           </Badge>
                         )}
                       </div>
-                      <Link href={ROUTES.ADMIN.FINANCE.ENTRIES.DETAIL.PATH.replace(':id', entry.id)}>
+                      <Link
+                        href={ROUTES.ADMIN.FINANCE.ENTRIES.DETAIL.PATH.replace(':id', entry.id)}
+                      >
                         <Button variant='outline' size='sm'>
                           Ver Detalle
                         </Button>
