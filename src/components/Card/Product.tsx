@@ -38,7 +38,7 @@ export const Product: React.FC<Props> = ({ product }) => {
     if (priceValue === 0) {
       return 'Entrada gratuita'
     }
-    return `$${price} ${currencyCode}`
+    return `$${priceValue.toLocaleString('es-MX', { maximumFractionDigits: 2, minimumFractionDigits: 2 })} ${currencyCode}`
   }
 
   return (
