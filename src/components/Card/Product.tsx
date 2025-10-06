@@ -16,15 +16,16 @@ export const Product: React.FC<Props> = ({ product }) => {
   const minPrice = product?.priceRange?.minVariantPrice ?? { amount: '0', currencyCode: 'MXN' }
   const maxPrice = product?.priceRange?.maxVariantPrice ?? { amount: '0', currencyCode: 'MXN' }
 
-  const hasVariations = minPrice.amount !== maxPrice.amount || product.variants.length > 1
+  const hasVariations = minPrice.amount !== maxPrice.amount || (product.variants?.length ?? 0) > 1
 
-  const variant = product.variants[0]
+  const variant = product.variants?.[0]
   const hasDiscount =
-    variant.compareAtPrice &&
+    variant?.compareAtPrice &&
+    variant?.price &&
     parseFloat(variant.compareAtPrice.amount) > parseFloat(variant.price.amount)
 
   const discountPercentage =
-    hasDiscount && variant.compareAtPrice
+    hasDiscount && variant?.compareAtPrice && variant?.price
       ? Math.round(
           ((parseFloat(variant.compareAtPrice.amount) - parseFloat(variant.price.amount)) /
             parseFloat(variant.compareAtPrice.amount)) *
@@ -144,7 +145,7 @@ export const Product: React.FC<Props> = ({ product }) => {
               </span>
             )}
 
-            {hasDiscount && variant.compareAtPrice && (
+            {hasDiscount && variant?.compareAtPrice && variant?.price && (
               <div className='flex items-center gap-2'>
                 <span className='text-sm text-muted-foreground line-through decoration-2'>
                   {formatPrice(variant.compareAtPrice.amount, variant.compareAtPrice.currencyCode)}

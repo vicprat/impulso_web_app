@@ -1,7 +1,7 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { Edit, PlusCircle, RefreshCw, Trash2 } from 'lucide-react'
+import { Edit, ExternalLink, PlusCircle, QrCode, RefreshCw, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCollections, useDeleteCollection } from '@/services/collection/hooks'
+import { ROUTES } from '@/src/config/routes'
 
 import { CollectionModal } from './CollectionModal'
 import { CollectionProductsModal } from './CollectionProductsModal'
@@ -81,7 +82,73 @@ export function CollectionManagerModal({ isOpen, onClose }: CollectionManagerMod
     setEditingCollection(null)
   }
 
-  const collections = collectionsData?.collections || []
+  const handleViewCollection = (collection: Collection) => {
+    const url = ROUTES.COLLECTIONS.DETAIL.PATH.replace(':collection', collection.handle)
+    window.open(url, '_blank')
+  }
+
+  const handleDownloadQR = async (collection: Collection) => {
+    try {
+      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}${ROUTES.COLLECTIONS.DETAIL.PATH.replace(':collection', collection.handle)}`
+
+      // Usar una API externa para generar el QR
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`
+
+      // Crear un canvas para agregar texto
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      canvas.width = 300
+      canvas.height = 400
+
+      // Fondo blanco
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Cargar y dibujar el QR
+      const qrImg = new Image()
+      qrImg.crossOrigin = 'anonymous'
+      qrImg.onload = () => {
+        const qrSize = 200
+        const qrX = (canvas.width - qrSize) / 2
+        const qrY = 50
+
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize)
+
+        // Agregar texto
+        ctx.fillStyle = '#000000'
+        ctx.font = 'bold 16px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText(collection.title, canvas.width / 2, qrY + qrSize + 30)
+
+        ctx.font = '12px Arial'
+        ctx.fillStyle = '#666666'
+        ctx.fillText(url, canvas.width / 2, qrY + qrSize + 50)
+
+        // Descargar la imagen
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const link = document.createElement('a')
+            link.download = `qr-${collection.handle}.png`
+            link.href = URL.createObjectURL(blob)
+            link.click()
+            URL.revokeObjectURL(link.href)
+            toast.success('QR descargado exitosamente')
+          }
+        })
+      }
+      qrImg.onerror = () => {
+        toast.error('Error al cargar el código QR')
+      }
+      qrImg.src = qrApiUrl
+    } catch (error) {
+      console.error('Error generando QR:', error)
+      toast.error('Error al generar el código QR')
+    }
+  }
+
+  const collections = collectionsData?.collections ?? []
 
   return (
     <>
@@ -179,7 +246,10 @@ export function CollectionManagerModal({ isOpen, onClose }: CollectionManagerMod
                             </p>
                           )}
                           <p className='mt-1 text-xs text-muted-foreground'>
-                            Handle: {collection.handle}
+                            {(() => {
+                              const fullUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${ROUTES.COLLECTIONS.DETAIL.PATH.replace(':collection', collection.handle)}`
+                              return fullUrl.replace(/^https?:\/\/(www\.)?/, '')
+                            })()}
                           </p>
                         </div>
                         <div className='ml-4 flex items-center space-x-2'>
@@ -199,6 +269,26 @@ export function CollectionManagerModal({ isOpen, onClose }: CollectionManagerMod
                             disabled={deletingId === collection.id}
                           >
                             <Edit className='size-4' />
+                          </Button>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => handleViewCollection(collection)}
+                            disabled={deletingId === collection.id}
+                            className='text-green-600 hover:bg-green-50 hover:text-green-700'
+                            title='Ver colección'
+                          >
+                            <ExternalLink className='size-4' />
+                          </Button>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => handleDownloadQR(collection)}
+                            disabled={deletingId === collection.id}
+                            className='text-purple-600 hover:bg-purple-50 hover:text-purple-700'
+                            title='Descargar QR'
+                          >
+                            <QrCode className='size-4' />
                           </Button>
                           <Button
                             variant='outline'
