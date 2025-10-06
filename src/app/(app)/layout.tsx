@@ -1,5 +1,6 @@
 'use client'
 
+import { WelcomeCouponDialog } from '@/components/Dialog/WelcomeCouponDialog'
 import { Guard } from '@/components/Guards'
 import { Header } from '@/components/Header'
 import { AppSidebar } from '@/components/Sidebar/Sidebar'
@@ -16,11 +17,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
             <Header.Authenticated />
 
-            <div className='flex-1 overflow-x-auto'>
-              {children}
-            </div>
+            <div className='flex-1 overflow-x-auto'>{children}</div>
           </div>
         </div>
+
+        <WelcomeCouponDialog />
       </SidebarProvider>
     </Guard.Route>
   )

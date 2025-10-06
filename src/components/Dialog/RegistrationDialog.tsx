@@ -93,7 +93,7 @@ export function RegistrationDialog() {
                     <div className='bg-primary/10 flex size-8 items-center justify-center rounded-full'>
                       <Gift className='size-4 text-primary' />
                     </div>
-                    <span>Ofertas especiales para miembros</span>
+                    <span>10% de descuento en tu primera compra</span>
                   </motion.div>
 
                   <motion.div
