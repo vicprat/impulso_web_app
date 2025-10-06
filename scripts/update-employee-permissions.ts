@@ -24,7 +24,7 @@ async function updateEmployeePermissions() {
     const blogPermissions = await prisma.permission.findMany({
       where: {
         name: {
-          in: ['manage_own_blog_posts'],
+          in: ['manage_own_blog_posts', 'manage_all_blog_posts'],
         },
       },
     })
