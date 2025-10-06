@@ -91,142 +91,40 @@ export function CollectionManagerModal({ isOpen, onClose }: CollectionManagerMod
     try {
       const url = `${typeof window !== 'undefined' ? window.location.origin : ''}${ROUTES.COLLECTIONS.DETAIL.PATH.replace(':collection', collection.handle)}`
 
-      // Usar una API externa para generar el QR
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`
+      // Usar una API externa para generar el QR limpio
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`
 
-      // Crear un canvas más grande para mejor UI
+      // Crear un canvas simple solo para el QR
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
-      canvas.width = 500
-      canvas.height = 600
+      canvas.width = 400
+      canvas.height = 400
 
       // Fondo blanco
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-      // Cargar el QR primero
+      // Cargar y dibujar solo el QR
       const qrImg = new Image()
       qrImg.crossOrigin = 'anonymous'
 
       qrImg.onload = () => {
-        const qrSize = 300
-        const qrX = (canvas.width - qrSize) / 2
-        const qrY = 50
+        // Dibujar el QR ocupando todo el canvas
+        ctx.drawImage(qrImg, 0, 0, canvas.width, canvas.height)
 
-        // Dibujar el QR
-        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize)
-
-        // Cargar y superponer el logo en el centro del QR
-        const logoImg = new Image()
-        logoImg.crossOrigin = 'anonymous'
-
-        logoImg.onload = () => {
-          // Calcular dimensiones del logo manteniendo su proporción
-          const logoWidth = 120 // Más ancho para acomodar el texto horizontal
-          const logoHeight = 60 // Más bajo para mantener proporción rectangular
-          const logoX = qrX + (qrSize - logoWidth) / 2
-          const logoY = qrY + (qrSize - logoHeight) / 2
-
-          // Fondo blanco para el logo
-          ctx.fillStyle = '#ffffff'
-          ctx.fillRect(logoX - 8, logoY - 8, logoWidth + 16, logoHeight + 16)
-
-          // Dibujar el logo manteniendo su proporción original
-          ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight)
-
-          // Agregar título de la colección
-          ctx.fillStyle = '#000000'
-          ctx.font = 'bold 26px Arial'
-          ctx.textAlign = 'center'
-          ctx.fillText(collection.title, canvas.width / 2, qrY + qrSize + 50)
-
-          // Agregar URL con mejor formato
-          ctx.font = '18px Arial'
-          ctx.fillStyle = '#666666'
-
-          // Dividir la URL en líneas si es muy larga
-          const maxWidth = canvas.width - 40
-          const urlText = url.replace(/^https?:\/\/(www\.)?/, '')
-          const words = urlText.split('')
-          let line = ''
-          let y = qrY + qrSize + 80
-
-          for (let i = 0; i < words.length; i++) {
-            const testLine = line + words[i]
-            const metrics = ctx.measureText(testLine)
-            const testWidth = metrics.width
-
-            if (testWidth > maxWidth && i > 0) {
-              ctx.fillText(line, canvas.width / 2, y)
-              line = words[i]
-              y += 24
-            } else {
-              line = testLine
-            }
+        // Descargar la imagen
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const link = document.createElement('a')
+            link.download = `qr-${collection.handle}.png`
+            link.href = URL.createObjectURL(blob)
+            link.click()
+            URL.revokeObjectURL(link.href)
+            toast.success('QR descargado exitosamente')
           }
-          ctx.fillText(line, canvas.width / 2, y)
-
-          // Descargar la imagen
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const link = document.createElement('a')
-              link.download = `qr-${collection.handle}.png`
-              link.href = URL.createObjectURL(blob)
-              link.click()
-              URL.revokeObjectURL(link.href)
-              toast.success('QR descargado exitosamente')
-            }
-          })
-        }
-
-        logoImg.onerror = () => {
-          // Si el logo falla, continuar sin él
-          // Agregar título de la colección
-          ctx.fillStyle = '#000000'
-          ctx.font = 'bold 22px Arial'
-          ctx.textAlign = 'center'
-          ctx.fillText(collection.title, canvas.width / 2, qrY + qrSize + 40)
-
-          // Agregar URL con mejor formato
-          ctx.font = '16px Arial'
-          ctx.fillStyle = '#666666'
-
-          const maxWidth = canvas.width - 40
-          const urlText = url.replace(/^https?:\/\/(www\.)?/, '')
-          const words = urlText.split('')
-          let line = ''
-          let y = qrY + qrSize + 70
-
-          for (let i = 0; i < words.length; i++) {
-            const testLine = line + words[i]
-            const metrics = ctx.measureText(testLine)
-            const testWidth = metrics.width
-
-            if (testWidth > maxWidth && i > 0) {
-              ctx.fillText(line, canvas.width / 2, y)
-              line = words[i]
-              y += 24
-            } else {
-              line = testLine
-            }
-          }
-          ctx.fillText(line, canvas.width / 2, y)
-
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const link = document.createElement('a')
-              link.download = `qr-${collection.handle}.png`
-              link.href = URL.createObjectURL(blob)
-              link.click()
-              URL.revokeObjectURL(link.href)
-              toast.success('QR descargado exitosamente')
-            }
-          })
-        }
-
-        logoImg.src = '/assets/logo1.svg'
+        })
       }
 
       qrImg.onerror = () => {
