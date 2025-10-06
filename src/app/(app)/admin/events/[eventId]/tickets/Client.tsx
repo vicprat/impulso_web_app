@@ -1,8 +1,9 @@
 'use client'
 
+import { PDFDownloadLink } from '@react-pdf/renderer'
 import { useQueryClient } from '@tanstack/react-query'
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
-import { ArrowLeft, Filter, RefreshCw, Search } from 'lucide-react'
+import { ArrowLeft, Download, Filter, RefreshCw, Search } from 'lucide-react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { useFinancialEntries } from '@/modules/finance/hooks'
 import { useGetEvent } from '@/services/event/hook'
+import { AttendeesList } from '@/src/components/AttendeesList'
 import { Table } from '@/src/components/Table'
 import { Skeleton } from '@/src/components/ui/skeleton'
 import { useOrdersByProduct } from '@/src/modules/customer/hooks'
@@ -306,7 +308,7 @@ export function Client() {
     })
   }, [pageInUrl, afterCursorInUrl, pageInfo])
 
-  const table = useReactTable<any>({
+  const table = useReactTable({
     columns,
     data: filteredOrders,
     getCoreRowModel: getCoreRowModel(),
@@ -376,8 +378,6 @@ export function Client() {
     )
   }
 
-  const totalPages = pageInfo?.hasNextPage ? pageInUrl + 1 : pageInUrl
-
   return (
     <div className='min-w-0 max-w-full space-y-4 p-2 md:p-4'>
       <div className='flex min-w-0 flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0'>
@@ -397,6 +397,21 @@ export function Client() {
           </div>
         </div>
         <div className='flex items-center space-x-2'>
+          <PDFDownloadLink
+            document={<AttendeesList.PDF attendees={filteredOrders} event={event} stats={stats} />}
+            fileName={`Lista-Asistentes-${event.title.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`}
+          >
+            {({ loading }) => (
+              <Button
+                disabled={loading}
+                className='hover:bg-success-container/90 bg-success-container text-success'
+              >
+                <Download className='mr-2 size-4' />
+                {loading ? 'Generando...' : 'Descargar Lista de Asistentes'}
+              </Button>
+            )}
+          </PDFDownloadLink>
+
           <Button variant='outline' onClick={handleRefresh} disabled={isFetching}>
             <RefreshCw className={`mr-2 size-4 ${isFetching ? 'animate-spin' : ''}`} />
             Actualizar
