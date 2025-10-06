@@ -36,7 +36,7 @@ export const ArtistTypeFilter = () => {
       case 'collective':
         return 'Collective'
       default:
-        return 'Todos los tipos'
+        return 'Todos los artistas'
     }
   }
 
