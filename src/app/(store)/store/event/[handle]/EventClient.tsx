@@ -122,10 +122,16 @@ const extractEventDetails = (event: Event) => {
   }
 }
 
+// Helper para crear fechas locales sin problemas de zona horaria
+const createLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Date(year, month - 1, day) // month es 0-indexed en Date constructor
+}
+
 const calculateDaysUntilEvent = (eventDate: string | null): number | null => {
   if (!eventDate) return null
 
-  const event = new Date(eventDate)
+  const event = createLocalDate(eventDate)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   event.setHours(0, 0, 0, 0)
@@ -148,7 +154,7 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0)
 
   const eventDetails = extractEventDetails(event)
-  const eventDate = eventDetails.date ? new Date(eventDetails.date) : null
+  const eventDate = eventDetails.date ? createLocalDate(eventDetails.date) : null
   const daysUntilEvent = calculateDaysUntilEvent(eventDetails.date)
   const isPastEvent = eventDate ? eventDate < new Date() : false
   const isFreeEvent = isEventFree(event)
@@ -173,7 +179,7 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({
-          text: `¡Únete a este evento! ${eventDetails.date ? formatEventDate(new Date(eventDetails.date)) : ''}`,
+          text: `¡Únete a este evento! ${eventDetails.date ? formatEventDate(createLocalDate(eventDetails.date)) : ''}`,
           title: event.title,
           url: window.location.href,
         })
@@ -399,7 +405,7 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                           width: img.width ?? 0,
                         })),
                       }}
-                      selectedVariant={primaryVariant || undefined}
+                      selectedVariant={primaryVariant ?? undefined}
                       size='lg'
                       className={`w-full shadow-elevation-2 ${
                         isFreeEvent

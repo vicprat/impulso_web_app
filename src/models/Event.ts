@@ -1,5 +1,11 @@
 const EVENT_METAFIELD_NAMESPACE = 'event_details'
 
+// Helper para crear fechas locales sin problemas de zona horaria
+const createLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Date(year, month - 1, day) // month es 0-indexed en Date constructor
+}
+
 export interface Money {
   amount: string
   currencyCode: string
@@ -180,8 +186,6 @@ export class Event {
     return this.descriptionHtml
   }
 
-  
-
   public get priceRange(): {
     minVariantPrice: Money
     maxVariantPrice: Money
@@ -220,7 +224,7 @@ export class Event {
     const details = []
 
     if (this.eventDetails.date) {
-      const date = new Date(this.eventDetails.date)
+      const date = createLocalDate(this.eventDetails.date)
       details.push(`📅 ${date.toLocaleDateString('es-MX')}`)
     }
 
@@ -241,7 +245,7 @@ export class Event {
   public get isPastEvent(): boolean {
     if (!this.eventDetails.date) return false
 
-    const eventDate = new Date(this.eventDetails.date)
+    const eventDate = createLocalDate(this.eventDetails.date)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
@@ -250,7 +254,7 @@ export class Event {
   public get daysUntilEvent(): number | null {
     if (!this.eventDetails.date) return null
 
-    const eventDate = new Date(this.eventDetails.date)
+    const eventDate = createLocalDate(this.eventDetails.date)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     eventDate.setHours(0, 0, 0, 0)

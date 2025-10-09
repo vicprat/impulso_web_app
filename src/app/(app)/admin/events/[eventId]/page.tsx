@@ -36,11 +36,17 @@ import { type UpdateEventPayload } from '@/services/event/types'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
 
+// Helper para crear fechas locales sin problemas de zona horaria
+const createLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Date(year, month - 1, day) // month es 0-indexed en Date constructor
+}
+
 export default function EventDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [ isEditing, setIsEditing ] = useState(false)
-  const [ showDeleteDialog, setShowDeleteDialog ] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const eventId = params.eventId as string
 
@@ -219,10 +225,7 @@ export default function EventDetailPage() {
                   </Link>
                 </Button>
                 <Button variant='outline' asChild>
-                  <Link
-                    href={`/admin/events/${event.id}/tickets`}
-                    className='flex items-center'
-                  >
+                  <Link href={`/admin/events/${event.id}/tickets`} className='flex items-center'>
                     <Ticket className='mr-2 size-4' />
                     Ver Tickets
                   </Link>
@@ -250,8 +253,8 @@ export default function EventDetailPage() {
                 </div>
                 <p className='text-lg font-bold text-on-surface'>
                   {formatCurrency(
-                    event.variants[ 0 ].price.amount,
-                    event.variants[ 0 ].price.currencyCode
+                    event.variants[0].price.amount,
+                    event.variants[0].price.currencyCode
                   )}
                 </p>
               </div>
@@ -262,7 +265,7 @@ export default function EventDetailPage() {
                   <span className='text-xs font-medium text-on-surface-variant'>Disponibles</span>
                 </div>
                 <p className='text-lg font-bold text-on-surface'>
-                  {event.variants[ 0 ]?.inventoryQuantity ?? 0}
+                  {event.variants[0]?.inventoryQuantity ?? 0}
                 </p>
               </div>
 
@@ -273,11 +276,11 @@ export default function EventDetailPage() {
                 </div>
                 <p className='text-sm font-semibold text-on-surface'>
                   {event.eventDetails.date
-                    ? new Date(event.eventDetails.date).toLocaleDateString('es-ES', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })
+                    ? createLocalDate(event.eventDetails.date).toLocaleDateString('es-ES', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })
                     : 'Fecha no disponible'}
                 </p>
               </div>
@@ -288,10 +291,10 @@ export default function EventDetailPage() {
                   <span className='text-xs font-medium text-on-surface-variant'>Estado</span>
                 </div>
                 <Badge
-                  variant={getAvailabilityVariant(event.variants[ 0 ].availableForSale)}
+                  variant={getAvailabilityVariant(event.variants[0].availableForSale)}
                   className='text-xs'
                 >
-                  {event.variants[ 0 ].availableForSale ? 'Disponible' : 'Agotado'}
+                  {event.variants[0].availableForSale ? 'Disponible' : 'Agotado'}
                 </Badge>
               </div>
             </div>
@@ -459,20 +462,20 @@ export default function EventDetailPage() {
                 <div className='text-center'>
                   <div className='mb-1 text-3xl font-bold text-on-primary-container'>
                     {formatCurrency(
-                      event.variants[ 0 ].price.amount,
-                      event.variants[ 0 ].price.currencyCode
+                      event.variants[0].price.amount,
+                      event.variants[0].price.currencyCode
                     )}
                   </div>
                   <p className='text-on-primary-container/70 text-sm'>Precio por boleto</p>
                 </div>
 
-                {event.variants[ 0 ]?.sku && (
+                {event.variants[0]?.sku && (
                   <div className='bg-card p-3'>
                     <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
                       SKU
                     </Label>
                     <p className='mt-1 font-mono text-sm text-on-surface'>
-                      {event.variants[ 0 ].sku}
+                      {event.variants[0].sku}
                     </p>
                   </div>
                 )}
@@ -496,13 +499,13 @@ export default function EventDetailPage() {
                   </p>
                 </div>
 
-                {event.variants[ 0 ] && (
+                {event.variants[0] && (
                   <div className=' p-3'>
                     <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
                       ID de Variante
                     </Label>
                     <p className='mt-1 break-all font-mono text-xs text-on-surface'>
-                      {event.variants[ 0 ].id.split('/').pop()}
+                      {event.variants[0].id.split('/').pop()}
                     </p>
                   </div>
                 )}
@@ -510,7 +513,6 @@ export default function EventDetailPage() {
             </Card>
           </div>
         </div>
-
       </div>
 
       <Dialog.Confirm

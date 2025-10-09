@@ -1,10 +1,15 @@
- 
 import { NextResponse } from 'next/server'
 
 import { PERMISSIONS } from '@/src/config/Permissions'
 import { makeAdminApiRequest } from '@/src/lib/shopifyAdmin'
 import { requirePermission } from '@/src/modules/auth/server/server'
 import { getAllUsers } from '@/src/modules/user/user.service'
+
+// Helper para crear fechas locales sin problemas de zona horaria
+const createLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Date(year, month - 1, day) // month es 0-indexed en Date constructor
+}
 
 interface ShopifyMoneyV2 {
   amount: string
@@ -56,7 +61,7 @@ async function getPrimaryLocationId(): Promise<string> {
     {}
   )
 
-  const locationId = response.locations.edges[ 0 ]?.node?.id
+  const locationId = response.locations.edges[0]?.node?.id
   if (!locationId) {
     throw new Error('No se pudo encontrar una ubicación de Shopify para gestionar el inventario.')
   }
@@ -161,7 +166,8 @@ export async function GET() {
       }
 
       try {
-        const productResponse: any = await makeAdminApiRequest(`
+        const productResponse: any = await makeAdminApiRequest(
+          `
           query($after: String, $first: Int!, $query: String, $reverse: Boolean, $sortKey: ProductSortKeys) {
             products(after: $after, first: $first, query: $query, reverse: $reverse, sortKey: $sortKey) {
               edges {
@@ -207,7 +213,9 @@ export async function GET() {
               }
             }
           }
-        `, productVariables)
+        `,
+          productVariables
+        )
 
         const products = productResponse.products.edges.map((edge: any) => {
           // Crear un objeto Product simplificado para el dashboard
@@ -215,13 +223,22 @@ export async function GET() {
 
           return {
             // Procesar artworkDetails desde metafields
-get artworkDetails() {
+            get artworkDetails() {
               const details: any = {}
               for (const { node } of this.metafields) {
                 if (node.namespace === 'art_details') {
-                  const validKeys = [ 'medium', 'year', 'height', 'width', 'depth', 'serie', 'location', 'artist' ]
+                  const validKeys = [
+                    'medium',
+                    'year',
+                    'height',
+                    'width',
+                    'depth',
+                    'serie',
+                    'location',
+                    'artist',
+                  ]
                   if (validKeys.includes(node.key)) {
-                    details[ node.key ] = node.value
+                    details[node.key] = node.value
                   }
                 }
               }
@@ -236,100 +253,69 @@ get artworkDetails() {
                 year: details.year || null,
               }
             },
-            
-get autoTags() {
+
+            get autoTags() {
               return this.tags.filter((tag: string) => tag.startsWith('auto-'))
             },
-            
-descriptionHtml: productData.descriptionHtml,
-            
-get formattedPrice() {
+
+            descriptionHtml: productData.descriptionHtml,
+
+            get formattedPrice() {
               const variant = this.primaryVariant
               return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
             },
-            
 
-handle: productData.handle,
-            
+            handle: productData.handle,
 
+            id: productData.id,
 
-id: productData.id,
-            
+            images: [],
 
-
-images: [],
-            
-
-
-get isAvailable() {
+            get isAvailable() {
               const variant = this.primaryVariant
-              return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
+              return variant
+                ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0
+                : false
             },
-            
 
-
-// Procesar tags
-get manualTags() {
+            // Procesar tags
+            get manualTags() {
               return this.tags.filter((tag: string) => !tag.startsWith('auto-'))
-            }, 
-            
-
-// Array vacío para evitar errores
-media: [], 
-            
-
-metafields: productData.metafields.edges,
-            
-
-
-// Métodos del modelo Product
-get primaryVariant() {
-              return this.variants[ 0 ] || null
             },
-            
-            
 
+            // Array vacío para evitar errores
+            media: [],
 
+            metafields: productData.metafields.edges,
 
-productType: productData.productType,
-            
+            // Métodos del modelo Product
+            get primaryVariant() {
+              return this.variants[0] || null
+            },
 
+            productType: productData.productType,
 
+            status: productData.status,
 
+            tags: productData.tags,
 
-status: productData.status,
-            
+            title: productData.title,
 
-
-
-
-tags: productData.tags,
-            
-            
-
-
-
-title: productData.title,
-            
-            
-
-
-
-// Array vacío para evitar errores
-variants: productData.variants.edges.map((variantEdge: any) => ({
+            // Array vacío para evitar errores
+            variants: productData.variants.edges.map((variantEdge: any) => ({
               availableForSale: variantEdge.node.availableForSale,
               id: variantEdge.node.id,
-              inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
+              inventoryManagement: variantEdge.node.inventoryItem.tracked
+                ? 'SHOPIFY'
+                : 'NOT_MANAGED',
               inventoryPolicy: variantEdge.node.inventoryPolicy,
               inventoryQuantity: variantEdge.node.inventoryQuantity,
               price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
               sku: variantEdge.node.sku,
-              title: variantEdge.node.title
+              title: variantEdge.node.title,
             })),
-            
 
-
-vendor: productData.vendor
+            vendor: productData.vendor,
           }
         })
         allProducts.push(...products)
@@ -344,11 +330,11 @@ vendor: productData.vendor
         }
 
         // Delay para evitar throttling
-        await new Promise(resolve => setTimeout(resolve, 200))
+        await new Promise((resolve) => setTimeout(resolve, 200))
       } catch (error: any) {
         if (error.message?.includes('Throttled')) {
           console.log('Throttled, esperando 2 segundos...')
-          await new Promise(resolve => setTimeout(resolve, 2000))
+          await new Promise((resolve) => setTimeout(resolve, 2000))
           continue
         }
         throw error
@@ -378,7 +364,8 @@ vendor: productData.vendor
       }
 
       try {
-        const eventResponse: any = await makeAdminApiRequest(`
+        const eventResponse: any = await makeAdminApiRequest(
+          `
           query($after: String, $first: Int!, $query: String, $reverse: Boolean, $sortKey: ProductSortKeys) {
             products(after: $after, first: $first, query: $query, reverse: $reverse, sortKey: $sortKey) {
               edges {
@@ -424,7 +411,9 @@ vendor: productData.vendor
               }
             }
           }
-        `, eventVariables)
+        `,
+          eventVariables
+        )
 
         const events = eventResponse.products.edges.map((edge: any) => {
           // Crear un objeto Event simplificado para el dashboard
@@ -437,23 +426,23 @@ vendor: productData.vendor
             },
             get daysUntilEvent() {
               if (!this.eventDetails.date) return null
-              const eventDate = new Date(this.eventDetails.date)
+              const eventDate = createLocalDate(this.eventDetails.date)
               const today = new Date()
               const diffTime = eventDate.getTime() - today.getTime()
               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
               return diffDays
             },
-            
-descriptionHtml: eventData.descriptionHtml,
-            
-// Procesar eventDetails desde metafields
-get eventDetails() {
+
+            descriptionHtml: eventData.descriptionHtml,
+
+            // Procesar eventDetails desde metafields
+            get eventDetails() {
               const details: any = {}
               for (const { node } of this.metafields) {
                 if (node.namespace === 'event_details') {
-                  const validKeys = [ 'date', 'location', 'startTime', 'endTime', 'organizer' ]
+                  const validKeys = ['date', 'location', 'startTime', 'endTime', 'organizer']
                   if (validKeys.includes(node.key)) {
-                    details[ node.key ] = node.value
+                    details[node.key] = node.value
                   }
                 }
               }
@@ -465,8 +454,8 @@ get eventDetails() {
                 startTime: details.startTime || null,
               }
             },
-            
-get formattedEventDetails() {
+
+            get formattedEventDetails() {
               const details = this.eventDetails
               const parts = []
               if (details.date) parts.push(`Fecha: ${details.date}`)
@@ -475,76 +464,61 @@ get formattedEventDetails() {
               if (details.organizer) parts.push(`Organizador: ${details.organizer}`)
               return parts.join(' | ')
             },
-            
-get formattedPrice() {
+
+            get formattedPrice() {
               const variant = this.primaryVariant
               return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
             },
-            
-handle: eventData.handle,
-            
-id: eventData.id,
-            
-images: [], 
-            
-get isAvailable() {
-              const variant = this.primaryVariant
-              return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
-            },
-            
 
-get isPastEvent() {
+            handle: eventData.handle,
+
+            id: eventData.id,
+
+            images: [],
+
+            get isAvailable() {
+              const variant = this.primaryVariant
+              return variant
+                ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0
+                : false
+            },
+
+            get isPastEvent() {
               if (!this.eventDetails.date) return false
-              const eventDate = new Date(this.eventDetails.date)
+              const eventDate = createLocalDate(this.eventDetails.date)
               return eventDate < new Date()
             },
-            
-            
 
-metafields: eventData.metafields.edges,
-            
+            metafields: eventData.metafields.edges,
 
-
-// Métodos del modelo Event
-get primaryVariant() {
-              return this.variants[ 0 ] || null
+            // Métodos del modelo Event
+            get primaryVariant() {
+              return this.variants[0] || null
             },
-            
 
+            productType: eventData.productType,
 
+            status: eventData.status,
 
-productType: eventData.productType,
-            
+            tags: eventData.tags,
 
+            title: eventData.title,
 
-
-status: eventData.status,
-            
-            
-
-
-tags: eventData.tags,
-            
-
-
-title: eventData.title,
-            
-
-
-// Array vacío para evitar errores
-variants: eventData.variants.edges.map((variantEdge: any) => ({
+            // Array vacío para evitar errores
+            variants: eventData.variants.edges.map((variantEdge: any) => ({
               availableForSale: variantEdge.node.availableForSale,
               id: variantEdge.node.id,
-              inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
+              inventoryManagement: variantEdge.node.inventoryItem.tracked
+                ? 'SHOPIFY'
+                : 'NOT_MANAGED',
               inventoryPolicy: variantEdge.node.inventoryPolicy,
               inventoryQuantity: variantEdge.node.inventoryQuantity,
               price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
               sku: variantEdge.node.sku,
-              title: variantEdge.node.title
+              title: variantEdge.node.title,
             })),
-            
 
-vendor: eventData.vendor
+            vendor: eventData.vendor,
           }
         })
         allEvents.push(...events)
@@ -559,11 +533,11 @@ vendor: eventData.vendor
         }
 
         // Delay para evitar throttling
-        await new Promise(resolve => setTimeout(resolve, 200))
+        await new Promise((resolve) => setTimeout(resolve, 200))
       } catch (error: any) {
         if (error.message?.includes('Throttled')) {
           console.log('Throttled, esperando 2 segundos...')
-          await new Promise(resolve => setTimeout(resolve, 2000))
+          await new Promise((resolve) => setTimeout(resolve, 2000))
           continue
         }
         throw error
@@ -580,7 +554,7 @@ vendor: eventData.vendor
     while (userHasMore) {
       const { total, users } = await getAllUsers({
         limit: 100,
-        page: userPage
+        page: userPage,
       })
 
       allUsers.push(...users)
@@ -643,7 +617,10 @@ vendor: eventData.vendor
       string,
       { name: string; artist: string; sales: number; units: number; details: any }
     >()
-    const artistsMap = new Map<string, { name: string; products: number; sales: number; details: any[] }>()
+    const artistsMap = new Map<
+      string,
+      { name: string; products: number; sales: number; details: any[] }
+    >()
 
     orders.forEach((order: ShopifyOrderEdge) => {
       order.node.lineItems.edges.forEach((item: ShopifyLineItemEdge) => {
@@ -665,7 +642,7 @@ vendor: eventData.vendor
             details: product || null,
             name: productName,
             sales: itemSales,
-            units: quantity
+            units: quantity,
           })
         }
 
@@ -674,7 +651,7 @@ vendor: eventData.vendor
             details: [],
             name: artistName,
             products: 0,
-            sales: 0
+            sales: 0,
           })
         }
         const artist = artistsMap.get(artistName)!
@@ -689,7 +666,7 @@ vendor: eventData.vendor
           details: [],
           name: artistName,
           products: 0,
-          sales: 0
+          sales: 0,
         })
       }
       const artist = artistsMap.get(artistName)!
@@ -701,7 +678,7 @@ vendor: eventData.vendor
         manualTags: product.manualTags,
         status: product.status,
         tags: product.tags,
-        title: product.title
+        title: product.title,
       })
     })
 
@@ -712,11 +689,11 @@ vendor: eventData.vendor
     const artistStats = Array.from(artistsMap.values())
       .sort((a, b) => b.sales - a.sales)
       .slice(0, 5)
-      .map(artist => ({
+      .map((artist) => ({
         ...artist,
         topProducts: artist.details
           .sort((a: any, b: any) => (b.sales || 0) - (a.sales || 0))
-          .slice(0, 3)
+          .slice(0, 3),
       }))
 
     const categoriesMap = new Map()
@@ -725,25 +702,25 @@ vendor: eventData.vendor
       categoriesMap.set(category, (categoriesMap.get(category) ?? 0) + 1)
     })
 
-    const productCategories = Array.from(categoriesMap.entries()).map(([ name, value ], index) => ({
-      color: [ '#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1' ][ index % 5 ],
+    const productCategories = Array.from(categoriesMap.entries()).map(([name, value], index) => ({
+      color: ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1'][index % 5],
       name,
       value,
     }))
 
     // Procesar eventos
     const eventsMap = new Map<string, { event: any; ticketsSold: number; totalTickets: number }>()
-    const upcomingEvents = events.filter(event => !event.isPastEvent && event.status === 'ACTIVE')
-    const pastEvents = events.filter(event => event.isPastEvent && event.status === 'ACTIVE')
+    const upcomingEvents = events.filter((event) => !event.isPastEvent && event.status === 'ACTIVE')
+    const pastEvents = events.filter((event) => event.isPastEvent && event.status === 'ACTIVE')
 
     // Calcular métricas de eventos
     const totalEvents = events.length
-    const activeEvents = events.filter(event => event.status === 'ACTIVE').length
+    const activeEvents = events.filter((event) => event.status === 'ACTIVE').length
     const upcomingEventsCount = upcomingEvents.length
     const pastEventsCount = pastEvents.length
 
     // Procesar detalles de eventos
-    const eventDetails = events.map(event => ({
+    const eventDetails = events.map((event) => ({
       availableForSale: event.availableForSale,
       daysUntilEvent: event.daysUntilEvent,
       eventDetails: event.eventDetails,
@@ -753,7 +730,7 @@ vendor: eventData.vendor
       isPastEvent: event.isPastEvent,
       price: event.formattedPrice,
       status: event.status,
-      title: event.title
+      title: event.title,
     }))
 
     interface AdminRecentActivityItem {
@@ -810,27 +787,36 @@ vendor: eventData.vendor
     }, 0)
 
     // Métricas adicionales con datos enriquecidos
-    const productsWithArtworkDetails = products.filter(p =>
-      p.artworkDetails && Object.values(p.artworkDetails).some(value => value !== null)
+    const productsWithArtworkDetails = products.filter(
+      (p) => p.artworkDetails && Object.values(p.artworkDetails).some((value) => value !== null)
     ).length
 
-    const productsByMedium = products.reduce((acc, product) => {
-      const medium = product.artworkDetails?.medium || 'Sin medio especificado'
-      acc[ medium ] = (acc[ medium ] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
+    const productsByMedium = products.reduce(
+      (acc, product) => {
+        const medium = product.artworkDetails?.medium || 'Sin medio especificado'
+        acc[medium] = (acc[medium] || 0) + 1
+        return acc
+      },
+      {} as Record<string, number>
+    )
 
-    const productsByYear = products.reduce((acc, product) => {
-      const year = product.artworkDetails?.year || 'Sin año especificado'
-      acc[ year ] = (acc[ year ] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
+    const productsByYear = products.reduce(
+      (acc, product) => {
+        const year = product.artworkDetails?.year || 'Sin año especificado'
+        acc[year] = (acc[year] || 0) + 1
+        return acc
+      },
+      {} as Record<string, number>
+    )
 
-    const productsByLocation = products.reduce((acc, product) => {
-      const location = product.artworkDetails?.location || 'Sin ubicación especificada'
-      acc[ location ] = (acc[ location ] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
+    const productsByLocation = products.reduce(
+      (acc, product) => {
+        const location = product.artworkDetails?.location || 'Sin ubicación especificada'
+        acc[location] = (acc[location] || 0) + 1
+        return acc
+      },
+      {} as Record<string, number>
+    )
 
     const totalRevenue = totalSales
     const totalExpenses = totalRevenue * 0.3
@@ -847,10 +833,10 @@ vendor: eventData.vendor
     const averageOrderValue =
       orders.length > 0
         ? orders.reduce(
-          (sum, order) =>
-            sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
-          0
-        ) / orders.length
+            (sum, order) =>
+              sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
+            0
+          ) / orders.length
         : 0
 
     const totalUsers = users?.length ?? 0
@@ -896,7 +882,7 @@ vendor: eventData.vendor
         details: eventDetails,
         ticketsSold: pastEventsCount,
         totalTickets: totalEvents,
-        upcoming: upcomingEventsCount
+        upcoming: upcomingEventsCount,
       },
 
       financialSummary: {
