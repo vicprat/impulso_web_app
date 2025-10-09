@@ -150,7 +150,7 @@ export default async function Page() {
   return (
     <main className='overflow-hidden bg-surface'>
       <HomeStructuredData />
-      {/* <Landing.Hero videoId='j5RAiTZ-w6E' /> */}
+      <Landing.Hero />
 
       <Landing.Carousel slides={slides} />
 
