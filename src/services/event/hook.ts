@@ -94,6 +94,10 @@ export const useUpdateEvent = () => {
       toast.success('Evento actualizado exitosamente')
       void queryClient.invalidateQueries({ queryKey: [EVENTS_QUERY_KEY, 'paginated'] })
       queryClient.setQueryData([EVENTS_QUERY_KEY, 'detail', eventId], updatedEvent)
+
+      void queryClient.invalidateQueries({
+        queryKey: [EVENTS_QUERY_KEY, 'detail', updatedEvent.handle],
+      })
     },
   })
 }
