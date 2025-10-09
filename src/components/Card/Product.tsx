@@ -8,8 +8,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { type Product as ProductType } from '@/modules/shopify/types'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
+import type { PublicEvent } from '@/src/modules/shopify/service'
+
 interface Props {
-  product: ProductType
+  product: ProductType | PublicEvent
 }
 
 export const Product: React.FC<Props> = ({ product }) => {
@@ -127,7 +129,7 @@ export const Product: React.FC<Props> = ({ product }) => {
             )}
           </div>
 
-          {product.description && (
+          {'description' in product && product.description && (
             <p className='line-clamp-2 text-xs leading-tight text-muted-foreground'>
               {product.description.replace(/(<([^>]+)>)/gi, '')}
             </p>

@@ -26,6 +26,11 @@ export interface Variant {
   compareAtPrice: Money | null
   sku: string | null
   selectedOptions: SelectedOption[]
+  inventoryQuantity?: number | null
+  inventoryPolicy?: 'DENY' | 'CONTINUE'
+  inventoryItem?: {
+    tracked: boolean
+  }
 }
 
 export interface Product {

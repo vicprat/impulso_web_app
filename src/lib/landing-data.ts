@@ -8,7 +8,7 @@ import {
   type Tag,
 } from '@/modules/blog/types'
 import { api as shopifyApi } from '@/modules/shopify/api'
-import { shopifyService } from '@/modules/shopify/service'
+import { shopifyService, type PublicEvent } from '@/modules/shopify/service'
 import { type Product } from '@/modules/shopify/types'
 import { type PublicArtist } from '@/modules/user/types'
 
@@ -132,7 +132,7 @@ export async function getPublicProducts(): Promise<Product[]> {
   }
 }
 
-export async function getPublicEvents(): Promise<any[]> {
+export async function getPublicEvents(): Promise<PublicEvent[]> {
   try {
     return await shopifyService.getPublicEvents({
       first: 6,

@@ -4,8 +4,10 @@ import { type Event } from '@/models/Event'
 
 import { Carousel } from './Carousel'
 
+import type { PublicEvent } from '@/src/modules/shopify/service'
+
 interface Props {
-  data: Event[]
+  data: Event[] | PublicEvent[]
 }
 
 export const Events: React.FC<Props> = ({ data }) => {
@@ -17,13 +19,22 @@ export const Events: React.FC<Props> = ({ data }) => {
         </div>
       ) : (
         <div className='animate-fade-in-up py-16 text-center'>
-          <div className='mx-auto mb-6 flex size-24 animate-scale-in items-center justify-center rounded-full bg-muted' style={{ animationDelay: '0.2s' }}>
+          <div
+            className='mx-auto mb-6 flex size-24 animate-scale-in items-center justify-center rounded-full bg-muted'
+            style={{ animationDelay: '0.2s' }}
+          >
             <Calendar className='size-8 text-muted-foreground' />
           </div>
-          <h3 className='mb-2 animate-fade-in-up text-xl font-semibold text-foreground' style={{ animationDelay: '0.3s' }}>
+          <h3
+            className='mb-2 animate-fade-in-up text-xl font-semibold text-foreground'
+            style={{ animationDelay: '0.3s' }}
+          >
             Nuevos eventos próximamente
           </h3>
-          <p className='animate-fade-in-up text-muted-foreground' style={{ animationDelay: '0.4s' }}>
+          <p
+            className='animate-fade-in-up text-muted-foreground'
+            style={{ animationDelay: '0.4s' }}
+          >
             Estamos organizando experiencias increíbles para ti
           </p>
         </div>

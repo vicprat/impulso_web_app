@@ -1,7 +1,8 @@
 'use client'
 
-import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from 'lucide-react'
+import { Facebook, Instagram, Mail, MapPin, Phone, Youtube } from 'lucide-react'
 import Link from 'next/link'
+import { FaTiktok } from 'react-icons/fa'
 
 import {
   AnimatedSpheres,
@@ -20,12 +21,6 @@ const navigationLinks = [
 
 const socialLinks = [
   {
-    handle: '@galeriaimpulso',
-    href: 'https://twitter.com/galeriaimpulso',
-    icon: Twitter,
-    name: 'Twitter',
-  },
-  {
     handle: '/impulsogaleria',
     href: 'https://facebook.com/impulsogaleria',
     icon: Facebook,
@@ -36,6 +31,18 @@ const socialLinks = [
     href: 'https://instagram.com/impulsogaleria',
     icon: Instagram,
     name: 'Instagram',
+  },
+  {
+    handle: '@impulsogaleria',
+    href: 'https://youtube.com/impulsogaleria',
+    icon: Youtube,
+    name: 'YouTube',
+  },
+  {
+    handle: '@impulsogaleria',
+    href: 'https://tiktok.com/impulsogaleria',
+    icon: FaTiktok,
+    name: 'TikTok',
   },
 ]
 

@@ -1,7 +1,61 @@
 import { prisma } from '@/lib/prisma'
 
 import { api } from './api'
-import { type Product, type ProductSearchParams, type ProductsResponse } from './types'
+import { type Money, type Product, type ProductSearchParams, type ProductsResponse } from './types'
+
+interface EventVariant {
+  id: string
+  title: string
+  availableForSale: boolean
+  price: Money
+  compareAtPrice: Money | null
+  sku: string | null
+  selectedOptions: {
+    name: string
+    value: string
+  }[]
+  inventoryQuantity: number | null
+  inventoryPolicy: 'DENY' | 'CONTINUE'
+  inventoryManagement: 'SHOPIFY' | 'NOT_MANAGED'
+}
+
+interface PublicEventDetails {
+  date: string | null
+  endTime: string | null
+  location: string | null
+  organizer: string | null
+  startTime: string | null
+}
+
+export interface PublicEvent {
+  id: string
+  handle: string
+  title: string
+  descriptionHtml: string
+  productType: string
+  vendor: string
+  status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED'
+  images: {
+    id?: string
+    url: string
+    altText: string | null
+    width?: number
+    height?: number
+  }[]
+  variants: EventVariant[]
+  tags: string[]
+  eventDetails: PublicEventDetails
+  createdAt: string
+  updatedAt: string
+  priceRange: {
+    minVariantPrice: Money
+    maxVariantPrice: Money
+  }
+  primaryVariant: EventVariant | null
+  isAvailable: boolean
+  availableForSale: boolean
+  formattedPrice: string
+}
 
 export const privateRoomsServerApi = {
   getPrivateProductIds: async (): Promise<string[]> => {
@@ -70,8 +124,7 @@ export const getPrivateRoomByUserId = async (userId: string) => {
 }
 
 export const shopifyService = {
-  getPublicEvents: async (params: ProductSearchParams = {}): Promise<any[]> => {
-    // Construir filtros específicos para eventos
+  getPublicEvents: async (params: ProductSearchParams = {}): Promise<PublicEvent[]> => {
     const eventParams = {
       ...params,
       filters: {
@@ -85,15 +138,33 @@ export const shopifyService = {
       getPrivateProductIds(),
     ])
 
-    // Filtrar solo eventos públicos
     const eventProducts = allProductsResponse.data.products.filter(
       (product: Product) => !privateProductIds.includes(product.id)
     )
 
-    // Retornar objetos con estructura de Event (serializables para Server Components)
     const events = eventProducts.map((product: Product) => {
-      // Adaptar Product a estructura de Event
+      const variants = product.variants.map((variant) => ({
+        availableForSale: variant.availableForSale,
+        compareAtPrice: variant.compareAtPrice,
+        id: variant.id,
+        inventoryManagement: 'NOT_MANAGED' as const,
+        inventoryPolicy: 'DENY' as const,
+        inventoryQuantity: null,
+        price: variant.price,
+        selectedOptions: variant.selectedOptions,
+        sku: variant.sku,
+        title: variant.title,
+      }))
+
+      const primaryVariant = variants.length > 0 ? variants[0] : null
+      const isAvailable = primaryVariant ? primaryVariant.availableForSale : false
+
+      const formattedPrice = primaryVariant
+        ? `${parseFloat(primaryVariant.price.amount).toLocaleString('es-MX')} ${primaryVariant.price.currencyCode}`
+        : 'Sin precio'
+
       return {
+        availableForSale: isAvailable,
         createdAt: product.createdAt,
         descriptionHtml: product.descriptionHtml,
         eventDetails: {
@@ -103,27 +174,19 @@ export const shopifyService = {
           organizer: null,
           startTime: null,
         },
+        formattedPrice,
         handle: product.handle,
         id: product.id,
         images: product.images,
-        primaryLocationId: 'gid://shopify/Location/123456789',
+        isAvailable,
+        priceRange: product.priceRange,
+        primaryVariant,
         productType: product.productType,
         status: product.status ?? 'ACTIVE',
         tags: product.tags ?? [],
         title: product.title,
         updatedAt: product.updatedAt,
-        variants: product.variants.map((variant) => ({
-          availableForSale: variant.availableForSale,
-          compareAtPrice: variant.compareAtPrice,
-          id: variant.id,
-          inventoryManagement: null,
-          inventoryPolicy: 'DENY' as const,
-          inventoryQuantity: null,
-          price: variant.price,
-          selectedOptions: variant.selectedOptions,
-          sku: variant.sku,
-          title: variant.title,
-        })),
+        variants,
         vendor: product.vendor,
       }
     })

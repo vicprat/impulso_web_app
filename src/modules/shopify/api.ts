@@ -22,7 +22,7 @@ import {
   type ProductSearchParams,
   type ProductsResponse,
   type RawCollection,
-  type RawProduct
+  type RawProduct,
 } from './types'
 
 // Tipo para la respuesta de getProductByHandle que devuelve ShopifyProductData
@@ -60,58 +60,47 @@ function convertToShopifyProductData(rawProduct: RawProduct) {
     handle: rawProduct.handle,
     id: rawProduct.id,
     // Los productos públicos no tienen tags personalizados
-images: {
-      edges: rawProduct.images?.edges || []
+    images: {
+      edges: rawProduct.images?.edges || [],
     },
-    
-media: {
-      nodes: [] // Los productos públicos no tienen media adicional
-    },
-    
-metafields: {
-      edges: [] // Los productos públicos no tienen metafields personalizados
-    },
-    
-productType: rawProduct.productType,
-    
-status: 'ACTIVE' as const, 
-    
-// Los productos públicos siempre están activos
-tags: [], 
-    
 
-title: rawProduct.title,
-    
+    media: {
+      nodes: [], // Los productos públicos no tienen media adicional
+    },
 
-updatedAt: rawProduct.updatedAt,
-    
-variants: {
-      edges: rawProduct.variants?.edges.map(edge => ({
-        node: {
-          availableForSale: edge.node.availableForSale,
-          id: edge.node.id,
-          // Política por defecto
-inventoryItem: {
-            tracked: false // Los productos públicos no están rastreados
+    metafields: {
+      edges: [], // Los productos públicos no tienen metafields personalizados
+    },
+
+    productType: rawProduct.productType,
+
+    status: 'ACTIVE' as const,
+
+    // Los productos públicos siempre están activos
+    tags: [],
+
+    title: rawProduct.title,
+
+    updatedAt: rawProduct.updatedAt,
+
+    variants: {
+      edges:
+        rawProduct.variants?.edges.map((edge) => ({
+          node: {
+            availableForSale: edge.node.availableForSale,
+            id: edge.node.id,
+            inventoryItem: {
+              tracked: false,
+            },
+            inventoryPolicy: 'DENY' as const,
+            inventoryQuantity: null,
+            price: edge.node.price.amount,
+            sku: edge.node.sku,
+            title: edge.node.title,
           },
-          
-// Los productos públicos no tienen información de inventario
-inventoryPolicy: 'DENY' as const,
-          
-
-inventoryQuantity: null,
-          
-
-price: edge.node.price.amount, 
-          
-
-sku: edge.node.sku, 
-          
-title: edge.node.title
-        }
-      })) || []
+        })) || [],
     },
-    vendor: rawProduct.vendor
+    vendor: rawProduct.vendor,
   }
 }
 
@@ -259,10 +248,12 @@ export const api = {
 
         if (!data) {
           if (attempt < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            await new Promise((resolve) => setTimeout(resolve, 1000))
             continue
           }
-          throw new Error(`No data received from Shopify API for handle "${handle}" after ${maxRetries} attempts`)
+          throw new Error(
+            `No data received from Shopify API for handle "${handle}" after ${maxRetries} attempts`
+          )
         }
 
         if (!data.product) {
@@ -275,14 +266,17 @@ export const api = {
         }
       } catch (error) {
         lastError = error as Error
-        
+
         if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, attempt * 1000))
+          await new Promise((resolve) => setTimeout(resolve, attempt * 1000))
         }
       }
     }
 
-    throw lastError || new Error(`Failed to fetch product with handle "${handle}" after ${maxRetries} attempts`)
+    throw (
+      lastError ||
+      new Error(`Failed to fetch product with handle "${handle}" after ${maxRetries} attempts`)
+    )
   },
 
   getProducts: async (params: ProductSearchParams = {}): Promise<ProductsResponse> => {
@@ -352,7 +346,9 @@ export const api = {
     }
   },
 
-  getProductsByIds: async (productIds: string[]): Promise<{ data: { pageInfo: any; products: Product[] }; statusCode: number }> => {
+  getProductsByIds: async (
+    productIds: string[]
+  ): Promise<{ data: { pageInfo: any; products: Product[] }; statusCode: number }> => {
     try {
       const { data, errors } = await storeClient.request(PRODUCTS_BY_IDS_QUERY, {
         variables: {

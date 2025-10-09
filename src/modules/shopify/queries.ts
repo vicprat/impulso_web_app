@@ -520,11 +520,6 @@ export const EVENT_BY_HANDLE_QUERY = `
               currencyCode
             }
             sku
-            inventoryQuantity
-            inventoryPolicy
-            inventoryItem {
-              tracked
-            }
             selectedOptions {
               name
               value
