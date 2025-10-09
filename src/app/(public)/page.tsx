@@ -150,26 +150,55 @@ export default async function Page() {
   return (
     <main className='overflow-hidden bg-surface'>
       <HomeStructuredData />
-      <Landing.Hero />
 
       <Landing.Carousel slides={slides} />
 
       <Landing.Section
-        icon='Sparkles'
-        title=''
-        subtitle=''
-        actionText='Ver todo el Blog'
-        actionHref={ROUTES.PUBLIC.POSTS.DYNAMIC.MAIN.PATH.replace(':postType', 'blog')}
-        paddingY='py-12 lg:py-16'
+        icon='Palette'
+        title='Obras Seleccionadas'
+        subtitle='Descubre piezas únicas cuidadosamente curadas que capturan la esencia del arte contemporáneo'
+        actionText='Explorar Galería'
+        actionHref={ROUTES.STORE.MAIN.PATH}
       >
-        <Suspense fallback={<Landing.Blog.Loader />}>
-          <Landing.Blog.Carousel
-            posts={blogPosts}
-            title='Últimos Artículos'
-            subtitle='Explora las historias más recientes del mundo del arte y nuestra comunidad creativa'
+        <Suspense fallback={<Landing.Products.Loader />}>
+          <Landing.Products.Main data={products} />
+        </Suspense>
+      </Landing.Section>
+
+      <Landing.Section
+        icon='Users'
+        title='Artistas Destacados'
+        subtitle='Conoce el talento excepcional de nuestra comunidad de artistas emergentes y consagrados'
+        actionText='Ver Todos los Artistas'
+        actionHref={ROUTES.PUBLIC.ARTISTS.PATH}
+        wrapperElement='section'
+      >
+        <Suspense fallback={<Landing.Artists.Loader />}>
+          <Landing.Artists.Carousel
+            artists={artists}
+            title='Artistas Destacados'
+            subtitle='Conoce el talento excepcional de nuestra comunidad de artistas emergentes y consagrados'
             autoplay={true}
             scrollSpeed={0.5}
           />
+        </Suspense>
+      </Landing.Section>
+
+      <Landing.LazyHero rootMargin='600px'>
+        <Suspense fallback={<div className='min-h-[90vh] bg-black' />}>
+          <Landing.Hero />
+        </Suspense>
+      </Landing.LazyHero>
+
+      <Landing.Section
+        icon='Calendar'
+        title='Próximos Eventos'
+        subtitle='Sumérgete en experiencias artísticas únicas que transformarán tu perspectiva del arte'
+        actionText='Ver Todos los Eventos'
+        actionHref={ROUTES.STORE.EVENTS.PATH}
+      >
+        <Suspense fallback={<Landing.Events.Loader />}>
+          <Landing.Events.Main data={events} />
         </Suspense>
       </Landing.Section>
 
@@ -186,18 +215,6 @@ export default async function Page() {
       </Landing.Section>
 
       <Landing.Section
-        icon='Calendar'
-        title='Próximos Eventos'
-        subtitle='Sumérgete en experiencias artísticas únicas que transformarán tu perspectiva del arte'
-        actionText='Ver Todos los Eventos'
-        actionHref={ROUTES.STORE.EVENTS.PATH}
-      >
-        <Suspense fallback={<Landing.Events.Loader />}>
-          <Landing.Events.Main data={events} />
-        </Suspense>
-      </Landing.Section>
-
-      <Landing.Section
         icon='Crown'
         title='Vende tus obras'
         subtitle='Adquiere un plan de membresía y disfruta de los grandes beneficios de vender tu arte con nosotros'
@@ -210,33 +227,21 @@ export default async function Page() {
       </Landing.Section>
 
       <Landing.Section
-        icon='Users'
-        title=''
-        subtitle=''
-        actionText='Ver Todos los Artistas'
-        actionHref={ROUTES.PUBLIC.ARTISTS.PATH}
-        wrapperElement='section'
+        icon='Sparkles'
+        title='Últimos Artículos'
+        subtitle='Explora las historias más recientes del mundo del arte y nuestra comunidad creativa'
+        actionText='Ver todo el Blog'
+        actionHref={ROUTES.PUBLIC.POSTS.DYNAMIC.MAIN.PATH.replace(':postType', 'blog')}
+        paddingY='py-12 lg:py-16'
       >
-        <Suspense fallback={<Landing.Artists.Loader />}>
-          <Landing.Artists.Carousel
-            artists={artists}
-            title='Artistas Destacados'
-            subtitle='Conoce el talento excepcional de nuestra comunidad de artistas emergentes y consagrados'
+        <Suspense fallback={<Landing.Blog.Loader />}>
+          <Landing.Blog.Carousel
+            posts={blogPosts}
+            title='Últimos Artículos'
+            subtitle='Explora las historias más recientes del mundo del arte y nuestra comunidad creativa'
             autoplay={true}
             scrollSpeed={0.5}
           />
-        </Suspense>
-      </Landing.Section>
-
-      <Landing.Section
-        icon='Palette'
-        title='Obras Seleccionadas'
-        subtitle='Descubre piezas únicas cuidadosamente curadas que capturan la esencia del arte contemporáneo'
-        actionText='Explorar Galería'
-        actionHref={ROUTES.STORE.MAIN.PATH}
-      >
-        <Suspense fallback={<Landing.Products.Loader />}>
-          <Landing.Products.Main data={products} />
         </Suspense>
       </Landing.Section>
     </main>
