@@ -25,7 +25,7 @@ import { Dialog } from '@/src/components/Dialog'
 import { Invoice } from '@/src/components/Invoce'
 import { formatCurrency, formatDate, getStatusColor } from '@/src/helpers'
 import { useDialog } from '@/src/hooks/useDialog'
-import { useCustomerOrder } from '@/src/modules/customer/hooks'
+import { useCustomerOrderSmart } from '@/src/modules/customer/hooks'
 
 import type { LineItem } from '@/src/modules/customer/types'
 
@@ -38,9 +38,7 @@ export default function Page() {
   const router = useRouter()
   const orderId = params.orderId as string
 
-  const fullOrderId = `gid://shopify/Order/${orderId}`
-
-  const { data: orderDetail, error, isLoading } = useCustomerOrder(fullOrderId)
+  const { data: orderDetail, error, isLoading } = useCustomerOrderSmart(orderId)
 
   const invoiceDialog = useDialog()
 
@@ -282,7 +280,7 @@ export default function Page() {
                 {order.shippingAddress.city}, {order.shippingAddress.zip}
               </p>
               <p>{order.shippingAddress.country}</p>
-              {order.shippingAddress.phone && (
+              {'phone' in order.shippingAddress && order.shippingAddress.phone && (
                 <div className='mt-2 flex items-center gap-2'>
                   <Phone className='size-4' />
                   <span>{order.shippingAddress.phone}</span>

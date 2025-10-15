@@ -1,4 +1,5 @@
 import { makeCustomerRequest } from '@/lib/shopify'
+import { type LocalOrderDetail, type LocalOrdersResult } from '@/services/order/localOrdersService'
 
 import {
   CREATE_CUSTOMER_ADDRESS_MUTATION,
@@ -13,7 +14,6 @@ import {
   UPDATE_CUSTOMER_MUTATION,
 } from './queries'
 import { type AllOrdersResult, type CustomerAddressInput } from './types'
-import { type LocalOrdersResult } from '@/services/order/localOrdersService'
 
 export const api = {
   createAddress: (address: CustomerAddressInput) => {
@@ -93,6 +93,23 @@ export const api = {
   getBasicInfo: () => makeCustomerRequest(GET_BASIC_INFO_QUERY),
 
   getOrder: (orderId: string) => makeCustomerRequest(GET_SINGLE_ORDER_QUERY, { id: orderId }),
+
+  getOrderLocal: async (orderId: string): Promise<{ order: LocalOrderDetail }> => {
+    const response = await fetch(`/api/orders/local/${orderId}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+      throw new Error(errorData.error ?? `HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    return response.json()
+  },
   getOrders: (params: { first?: number; after?: string } = {}) => {
     const { after, first = 10 } = params
     return makeCustomerRequest(GET_CUSTOMER_ORDERS_QUERY, { after, first })

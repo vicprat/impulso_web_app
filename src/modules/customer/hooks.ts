@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
 
 import { useAuth } from '@/modules/auth/context/useAuth'
+import { type LocalOrderDetail, type LocalOrdersResult } from '@/services/order/localOrdersService'
 
 import { api } from './api'
 import {
@@ -13,7 +14,6 @@ import {
   type CustomerUpdateInput,
   type ShopifyCustomerProfile,
 } from './types'
-import { type LocalOrdersResult } from '@/services/order/localOrdersService'
 
 export const customerKeys = {
   addresses: (first?: number) => [...customerKeys.all, 'addresses', first] as const,
@@ -172,6 +172,42 @@ export function useCustomerOrder(
     enabled: isAuthenticated && !!orderId,
     queryFn: () => api.getOrder(orderId),
     queryKey: customerKeys.order(orderId),
+    staleTime: 2 * 60 * 1000,
+    ...options,
+  })
+}
+
+export function useCustomerOrderLocal(
+  orderId: string,
+  options?: Omit<UseQueryOptions<{ order: LocalOrderDetail }, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryFn: () => api.getOrderLocal(orderId),
+    queryKey: [...customerKeys.all, 'orderLocal', orderId] as const,
+    staleTime: 2 * 60 * 1000,
+    ...options,
+  })
+}
+
+export function useCustomerOrderSmart(
+  orderId: string,
+  options?: Omit<
+    UseQueryOptions<{ order: CustomerOrder | LocalOrderDetail }, Error>,
+    'queryKey' | 'queryFn'
+  >
+) {
+  // Determinar si es un ID de Shopify o local
+  const isShopifyId = orderId.startsWith('gid://shopify/Order/')
+
+  return useQuery({
+    queryFn: async () => {
+      if (isShopifyId) {
+        return await api.getOrder(orderId)
+      } else {
+        return await api.getOrderLocal(orderId)
+      }
+    },
+    queryKey: [...customerKeys.all, 'orderSmart', orderId, isShopifyId] as const,
     staleTime: 2 * 60 * 1000,
     ...options,
   })
