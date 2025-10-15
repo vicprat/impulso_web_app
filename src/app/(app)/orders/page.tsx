@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Table } from '@/src/components/Table'
 import { PERMISSIONS } from '@/src/config/Permissions'
-import { useAllOrders, useCustomerOrders } from '@/src/modules/customer/hooks'
+import { useAllOrdersLocal, useCustomerOrders } from '@/src/modules/customer/hooks'
 
 import { columns } from './columns'
 
@@ -28,7 +28,7 @@ export default function OrdersPage() {
 
   const debouncedSearch = useDebounce(searchTerm, 500)
 
-  const allOrdersQuery = useAllOrders({
+  const allOrdersQuery = useAllOrdersLocal({
     after: cursors[currentPage],
     first: pageSize,
     query: debouncedSearch,
@@ -49,18 +49,12 @@ export default function OrdersPage() {
           displayFinancialStatus: edge.node.displayFinancialStatus,
           displayFulfillmentStatus: edge.node.displayFulfillmentStatus,
           id: edge.node.id,
-          lineItemsCount: edge.node.lineItems.edges.length,
+          lineItemsCount: edge.node.lineItemsCount,
           name: edge.node.name,
           processedAt: edge.node.processedAt,
           totalPrice: {
-            amount:
-              edge.node.currentTotalPriceSet?.shopMoney.amount ??
-              edge.node.totalPriceSet?.shopMoney.amount ??
-              '0',
-            currencyCode:
-              edge.node.currentTotalPriceSet?.shopMoney.currencyCode ??
-              edge.node.totalPriceSet?.shopMoney.currencyCode ??
-              'USD',
+            amount: edge.node.totalPrice.amount,
+            currencyCode: edge.node.totalPrice.currencyCode,
           },
         })) ?? []
       )

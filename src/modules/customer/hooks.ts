@@ -13,6 +13,7 @@ import {
   type CustomerUpdateInput,
   type ShopifyCustomerProfile,
 } from './types'
+import { type LocalOrdersResult } from '@/services/order/localOrdersService'
 
 export const customerKeys = {
   addresses: (first?: number) => [...customerKeys.all, 'addresses', first] as const,
@@ -28,6 +29,8 @@ export const orderManagementKeys = {
   all: ['orderManagement'] as const,
   allOrders: (params?: { first?: number; after?: string; query?: string }) =>
     [...orderManagementKeys.all, 'allOrders', params] as const,
+  allOrdersLocal: (params?: { first?: number; after?: string; query?: string }) =>
+    [...orderManagementKeys.all, 'allOrdersLocal', params] as const,
 }
 
 export function useCustomerProfile(
@@ -182,6 +185,18 @@ export function useAllOrders(
   return useQuery({
     queryFn: () => api.getAllOrders(params),
     queryKey: orderManagementKeys.allOrders(params),
+    staleTime: 2 * 60 * 1000,
+    ...options,
+  })
+}
+
+export function useAllOrdersLocal(
+  params?: { first?: number; after?: string; query?: string },
+  options?: Omit<UseQueryOptions<LocalOrdersResult, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryFn: () => api.getAllOrdersLocal(params),
+    queryKey: orderManagementKeys.allOrdersLocal(params),
     staleTime: 2 * 60 * 1000,
     ...options,
   })

@@ -13,6 +13,7 @@ import {
   UPDATE_CUSTOMER_MUTATION,
 } from './queries'
 import { type AllOrdersResult, type CustomerAddressInput } from './types'
+import { type LocalOrdersResult } from '@/services/order/localOrdersService'
 
 export const api = {
   createAddress: (address: CustomerAddressInput) => {
@@ -42,6 +43,38 @@ export const api = {
     }
 
     const response = await fetch(`/api/orders/all?${searchParams.toString()}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+      throw new Error(errorData.error ?? `HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    return response.json()
+  },
+
+  getAllOrdersLocal: async (params?: {
+    first?: number
+    after?: string
+    query?: string
+  }): Promise<LocalOrdersResult> => {
+    const { after, first = 10, query } = params ?? {}
+
+    const searchParams = new URLSearchParams()
+    searchParams.append('first', first.toString())
+    if (after) {
+      searchParams.append('after', after)
+    }
+    if (query) {
+      searchParams.append('query', query)
+    }
+
+    const response = await fetch(`/api/orders/local?${searchParams.toString()}`, {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
