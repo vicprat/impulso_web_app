@@ -54,16 +54,29 @@ export const columns: ColumnDef<Order>[] = [
     ),
   },
   {
-    accessorKey: 'customer',
+    accessorKey: 'customer.name',
     cell: ({ row }) => {
       const { customer } = row.original
-      if (!customer || (!customer.firstName && !customer.lastName)) {
-        return <span className='text-muted-foreground'>N/A</span>
+      if (!customer) {
+        return <span className='text-muted-foreground'>-</span>
       }
-      return `${customer.firstName ?? ''} ${customer.lastName ?? ''}`.trim()
+      const fullName = `${customer.firstName ?? ''} ${customer.lastName ?? ''}`.trim()
+      return fullName || <span className='text-muted-foreground'>-</span>
     },
-    header: 'Cliente',
-    id: 'customer',
+    header: 'Nombre',
+    id: 'customerName',
+  },
+  {
+    accessorKey: 'customer.email',
+    cell: ({ row }) => {
+      const { customer } = row.original
+      if (!customer?.email) {
+        return <span className='text-muted-foreground'>-</span>
+      }
+      return <span className='text-sm'>{customer.email}</span>
+    },
+    header: 'Email',
+    id: 'customerEmail',
   },
   {
     accessorKey: 'displayFinancialStatus',

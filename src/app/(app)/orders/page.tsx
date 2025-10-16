@@ -84,7 +84,9 @@ export default function OrdersPage() {
       : customerOrdersQuery.data?.customer?.orders?.pageInfo
 
   const tableColumns =
-    activeTab === 'all-orders' ? columns : columns.filter((col) => col.id !== 'customer')
+    activeTab === 'all-orders'
+      ? columns
+      : columns.filter((col) => col.id !== 'customerName' && col.id !== 'customerEmail')
 
   useEffect(() => {
     if (pageInfo?.hasNextPage && pageInfo.endCursor) {
