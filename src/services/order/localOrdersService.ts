@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 
 export interface LocalOrder {
   id: string
@@ -51,7 +52,7 @@ export async function getLocalOrders(params?: LocalOrdersParams): Promise<LocalO
   const offset = after ? parseInt(after) : 0
 
   // Construir condiciones de búsqueda
-  const whereConditions: any = {}
+  const whereConditions: Record<string, unknown> = {}
 
   if (query) {
     whereConditions.OR = [
@@ -319,7 +320,7 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
 
   const firstEntry = financialEntries[0]
 
-  // Buscar tickets para obtener información del usuario
+  // Buscar tickets para obtener información del usuario (si existen)
   const tickets = await prisma.ticket.findMany({
     include: {
       user: {
@@ -335,28 +336,140 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
     where: { orderId },
   })
 
-  const user = tickets[0]?.user || null
-  if (!user) return null
+  // Si hay tickets, usar el usuario del ticket; si no, buscar por el userId en financialEntry
+  let user: {
+    id: string
+    email: string
+    firstName: string | null
+    lastName: string | null
+  } | null = tickets[0]?.user || null
+
+  if (!user && firstEntry.userId) {
+    user = await prisma.user.findUnique({
+      select: {
+        email: true,
+        firstName: true,
+        id: true,
+        lastName: true,
+      },
+      where: { id: firstEntry.userId },
+    })
+  }
+
+  // Si no hay usuario ni en tickets ni en financialEntry, usar relatedParty como fallback
+  if (!user) {
+    const relatedParty = firstEntry.relatedParty ?? 'Cliente desconocido'
+    const nameParts = relatedParty.split(' ')
+    user = {
+      email: 'no-disponible@example.com',
+      firstName: nameParts[0] || 'Cliente',
+      id: 'unknown',
+      lastName: nameParts.slice(1).join(' ') || 'Desconocido',
+    }
+  }
+
+  // Intentar obtener datos completos de Shopify
+  let shopifyOrderData = null
+  try {
+    const SHOPIFY_ORDER_QUERY = `
+      query GetOrder($id: ID!) {
+        order(id: $id) {
+          id
+          requiresShipping
+          shippingAddress {
+            address1
+            address2
+            city
+            zip
+            country
+            firstName
+            lastName
+            phone
+            province
+          }
+          lineItems(first: 50) {
+            edges {
+              node {
+                id
+                title
+                quantity
+                vendor
+                product {
+                  id
+                }
+              }
+            }
+          }
+        }
+      }
+    `
+
+    const shopifyId = `gid://shopify/Order/${orderId}`
+    const response = await makeAdminApiRequest<{
+      order: {
+        id: string
+        requiresShipping: boolean
+        shippingAddress: {
+          address1: string
+          address2?: string
+          city: string
+          zip: string
+          country: string
+          firstName: string
+          lastName: string
+          phone?: string
+          province?: string
+        } | null
+        lineItems: {
+          edges: {
+            node: {
+              id: string
+              title: string
+              quantity: number
+              vendor: string
+              product: { id: string } | null
+            }
+          }[]
+        }
+      } | null
+    }>(SHOPIFY_ORDER_QUERY, { id: shopifyId })
+
+    shopifyOrderData = response.order
+  } catch (error) {
+    console.error('Error fetching Shopify order data:', error)
+  }
 
   // Calcular totales
   const totalAmount = financialEntries.reduce((sum, entry) => sum + Number(entry.amount), 0)
 
-  // Crear line items basados en las entradas financieras
-  const lineItems = financialEntries.map((entry, index) => ({
-    node: {
-      id: `local-${orderId}-${index}`,
-      // Simplificado por ahora
-      price: {
-        amount: entry.amount.toString(),
-        currencyCode: entry.currency,
-      },
-
-      quantity: 1,
-      title: entry.description
-        .replace(/^Venta de /, '')
-        .replace(/ \(Cantidad: \d+\) - Orden #.*$/, ''),
-    },
-  }))
+  // Crear line items - usar datos de Shopify si están disponibles, si no usar financialEntries
+  const lineItems = shopifyOrderData?.lineItems.edges.length
+    ? shopifyOrderData.lineItems.edges.map((edge) => ({
+        node: {
+          id: edge.node.id,
+          price: {
+            amount: (
+              financialEntries.find((e) => e.description.includes(edge.node.title))?.amount ?? 0
+            ).toString(),
+            currencyCode: firstEntry.currency,
+          },
+          quantity: edge.node.quantity,
+          title: edge.node.title,
+        },
+      }))
+    : financialEntries.map((entry, index) => ({
+        node: {
+          id: `local-${orderId}-${index}`,
+          price: {
+            amount: entry.amount.toString(),
+            currencyCode: entry.currency,
+          },
+          quantity: 1,
+          title: entry.description
+            .replace(/^Venta de /, '')
+            .replace(/ \(Cantidad: \d+\) - Orden #.*$/, ''),
+        },
+      }))
 
   return {
     billingAddress: undefined,
@@ -386,9 +499,19 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
     },
     name: `#${orderId}`,
     processedAt: firstEntry.date.toISOString(),
-    requiresShipping: false,
-    shippingAddress:
-      user.firstName && user.lastName
+    requiresShipping: shopifyOrderData?.requiresShipping ?? false,
+    shippingAddress: shopifyOrderData?.shippingAddress
+      ? {
+          address1: shopifyOrderData.shippingAddress.address1,
+          address2: shopifyOrderData.shippingAddress.address2,
+          city: shopifyOrderData.shippingAddress.city,
+          country: shopifyOrderData.shippingAddress.country,
+          firstName: shopifyOrderData.shippingAddress.firstName,
+          id: `shopify-address-${orderId}`,
+          lastName: shopifyOrderData.shippingAddress.lastName,
+          zip: shopifyOrderData.shippingAddress.zip,
+        }
+      : user.firstName && user.lastName
         ? {
             address1: 'Dirección no disponible',
             city: 'Ciudad no disponible',
