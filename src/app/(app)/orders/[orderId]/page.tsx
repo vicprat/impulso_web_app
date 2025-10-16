@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 
+import { Guard } from '@/components/Guards'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,6 +24,8 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog } from '@/src/components/Dialog'
 import { Invoice } from '@/src/components/Invoce'
+import { CreateFulfillmentDialog } from '@/src/components/Orders/CreateFulfillmentDialog'
+import { PERMISSIONS } from '@/src/config/Permissions'
 import { formatCurrency, formatDate, getStatusColor } from '@/src/helpers'
 import { useDialog } from '@/src/hooks/useDialog'
 import { useCustomerOrderSmart } from '@/src/modules/customer/hooks'
@@ -38,11 +41,21 @@ export default function Page() {
   const router = useRouter()
   const orderId = params.orderId as string
 
-  const { data: orderDetail, error, isLoading } = useCustomerOrderSmart(orderId)
+  const orderQuery = useCustomerOrderSmart(orderId)
+  const { data: orderDetail, error, isLoading } = orderQuery
 
   const invoiceDialog = useDialog()
 
   const order = orderDetail?.order
+
+  const isEventOrder = order?.requiresShipping === false
+
+  const lineItemsForFulfillment =
+    order?.lineItems.edges.map((edge) => ({
+      id: edge.node.id,
+      quantity: edge.node.quantity,
+      title: edge.node.title,
+    })) ?? []
 
   if (isLoading) {
     return (
@@ -134,6 +147,18 @@ export default function Page() {
               </Button>
             )}
           </PDFDownloadLink>
+
+          <Guard.Permission permission={PERMISSIONS.MANAGE_ALL_ORDERS}>
+            {!isEventOrder && order?.requiresShipping && lineItemsForFulfillment.length > 0 && (
+              <CreateFulfillmentDialog
+                orderId={orderId}
+                lineItems={lineItemsForFulfillment}
+                onSuccess={() => {
+                  void orderQuery.refetch()
+                }}
+              />
+            )}
+          </Guard.Permission>
         </div>
       </div>
 
