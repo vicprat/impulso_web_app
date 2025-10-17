@@ -77,6 +77,12 @@ export default function ManageEventsPage() {
     draft: events.filter((p) => p.status === 'DRAFT').length,
     outOfStock: events.filter((p) => {
       const firstVariant = p.variants[0]
+      if (!firstVariant) return false
+
+      if (firstVariant.inventoryQuantity === null) {
+        return !firstVariant.availableForSale
+      }
+
       return !firstVariant.availableForSale || firstVariant.inventoryQuantity === 0
     }).length,
     total: events.length,

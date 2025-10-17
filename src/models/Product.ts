@@ -567,7 +567,13 @@ export class Product {
 
   public get isAvailable(): boolean {
     const variant = this.primaryVariant
-    return variant ? variant.availableForSale && (variant.inventoryQuantity ?? 0) > 0 : false
+    if (!variant) return false
+
+    if (variant.inventoryQuantity === null) {
+      return variant.availableForSale
+    }
+
+    return variant.availableForSale && variant.inventoryQuantity > 0
   }
 
   public get statusLabel(): string {

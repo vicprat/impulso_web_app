@@ -14,7 +14,7 @@ async function getPrimaryLocationId(): Promise<string> {
     {}
   )
 
-  const locationId = response.locations.edges[ 0 ]?.node?.id
+  const locationId = response.locations.edges[0]?.node?.id
   if (!locationId) {
     throw new Error('No se pudo encontrar una ubicación de Shopify para gestionar el inventario.')
   }
@@ -48,7 +48,8 @@ export async function GET() {
       }
 
       try {
-        const response = await makeAdminApiRequest<any>(`
+        const response = await makeAdminApiRequest<any>(
+          `
           query($after: String, $first: Int!, $query: String, $reverse: Boolean, $sortKey: ProductSortKeys) {
   products(after: $after, first: $first, query: $query, reverse: $reverse, sortKey: $sortKey) {
     edges {
@@ -95,7 +96,9 @@ export async function GET() {
     }
   }
 }
-        `, variables)
+        `,
+          variables
+        )
 
         const locationId = await getPrimaryLocationId()
         const products = response.products.edges.map((edge: any) => {
@@ -104,13 +107,22 @@ export async function GET() {
 
           return {
             // Procesar artworkDetails desde metafields
-get artworkDetails() {
+            get artworkDetails() {
               const details: any = {}
               for (const { node } of this.metafields) {
                 if (node.namespace === 'art_details') {
-                  const validKeys = [ 'medium', 'year', 'height', 'width', 'depth', 'serie', 'location', 'artist' ]
+                  const validKeys = [
+                    'medium',
+                    'year',
+                    'height',
+                    'width',
+                    'depth',
+                    'serie',
+                    'location',
+                    'artist',
+                  ]
                   if (validKeys.includes(node.key)) {
-                    details[ node.key ] = node.value
+                    details[node.key] = node.value
                   }
                 }
               }
@@ -125,100 +137,73 @@ get artworkDetails() {
                 year: details.year || null,
               }
             },
-            
-get autoTags() {
+
+            get autoTags() {
               return this.tags.filter((tag: string) => tag.startsWith('auto-'))
             },
-            
-descriptionHtml: productData.descriptionHtml,
-            
-get formattedPrice() {
+
+            descriptionHtml: productData.descriptionHtml,
+
+            get formattedPrice() {
               const variant = this.primaryVariant
               return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
             },
-            
 
-handle: productData.handle,
-            
+            handle: productData.handle,
 
+            id: productData.id,
 
-id: productData.id,
-            
+            images: [],
 
-
-images: [],
-            
-
-
-get isAvailable() {
+            get isAvailable() {
               const variant = this.primaryVariant
-              return variant ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0 : false
+              if (!variant) return false
+
+              if (variant.inventoryQuantity === null) {
+                return variant.availableForSale
+              }
+
+              return variant.availableForSale && variant.inventoryQuantity > 0
             },
-            
 
-
-// Procesar tags
-get manualTags() {
+            // Procesar tags
+            get manualTags() {
               return this.tags.filter((tag: string) => !tag.startsWith('auto-'))
-            }, 
-            
-
-// Array vacío para evitar errores
-media: [], 
-            
-
-metafields: productData.metafields.edges,
-            
-
-
-// Métodos del modelo Product
-get primaryVariant() {
-              return this.variants[ 0 ] || null
             },
-            
-            
 
+            // Array vacío para evitar errores
+            media: [],
 
+            metafields: productData.metafields.edges,
 
-productType: productData.productType,
-            
+            // Métodos del modelo Product
+            get primaryVariant() {
+              return this.variants[0] || null
+            },
 
+            productType: productData.productType,
 
+            status: productData.status,
 
+            tags: productData.tags,
 
-status: productData.status,
-            
+            title: productData.title,
 
-
-
-
-tags: productData.tags,
-            
-            
-
-
-
-title: productData.title,
-            
-            
-
-
-
-// Array vacío para evitar errores
-variants: productData.variants.edges.map((variantEdge: any) => ({
+            // Array vacío para evitar errores
+            variants: productData.variants.edges.map((variantEdge: any) => ({
               availableForSale: variantEdge.node.availableForSale,
               id: variantEdge.node.id,
-              inventoryManagement: variantEdge.node.inventoryItem.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
+              inventoryManagement: variantEdge.node.inventoryItem.tracked
+                ? 'SHOPIFY'
+                : 'NOT_MANAGED',
               inventoryPolicy: variantEdge.node.inventoryPolicy,
               inventoryQuantity: variantEdge.node.inventoryQuantity,
               price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
               sku: variantEdge.node.sku,
-              title: variantEdge.node.title
+              title: variantEdge.node.title,
             })),
-            
 
-
-vendor: productData.vendor
+            vendor: productData.vendor,
           }
         })
         allProducts.push(...products)
@@ -233,11 +218,11 @@ vendor: productData.vendor
         }
 
         // Delay para evitar throttling
-        await new Promise(resolve => setTimeout(resolve, 200))
+        await new Promise((resolve) => setTimeout(resolve, 200))
       } catch (error: any) {
         if (error.message?.includes('Throttled')) {
           console.log('Throttled, esperando 2 segundos...')
-          await new Promise(resolve => setTimeout(resolve, 2000))
+          await new Promise((resolve) => setTimeout(resolve, 2000))
           continue
         }
         throw error
@@ -252,15 +237,15 @@ vendor: productData.vendor
       averagePrice:
         products.length > 0
           ? products.reduce(
-            (sum: number, p: any) => sum + parseFloat(p.primaryVariant?.price?.amount ?? '0'),
-            0
-          ) / products.length
+              (sum: number, p: any) => sum + parseFloat(p.primaryVariant?.price?.amount ?? '0'),
+              0
+            ) / products.length
           : 0,
       draftProducts: products.filter((p) => p.status === 'DRAFT').length,
       productsByArtist: products.reduce(
         (acc: Record<string, number>, product: any) => {
           const artist = product.vendor ?? 'Sin artista'
-          acc[ artist ] = (acc[ artist ] ?? 0) + 1
+          acc[artist] = (acc[artist] ?? 0) + 1
           return acc
         },
         {} as Record<string, number>
@@ -268,52 +253,50 @@ vendor: productData.vendor
       productsByCategory: products.reduce(
         (acc: Record<string, number>, product: any) => {
           const category = product.productType ?? 'Sin categoría'
-          acc[ category ] = (acc[ category ] ?? 0) + 1
+          acc[category] = (acc[category] ?? 0) + 1
           return acc
         },
         {} as Record<string, number>
       ),
-      
-productsByLocation: products.reduce(
+
+      productsByLocation: products.reduce(
         (acc: Record<string, number>, product: any) => {
           const location = product.artworkDetails?.location || 'Sin ubicación especificada'
-          acc[ location ] = (acc[ location ] || 0) + 1
+          acc[location] = (acc[location] || 0) + 1
           return acc
         },
         {} as Record<string, number>
       ),
-      
 
-productsByMedium: products.reduce(
+      productsByMedium: products.reduce(
         (acc: Record<string, number>, product: any) => {
           const medium = product.artworkDetails?.medium || 'Sin medio especificado'
-          acc[ medium ] = (acc[ medium ] || 0) + 1
+          acc[medium] = (acc[medium] || 0) + 1
           return acc
         },
         {} as Record<string, number>
       ),
-      
-      
-productsBySerie: products.reduce(
+
+      productsBySerie: products.reduce(
         (acc: Record<string, number>, product: any) => {
           const serie = product.artworkDetails?.serie || 'Sin serie especificada'
-          acc[ serie ] = (acc[ serie ] || 0) + 1
+          acc[serie] = (acc[serie] || 0) + 1
           return acc
         },
         {} as Record<string, number>
       ),
-      
-productsByYear: products.reduce(
+
+      productsByYear: products.reduce(
         (acc: Record<string, number>, product: any) => {
           const year = product.artworkDetails?.year || 'Sin año especificado'
-          acc[ year ] = (acc[ year ] || 0) + 1
+          acc[year] = (acc[year] || 0) + 1
           return acc
         },
         {} as Record<string, number>
       ),
-      
-// Información detallada de productos
-productsDetails: products.map(product => ({
+
+      // Información detallada de productos
+      productsDetails: products.map((product) => ({
         artworkDetails: product.artworkDetails,
         autoTags: product.autoTags,
         id: product.id,
@@ -324,24 +307,21 @@ productsDetails: products.map(product => ({
         status: product.status,
         tags: product.tags,
         title: product.title,
-        vendor: product.vendor
+        vendor: product.vendor,
       })),
-      
-// Métricas enriquecidas con datos de artwork
-productsWithArtworkDetails: products.filter(p =>
-        p.artworkDetails && Object.values(p.artworkDetails).some(value => value !== null)
+
+      // Métricas enriquecidas con datos de artwork
+      productsWithArtworkDetails: products.filter(
+        (p) => p.artworkDetails && Object.values(p.artworkDetails).some((value) => value !== null)
       ).length,
-      
-totalInventoryValue: products.reduce(
-        (sum: number, p: any) => {
-          const price = parseFloat(p.primaryVariant?.price?.amount ?? '0')
-          const quantity = p.primaryVariant?.inventoryQuantity ?? 0
-          return sum + (price * quantity)
-        },
-        0
-      ),
-      
-      totalProducts: products.length
+
+      totalInventoryValue: products.reduce((sum: number, p: any) => {
+        const price = parseFloat(p.primaryVariant?.price?.amount ?? '0')
+        const quantity = p.primaryVariant?.inventoryQuantity ?? 0
+        return sum + price * quantity
+      }, 0),
+
+      totalProducts: products.length,
     }
 
     return NextResponse.json({ data })

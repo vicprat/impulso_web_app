@@ -201,11 +201,11 @@ export class Event {
     const variant = this.primaryVariant
     if (!variant) return false
 
-    if (variant.inventoryManagement === 'NOT_MANAGED') {
+    if (variant.inventoryManagement === 'NOT_MANAGED' || variant.inventoryQuantity === null) {
       return variant.availableForSale
     }
 
-    return variant.availableForSale && (variant.inventoryQuantity ?? 0) > 0
+    return variant.availableForSale && variant.inventoryQuantity > 0
   }
 
   public get availableForSale(): boolean {

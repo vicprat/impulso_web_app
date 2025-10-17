@@ -273,9 +273,13 @@ export async function GET() {
 
             get isAvailable() {
               const variant = this.primaryVariant
-              return variant
-                ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0
-                : false
+              if (!variant) return false
+
+              if (variant.inventoryQuantity === null) {
+                return variant.availableForSale
+              }
+
+              return variant.availableForSale && variant.inventoryQuantity > 0
             },
 
             // Procesar tags
@@ -478,9 +482,13 @@ export async function GET() {
 
             get isAvailable() {
               const variant = this.primaryVariant
-              return variant
-                ? variant.availableForSale && (variant.inventoryQuantity || 0) > 0
-                : false
+              if (!variant) return false
+
+              if (variant.inventoryQuantity === null) {
+                return variant.availableForSale
+              }
+
+              return variant.availableForSale && variant.inventoryQuantity > 0
             },
 
             get isPastEvent() {
@@ -772,14 +780,14 @@ export async function GET() {
     const recentActivity = combinedRecentActivity
 
     const totalProducts = products.length
-    const lowStock = products.filter(
-      (p) =>
-        (p.primaryVariant?.inventoryQuantity ?? 0) < 5 &&
-        (p.primaryVariant?.inventoryQuantity ?? 0) > 0
-    ).length
-    const outOfStock = products.filter(
-      (p) => (p.primaryVariant?.inventoryQuantity ?? 0) === 0
-    ).length
+    const lowStock = products.filter((p) => {
+      const qty = p.primaryVariant?.inventoryQuantity
+      return qty !== null && qty !== undefined && qty < 5 && qty > 0
+    }).length
+    const outOfStock = products.filter((p) => {
+      const qty = p.primaryVariant?.inventoryQuantity
+      return qty !== null && qty !== undefined && qty === 0
+    }).length
     const totalInventoryValue = products.reduce((sum, product) => {
       const price = parseFloat(product.primaryVariant?.price?.amount ?? '0')
       const quantity = product.primaryVariant?.inventoryQuantity ?? 0
