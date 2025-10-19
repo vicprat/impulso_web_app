@@ -251,6 +251,21 @@ export const useGetLocations = () => {
   })
 }
 
+export const useGetLocationHistory = (productId: string | null) => {
+  return useQuery({
+    enabled: !!productId,
+    queryFn: async () => {
+      if (!productId) throw new Error('Product ID is required')
+
+      const identifier = productId.includes('/') ? productId.split('/').pop() : productId
+      const { data } = await axios.get(`/api/products/${identifier}/location-history`)
+      return data
+    },
+    queryKey: ['locationHistory', productId],
+    staleTime: 2 * 60 * 1000,
+  })
+}
+
 export const useGetCurrentUser = () => {
   return useQuery({
     queryFn: async () => {

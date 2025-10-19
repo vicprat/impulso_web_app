@@ -6,13 +6,16 @@ import {
   ArrowLeft,
   Box,
   Calendar,
+  Clock,
   DollarSign,
   Edit2,
   ExternalLink,
   FileText,
   Hash,
+  History,
   Image as ImageIcon,
   Inbox,
+  MapPin,
   Package,
   Palette,
   Plus,
@@ -21,7 +24,7 @@ import {
   Tag,
   Trash2,
   User,
-  Warehouse
+  Warehouse,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -43,11 +46,18 @@ import {
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useDeleteProduct, useGetArtworkTypes, useGetLocations, useGetProduct, useGetTechniques, useUpdateProduct } from '@/services/product/hook'
+import {
+  useDeleteProduct,
+  useGetArtworkTypes,
+  useGetLocationHistory,
+  useGetLocations,
+  useGetProduct,
+  useGetTechniques,
+  useUpdateProduct,
+} from '@/services/product/hook'
 import { type UpdateProductPayload } from '@/services/product/types'
-import { replaceRouteParams, ROUTES } from '@/src/config/routes'
+import { ROUTES, replaceRouteParams } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
-
 
 export const dynamic = 'force-dynamic'
 
@@ -64,8 +74,8 @@ const AddOptionDropdown = ({
   placeholder: string
   label: string
 }) => {
-  const [ isAdding, setIsAdding ] = useState(false)
-  const [ newValue, setNewValue ] = useState('')
+  const [isAdding, setIsAdding] = useState(false)
+  const [newValue, setNewValue] = useState('')
 
   const handleAddNew = async () => {
     if (!newValue.trim()) return
@@ -76,7 +86,9 @@ const AddOptionDropdown = ({
       setNewValue('')
       toast.success(`${label} agregado exitosamente`)
     } catch (error) {
-      toast.error(`Error al agregar ${label}: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+      toast.error(
+        `Error al agregar ${label}: ${error instanceof Error ? error.message : 'Error desconocido'}`
+      )
     } finally {
       setIsAdding(false)
     }
@@ -98,12 +110,7 @@ const AddOptionDropdown = ({
             ))}
           </SelectContent>
         </Select>
-        <Button
-          variant='outline'
-          size='sm'
-          onClick={() => setIsAdding(true)}
-          disabled={isLoading}
-        >
+        <Button variant='outline' size='sm' onClick={() => setIsAdding(true)} disabled={isLoading}>
           <Plus className='size-4' />
         </Button>
       </div>
@@ -125,11 +132,7 @@ const AddOptionDropdown = ({
             }}
             autoFocus
           />
-          <Button
-            size='sm'
-            onClick={handleAddNew}
-            disabled={!newValue.trim()}
-          >
+          <Button size='sm' onClick={handleAddNew} disabled={!newValue.trim()}>
             Agregar
           </Button>
           <Button
@@ -148,12 +151,10 @@ const AddOptionDropdown = ({
   )
 }
 
-
-
 export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [ isEditing, setIsEditing ] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const queryClient = useQueryClient()
 
   const productId = params.id as string
@@ -164,6 +165,10 @@ export default function ProductDetailPage() {
   const { data: techniques = [], isLoading: isLoadingTechniques } = useGetTechniques()
   const { data: artworkTypes = [], isLoading: isLoadingArtworkTypes } = useGetArtworkTypes()
   const { data: locations = [], isLoading: isLoadingLocations } = useGetLocations()
+
+  // Hook para obtener el historial de ubicaciones
+  const { data: locationHistory = [], isLoading: isLoadingHistory } =
+    useGetLocationHistory(productId)
 
   const updateMutation = useUpdateProduct()
   const deleteMutation = useDeleteProduct()
@@ -224,9 +229,9 @@ export default function ProductDetailPage() {
     }
 
     // Invalidar las queries para refrescar las opciones
-    await queryClient.invalidateQueries({ queryKey: [ 'techniques' ] })
-    await queryClient.invalidateQueries({ queryKey: [ 'artwork_types' ] })
-    await queryClient.invalidateQueries({ queryKey: [ 'locations' ] })
+    await queryClient.invalidateQueries({ queryKey: ['techniques'] })
+    await queryClient.invalidateQueries({ queryKey: ['artwork_types'] })
+    await queryClient.invalidateQueries({ queryKey: ['locations'] })
   }
 
   const handleNavigateBack = () => {
@@ -275,16 +280,14 @@ export default function ProductDetailPage() {
             <p className='mb-4 text-muted-foreground'>
               El producto que buscas no existe o no tienes permisos para verlo.
             </p>
-            <Button onClick={handleNavigateBack}>
-              Volver al listado
-            </Button>
+            <Button onClick={handleNavigateBack}>Volver al listado</Button>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  const variant = product.variants && product.variants.length > 0 ? product.variants[ 0 ] : undefined
+  const variant = product.variants && product.variants.length > 0 ? product.variants[0] : undefined
 
   const getAvailabilityVariant = (available: boolean) => {
     return available ? 'default' : 'destructive'
@@ -323,7 +326,9 @@ export default function ProductDetailPage() {
                       {product.status}
                     </Badge>
                   </div>
-                  <p className='text-sm text-on-surface-variant'>ID: {product.id.split('/').pop()}</p>
+                  <p className='text-sm text-on-surface-variant'>
+                    ID: {product.id.split('/').pop()}
+                  </p>
                 </div>
               </div>
 
@@ -385,7 +390,9 @@ export default function ProductDetailPage() {
                           <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
                             Título
                           </Label>
-                          <p className='mt-1 text-sm font-medium text-on-surface'>{product.title}</p>
+                          <p className='mt-1 text-sm font-medium text-on-surface'>
+                            {product.title}
+                          </p>
                         </div>
                         <div>
                           <Label className='text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
@@ -413,7 +420,9 @@ export default function ProductDetailPage() {
                           </Label>
                           <div className='mt-1 flex items-center gap-2'>
                             <Package className='size-3 text-on-surface-variant' />
-                            <p className='text-sm font-medium text-on-surface'>{product.productType}</p>
+                            <p className='text-sm font-medium text-on-surface'>
+                              {product.productType}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -426,10 +435,10 @@ export default function ProductDetailPage() {
                             Descripción
                           </Label>
                           <div
-                            className="prose prose-sm prose-slate max-w-none dark:prose-invert 
+                            className='prose prose-sm prose-slate max-w-none dark:prose-invert 
                    prose-headings:text-foreground prose-p:text-muted-foreground 
                    prose-strong:text-foreground prose-code:text-foreground
-                   prose-pre:border prose-pre:bg-muted"
+                   prose-pre:border prose-pre:bg-muted'
                             dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
                           />
                         </div>
@@ -468,7 +477,9 @@ export default function ProductDetailPage() {
                         {product.images.length > 8 && (
                           <div className='flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-outline-variant bg-surface-container-high'>
                             <div className='text-center'>
-                              <p className='text-sm font-bold text-on-surface'>+{product.images.length - 8}</p>
+                              <p className='text-sm font-bold text-on-surface'>
+                                +{product.images.length - 8}
+                              </p>
                             </div>
                           </div>
                         )}
@@ -505,13 +516,18 @@ export default function ProductDetailPage() {
                           </div>
                         </div>
                       )}
-                      {(product.artworkDetails.width || product.artworkDetails.height || product.artworkDetails.depth) && (
+                      {(product.artworkDetails.width ||
+                        product.artworkDetails.height ||
+                        product.artworkDetails.depth) && (
                         <div className='flex items-center gap-2'>
                           <Ruler className='size-4 text-on-surface-variant' />
                           <div>
                             <Label className='text-xs text-on-surface-variant'>Medidas (cm)</Label>
                             <p className='text-sm font-medium'>
-                              {product.artworkDetails.height} x {product.artworkDetails.width} {product.artworkDetails.depth ? `x ${product.artworkDetails.depth}` : ''}
+                              {product.artworkDetails.height} x {product.artworkDetails.width}{' '}
+                              {product.artworkDetails.depth
+                                ? `x ${product.artworkDetails.depth}`
+                                : ''}
                             </p>
                           </div>
                         </div>
@@ -573,7 +589,9 @@ export default function ProductDetailPage() {
                   <CardContent className='space-y-4'>
                     <div className='text-center'>
                       <div className='mb-1 text-3xl font-bold text-on-primary-container'>
-                        {variant?.price ? formatCurrency(variant.price.amount, variant.price.currencyCode) : 'N/A'}
+                        {variant?.price
+                          ? formatCurrency(variant.price.amount, variant.price.currencyCode)
+                          : 'N/A'}
                       </div>
                     </div>
                     {variant?.sku && (
@@ -601,7 +619,9 @@ export default function ProductDetailPage() {
                         <Package className='size-4 text-on-surface-variant' />
                         <span className='text-sm font-medium'>Cantidad</span>
                       </div>
-                      <span className='text-lg font-semibold'>{variant?.inventoryQuantity ?? 0}</span>
+                      <span className='text-lg font-semibold'>
+                        {variant?.inventoryQuantity ?? 0}
+                      </span>
                     </div>
                     <div className='flex items-center justify-between'>
                       <div className='flex items-center gap-2'>
@@ -617,7 +637,9 @@ export default function ProductDetailPage() {
                         <Settings className='size-4 text-on-surface-variant' />
                         <span className='text-sm font-medium'>Gestión</span>
                       </div>
-                      <span className='text-sm text-muted-foreground'>{variant?.inventoryManagement ?? 'N/A'}</span>
+                      <span className='text-sm text-muted-foreground'>
+                        {variant?.inventoryManagement ?? 'N/A'}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
@@ -651,6 +673,82 @@ export default function ProductDetailPage() {
                       placeholder='Seleccionar ubicación'
                       label='Ubicaciones'
                     />
+                  </CardContent>
+                </Card>
+
+                {/* Historial de Ubicaciones */}
+                <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='flex items-center gap-2 text-on-surface'>
+                      <History className='size-5 text-primary' />
+                      Historial de Ubicaciones
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingHistory ? (
+                      <div className='space-y-3'>
+                        <Skeleton className='h-16 w-full' />
+                        <Skeleton className='h-16 w-full' />
+                      </div>
+                    ) : locationHistory.length > 0 ? (
+                      <div className='space-y-3'>
+                        {locationHistory.map(
+                          (entry: {
+                            id: string
+                            location: { name: string } | null
+                            notes: string | null
+                            changedAt: string
+                          }) => (
+                            <div
+                              key={entry.id}
+                              className='rounded-lg border border-outline-variant bg-surface-container-lowest p-3 transition-colors hover:bg-surface-container-low'
+                            >
+                              <div className='flex items-start justify-between'>
+                                <div className='flex items-start gap-2'>
+                                  <MapPin className='mt-0.5 size-4 text-on-surface-variant' />
+                                  <div>
+                                    <p className='font-medium text-on-surface'>
+                                      {entry.location?.name || 'Sin ubicación'}
+                                    </p>
+                                    {entry.notes && (
+                                      <p className='mt-0.5 text-xs text-on-surface-variant'>
+                                        {entry.notes}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className='flex flex-col items-end'>
+                                  <div className='flex items-center gap-1 text-xs text-on-surface-variant'>
+                                    <Clock className='size-3' />
+                                    {new Date(entry.changedAt).toLocaleDateString('es-ES', {
+                                      day: '2-digit',
+                                      month: 'short',
+                                      year: 'numeric',
+                                    })}
+                                  </div>
+                                  <p className='mt-0.5 text-xs text-on-surface-variant'>
+                                    {new Date(entry.changedAt).toLocaleTimeString('es-ES', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    ) : (
+                      <div className='rounded-lg border-2 border-dashed border-outline-variant bg-surface-container-lowest p-6 text-center'>
+                        <MapPin className='mx-auto mb-2 size-8 text-on-surface-variant opacity-50' />
+                        <p className='text-sm text-on-surface-variant'>
+                          No hay historial de ubicaciones
+                        </p>
+                        <p className='mt-1 text-xs text-on-surface-variant'>
+                          Los cambios de ubicación se registrarán aquí
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 

@@ -287,13 +287,47 @@ model ArtworkType {
 }
 
 model Location {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String            @id @default(cuid())
+  name            String            @unique
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  currentProducts Product[]         @relation("CurrentLocation")
+  locationHistory LocationHistory[]
 
   @@map("locations")
+}
+
+model Product {
+  id                String            @id
+  shopifyGid        String            @unique
+  title             String?
+  handle            String?
+  vendor            String?
+  currentLocationId String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  currentLocation   Location?         @relation("CurrentLocation", fields: [currentLocationId], references: [id])
+  locationHistory   LocationHistory[]
+
+  @@index([currentLocationId])
+  @@map("products")
+}
+
+model LocationHistory {
+  id         String    @id @default(cuid())
+  productId  String
+  locationId String?
+  changedAt  DateTime  @default(now())
+  changedBy  String?
+  notes      String?
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  @@index([productId])
+  @@index([locationId])
+  @@index([changedAt])
+  @@map("location_history")
 }
 
 model Event {

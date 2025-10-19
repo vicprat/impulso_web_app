@@ -4,6 +4,7 @@ import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { Product } from '@/models/Product'
 import { type AuthSession } from '@/modules/auth/service'
 
+import { locationTrackingService } from './location-tracking'
 import {
   CREATE_PRODUCT_MUTATION,
   DELETE_PRODUCT_MUTATION,
@@ -712,6 +713,30 @@ async function createProduct(
     throw new Error('Error al obtener el producto creado')
   }
 
+  // Registrar ubicación inicial si se proporcionó
+  if (payload.details?.location) {
+    try {
+      let locationIdToTrack: string | null = null
+
+      const location = await prisma.location.findFirst({
+        where: { name: payload.details.location },
+      })
+      locationIdToTrack = location?.id || null
+
+      await locationTrackingService.createLocationHistory({
+        changedBy: session.user.id,
+        handle: finalProduct.handle,
+        locationId: locationIdToTrack,
+        productId: finalProduct.id,
+        shopifyGid: finalProduct.id,
+        title: finalProduct.title,
+        vendor: finalProduct.vendor,
+      })
+    } catch (locationError) {
+      console.error('Error tracking initial location:', locationError)
+    }
+  }
+
   return finalProduct
 }
 
@@ -1058,6 +1083,32 @@ async function updateProduct(
     } catch (imageError) {
       console.error('Error al eliminar imágenes del producto:', imageError)
       // No lanzar error aquí para no interrumpir la actualización del producto
+    }
+  }
+
+  // Registrar cambio de ubicación si se proporcionó una nueva
+  if (payload.details?.location !== undefined) {
+    try {
+      let locationIdToTrack: string | null = null
+
+      if (payload.details.location) {
+        const location = await prisma.location.findFirst({
+          where: { name: payload.details.location },
+        })
+        locationIdToTrack = location?.id || null
+      }
+
+      await locationTrackingService.createLocationHistory({
+        changedBy: session.user.id,
+        handle: existingProduct.handle,
+        locationId: locationIdToTrack,
+        productId: existingProduct.id,
+        shopifyGid: existingProduct.id,
+        title: existingProduct.title,
+        vendor: existingProduct.vendor,
+      })
+    } catch (locationError) {
+      console.error('Error tracking location change:', locationError)
     }
   }
 
