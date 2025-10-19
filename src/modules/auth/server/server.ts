@@ -28,7 +28,23 @@ export async function getServerSession(): Promise<ServerSession> {
     }
 
     const authService = new AuthService(authConfig)
-    return await authService.getSessionByAccessToken(accessToken)
+    let session = await authService.getSessionByAccessToken(accessToken)
+
+    if (!session) {
+      const refreshToken = (await cookieStore).get('refresh_token')?.value
+      if (refreshToken) {
+        try {
+          const refreshedSession = await authService.refreshSession(refreshToken.trim())
+          if (refreshedSession) {
+            session = refreshedSession
+          }
+        } catch (refreshError) {
+          console.error('Auto-refresh failed in getServerSession:', refreshError)
+        }
+      }
+    }
+
+    return session
   } catch (error) {
     console.error('Server session error:', error)
     return null

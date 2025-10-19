@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
 import { type Cart } from '@/modules/cart/types'
 
@@ -8,10 +8,112 @@ import { type AuthContextType, type AuthMeResponse, type User } from '../types'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [cart, setCart] = useState<Cart | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const scheduleTokenRefresh = useCallback((expiresAt: Date) => {
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current)
+    }
+
+    const now = Date.now()
+    const expiryTime = new Date(expiresAt).getTime()
+    const timeUntilRefresh = expiryTime - now - REFRESH_BEFORE_EXPIRY_MS
+
+    if (timeUntilRefresh > 0) {
+      refreshTimeoutRef.current = setTimeout(async () => {
+        try {
+          const response = await fetch('/api/auth/refresh', {
+            credentials: 'include',
+            method: 'POST',
+          })
+          if (response.ok) {
+            const data: AuthMeResponse = await response.json()
+            setUser(data.user)
+            setCart(data.cart)
+
+            const nextExpiresAt = new Date(data.expiresAt)
+            scheduleTokenRefresh(nextExpiresAt)
+          } else {
+            setUser(null)
+            setCart(null)
+            if (refreshTimeoutRef.current) {
+              clearTimeout(refreshTimeoutRef.current)
+            }
+          }
+        } catch {
+          setUser(null)
+          setCart(null)
+          if (refreshTimeoutRef.current) {
+            clearTimeout(refreshTimeoutRef.current)
+          }
+        }
+      }, timeUntilRefresh)
+    } else {
+      void (async () => {
+        try {
+          const response = await fetch('/api/auth/refresh', {
+            credentials: 'include',
+            method: 'POST',
+          })
+          if (response.ok) {
+            const data: AuthMeResponse = await response.json()
+            setUser(data.user)
+            setCart(data.cart)
+
+            const nextExpiresAt = new Date(data.expiresAt)
+            scheduleTokenRefresh(nextExpiresAt)
+          } else {
+            setUser(null)
+            setCart(null)
+            if (refreshTimeoutRef.current) {
+              clearTimeout(refreshTimeoutRef.current)
+            }
+          }
+        } catch {
+          setUser(null)
+          setCart(null)
+          if (refreshTimeoutRef.current) {
+            clearTimeout(refreshTimeoutRef.current)
+          }
+        }
+      })()
+    }
+  }, [])
+
+  const refresh = useCallback(async () => {
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        credentials: 'include',
+        method: 'POST',
+      })
+      if (response.ok) {
+        const data: AuthMeResponse = await response.json()
+        setUser(data.user)
+        setCart(data.cart)
+
+        const expiresAt = new Date(data.expiresAt)
+        scheduleTokenRefresh(expiresAt)
+      } else {
+        setUser(null)
+        setCart(null)
+        if (refreshTimeoutRef.current) {
+          clearTimeout(refreshTimeoutRef.current)
+        }
+      }
+    } catch {
+      setUser(null)
+      setCart(null)
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
+    }
+  }, [scheduleTokenRefresh])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -28,6 +130,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const data: AuthMeResponse = await response.json()
           setUser(data.user)
           setCart(data.cart)
+
+          const expiresAt = new Date(data.expiresAt)
+          scheduleTokenRefresh(expiresAt)
         } else {
           setUser(null)
           setCart(null)
@@ -48,8 +153,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       controller.abort()
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
     }
-  }, [])
+  }, [scheduleTokenRefresh])
 
   const login = useCallback(() => {
     window.location.href = '/api/auth/login'
@@ -57,6 +165,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
+
       const response = await fetch('/api/auth/logout', {
         credentials: 'include',
         method: 'POST',
@@ -64,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json()
       setUser(null)
       setCart(null)
+
       if (data.shopifyLogoutUrl) {
         window.location.href = data.shopifyLogoutUrl
       } else {
@@ -73,26 +186,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setCart(null)
       window.location.href = '/'
-    }
-  }, [])
-
-  const refresh = useCallback(async () => {
-    try {
-      const response = await fetch('/api/auth/refresh', {
-        credentials: 'include',
-        method: 'POST',
-      })
-      if (response.ok) {
-        const data: AuthMeResponse = await response.json()
-        setUser(data.user)
-        setCart(data.cart)
-      } else {
-        setUser(null)
-        setCart(null)
-      }
-    } catch {
-      setUser(null)
-      setCart(null)
     }
   }, [])
 

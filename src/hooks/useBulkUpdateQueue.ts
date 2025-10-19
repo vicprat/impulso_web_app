@@ -45,6 +45,9 @@ export function useBulkUpdateQueue<T = any>(
   // Flag para evitar múltiples llamadas a onComplete
   const hasCompletedRef = useRef(false)
 
+  // Flag para evitar iniciar procesamiento múltiples veces
+  const isStartingRef = useRef(false)
+
   const [queue, setQueue] = useState<BulkUpdateQueue<T>>({
     isProcessing: false,
     items: [],
@@ -57,8 +60,9 @@ export function useBulkUpdateQueue<T = any>(
   })
 
   const addItems = useCallback((items: T[]) => {
-    // Resetear el flag de completado cuando se agregan nuevos items
+    // Resetear los flags cuando se agregan nuevos items
     hasCompletedRef.current = false
+    isStartingRef.current = false
 
     const bulkItems: BulkUpdateItem<T>[] = items.map((item, index) => {
       // Extraer el ID numérico de Shopify si existe, o usar el ID original
@@ -71,7 +75,7 @@ export function useBulkUpdateQueue<T = any>(
         data: item,
         id: String(itemId) || `bulk-${index}-${index}-${Math.random().toString(36).substr(2, 9)}`,
         retryCount: 0,
-        status: 'pending',
+        status: 'pending' as const,
       }
     })
 
@@ -97,6 +101,10 @@ export function useBulkUpdateQueue<T = any>(
   }, [])
 
   const clearQueue = useCallback(() => {
+    // Resetear flags
+    isStartingRef.current = false
+    hasCompletedRef.current = false
+
     // Detener cualquier procesamiento en curso
     setQueue((prev) => ({
       ...prev,
@@ -111,16 +119,13 @@ export function useBulkUpdateQueue<T = any>(
     }))
   }, [])
 
-  const processQueue = useCallback(async () => {
-    if (queue.isProcessing || queue.items.length === 0) return
-
-    setQueue((prev) => ({ ...prev, isProcessing: true }))
-
-    const pendingItems = queue.items.filter((item) => item.status === 'pending')
+  const startProcessing = useCallback(() => {
     const processingItems = new Set<string>()
 
     const processItem = async (item: BulkUpdateItem<T>) => {
-      if (processingItems.has(item.id)) return
+      if (processingItems.has(item.id)) {
+        return
+      }
 
       processingItems.add(item.id)
 
@@ -149,7 +154,6 @@ export function useBulkUpdateQueue<T = any>(
         }))
 
         onItemSuccess?.(item)
-        // No mostrar toast individual - solo se mostrará uno al final
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
 
@@ -259,15 +263,14 @@ export function useBulkUpdateQueue<T = any>(
             // Solo continuar si aún hay items pendientes y no se ha detenido el procesamiento
             setQueue((currentState) => {
               if (!currentState.isProcessing) {
-                // El procesamiento se detuvo, no continuar
                 return currentState
               }
 
               const stillPending = currentState.items.filter((item) => item.status === 'pending')
+
               if (stillPending.length > 0) {
                 void processBatch()
               } else {
-                // No hay más items pendientes, marcar como completado
                 setQueue((prev) => ({ ...prev, isProcessing: false }))
                 // Solo llamar onComplete si no se ha llamado antes
                 if (!hasCompletedRef.current) {
@@ -295,6 +298,35 @@ export function useBulkUpdateQueue<T = any>(
     onItemError,
     onComplete,
   ])
+
+  const processQueue = useCallback(() => {
+    // Verificar y establecer el flag de inicio ANTES de cualquier otra cosa
+    if (isStartingRef.current) {
+      return
+    }
+
+    // Marcar inmediatamente que se está iniciando
+    isStartingRef.current = true
+
+    // Programar el setTimeout UNA SOLA VEZ aquí, FUERA de setQueue
+    setTimeout(() => {
+      isStartingRef.current = false
+      startProcessing()
+    }, 10)
+
+    // Actualizar el estado
+    setQueue((prev) => {
+      if (prev.isProcessing) {
+        return prev
+      }
+
+      if (prev.items.length === 0) {
+        return prev
+      }
+
+      return { ...prev, isProcessing: true }
+    })
+  }, [startProcessing])
 
   const retryItem = useCallback((id: string) => {
     setQueue((prev) => ({

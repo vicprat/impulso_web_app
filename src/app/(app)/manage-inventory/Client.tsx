@@ -958,6 +958,12 @@ export function Client() {
               Gestionar Colecciones
             </Button>
           </Link>
+          <Link href='/manage-inventory/create-bulk'>
+            <Button variant='outline' className='bg-indigo-50 text-indigo-700 hover:bg-indigo-100'>
+              <PlusCircle className='mr-2 size-4' />
+              Creación en Lote
+            </Button>
+          </Link>
           <Link href={ROUTES.INVENTORY.CREATE.PATH}>
             <Button>
               <PlusCircle className='mr-2 size-4' />

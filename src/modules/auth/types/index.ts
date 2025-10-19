@@ -1,4 +1,4 @@
-import { type Links, type Profile, type Artist } from '@prisma/client'
+import { type Artist, type Links, type Profile } from '@prisma/client'
 
 import { type Cart } from '@/modules/cart/types'
 
@@ -31,7 +31,7 @@ export interface AuthContextType {
 
 export interface AuthMeResponse {
   user: User
-  expiresAt: string
+  expiresAt: string | Date
   refreshed: boolean
   cart: Cart | null
 }
