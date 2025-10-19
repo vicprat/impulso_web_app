@@ -52,6 +52,8 @@ export default function OrdersPage() {
           lineItemsCount: edge.node.lineItemsCount,
           name: edge.node.name,
           processedAt: edge.node.processedAt,
+          requiresShipping: edge.node.requiresShipping,
+          shippingLine: edge.node.shippingLine,
           totalPrice: {
             amount: edge.node.totalPrice.amount,
             currencyCode: edge.node.totalPrice.currencyCode,

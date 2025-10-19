@@ -242,6 +242,11 @@ export const GET_ALL_ORDERS_QUERY = `
           displayFulfillmentStatus
           displayFinancialStatus
           currencyCode
+          requiresShipping
+          shippingLine {
+            title
+            code
+          }
           totalPriceSet {
             shopMoney {
               amount

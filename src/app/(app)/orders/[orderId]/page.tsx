@@ -162,6 +162,23 @@ export default function Page() {
         </div>
       </div>
 
+      {!order.requiresShipping && (
+        <Card className='bg-success-container/20 border-success shadow-elevation-1'>
+          <CardContent className='flex items-start gap-3 pt-6'>
+            <CheckCircle className='mt-0.5 size-5 text-success' />
+            <div>
+              <p className='font-medium text-on-success-container'>
+                Orden Digital - No Requiere Envío
+              </p>
+              <p className='text-on-success-container/80 text-sm'>
+                Esta orden contiene tickets o entradas digitales para eventos. Los tickets se han
+                generado automáticamente y están disponibles en el perfil del cliente.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className='bg-card shadow-elevation-1'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2 text-foreground'>
@@ -181,9 +198,15 @@ export default function Page() {
             <div className='flex flex-col items-center space-y-2 rounded-lg bg-surface-container p-4'>
               <Package className='size-6 text-muted-foreground' />
               <span className='text-sm text-muted-foreground'>Cumplimiento</span>
-              <Badge className={getStatusColor(order.fulfillmentStatus, 'fulfillment')}>
-                {order.fulfillmentStatus}
-              </Badge>
+              {order.requiresShipping === false ? (
+                <Badge className='bg-success-container text-on-success-container'>
+                  Entrega Digital
+                </Badge>
+              ) : (
+                <Badge className={getStatusColor(order.fulfillmentStatus, 'fulfillment')}>
+                  {order.fulfillmentStatus}
+                </Badge>
+              )}
             </div>
             <div className='flex flex-col items-center space-y-2 rounded-lg bg-surface-container p-4'>
               <Calendar className='size-6 text-muted-foreground' />
@@ -264,17 +287,23 @@ export default function Page() {
               <span>{order.email}</span>
             </div>
             <div>
-              <span className='block font-medium text-foreground'>Requiere Envío:</span>
+              <span className='block font-medium text-foreground'>Tipo de Entrega:</span>
               <Badge
                 className={
                   order.requiresShipping
                     ? 'bg-primary-container text-on-primary-container'
-                    : 'bg-muted'
+                    : 'bg-success-container text-on-success-container'
                 }
               >
-                {order.requiresShipping ? 'Sí' : 'No'}
+                {order.requiresShipping ? 'Envío Físico' : 'Digital (Eventos/Tickets)'}
               </Badge>
             </div>
+            {'shippingLine' in order && order.shippingLine && (
+              <div>
+                <span className='block font-medium text-foreground'>Método de Envío:</span>
+                <span>{order.shippingLine.title}</span>
+              </div>
+            )}
             {order.statusPageUrl && (
               <div>
                 <span className='mb-1 block font-medium text-foreground'>Estado de la Orden:</span>

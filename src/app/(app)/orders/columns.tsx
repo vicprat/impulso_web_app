@@ -100,7 +100,15 @@ export const columns: ColumnDef<Order>[] = [
   {
     accessorKey: 'displayFulfillmentStatus',
     cell: ({ row }) => {
+      const { requiresShipping } = row.original
       const status = row.original.displayFulfillmentStatus ?? row.original.fulfillmentStatus
+
+      if (requiresShipping === false) {
+        return (
+          <Badge className='bg-success-container text-on-success-container'>Entrega Digital</Badge>
+        )
+      }
+
       if (!status) return <Badge variant='secondary'>No disponible</Badge>
 
       const statusMap: Record<string, JSX.Element> = {
@@ -115,6 +123,24 @@ export const columns: ColumnDef<Order>[] = [
       )
     },
     header: 'Estado de Envío',
+  },
+  {
+    accessorKey: 'shippingLine',
+    cell: ({ row }) => {
+      const { requiresShipping, shippingLine } = row.original
+
+      if (requiresShipping === false) {
+        return <Badge variant='outline'>No requiere envío</Badge>
+      }
+
+      if (!shippingLine?.title) {
+        return <span className='text-muted-foreground'>-</span>
+      }
+
+      return <span className='text-sm'>{shippingLine.title}</span>
+    },
+    header: 'Método de Envío',
+    id: 'shippingMethod',
   },
   {
     accessorKey: 'totalPrice',

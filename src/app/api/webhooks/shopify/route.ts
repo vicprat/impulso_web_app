@@ -118,8 +118,10 @@ export async function POST(request: Request) {
     const createdTickets = []
     const skippedItems = []
     const errors = []
+    let eventItemsCount = 0
+    const totalItemsCount = order.line_items?.length ?? 0
 
-    for (let i = 0; i < (order.line_items?.length ?? 0); i++) {
+    for (let i = 0; i < totalItemsCount; i++) {
       const lineItem = order.line_items[i]
 
       try {
@@ -163,10 +165,10 @@ export async function POST(request: Request) {
         })
       }
       if (lineItem.vendor?.toLowerCase() === 'evento') {
+        eventItemsCount++
         const eventId = `gid://shopify/Product/${lineItem.product_id}`
         const quantity = lineItem.quantity ?? 1
 
-        // Verificar si ya existe un ticket agrupado para este evento y orden
         const existingTicket = await prisma.ticket.findFirst({
           where: {
             eventId,
@@ -221,19 +223,27 @@ export async function POST(request: Request) {
       }
     }
 
+    const isEventOnlyOrder = eventItemsCount === totalItemsCount && totalItemsCount > 0
+
     const processingTime = Date.now() - startTime
 
     return NextResponse.json({
       customerEmail: user.email,
       errors,
+      isEventOnlyOrder,
       message: 'Webhook processed successfully',
+      note: isEventOnlyOrder
+        ? 'Order contains only events - digital delivery, no physical shipping required'
+        : undefined,
       orderId: order.id,
       orderNumber: order.order_number ?? order.name,
       processing: {
         errors: errors.length,
+        eventItems: eventItemsCount,
         itemsSkipped: skippedItems.length,
         processingTimeMs: processingTime,
         ticketsCreated: createdTickets.length,
+        totalItems: totalItemsCount,
       },
       skipped: skippedItems,
       success: true,

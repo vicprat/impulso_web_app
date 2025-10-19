@@ -18,6 +18,11 @@ export interface LocalOrder {
     email: string
   }
   lineItemsCount: number
+  requiresShipping: boolean
+  shippingLine?: {
+    title: string
+    code?: string
+  }
   tickets: {
     id: string
     eventId: string
@@ -90,7 +95,6 @@ export async function getLocalOrders(params?: LocalOrdersParams): Promise<LocalO
     const orderId = ticket.orderId
 
     if (!ordersMap.has(orderId)) {
-      // Buscar información financiera para esta orden
       const financialEntry = await prisma.financialEntry.findFirst({
         orderBy: { createdAt: 'desc' },
         where: {
@@ -99,6 +103,47 @@ export async function getLocalOrders(params?: LocalOrdersParams): Promise<LocalO
         },
       })
 
+      let requiresShipping = false
+      let shippingLine: { title: string; code?: string } | undefined = undefined
+      let fulfillmentStatus = 'UNFULFILLED'
+
+      try {
+        const SHOPIFY_ORDER_BASIC_QUERY = `
+          query GetOrderBasicInfo($id: ID!) {
+            order(id: $id) {
+              id
+              requiresShipping
+              displayFulfillmentStatus
+              shippingLine {
+                title
+                code
+              }
+            }
+          }
+        `
+
+        const shopifyId = `gid://shopify/Order/${orderId}`
+        const response = await makeAdminApiRequest<{
+          order: {
+            id: string
+            requiresShipping: boolean
+            displayFulfillmentStatus: string
+            shippingLine: {
+              title: string
+              code?: string
+            } | null
+          } | null
+        }>(SHOPIFY_ORDER_BASIC_QUERY, { id: shopifyId })
+
+        if (response.order) {
+          requiresShipping = response.order.requiresShipping
+          shippingLine = response.order.shippingLine ?? undefined
+          fulfillmentStatus = response.order.displayFulfillmentStatus
+        }
+      } catch (error) {
+        console.error(`Error fetching Shopify order ${orderId}:`, error)
+      }
+
       ordersMap.set(orderId, {
         customer: {
           email: ticket.user.email,
@@ -106,21 +151,15 @@ export async function getLocalOrders(params?: LocalOrdersParams): Promise<LocalO
           id: ticket.user.id,
           lastName: ticket.user.lastName ?? undefined,
         },
-
         displayFinancialStatus: 'PAID',
-
-        // Asumimos que si hay ticket, la orden está pagada
-        displayFulfillmentStatus: 'FULFILLED',
-
+        displayFulfillmentStatus: fulfillmentStatus,
         id: orderId,
         lineItemsCount: 0,
         name: `#${orderId}`,
-
         processedAt: ticket.createdAt.toISOString(),
-
-        // Se calculará después
+        requiresShipping,
+        shippingLine,
         tickets: [],
-        // Asumimos que está cumplida
         totalPrice: {
           amount: financialEntry?.amount.toString() ?? '0',
           currencyCode: financialEntry?.currency ?? 'MXN',
@@ -190,7 +229,6 @@ export async function getLocalOrderById(orderId: string): Promise<LocalOrder | n
 
   const ticket = tickets[0]
 
-  // Buscar información financiera para esta orden
   const financialEntry = await prisma.financialEntry.findFirst({
     orderBy: { createdAt: 'desc' },
     where: {
@@ -198,6 +236,47 @@ export async function getLocalOrderById(orderId: string): Promise<LocalOrder | n
       sourceId: orderId,
     },
   })
+
+  let requiresShipping = false
+  let shippingLine: { title: string; code?: string } | undefined = undefined
+  let fulfillmentStatus = 'UNFULFILLED'
+
+  try {
+    const SHOPIFY_ORDER_BASIC_QUERY = `
+      query GetOrderBasicInfo($id: ID!) {
+        order(id: $id) {
+          id
+          requiresShipping
+          displayFulfillmentStatus
+          shippingLine {
+            title
+            code
+          }
+        }
+      }
+    `
+
+    const shopifyId = `gid://shopify/Order/${orderId}`
+    const response = await makeAdminApiRequest<{
+      order: {
+        id: string
+        requiresShipping: boolean
+        displayFulfillmentStatus: string
+        shippingLine: {
+          title: string
+          code?: string
+        } | null
+      } | null
+    }>(SHOPIFY_ORDER_BASIC_QUERY, { id: shopifyId })
+
+    if (response.order) {
+      requiresShipping = response.order.requiresShipping
+      shippingLine = response.order.shippingLine ?? undefined
+      fulfillmentStatus = response.order.displayFulfillmentStatus
+    }
+  } catch (error) {
+    console.error(`Error fetching Shopify order ${orderId}:`, error)
+  }
 
   return {
     customer: {
@@ -207,11 +286,13 @@ export async function getLocalOrderById(orderId: string): Promise<LocalOrder | n
       lastName: ticket.user.lastName ?? undefined,
     },
     displayFinancialStatus: 'PAID',
-    displayFulfillmentStatus: 'FULFILLED',
+    displayFulfillmentStatus: fulfillmentStatus,
     id: orderId,
     lineItemsCount: tickets.length,
     name: `#${orderId}`,
     processedAt: ticket.createdAt.toISOString(),
+    requiresShipping,
+    shippingLine,
     tickets: tickets.map((t) => ({
       eventId: t.eventId,
       id: t.id,
@@ -246,6 +327,10 @@ export interface LocalOrderDetail {
   edited: boolean
   requiresShipping: boolean
   statusPageUrl?: string
+  shippingLine?: {
+    title: string
+    code?: string
+  }
   lineItems: {
     edges: {
       node: {
@@ -368,7 +453,6 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
     }
   }
 
-  // Intentar obtener datos completos de Shopify
   let shopifyOrderData = null
   try {
     const SHOPIFY_ORDER_QUERY = `
@@ -376,6 +460,11 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
         order(id: $id) {
           id
           requiresShipping
+          displayFulfillmentStatus
+          shippingLine {
+            title
+            code
+          }
           shippingAddress {
             address1
             address2
@@ -409,6 +498,11 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
       order: {
         id: string
         requiresShipping: boolean
+        displayFulfillmentStatus: string
+        shippingLine: {
+          title: string
+          code?: string
+        } | null
         shippingAddress: {
           address1: string
           address2?: string
@@ -471,6 +565,8 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
         },
       }))
 
+  const fulfillmentStatus = shopifyOrderData?.displayFulfillmentStatus ?? 'UNFULFILLED'
+
   return {
     billingAddress: undefined,
     cancelReason: null,
@@ -481,17 +577,20 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
     edited: false,
     email: user.email,
     financialStatus: 'PAID',
-    fulfillmentStatus: 'FULFILLED',
+    fulfillmentStatus,
     fulfillments: {
-      edges: [
-        {
-          node: {
-            id: `local-fulfillment-${orderId}`,
-            status: 'FULFILLED',
-            updatedAt: firstEntry.updatedAt.toISOString(),
-          },
-        },
-      ],
+      edges:
+        fulfillmentStatus !== 'UNFULFILLED'
+          ? [
+              {
+                node: {
+                  id: `local-fulfillment-${orderId}`,
+                  status: fulfillmentStatus,
+                  updatedAt: firstEntry.updatedAt.toISOString(),
+                },
+              },
+            ]
+          : [],
     },
     id: orderId,
     lineItems: {
@@ -522,6 +621,7 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
             zip: '00000',
           }
         : undefined,
+    shippingLine: shopifyOrderData?.shippingLine ?? undefined,
     statusPageUrl: undefined,
     subtotal: {
       amount: totalAmount.toString(),

@@ -181,6 +181,11 @@ export interface AdminOrder {
   displayFulfillmentStatus: string
   displayFinancialStatus: string
   currencyCode: string
+  requiresShipping: boolean
+  shippingLine?: {
+    title: string
+    code?: string
+  } | null
   totalPriceSet?: PriceSet
   currentTotalPriceSet?: PriceSet
   customer: {
@@ -234,6 +239,11 @@ export interface Order {
     email: string
   }
   lineItemsCount: number
+  requiresShipping?: boolean
+  shippingLine?: {
+    title: string
+    code?: string
+  }
 }
 
 export interface CustomerAddress {

@@ -9,6 +9,7 @@
     "lint": "next lint",
     "db:seed": "tsx prisma/seed.ts",
     "migrate:locations": "tsx scripts/migrate-product-locations.ts",
+    "migrate:locations:prod": "export $(cat .env.production | grep -v '^#' | xargs) && tsx scripts/migrate-product-locations.ts",
     "setup-admin": "tsx scripts/setup-auth.ts",
     "setup-env": "tsx scripts/setup-env.ts",
     "setup-webhooks": "tsx scripts/setup-webhooks.ts",
