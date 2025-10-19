@@ -1,3 +1,5 @@
+export * from './search'
+
 export const formatCurrency = (amount: string, currencyCode: string): string => {
   const numericAmount = parseFloat(amount)
 
@@ -29,9 +31,6 @@ export const getStatusColor = (status: string, type: 'financial' | 'fulfillment'
       : 'bg-secondary-container text-on-secondary-container'
   }
 }
-
-
-
 
 export const getPlatformStyles = (platformId: string) => {
   const styles: Record<

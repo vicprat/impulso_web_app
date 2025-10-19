@@ -296,7 +296,13 @@ async function main() {
     {
       description: 'Empleado de la empresa',
       name: 'employee',
-      permissions: ['view_profile', 'update_profile', 'manage_employees', 'view_financial_entries'],
+      permissions: [
+        'view_profile',
+        'update_profile',
+        'manage_employees',
+        'manage_own_blog_posts',
+        'manage_all_blog_posts',
+      ],
     },
     {
       description: 'Proveedor de servicios o productos',

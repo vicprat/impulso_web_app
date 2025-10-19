@@ -14,6 +14,7 @@ import {
   CommandSeparator,
 } from '@/components/ui/command'
 import { Skeleton } from '@/components/ui/skeleton'
+import { buildProductSearchQuery } from '@/helpers/search'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useProducts } from '@/modules/shopify/hooks'
 
@@ -29,15 +30,17 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebounce(query, 300)
 
+  const searchQuery = buildProductSearchQuery(debouncedQuery)
+
   const { data, isError, isLoading } = useProducts(
     {
       filters: {
-        query: `(title:*${debouncedQuery}*) OR (product_type:*${debouncedQuery}*) OR (tag:*${debouncedQuery}*)`,
+        query: searchQuery,
       },
       first: 5,
     },
     {
-      enabled: !!debouncedQuery,
+      enabled: !!debouncedQuery && !!searchQuery,
     }
   )
 

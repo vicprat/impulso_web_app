@@ -1,3 +1,4 @@
+import { buildProductSearchQuery } from '@/helpers/search'
 import { prisma } from '@/lib/prisma'
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { Product } from '@/models/Product'
@@ -1083,7 +1084,7 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
   let shopifyQuery = ''
 
   if (params.search?.trim()) {
-    shopifyQuery = `(title:*${params.search}* OR product_type:*${params.search}* OR vendor:*${params.search}*)`
+    shopifyQuery = buildProductSearchQuery(params.search)
   }
 
   if (params.vendor?.trim()) {
