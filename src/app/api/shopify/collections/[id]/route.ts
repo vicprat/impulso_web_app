@@ -1,6 +1,8 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
+import { Product } from '@/models/Product'
+import { getPrimaryLocationId } from '@/services/product/service'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -38,8 +40,65 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             edges {
               node {
                 id
-                title
                 handle
+                title
+                descriptionHtml
+                vendor
+                productType
+                status
+                tags
+                images(first: 10) {
+                  edges {
+                    node {
+                      id
+                      url
+                      altText
+                      width
+                      height
+                    }
+                  }
+                }
+                media(first: 10) {
+                  nodes {
+                    id
+                    mediaContentType
+                    status
+                    ... on MediaImage {
+                      image {
+                        id
+                        url
+                        altText
+                        width
+                        height
+                      }
+                    }
+                  }
+                }
+                variants(first: 1) {
+                  edges {
+                    node {
+                      id
+                      title
+                      availableForSale
+                      price
+                      sku
+                      inventoryQuantity
+                      inventoryPolicy
+                      inventoryItem {
+                        tracked
+                      }
+                    }
+                  }
+                }
+                metafields(first: 20) {
+                  edges {
+                    node {
+                      namespace
+                      key
+                      value
+                    }
+                  }
+                }
               }
             }
           }
@@ -55,10 +114,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Collection not found' }, { status: 404 })
     }
 
+    const locationId = await getPrimaryLocationId()
+    const products = response.collection.products.edges.map(
+      (edge: any) => new Product(edge.node, locationId)
+    )
+
     const collection = {
       ...response.collection,
       description: response.collection.descriptionHtml,
-      products: response.collection.products.edges.map((edge: { node: any }) => edge.node),
+      products,
       productsCount: response.collection.productsCount?.count ?? 0,
     }
 

@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 
@@ -80,12 +80,9 @@ export async function DELETE(
     const MUTATION = `
       mutation collectionRemoveProducts($id: ID!, $productIds: [ID!]!) {
         collectionRemoveProducts(id: $id, productIds: $productIds) {
-          collection {
+          job {
             id
-            title
-            productsCount {
-              count
-            }
+            done
           }
           userErrors {
             field
@@ -112,7 +109,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({
-      data: response.collectionRemoveProducts.collection,
+      data: { job: response.collectionRemoveProducts.job, success: true },
       statusCode: 200,
     })
   } catch (error) {

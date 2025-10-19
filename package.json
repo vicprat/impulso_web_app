@@ -67,6 +67,7 @@
     "embla-carousel-react": "^8.6.0",
     "graphql": "^16.11.0",
     "js-cookie": "^3.0.5",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.482.0",
     "motion": "^12.6.2",
     "next": "^15.3.0",

@@ -51,7 +51,7 @@ function validateSession(session: AuthSession): asserts session is ValidatedSess
   }
 }
 
-async function getPrimaryLocationId(): Promise<string> {
+export async function getPrimaryLocationId(): Promise<string> {
   if (primaryLocationId) return primaryLocationId
 
   const response = await makeAdminApiRequest<{ locations: { edges: { node: { id: string } }[] } }>(
