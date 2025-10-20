@@ -61,13 +61,13 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
   }, [open])
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
+    <CommandDialog open={open} onOpenChange={setOpen} shouldFilter={false}>
       <CommandInput
         placeholder='Busca por obra, artista, estilo o técnica...'
         value={query}
         onValueChange={setQuery}
       />
-      <CommandList>
+      <CommandList className='max-h-[400px]'>
         {isLoading && (
           <div className='space-y-2 p-4'>
             <Skeleton className='h-8 w-full' />
@@ -101,6 +101,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
                 </div>
                 <div className='flex flex-col'>
                   <span className='font-medium'>{product.title}</span>
+                  <span className='text-sm text-muted-foreground'>{product.vendor}</span>
                   <span className='text-sm text-muted-foreground'>
                     ${product.priceRange.minVariantPrice.amount}{' '}
                     {product.priceRange.minVariantPrice.currencyCode}
