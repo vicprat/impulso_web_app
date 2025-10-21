@@ -212,7 +212,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='__clear__'>Todas las técnicas</SelectItem>
-                    {techniqueOptions.slice(0, 10).map((technique) => (
+                    {techniqueOptions.map((technique) => (
                       <SelectItem key={technique.value} value={technique.value}>
                         {technique.label}
                       </SelectItem>

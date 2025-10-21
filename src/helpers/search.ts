@@ -39,6 +39,7 @@ export function buildProductSearchQuery(
     includeVendor?: boolean
     includeTags?: boolean
     includeProductType?: boolean
+    includeTechnique?: boolean
     minWordLength?: number
   }
 ): string {
@@ -48,6 +49,7 @@ export function buildProductSearchQuery(
     includeProductType = true,
     includeTags = true,
     includeVendor = true,
+    includeTechnique = true,
     minWordLength = 2,
   } = options ?? {}
 
@@ -66,10 +68,22 @@ export function buildProductSearchQuery(
   if (words.length === 1) {
     const word = words[0]
     const fieldQueries = searchFields.map((field) => `${field}:*${word}*`)
+
+    // Agregar búsqueda en metafields de técnica
+    if (includeTechnique) {
+      fieldQueries.push(`metafields.custom.technique:*${word}*`)
+    }
+
     queryParts.push(`(${fieldQueries.join(' OR ')})`)
   } else {
     words.forEach((word) => {
       const fieldQueries = searchFields.map((field) => `${field}:*${word}*`)
+
+      // Agregar búsqueda en metafields de técnica
+      if (includeTechnique) {
+        fieldQueries.push(`metafields.custom.technique:*${word}*`)
+      }
+
       queryParts.push(`(${fieldQueries.join(' OR ')})`)
     })
   }
