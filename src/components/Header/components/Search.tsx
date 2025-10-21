@@ -73,6 +73,11 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
 
   const isError = !!error
 
+  // Estados de carga específicos
+  const isTextSearching = query !== debouncedQuery && query.trim().length > 0
+  const isFilterSearching = isLoading && hasAnyFilter
+  const isSearching = isTextSearching || isFilterSearching
+
   const products = data?.products ?? []
 
   const filteredProducts = products.filter((product: Product) => {
@@ -159,7 +164,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
       <div className='flex items-center gap-2 border-b pr-3'>
         <div className='flex-1'>
           <CommandInput
-            placeholder='Busca por obra, artista, estilo o técnica...'
+            placeholder='Busca por obra, artista, estilo, técnica, año o precio...'
             value={query}
             onValueChange={setQuery}
           />
@@ -206,6 +211,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
                       ? removeQuickFilter('technique')
                       : handleQuickFilterChange('technique', value)
                   }
+                  disabled={!!isFilterSearching}
                 >
                   <SelectTrigger className='h-8 text-xs'>
                     <SelectValue placeholder='Todas' />
@@ -230,6 +236,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
                       ? removeQuickFilter('productType')
                       : handleQuickFilterChange('productType', value)
                   }
+                  disabled={!!isFilterSearching}
                 >
                   <SelectTrigger className='h-8 text-xs'>
                     <SelectValue placeholder='Todos' />
@@ -258,6 +265,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
                       handleQuickFilterChange('priceRange', value)
                     }
                   }}
+                  disabled={!!isFilterSearching}
                 >
                   <SelectTrigger className='h-8 text-xs'>
                     <SelectValue placeholder='Cualquiera' />
@@ -282,6 +290,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
                       ? removeQuickFilter('year')
                       : handleQuickFilterChange('year', value)
                   }
+                  disabled={!!isFilterSearching}
                 >
                   <SelectTrigger className='h-8 text-xs'>
                     <SelectValue placeholder='Cualquiera' />
@@ -343,15 +352,26 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
       )}
 
       <CommandList className='max-h-[400px]'>
-        {isLoading && (
+        {isSearching && (
           <div className='space-y-2 p-4'>
-            <Skeleton className='h-16 w-full' />
-            <Skeleton className='h-16 w-full' />
-            <Skeleton className='h-16 w-full' />
+            <ScrollArea className='max-h-[300px]'>
+              <div className='space-y-2'>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className='flex items-center gap-3 rounded-lg border p-3'>
+                    <Skeleton className='size-12 rounded-md bg-surface' />
+                    <div className='flex min-w-0 flex-1 flex-col space-y-1'>
+                      <Skeleton className='h-4 w-3/4 bg-surface' />
+                      <Skeleton className='h-3 w-1/2 bg-surface' />
+                      <Skeleton className='h-3 w-1/4 bg-surface' />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
           </div>
         )}
 
-        {!isLoading && !isError && filteredProducts.length === 0 && hasAnyFilter && (
+        {!isSearching && !isError && filteredProducts.length === 0 && hasAnyFilter && (
           <CommandEmpty>
             <div className='py-6 text-center'>
               <p className='text-sm text-muted-foreground'>No se encontraron obras.</p>
