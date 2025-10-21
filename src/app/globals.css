@@ -276,14 +276,14 @@
 
   /* Enhanced focus styles */
   :focus-visible {
-    outline: 2px solid hsl(var(--ring));
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 
   /* Improved selection styles */
   ::selection {
-    background-color: hsl(var(--primary) / 0.2);
-    color: hsl(var(--primary-foreground));
+    background-color: var(--primary-container);
+    color: var(--on-primary-container);
   }
 }
 
