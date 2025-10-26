@@ -159,6 +159,13 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
     setQuickFilters((prev) => ({ ...prev, [key]: value }))
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && debouncedQuery && !isSearching) {
+      e.preventDefault()
+      handleSeeMore()
+    }
+  }
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen} shouldFilter={false}>
       <div className='flex items-center gap-2 border-b pr-3'>
@@ -167,6 +174,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
             placeholder='Busca por obra, artista, estilo, técnica, año o precio...'
             value={query}
             onValueChange={setQuery}
+            onKeyDown={handleKeyDown}
           />
         </div>
         <Button
