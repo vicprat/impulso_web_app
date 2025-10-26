@@ -15,6 +15,7 @@ import { ROUTES } from '@/src/config/routes'
 
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = routeMetadata['/']
 
 interface Slide {

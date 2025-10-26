@@ -11,6 +11,7 @@ import { List } from '../components/List'
 
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
 interface Props {
   params: Promise<{
     userId: string

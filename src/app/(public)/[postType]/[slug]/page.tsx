@@ -12,6 +12,7 @@ import { FeaturedImage } from '../components/FeaturedImage'
 import { ImageGallery } from '../components/ImageGallery'
 import { Loader } from '../components/Loader'
 
+export const dynamic = 'force-dynamic'
 export default async function Page({
   params,
 }: {
