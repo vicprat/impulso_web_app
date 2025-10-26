@@ -28,30 +28,44 @@ export const columns: ColumnDef<Order>[] = [
   {
     accessorKey: 'name',
     cell: ({ row }) => <span className='font-medium'>{row.original.name}</span>,
-    header: ({ column }) => (
-      <Button
-        variant='ghost'
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        className='h-auto p-0 font-semibold'
-      >
-        Orden
-        <ArrowUpDown className='ml-2 size-4' />
-      </Button>
-    ),
+    header: ({ table }) => {
+      const { currentSortBy, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'name'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('name')}
+          className='h-auto p-0 font-semibold'
+          title='Ordenar por número de orden'
+        >
+          Orden
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
+    id: 'name',
   },
   {
     accessorKey: 'processedAt',
     cell: ({ row }) => formatDate(row.original.processedAt),
-    header: ({ column }) => (
-      <Button
-        variant='ghost'
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        className='h-auto p-0 font-semibold'
-      >
-        Fecha
-        <ArrowUpDown className='ml-2 size-4' />
-      </Button>
-    ),
+    header: ({ table }) => {
+      const { currentSortBy, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'processedAt'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('processedAt')}
+          className='h-auto p-0 font-semibold'
+          title='Ordenar por fecha'
+        >
+          Fecha
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
+    id: 'processedAt',
   },
   {
     accessorKey: 'customer.name',
@@ -63,7 +77,22 @@ export const columns: ColumnDef<Order>[] = [
       const fullName = `${customer.firstName ?? ''} ${customer.lastName ?? ''}`.trim()
       return fullName || <span className='text-muted-foreground'>-</span>
     },
-    header: 'Nombre',
+    header: ({ table }) => {
+      const { currentSortBy, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'customerName'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('customerName')}
+          className='h-auto p-0 font-semibold'
+          title='Ordenar por nombre'
+        >
+          Nombre
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
     id: 'customerName',
   },
   {
@@ -75,7 +104,22 @@ export const columns: ColumnDef<Order>[] = [
       }
       return <span className='text-sm'>{customer.email}</span>
     },
-    header: 'Email',
+    header: ({ table }) => {
+      const { currentSortBy, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'customerEmail'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('customerEmail')}
+          className='h-auto p-0 font-semibold'
+          title='Ordenar por email'
+        >
+          Email
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
     id: 'customerEmail',
   },
   {
@@ -105,7 +149,23 @@ export const columns: ColumnDef<Order>[] = [
         statusMap[status as keyof typeof statusMap] ?? <Badge variant='secondary'>{status}</Badge>
       )
     },
-    header: 'Estado de Pago',
+    header: ({ table }) => {
+      const { currentSortBy, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'displayFinancialStatus'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('displayFinancialStatus')}
+          className='h-auto p-0 font-semibold'
+          title='Ordenar por estado de pago'
+        >
+          Estado de Pago
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
+    id: 'displayFinancialStatus',
   },
   {
     accessorKey: 'shippingLine',
@@ -142,7 +202,22 @@ export const columns: ColumnDef<Order>[] = [
 
       return <span className='text-muted-foreground'>-</span>
     },
-    header: 'Método de Envío',
+    header: ({ table }) => {
+      const { currentSortBy, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'shippingMethod'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('shippingMethod')}
+          className='h-auto p-0 font-semibold'
+          title='Ordenar por método de envío'
+        >
+          Método de Envío
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
     id: 'shippingMethod',
   },
   {
@@ -183,7 +258,22 @@ export const columns: ColumnDef<Order>[] = [
 
       return statusMap[fulfillmentStatus] ?? <Badge variant='secondary'>{fulfillmentStatus}</Badge>
     },
-    header: 'Estado de Envío',
+    header: ({ table }) => {
+      const { currentSortBy, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'fulfillmentStatus'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('fulfillmentStatus')}
+          className='h-auto p-0 font-semibold'
+          title='Ordenar por estado de envío'
+        >
+          Estado de Envío
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
     id: 'fulfillmentStatus',
   },
   {
@@ -192,16 +282,23 @@ export const columns: ColumnDef<Order>[] = [
       const { amount, currencyCode } = row.original.totalPrice
       return <div className='text-right font-medium'>{formatPrice(amount, currencyCode)}</div>
     },
-    header: ({ column }) => (
-      <Button
-        variant='ghost'
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        className='h-auto w-full justify-end p-0 text-right font-semibold'
-      >
-        Total
-        <ArrowUpDown className='ml-2 size-4' />
-      </Button>
-    ),
+    header: ({ table }) => {
+      const { currentSortBy, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'totalPrice'
+
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => handleSorting?.('totalPrice')}
+          className='h-auto w-full justify-end p-0 text-right font-semibold'
+          title='Ordenar por total'
+        >
+          Total
+          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+        </Button>
+      )
+    },
+    id: 'totalPrice',
   },
   {
     cell: ({ row }) => {

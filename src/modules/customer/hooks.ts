@@ -27,11 +27,16 @@ export const customerKeys = {
 
 export const orderManagementKeys = {
   all: ['orderManagement'] as const,
-  allOrders: (params?: { first?: number; after?: string; query?: string }) =>
+  allOrders: (params?: { after?: string; first?: number; query?: string }) =>
     [...orderManagementKeys.all, 'allOrders', params] as const,
-  allOrdersHybrid: (params?: { first?: number; after?: string; query?: string }) =>
-    [...orderManagementKeys.all, 'allOrdersHybrid', params] as const,
-  allOrdersLocal: (params?: { first?: number; after?: string; query?: string }) =>
+  allOrdersHybrid: (params?: {
+    after?: string
+    first?: number
+    query?: string
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
+  }) => [...orderManagementKeys.all, 'allOrdersHybrid', params] as const,
+  allOrdersLocal: (params?: { after?: string; first?: number; query?: string }) =>
     [...orderManagementKeys.all, 'allOrdersLocal', params] as const,
 }
 
@@ -253,7 +258,13 @@ export function useAllOrdersLocal(
 }
 
 export function useAllOrdersHybrid(
-  params?: { first?: number; after?: string; query?: string },
+  params?: {
+    after?: string
+    first?: number
+    query?: string
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
+  },
   options?: Omit<UseQueryOptions<unknown, Error>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery({

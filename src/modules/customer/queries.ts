@@ -230,8 +230,8 @@ export const GET_SINGLE_ORDER_QUERY = `
 `
 
 export const GET_ALL_ORDERS_QUERY = `
-  query GetAllOrders($first: Int!, $after: String, $query: String) {
-    orders(first: $first, after: $after, query: $query) {
+  query GetAllOrders($first: Int!, $after: String, $query: String, $reverse: Boolean, $sortKey: OrderSortKeys) {
+    orders(first: $first, after: $after, query: $query, reverse: $reverse, sortKey: $sortKey) {
       edges {
         node {
           id

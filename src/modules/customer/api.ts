@@ -58,8 +58,14 @@ export const api = {
     return response.json()
   },
 
-  getAllOrdersHybrid: async (params?: { first?: number; after?: string; query?: string }) => {
-    const { after, first = 10, query } = params ?? {}
+  getAllOrdersHybrid: async (params?: {
+    after?: string
+    first?: number
+    query?: string
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
+  }) => {
+    const { after, first = 10, query, sortBy, sortOrder } = params ?? {}
 
     const searchParams = new URLSearchParams()
     searchParams.append('first', first.toString())
@@ -68,6 +74,12 @@ export const api = {
     }
     if (query) {
       searchParams.append('query', query)
+    }
+    if (sortBy) {
+      searchParams.append('sortBy', sortBy)
+    }
+    if (sortOrder) {
+      searchParams.append('sortOrder', sortOrder)
     }
 
     const response = await fetch(`/api/orders/hybrid?${searchParams.toString()}`, {

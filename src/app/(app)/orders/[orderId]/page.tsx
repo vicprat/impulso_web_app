@@ -333,26 +333,28 @@ export default function Page() {
                 <Badge variant='secondary'>No especificado</Badge>
               )}
             </div>
-            <div>
-              <span className='block font-medium text-foreground'>Estado de Entrega:</span>
-              {(() => {
-                const status = order.fulfillmentStatus
-                const statusMap: Record<string, React.ReactNode> = {
-                  FULFILLED: (
-                    <Badge className='bg-success-container text-on-success-container'>
-                      Enviado
-                    </Badge>
-                  ),
-                  PARTIALLY_FULFILLED: <Badge variant='outline'>Parcialmente Enviado</Badge>,
-                  UNFULFILLED: <Badge variant='secondary'>Pendiente de Envío</Badge>,
-                }
-                return (
-                  statusMap[status] ?? (
-                    <Badge variant='secondary'>{status ?? 'No disponible'}</Badge>
+            {order.requiresShipping !== false && (
+              <div>
+                <span className='block font-medium text-foreground'>Estado de Entrega:</span>
+                {(() => {
+                  const status = order.fulfillmentStatus
+                  const statusMap: Record<string, React.ReactNode> = {
+                    FULFILLED: (
+                      <Badge className='bg-success-container text-on-success-container'>
+                        Enviado
+                      </Badge>
+                    ),
+                    PARTIALLY_FULFILLED: <Badge variant='outline'>Parcialmente Enviado</Badge>,
+                    UNFULFILLED: <Badge variant='secondary'>Pendiente de Envío</Badge>,
+                  }
+                  return (
+                    statusMap[status] ?? (
+                      <Badge variant='secondary'>{status ?? 'No disponible'}</Badge>
+                    )
                   )
-                )
-              })()}
-            </div>
+                })()}
+              </div>
+            )}
             {order.statusPageUrl && (
               <div>
                 <span className='mb-1 block font-medium text-foreground'>Estado de la Orden:</span>

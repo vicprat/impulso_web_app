@@ -48,9 +48,11 @@ export interface HybridOrdersResult {
 }
 
 export interface HybridOrdersParams {
-  first?: number
   after?: string
+  first?: number
   query?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
 /**
@@ -58,7 +60,21 @@ export interface HybridOrdersParams {
  * This ensures consistency between Shopify and the local DB
  */
 export async function getHybridOrders(params?: HybridOrdersParams): Promise<HybridOrdersResult> {
-  const { after, first = 10, query } = params ?? {}
+  const { after, first = 10, query, sortBy, sortOrder } = params ?? {}
+
+  // Map our sortBy values to Shopify OrderSortKeys enum
+  const sortKeyMap: Record<string, string> = {
+    name: 'NUMBER',
+    processedAt: 'PROCESSED_AT',
+    totalPrice: 'TOTAL_PRICE',
+    createdAt: 'CREATED_AT',
+    updatedAt: 'UPDATED_AT',
+    id: 'ID',
+    relevance: 'RELEVANCE',
+  }
+
+  const shopifySortKey = sortBy ? sortKeyMap[sortBy] : 'PROCESSED_AT'
+  const shopifyReverse = sortOrder === 'asc'
 
   try {
     // Fetch orders from Shopify Admin API
@@ -103,6 +119,8 @@ export async function getHybridOrders(params?: HybridOrdersParams): Promise<Hybr
       after,
       first,
       query,
+      reverse: shopifyReverse,
+      sortKey: shopifySortKey,
     })
 
     // Get all order IDs from Shopify

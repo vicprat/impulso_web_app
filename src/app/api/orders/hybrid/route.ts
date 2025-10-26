@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
     const firstParam = searchParams.get('first')
     const after = searchParams.get('after') ?? undefined
     const query = searchParams.get('query') ?? undefined
+    const sortBy = searchParams.get('sortBy') ?? undefined
+    const sortOrder = searchParams.get('sortOrder') ?? undefined
 
     let first = 10
     if (firstParam) {
@@ -29,6 +31,8 @@ export async function GET(request: NextRequest) {
       after,
       first,
       query,
+      sortBy,
+      sortOrder: sortOrder as 'asc' | 'desc' | undefined,
     })
 
     return NextResponse.json(data)

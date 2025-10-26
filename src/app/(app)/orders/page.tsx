@@ -2,13 +2,13 @@
 
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import { RefreshCw } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Guard } from '@/components/Guards'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useDebounce } from '@/hooks/use-debounce'
 import { Table } from '@/src/components/Table'
 import { PERMISSIONS } from '@/src/config/Permissions'
 import { useAllOrdersHybrid, useCustomerOrders } from '@/src/modules/customer/hooks'
@@ -21,31 +21,53 @@ export const dynamic = 'force-dynamic'
 type OrdersTab = 'my-orders' | 'all-orders'
 
 export default function OrdersPage() {
-  const [activeTab, setActiveTab] = useState<OrdersTab>('my-orders')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
-  const [cursors, setCursors] = useState<Record<number, string | undefined>>({ 1: undefined })
+  const searchParams = useSearchParams()
+  const router = useRouter()
 
-  const debouncedSearch = useDebounce(searchTerm, 500)
+  const activeTabInUrl = searchParams.get('tab') ?? 'my-orders'
+  const pageInUrl = parseInt(searchParams.get('page') ?? '1', 10)
+  const pageSizeInUrl = parseInt(searchParams.get('pageSize') ?? '10', 10)
+  const searchInUrl = searchParams.get('search') ?? ''
+  const sortByInUrl = (searchParams.get('sortBy') ?? 'processedAt') as string
+  const sortOrderInUrl = (searchParams.get('sortOrder') ?? 'desc') as 'asc' | 'desc'
+  const afterCursorInUrl = searchParams.get('after') ?? null
+
+  const [activeTab, setActiveTab] = useState<OrdersTab>(activeTabInUrl as OrdersTab)
+  const [searchInput, setSearchInput] = useState(searchInUrl)
+  const [historyCursors, setHistoryCursors] = useState<Record<number, string | null>>({})
+  const [previousPageSize, setPreviousPageSize] = useState(pageSizeInUrl)
+
+  // Update activeTab when URL changes
+  useEffect(() => {
+    setActiveTab(activeTabInUrl as OrdersTab)
+  }, [activeTabInUrl])
+
+  // Update searchInput when URL changes
+  useEffect(() => {
+    setSearchInput(searchInUrl)
+  }, [searchInUrl])
 
   const allOrdersQuery = useAllOrdersHybrid({
-    after: cursors[currentPage],
-    first: pageSize,
-    query: debouncedSearch,
+    after: afterCursorInUrl ?? undefined,
+    first: pageSizeInUrl,
+    query: searchInUrl,
+    sortBy: sortByInUrl,
+    sortOrder: sortOrderInUrl,
   })
 
   const customerOrdersQuery = useCustomerOrders({
-    after: cursors[currentPage],
-    first: pageSize,
+    after: afterCursorInUrl ?? undefined,
+    first: pageSizeInUrl,
   })
 
   const activeQuery = activeTab === 'all-orders' ? allOrdersQuery : customerOrdersQuery
 
   const orders: Order[] = (() => {
+    let ordersArray: Order[]
+
     if (activeTab === 'all-orders') {
       const hybridData = allOrdersQuery.data as { orders: { edges: { node: Order }[] } } | undefined
-      return (
+      ordersArray =
         hybridData?.orders.edges.map((edge) => ({
           customer: edge.node.customer,
           displayFinancialStatus: edge.node.displayFinancialStatus,
@@ -61,9 +83,8 @@ export default function OrdersPage() {
             currencyCode: edge.node.totalPrice.currencyCode,
           },
         })) ?? []
-      )
     } else {
-      const customerOrders =
+      ordersArray =
         customerOrdersQuery.data?.customer?.orders?.edges.map((edge) => ({
           displayFinancialStatus: edge.node.financialStatus,
           fulfillmentStatus: edge.node.fulfillmentStatus,
@@ -77,11 +98,57 @@ export default function OrdersPage() {
             currencyCode: edge.node.totalPrice.currencyCode,
           },
         })) ?? []
-
-      return customerOrders.filter((order) =>
-        order.name.toLowerCase().includes(debouncedSearch.toLowerCase())
-      )
     }
+
+    // Client-side sorting for fields not supported by Shopify API
+    // Only apply client-side sorting if the field is not supported by Shopify
+    const serverSupportedSortKeys = [
+      'name',
+      'processedAt',
+      'totalPrice',
+      'createdAt',
+      'updatedAt',
+      'id',
+    ]
+    if (!serverSupportedSortKeys.includes(sortByInUrl)) {
+      const sorted = [...ordersArray].sort((a, b) => {
+        let aVal: string | number
+        let bVal: string | number
+
+        switch (sortByInUrl) {
+          case 'customerName':
+            aVal = `${a.customer?.firstName ?? ''} ${a.customer?.lastName ?? ''}`.trim()
+            bVal = `${b.customer?.firstName ?? ''} ${b.customer?.lastName ?? ''}`.trim()
+            break
+          case 'customerEmail':
+            aVal = a.customer?.email ?? ''
+            bVal = b.customer?.email ?? ''
+            break
+          case 'displayFinancialStatus':
+            aVal = a.displayFinancialStatus ?? ''
+            bVal = b.displayFinancialStatus ?? ''
+            break
+          case 'shippingMethod':
+            aVal = a.shippingLine?.title ?? ''
+            bVal = b.shippingLine?.title ?? ''
+            break
+          case 'fulfillmentStatus':
+            aVal = a.fulfillmentStatus ?? a.displayFulfillmentStatus ?? ''
+            bVal = b.fulfillmentStatus ?? b.displayFulfillmentStatus ?? ''
+            break
+          default:
+            return 0
+        }
+
+        // Compare values
+        if (aVal < bVal) return sortOrderInUrl === 'asc' ? -1 : 1
+        if (aVal > bVal) return sortOrderInUrl === 'asc' ? 1 : -1
+        return 0
+      })
+      return sorted
+    }
+
+    return ordersArray
   })()
 
   const pageInfo = (() => {
@@ -106,36 +173,141 @@ export default function OrdersPage() {
   const tableColumns =
     activeTab === 'all-orders'
       ? columns
-      : // Admin sees all columns
+      : // Customer sees: Orden, Fecha, Estado de Pago, Estado de Envío, Total
         columns.filter(
           (col) =>
             col.id !== 'customerName' &&
             col.id !== 'customerEmail' &&
             col.id !== 'shippingMethod' &&
             col.id !== 'displayFinancialStatus'
-        ) // Customer sees: Orden, Fecha, Estado de Pago, Estado de Envío, Total
+        )
 
-  useEffect(() => {
-    if (pageInfo?.hasNextPage && pageInfo.endCursor) {
-      setCursors((prev) => ({ ...prev, [currentPage + 1]: pageInfo.endCursor! }))
-    }
-  }, [pageInfo, currentPage])
-
-  useEffect(() => {
-    setCurrentPage(1)
-    setCursors({ 1: undefined })
-  }, [debouncedSearch, pageSize])
-
-  useEffect(() => {
-    setCurrentPage(1)
-    setCursors({ 1: undefined })
-    setSearchTerm('')
-  }, [activeTab])
-
+  // Handlers
   const handleRefresh = useCallback(() => {
     void activeQuery.refetch()
     toast.info('Actualizando datos...')
   }, [activeQuery])
+
+  const handleSorting = useCallback(
+    (columnId: string) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      newUrlParams.set('sortBy', columnId)
+      const newSortOrder = sortByInUrl === columnId && sortOrderInUrl === 'desc' ? 'asc' : 'desc'
+      newUrlParams.set('sortOrder', newSortOrder)
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      router.push(`/orders?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [sortByInUrl, sortOrderInUrl, router, searchParams]
+  )
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      let targetCursor: string | null | undefined = undefined
+
+      if (newPage === 1) {
+        targetCursor = null
+      } else {
+        targetCursor = historyCursors[newPage]
+      }
+
+      if (newPage > pageInUrl && newPage === pageInUrl + 1) {
+        if (pageInfo?.hasNextPage && pageInfo.endCursor) {
+          targetCursor = pageInfo.endCursor
+        }
+      }
+
+      newUrlParams.set('page', newPage.toString())
+      if (targetCursor === null) {
+        newUrlParams.delete('after')
+      } else if (targetCursor) {
+        newUrlParams.set('after', targetCursor)
+      } else {
+        newUrlParams.delete('after')
+      }
+
+      router.push(`/orders?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [pageInUrl, historyCursors, pageInfo, router, searchParams]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      newUrlParams.set('pageSize', size.toString())
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      router.push(`/orders?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
+
+  const handleSearchSubmit = useCallback(() => {
+    if (!activeQuery.isFetching) {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      if (searchInput) {
+        newUrlParams.set('search', searchInput)
+      } else {
+        newUrlParams.delete('search')
+      }
+      router.push(`/orders?${newUrlParams.toString()}`, { scroll: false })
+    }
+  }, [activeQuery.isFetching, searchInput, router, searchParams])
+
+  const handleTabChange = useCallback(
+    (tab: string) => {
+      setActiveTab(tab as OrdersTab)
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      newUrlParams.set('tab', tab)
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      router.push(`/orders?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
+
+  // Update cursors
+  useEffect(() => {
+    setHistoryCursors((prev) => {
+      const newCursors = { ...prev }
+      let changed = false
+      if (newCursors[pageInUrl] !== afterCursorInUrl) {
+        newCursors[pageInUrl] = afterCursorInUrl
+        changed = true
+      }
+      if (pageInfo?.hasNextPage && pageInfo.endCursor) {
+        const nextPageNumber = pageInUrl + 1
+        if (newCursors[nextPageNumber] !== pageInfo.endCursor) {
+          newCursors[nextPageNumber] = pageInfo.endCursor
+          changed = true
+        }
+      } else if (pageInfo && !pageInfo.hasNextPage) {
+        const nextPageNumber = pageInUrl + 1
+        if (nextPageNumber in newCursors) {
+          delete newCursors[nextPageNumber]
+          changed = true
+        }
+      }
+      return changed ? newCursors : prev
+    })
+  }, [pageInUrl, afterCursorInUrl, pageInfo])
+
+  // Update previousPageSize
+  useEffect(() => {
+    if (pageSizeInUrl !== previousPageSize) {
+      setPreviousPageSize(pageSizeInUrl)
+      if (pageInUrl > 1 || afterCursorInUrl) {
+        const newUrlParams = new URLSearchParams(searchParams.toString())
+        newUrlParams.set('page', '1')
+        newUrlParams.delete('after')
+        router.push(`/orders?${newUrlParams.toString()}`, { scroll: false })
+        setHistoryCursors({})
+      }
+    }
+  }, [pageSizeInUrl, previousPageSize, pageInUrl, afterCursorInUrl, router, searchParams])
 
   const table = useReactTable({
     columns: tableColumns,
@@ -143,10 +315,19 @@ export default function OrdersPage() {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     manualPagination: true,
+    manualSorting: true,
+    meta: {
+      currentSortBy: sortByInUrl,
+      currentSortOrder: sortOrderInUrl,
+      handleSorting,
+    },
+    onSortingChange: () => {
+      // Handled by handleSorting in meta
+    },
     state: {
       pagination: {
-        pageIndex: currentPage - 1,
-        pageSize,
+        pageIndex: pageInUrl - 1,
+        pageSize: pageSizeInUrl,
       },
     },
   })
@@ -186,7 +367,7 @@ export default function OrdersPage() {
     <div className='container mx-auto py-10'>
       <h1 className='mb-6 text-3xl font-bold'>Órdenes</h1>
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as OrdersTab)}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value='my-orders'>Mis Órdenes</TabsTrigger>
           <Guard.Permission permission={PERMISSIONS.VIEW_ALL_ORDERS}>
@@ -211,9 +392,10 @@ export default function OrdersPage() {
     return (
       <>
         <Table.Toolbar
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          placeholder='Buscar por número de orden...'
+          searchTerm={searchInput}
+          onSearchChange={setSearchInput}
+          placeholder='Buscar por número de orden, cliente, email...'
+          onSubmit={handleSearchSubmit}
         >
           <Button variant='outline' onClick={handleRefresh} disabled={activeQuery.isFetching}>
             <RefreshCw className={`mr-2 size-4 ${activeQuery.isFetching ? 'animate-spin' : ''}`} />
@@ -232,8 +414,8 @@ export default function OrdersPage() {
           <Table.Data
             table={table}
             emptyMessage={
-              debouncedSearch
-                ? `No se encontraron órdenes que coincidan con "${debouncedSearch}"`
+              searchInUrl
+                ? `No se encontraron órdenes que coincidan con "${searchInUrl}"`
                 : 'No se encontraron órdenes.'
             }
           />
@@ -243,13 +425,10 @@ export default function OrdersPage() {
           table={table}
           isServerSide={true}
           hasNextPage={pageInfo?.hasNextPage}
-          hasPreviousPage={currentPage > 1}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={(size) => {
-            setPageSize(size)
-            setCurrentPage(1)
-          }}
+          hasPreviousPage={pageInUrl > 1}
+          currentPage={pageInUrl}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
         />
 
         {orders.length > 0 && (
