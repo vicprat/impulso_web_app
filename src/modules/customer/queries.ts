@@ -313,6 +313,99 @@ export const GET_ALL_ORDERS_QUERY = `
   }
 `
 
+export const GET_ORDER_BY_ID_ADMIN_QUERY = `
+  query GetOrderById($id: ID!) {
+    order(id: $id) {
+      id
+      name
+      processedAt
+      createdAt
+      updatedAt
+      displayFulfillmentStatus
+      displayFinancialStatus
+      currencyCode
+      requiresShipping
+      email
+      cancelledAt
+      cancelReason
+      confirmationNumber
+      edited
+      statusPageUrl
+      shippingLine {
+        title
+        code
+      }
+      totalPriceSet {
+        shopMoney {
+          amount
+          currencyCode
+        }
+      }
+      currentTotalPriceSet {
+        shopMoney {
+          amount
+          currencyCode
+        }
+      }
+      customer {
+        id
+        firstName
+        lastName
+        email
+      }
+      lineItems(first: 50) {
+        edges {
+          node {
+            id
+            title
+            quantity
+            currentQuantity
+            originalUnitPriceSet {
+              shopMoney {
+                amount
+                currencyCode
+              }
+            }
+            discountedUnitPriceSet {
+              shopMoney {
+                amount
+                currencyCode
+              }
+            }
+          }
+        }
+      }
+      shippingAddress {
+        firstName
+        lastName
+        address1
+        address2
+        city
+        province
+        country
+        zip
+        phone
+      }
+      billingAddress {
+        firstName
+        lastName
+        address1
+        address2
+        city
+        province
+        country
+        zip
+        phone
+      }
+      fulfillments {
+        id
+        status
+        updatedAt
+      }
+    }
+  }
+`
+
 export const GET_BASIC_INFO_QUERY = `
   query GetBasicInfo {
     customer {

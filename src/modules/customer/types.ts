@@ -244,6 +244,15 @@ export interface Order {
     title: string
     code?: string
   }
+  source?: 'shopify' | 'local'
+  hasLocalData?: boolean
+  tickets?: {
+    id: string
+    eventId: string
+    qrCode: string
+    status: string
+    quantity: number
+  }[]
 }
 
 export interface CustomerAddress {

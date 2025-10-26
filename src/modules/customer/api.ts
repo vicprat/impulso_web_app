@@ -58,6 +58,34 @@ export const api = {
     return response.json()
   },
 
+  getAllOrdersHybrid: async (params?: { first?: number; after?: string; query?: string }) => {
+    const { after, first = 10, query } = params ?? {}
+
+    const searchParams = new URLSearchParams()
+    searchParams.append('first', first.toString())
+    if (after) {
+      searchParams.append('after', after)
+    }
+    if (query) {
+      searchParams.append('query', query)
+    }
+
+    const response = await fetch(`/api/orders/hybrid?${searchParams.toString()}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+      throw new Error(errorData.error ?? `HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    return response.json()
+  },
+
   getAllOrdersLocal: async (params?: {
     first?: number
     after?: string
@@ -93,6 +121,23 @@ export const api = {
   getBasicInfo: () => makeCustomerRequest(GET_BASIC_INFO_QUERY),
 
   getOrder: (orderId: string) => makeCustomerRequest(GET_SINGLE_ORDER_QUERY, { id: orderId }),
+
+  getOrderHybrid: async (orderId: string): Promise<{ order: LocalOrderDetail }> => {
+    const response = await fetch(`/api/orders/hybrid/${orderId}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+      throw new Error(errorData.error ?? `HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    return response.json()
+  },
 
   getOrderLocal: async (orderId: string): Promise<{ order: LocalOrderDetail }> => {
     const response = await fetch(`/api/orders/local/${orderId}`, {

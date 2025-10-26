@@ -28,12 +28,14 @@ interface CreateFulfillmentDialogProps {
   lineItems: LineItem[]
   orderId: string
   onSuccess?: () => void
+  shippingMethod?: 'standard' | 'local' // Determina si es envío estándar o local
 }
 
 export function CreateFulfillmentDialog({
   lineItems,
   onSuccess,
   orderId,
+  shippingMethod = 'standard',
 }: CreateFulfillmentDialogProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -42,8 +44,19 @@ export function CreateFulfillmentDialog({
   const [trackingUrl, setTrackingUrl] = useState('')
   const [notifyCustomer, setNotifyCustomer] = useState(true)
 
+  const isLocalShipping = shippingMethod === 'local'
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Validación para envío estándar
+    if (!isLocalShipping) {
+      if (!trackingCompany && !trackingNumber) {
+        toast.error('Debe proporcionar al menos Compañía de Envío o Número de Rastreo')
+        return
+      }
+    }
+
     setIsLoading(true)
 
     try {
@@ -54,12 +67,17 @@ export function CreateFulfillmentDialog({
             quantity: item.quantity,
           })),
           notifyCustomer,
-          trackingInfo:
-            trackingCompany || trackingNumber || trackingUrl
+          trackingInfo: isLocalShipping
+            ? {
+                company: 'Entrega Local',
+                number: undefined,
+                url: undefined,
+              }
+            : trackingCompany || trackingNumber || trackingUrl
               ? {
-                  company: trackingCompany ?? undefined,
-                  number: trackingNumber ?? undefined,
-                  url: trackingUrl ?? undefined,
+                  company: trackingCompany || undefined,
+                  number: trackingNumber || undefined,
+                  url: trackingUrl || undefined,
                 }
               : undefined,
         }),
@@ -74,7 +92,9 @@ export function CreateFulfillmentDialog({
         throw new Error(error.error ?? 'Error al crear el envío')
       }
 
-      toast.success('Envío creado exitosamente')
+      toast.success(
+        isLocalShipping ? 'Entrega local marcada exitosamente' : 'Envío creado exitosamente'
+      )
       setOpen(false)
       onSuccess?.()
 
@@ -100,46 +120,68 @@ export function CreateFulfillmentDialog({
       <DialogContent className='sm:max-w-[500px]'>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Crear Envío</DialogTitle>
+            <DialogTitle>{isLocalShipping ? 'Crear Entrega Local' : 'Crear Envío'}</DialogTitle>
             <DialogDescription>
-              Crea un nuevo envío para esta orden. Los productos serán marcados como enviados.
+              {isLocalShipping
+                ? 'Marca esta orden como entregada localmente. El cliente recibirá la notificación.'
+                : 'Crea un nuevo envío para esta orden. Los productos serán marcados como enviados.'}
             </DialogDescription>
           </DialogHeader>
 
           <div className='space-y-4 py-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='company'>Compañía de Envío (Opcional)</Label>
-              <Input
-                id='company'
-                placeholder='Ej: FedEx, DHL, Estafeta'
-                value={trackingCompany}
-                onChange={(e) => setTrackingCompany(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
+            {isLocalShipping ? (
+              <div className='rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950'>
+                <p className='text-sm font-medium text-blue-900 dark:text-blue-100'>
+                  Entrega Local
+                </p>
+                <p className='mt-1 text-sm text-blue-700 dark:text-blue-300'>
+                  Esta orden será marcada como entregada por el mismo cliente o mediante entrega
+                  local. No se requiere información de tracking.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className='space-y-2'>
+                  <Label htmlFor='company'>
+                    Compañía de Envío <span className='text-red-500'>*</span>
+                  </Label>
+                  <Input
+                    id='company'
+                    placeholder='Ej: FedEx, DHL, Estafeta'
+                    value={trackingCompany}
+                    onChange={(e) => setTrackingCompany(e.target.value)}
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
 
-            <div className='space-y-2'>
-              <Label htmlFor='tracking'>Número de Rastreo (Opcional)</Label>
-              <Input
-                id='tracking'
-                placeholder='Ej: 1234567890'
-                value={trackingNumber}
-                onChange={(e) => setTrackingNumber(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='tracking'>
+                    Número de Rastreo <span className='text-red-500'>*</span>
+                  </Label>
+                  <Input
+                    id='tracking'
+                    placeholder='Ej: 1234567890'
+                    value={trackingNumber}
+                    onChange={(e) => setTrackingNumber(e.target.value)}
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
 
-            <div className='space-y-2'>
-              <Label htmlFor='url'>URL de Rastreo (Opcional)</Label>
-              <Input
-                id='url'
-                type='url'
-                placeholder='https://...'
-                value={trackingUrl}
-                onChange={(e) => setTrackingUrl(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='url'>URL de Rastreo (Opcional)</Label>
+                  <Input
+                    id='url'
+                    type='url'
+                    placeholder='https://...'
+                    value={trackingUrl}
+                    onChange={(e) => setTrackingUrl(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+              </>
+            )}
 
             <div className='flex items-center space-x-2'>
               <Checkbox
@@ -175,7 +217,11 @@ export function CreateFulfillmentDialog({
               Cancelar
             </Button>
             <Button type='submit' disabled={isLoading}>
-              {isLoading ? 'Creando...' : 'Crear Envío'}
+              {isLoading
+                ? 'Guardando...'
+                : isLocalShipping
+                  ? 'Marcar como Entregado'
+                  : 'Crear Envío'}
             </Button>
           </DialogFooter>
         </form>

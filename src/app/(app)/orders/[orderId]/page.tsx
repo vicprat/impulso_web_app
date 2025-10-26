@@ -1,4 +1,5 @@
 'use client'
+
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import {
   ArrowLeft,
@@ -28,9 +29,11 @@ import { CreateFulfillmentDialog } from '@/src/components/Orders/CreateFulfillme
 import { PERMISSIONS } from '@/src/config/Permissions'
 import { formatCurrency, formatDate, getStatusColor } from '@/src/helpers'
 import { useDialog } from '@/src/hooks/useDialog'
-import { useCustomerOrderSmart } from '@/src/modules/customer/hooks'
+import { useCustomerOrderHybrid } from '@/src/modules/customer/hooks'
 
 import type { LineItem } from '@/src/modules/customer/types'
+import type React from 'react'
+export const dynamic = 'force-dynamic'
 
 interface LineItemEdge {
   node: LineItem
@@ -41,7 +44,7 @@ export default function Page() {
   const router = useRouter()
   const orderId = params.orderId as string
 
-  const orderQuery = useCustomerOrderSmart(orderId)
+  const orderQuery = useCustomerOrderHybrid(orderId)
   const { data: orderDetail, error, isLoading } = orderQuery
 
   const invoiceDialog = useDialog()
@@ -50,8 +53,18 @@ export default function Page() {
 
   const isEventOrder = order?.requiresShipping === false
 
+  // Determine shipping method based on shipping line
+  const determineShippingMethod = (): 'standard' | 'local' => {
+    if (!order?.shippingLine?.title) return 'standard'
+
+    const title = order.shippingLine.title.toLowerCase()
+    return title.includes('local') ? 'local' : 'standard'
+  }
+
+  const shippingMethod = determineShippingMethod()
+
   const lineItemsForFulfillment =
-    order?.lineItems.edges.map((edge) => ({
+    order?.lineItems.edges.map((edge: LineItemEdge) => ({
       id: edge.node.id,
       quantity: edge.node.quantity,
       title: edge.node.title,
@@ -153,6 +166,7 @@ export default function Page() {
               <CreateFulfillmentDialog
                 orderId={orderId}
                 lineItems={lineItemsForFulfillment}
+                shippingMethod={shippingMethod}
                 onSuccess={() => {
                   void orderQuery.refetch()
                 }}
@@ -288,22 +302,57 @@ export default function Page() {
             </div>
             <div>
               <span className='block font-medium text-foreground'>Tipo de Entrega:</span>
-              <Badge
-                className={
-                  order.requiresShipping
-                    ? 'bg-primary-container text-on-primary-container'
-                    : 'bg-success-container text-on-success-container'
-                }
-              >
-                {order.requiresShipping ? 'Envío Físico' : 'Digital (Eventos/Tickets)'}
-              </Badge>
+              {order.requiresShipping === false ? (
+                <Badge className='bg-success-container text-on-success-container'>
+                  Digital - Eventos/Tickets
+                </Badge>
+              ) : order.shippingLine?.title ? (
+                (() => {
+                  const title = order.shippingLine.title.toLowerCase()
+                  if (title.includes('local')) {
+                    return (
+                      <Badge className='bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200'>
+                        Envío Local
+                      </Badge>
+                    )
+                  } else if (
+                    title.includes('estándar') ||
+                    title.includes('standard') ||
+                    title.includes('paqueteria')
+                  ) {
+                    return (
+                      <Badge className='bg-primary-container text-on-primary-container'>
+                        Envío Estándar
+                      </Badge>
+                    )
+                  } else {
+                    return <Badge variant='outline'>{order.shippingLine.title}</Badge>
+                  }
+                })()
+              ) : (
+                <Badge variant='secondary'>No especificado</Badge>
+              )}
             </div>
-            {'shippingLine' in order && order.shippingLine && (
-              <div>
-                <span className='block font-medium text-foreground'>Método de Envío:</span>
-                <span>{order.shippingLine.title}</span>
-              </div>
-            )}
+            <div>
+              <span className='block font-medium text-foreground'>Estado de Entrega:</span>
+              {(() => {
+                const status = order.fulfillmentStatus
+                const statusMap: Record<string, React.ReactNode> = {
+                  FULFILLED: (
+                    <Badge className='bg-success-container text-on-success-container'>
+                      Enviado
+                    </Badge>
+                  ),
+                  PARTIALLY_FULFILLED: <Badge variant='outline'>Parcialmente Enviado</Badge>,
+                  UNFULFILLED: <Badge variant='secondary'>Pendiente de Envío</Badge>,
+                }
+                return (
+                  statusMap[status] ?? (
+                    <Badge variant='secondary'>{status ?? 'No disponible'}</Badge>
+                  )
+                )
+              })()}
+            </div>
             {order.statusPageUrl && (
               <div>
                 <span className='mb-1 block font-medium text-foreground'>Estado de la Orden:</span>
@@ -334,12 +383,16 @@ export default function Page() {
                 {order.shippingAddress.city}, {order.shippingAddress.zip}
               </p>
               <p>{order.shippingAddress.country}</p>
-              {'phone' in order.shippingAddress && order.shippingAddress.phone && (
+              {order.shippingAddress && 'phone' in order.shippingAddress ? (
                 <div className='mt-2 flex items-center gap-2'>
                   <Phone className='size-4' />
-                  <span>{order.shippingAddress.phone}</span>
+                  <span>
+                    {typeof order.shippingAddress.phone === 'string'
+                      ? order.shippingAddress.phone
+                      : ''}
+                  </span>
                 </div>
-              )}
+              ) : null}
             </CardContent>
           </Card>
         )}

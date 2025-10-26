@@ -11,11 +11,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Table } from '@/src/components/Table'
 import { PERMISSIONS } from '@/src/config/Permissions'
-import { useAllOrdersLocal, useCustomerOrders } from '@/src/modules/customer/hooks'
+import { useAllOrdersHybrid, useCustomerOrders } from '@/src/modules/customer/hooks'
 
 import { columns } from './columns'
 
 import type { Order } from '@/src/modules/customer/types'
+export const dynamic = 'force-dynamic'
 
 type OrdersTab = 'my-orders' | 'all-orders'
 
@@ -28,7 +29,7 @@ export default function OrdersPage() {
 
   const debouncedSearch = useDebounce(searchTerm, 500)
 
-  const allOrdersQuery = useAllOrdersLocal({
+  const allOrdersQuery = useAllOrdersHybrid({
     after: cursors[currentPage],
     first: pageSize,
     query: debouncedSearch,
@@ -43,8 +44,9 @@ export default function OrdersPage() {
 
   const orders: Order[] = (() => {
     if (activeTab === 'all-orders') {
+      const hybridData = allOrdersQuery.data as { orders: { edges: { node: Order }[] } } | undefined
       return (
-        allOrdersQuery.data?.orders.edges.map((edge) => ({
+        hybridData?.orders.edges.map((edge) => ({
           customer: edge.node.customer,
           displayFinancialStatus: edge.node.displayFinancialStatus,
           displayFulfillmentStatus: edge.node.displayFulfillmentStatus,
@@ -63,11 +65,13 @@ export default function OrdersPage() {
     } else {
       const customerOrders =
         customerOrdersQuery.data?.customer?.orders?.edges.map((edge) => ({
+          displayFinancialStatus: edge.node.financialStatus,
           fulfillmentStatus: edge.node.fulfillmentStatus,
           id: edge.node.id,
           lineItemsCount: edge.node.lineItems.edges.length,
           name: edge.node.name,
           processedAt: edge.node.processedAt,
+          requiresShipping: edge.node.requiresShipping,
           totalPrice: {
             amount: edge.node.totalPrice.amount,
             currencyCode: edge.node.totalPrice.currencyCode,
@@ -80,15 +84,36 @@ export default function OrdersPage() {
     }
   })()
 
-  const pageInfo =
-    activeTab === 'all-orders'
-      ? allOrdersQuery.data?.orders.pageInfo
-      : customerOrdersQuery.data?.customer?.orders?.pageInfo
+  const pageInfo = (() => {
+    if (activeTab === 'all-orders') {
+      const hybridData = allOrdersQuery.data as
+        | {
+            orders: {
+              pageInfo: {
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+                startCursor?: string | null
+                endCursor?: string | null
+              }
+            }
+          }
+        | undefined
+      return hybridData?.orders.pageInfo
+    }
+    return customerOrdersQuery.data?.customer?.orders?.pageInfo
+  })()
 
   const tableColumns =
     activeTab === 'all-orders'
       ? columns
-      : columns.filter((col) => col.id !== 'customerName' && col.id !== 'customerEmail')
+      : // Admin sees all columns
+        columns.filter(
+          (col) =>
+            col.id !== 'customerName' &&
+            col.id !== 'customerEmail' &&
+            col.id !== 'shippingMethod' &&
+            col.id !== 'displayFinancialStatus'
+        ) // Customer sees: Orden, Fecha, Estado de Pago, Estado de Envío, Total
 
   useEffect(() => {
     if (pageInfo?.hasNextPage && pageInfo.endCursor) {

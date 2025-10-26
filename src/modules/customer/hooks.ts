@@ -29,6 +29,8 @@ export const orderManagementKeys = {
   all: ['orderManagement'] as const,
   allOrders: (params?: { first?: number; after?: string; query?: string }) =>
     [...orderManagementKeys.all, 'allOrders', params] as const,
+  allOrdersHybrid: (params?: { first?: number; after?: string; query?: string }) =>
+    [...orderManagementKeys.all, 'allOrdersHybrid', params] as const,
   allOrdersLocal: (params?: { first?: number; after?: string; query?: string }) =>
     [...orderManagementKeys.all, 'allOrdersLocal', params] as const,
 }
@@ -213,6 +215,18 @@ export function useCustomerOrderSmart(
   })
 }
 
+export function useCustomerOrderHybrid(
+  orderId: string,
+  options?: Omit<UseQueryOptions<{ order: LocalOrderDetail }, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryFn: () => api.getOrderHybrid(orderId),
+    queryKey: [...customerKeys.all, 'orderHybrid', orderId] as const,
+    staleTime: 2 * 60 * 1000,
+    ...options,
+  })
+}
+
 // Fixed: Remove the extra wrapper to match the actual usage in the component
 export function useAllOrders(
   params?: { first?: number; after?: string; query?: string },
@@ -233,6 +247,18 @@ export function useAllOrdersLocal(
   return useQuery({
     queryFn: () => api.getAllOrdersLocal(params),
     queryKey: orderManagementKeys.allOrdersLocal(params),
+    staleTime: 2 * 60 * 1000,
+    ...options,
+  })
+}
+
+export function useAllOrdersHybrid(
+  params?: { first?: number; after?: string; query?: string },
+  options?: Omit<UseQueryOptions<unknown, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryFn: () => api.getAllOrdersHybrid(params),
+    queryKey: orderManagementKeys.allOrdersHybrid(params),
     staleTime: 2 * 60 * 1000,
     ...options,
   })

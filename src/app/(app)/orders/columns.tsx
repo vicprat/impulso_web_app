@@ -85,11 +85,21 @@ export const columns: ColumnDef<Order>[] = [
       if (!status) return <Badge variant='secondary'>No disponible</Badge>
 
       const statusMap: Record<string, JSX.Element> = {
-        PAID: <Badge className='bg-success-container text-on-success-container'>Pagado</Badge>,
-        PENDING: (
-          <Badge className='bg-warning-container text-on-warning-container'>Pendiente</Badge>
+        PAID: (
+          <Badge className='bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'>
+            Pagado
+          </Badge>
         ),
-        REFUNDED: <Badge variant='outline'>Reembolsado</Badge>,
+        PENDING: (
+          <Badge className='bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'>
+            Pendiente
+          </Badge>
+        ),
+        REFUNDED: (
+          <Badge className='bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'>
+            Reembolsado
+          </Badge>
+        ),
       }
       return (
         statusMap[status as keyof typeof statusMap] ?? <Badge variant='secondary'>{status}</Badge>
@@ -98,49 +108,83 @@ export const columns: ColumnDef<Order>[] = [
     header: 'Estado de Pago',
   },
   {
-    accessorKey: 'displayFulfillmentStatus',
-    cell: ({ row }) => {
-      const { requiresShipping } = row.original
-      const status = row.original.displayFulfillmentStatus ?? row.original.fulfillmentStatus
-
-      if (requiresShipping === false) {
-        return (
-          <Badge className='bg-success-container text-on-success-container'>Entrega Digital</Badge>
-        )
-      }
-
-      if (!status) return <Badge variant='secondary'>No disponible</Badge>
-
-      const statusMap: Record<string, JSX.Element> = {
-        FULFILLED: (
-          <Badge className='bg-primary-container text-on-primary-container'>Enviado</Badge>
-        ),
-        PARTIALLY_FULFILLED: <Badge variant='outline'>Parcialmente Enviado</Badge>,
-        UNFULFILLED: <Badge variant='secondary'>No Enviado</Badge>,
-      }
-      return (
-        statusMap[status as keyof typeof statusMap] ?? <Badge variant='secondary'>{status}</Badge>
-      )
-    },
-    header: 'Estado de Envío',
-  },
-  {
     accessorKey: 'shippingLine',
     cell: ({ row }) => {
       const { requiresShipping, shippingLine } = row.original
 
+      // Digital orders (tickets/events)
       if (requiresShipping === false) {
-        return <Badge variant='outline'>No requiere envío</Badge>
+        return <Badge variant='outline'>Digital - Eventos/Tickets</Badge>
       }
 
-      if (!shippingLine?.title) {
-        return <span className='text-muted-foreground'>-</span>
+      // Determine shipping method based on title
+      if (shippingLine?.title) {
+        const title = shippingLine.title.toLowerCase()
+
+        if (title.includes('local')) {
+          return (
+            <Badge className='bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200'>
+              Envío Local
+            </Badge>
+          )
+        } else if (
+          title.includes('estándar') ||
+          title.includes('standard') ||
+          title.includes('paqueteria')
+        ) {
+          return (
+            <Badge className='bg-primary-container text-on-primary-container'>Envío Estándar</Badge>
+          )
+        } else {
+          return <span className='text-sm'>{shippingLine.title}</span>
+        }
       }
 
-      return <span className='text-sm'>{shippingLine.title}</span>
+      return <span className='text-muted-foreground'>-</span>
     },
     header: 'Método de Envío',
     id: 'shippingMethod',
+  },
+  {
+    accessorKey: 'fulfillmentStatus',
+    cell: ({ row }) => {
+      const { requiresShipping } = row.original
+      const fulfillmentStatus =
+        row.original.fulfillmentStatus ?? row.original.displayFulfillmentStatus
+
+      // Digital orders don't need shipping
+      if (requiresShipping === false) {
+        return (
+          <Badge className='bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'>
+            Entrega Digital
+          </Badge>
+        )
+      }
+
+      if (!fulfillmentStatus) return <Badge variant='secondary'>No disponible</Badge>
+
+      const statusMap: Record<string, JSX.Element> = {
+        FULFILLED: (
+          <Badge className='bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'>
+            Enviado
+          </Badge>
+        ),
+        PARTIALLY_FULFILLED: (
+          <Badge className='bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'>
+            Parcialmente Enviado
+          </Badge>
+        ),
+        UNFULFILLED: (
+          <Badge className='bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'>
+            Pendiente de Envío
+          </Badge>
+        ),
+      }
+
+      return statusMap[fulfillmentStatus] ?? <Badge variant='secondary'>{fulfillmentStatus}</Badge>
+    },
+    header: 'Estado de Envío',
+    id: 'fulfillmentStatus',
   },
   {
     accessorKey: 'totalPrice',
