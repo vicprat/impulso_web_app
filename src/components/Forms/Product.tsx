@@ -5,7 +5,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   Box,
   Calendar,
-  Check, ChevronsUpDown,
+  Check,
+  ChevronsUpDown,
   DollarSign,
   Hash,
   Image as ImageIcon,
@@ -16,7 +17,7 @@ import {
   Tag,
   User,
   Warehouse,
-  X
+  X,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -44,11 +45,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -60,10 +57,13 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { type Product } from '@/models/Product'
 import { useAuth } from '@/modules/auth/context/useAuth'
-import { useGetArtworkTypes, useGetLocations, useGetTechniques, useGetVendors } from '@/services/product/hook'
+import {
+  useGetArtworkTypes,
+  useGetLocations,
+  useGetTechniques,
+  useGetVendors,
+} from '@/services/product/hook'
 import { type CreateProductPayload, type UpdateProductPayload } from '@/services/product/types'
-
-
 
 import { Tiptap } from '../TipTap'
 import { MultiImageUploader } from './MultiImageUploader'
@@ -88,8 +88,8 @@ const AddOptionSelect = ({
   onValueChange: (value: string) => void
   icon?: React.ComponentType<{ className?: string }>
 }) => {
-  const [ isAdding, setIsAdding ] = useState(false)
-  const [ newValue, setNewValue ] = useState('')
+  const [isAdding, setIsAdding] = useState(false)
+  const [newValue, setNewValue] = useState('')
 
   const handleAddNew = async () => {
     if (!newValue.trim()) return
@@ -147,12 +147,7 @@ const AddOptionSelect = ({
                 {isAdding ? 'Agregando...' : 'Agregar'}
               </Button>
               {newValue && (
-                <Button
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  onClick={handleCancel}
-                >
+                <Button type='button' size='sm' variant='outline' onClick={handleCancel}>
                   Cancelar
                 </Button>
               )}
@@ -178,13 +173,13 @@ const VendorCombobox = ({
   onValueChange: (value: string) => void
   disabled?: boolean
 }) => {
-  const [ open, setOpen ] = useState(false)
-  const [ inputValue, setInputValue ] = useState(value)
+  const [open, setOpen] = useState(false)
+  const [inputValue, setInputValue] = useState(value)
 
   // Actualizar inputValue cuando cambie el value
   useEffect(() => {
     setInputValue(value)
-  }, [ value ])
+  }, [value])
 
   const handleSelect = (selectedValue: string) => {
     onValueChange(selectedValue)
@@ -225,21 +220,12 @@ const VendorCombobox = ({
             <CommandEmpty>No se encontraron artistas.</CommandEmpty>
             <CommandGroup>
               {isLoading ? (
-                <CommandItem disabled>
-                  Cargando artistas...
-                </CommandItem>
+                <CommandItem disabled>Cargando artistas...</CommandItem>
               ) : (
                 vendors?.map((vendor) => (
-                  <CommandItem
-                    key={vendor}
-                    value={vendor}
-                    onSelect={() => handleSelect(vendor)}
-                  >
+                  <CommandItem key={vendor} value={vendor} onSelect={() => handleSelect(vendor)}>
                     <Check
-                      className={cn(
-                        'mr-2 size-4',
-                        value === vendor ? 'opacity-100' : 'opacity-0'
-                      )}
+                      className={cn('mr-2 size-4', value === vendor ? 'opacity-100' : 'opacity-0')}
                     />
                     {vendor}
                   </CommandItem>
@@ -254,28 +240,29 @@ const VendorCombobox = ({
 }
 
 // Función para crear el esquema de validación dinámicamente
-const createProductFormSchema = (isArtist: boolean) => z.object({
-  depth: z.string().optional(),
-  description: z.string().optional(),
-  handle: z.string().min(3, 'El handle debe tener al menos 3 caracteres').optional(),
-  height: z.string().optional(),
-  inventoryQuantity: z.string().refine((val) => !isNaN(parseInt(val)) && parseInt(val) >= 0, {
-    message: 'Debe ser un número entero mayor o igual a 0',
-  }),
-  location: z.string().optional(),
-  medium: z.string().optional(),
-  price: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
-    message: 'Debe ser un número válido mayor o igual a 0',
-  }),
-  productType: z.string().optional(),
-  serie: z.string().optional(),
-  status: z.enum([ 'ACTIVE', 'DRAFT', 'ARCHIVED' ]),
-  tags: z.string(),
-  title: z.string().min(3, 'El título debe tener al menos 3 caracteres'),
-  vendor: isArtist ? z.string().min(1, 'El campo artista es requerido') : z.string().optional(),
-  width: z.string().optional(),
-  year: z.string().optional(),
-})
+const createProductFormSchema = (isArtist: boolean) =>
+  z.object({
+    depth: z.string().optional(),
+    description: z.string().optional(),
+    handle: z.string().min(3, 'El handle debe tener al menos 3 caracteres').optional(),
+    height: z.string().optional(),
+    inventoryQuantity: z.string().refine((val) => !isNaN(parseInt(val)) && parseInt(val) >= 0, {
+      message: 'Debe ser un número entero mayor o igual a 0',
+    }),
+    location: z.string().optional(),
+    medium: z.string().optional(),
+    price: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+      message: 'Debe ser un número válido mayor o igual a 0',
+    }),
+    productType: z.string().optional(),
+    serie: z.string().optional(),
+    status: z.enum(['ACTIVE', 'DRAFT', 'ARCHIVED']),
+    tags: z.string(),
+    title: z.string().min(3, 'El título debe tener al menos 3 caracteres'),
+    vendor: isArtist ? z.string().min(1, 'El campo artista es requerido') : z.string().optional(),
+    width: z.string().optional(),
+    year: z.string().optional(),
+  })
 
 type ProductFormData = z.infer<ReturnType<typeof createProductFormSchema>>
 
@@ -324,12 +311,12 @@ export function ProductForm({
 }: ProductFormProps) {
   const { hasRole, user } = useAuth()
   const { data: vendors, isLoading: vendorsLoading } = useGetVendors()
-  const [ allImages, setAllImages ] = useState<ImageData[]>([])
-  const [ tagsArray, setTagsArray ] = useState<string[]>([])
+  const [allImages, setAllImages] = useState<ImageData[]>([])
+  const [tagsArray, setTagsArray] = useState<string[]>([])
   const queryClient = useQueryClient()
 
   const isEditing = mode === 'edit'
-  const variant = product?.variants && product.variants.length > 0 ? product.variants[ 0 ] : undefined
+  const variant = product?.variants && product.variants.length > 0 ? product.variants[0] : undefined
 
   // Determinar si el usuario puede cambiar el vendor
   const canChangeVendor = hasRole('admin') || hasRole('super_admin')
@@ -342,14 +329,13 @@ export function ProductForm({
   useEffect(() => {
     if (product?.media) {
       const existingImages: ImageData[] = product.media
-        .filter(node => node.mediaContentType === 'IMAGE' && node.image?.url && node.image?.id)
+        .filter((node) => node.mediaContentType === 'IMAGE' && node.image?.url && node.image?.id)
         .map((node, index) => ({
           altText: node.image!.altText ?? undefined,
           id: node.image!.id,
 
           // La primera imagen es la principal
           isNew: false,
-
 
           isPrimary: index === 0,
 
@@ -361,7 +347,7 @@ export function ProductForm({
     } else {
       setAllImages([])
     }
-  }, [ product?.media ])
+  }, [product?.media])
 
   // Hooks para obtener las opciones
   const { data: techniques = [], isLoading: isLoadingTechniques } = useGetTechniques()
@@ -369,25 +355,28 @@ export function ProductForm({
   const { data: locations = [], isLoading: isLoadingLocations } = useGetLocations()
 
   // Función para agregar nuevas opciones
-  const handleAddNewOption = useCallback(async (optionType: string, name: string) => {
-    const response = await fetch(`/api/options/${optionType}`, {
-      body: JSON.stringify({ name }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-    })
+  const handleAddNewOption = useCallback(
+    async (optionType: string, name: string) => {
+      const response = await fetch(`/api/options/${optionType}`, {
+        body: JSON.stringify({ name }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
 
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Error al agregar la opción')
-    }
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error al agregar la opción')
+      }
 
-    // Invalidar las queries para refrescar las opciones
-    await queryClient.invalidateQueries({ queryKey: [ 'techniques' ] })
-    await queryClient.invalidateQueries({ queryKey: [ 'artwork_types' ] })
-    await queryClient.invalidateQueries({ queryKey: [ 'locations' ] })
-  }, [ queryClient ])
+      // Invalidar las queries para refrescar las opciones
+      await queryClient.invalidateQueries({ queryKey: ['techniques'] })
+      await queryClient.invalidateQueries({ queryKey: ['artwork_types'] })
+      await queryClient.invalidateQueries({ queryKey: ['locations'] })
+    },
+    [queryClient]
+  )
 
   const generateHandle = (title: string) => {
     return title
@@ -418,32 +407,30 @@ export function ProductForm({
       status: product?.status ?? 'DRAFT',
       tags: product?.manualTags.join(', ') ?? '',
       title: product?.title ?? '',
-      vendor: isArtist ? defaultVendor : product?.vendor ?? '',
+      vendor: isArtist ? defaultVendor : (product?.vendor ?? ''),
       width: product?.artworkDetails.width ?? '',
       year: product?.artworkDetails.year ?? '',
     },
     resolver: zodResolver(createProductFormSchema(isArtist)),
   })
 
-
-
   useEffect(() => {
     if (product?.tags) {
       setTagsArray(product.tags)
     }
-  }, [ product ])
+  }, [product])
 
   // Actualizar el vendor cuando el usuario se cargue completamente (especialmente para artistas)
   useEffect(() => {
     if (isArtist && user?.artist?.name && !isEditing) {
       form.setValue('vendor', user.artist.name)
     }
-  }, [ isArtist, user?.artist?.name, isEditing, form ])
+  }, [isArtist, user?.artist?.name, isEditing, form])
 
   // Reinicializar el formulario cuando cambie el rol del usuario (para actualizar la validación)
   useEffect(() => {
     form.clearErrors()
-  }, [ isArtist, form ])
+  }, [isArtist, form])
 
   const onSubmit = async (data: ProductFormData) => {
     if (isEditing) {
@@ -452,21 +439,21 @@ export function ProductForm({
 
       // Identificar imágenes que fueron eliminadas usando mediaId
       const remainingMediaIds = allImages
-        .filter(img => !img.isNew)
-        .map(img => img.mediaId)
-        .filter(id => id?.startsWith('gid://')) // Solo IDs válidos de MediaImage
+        .filter((img) => !img.isNew)
+        .map((img) => img.mediaId)
+        .filter((id) => id?.startsWith('gid://')) // Solo IDs válidos de MediaImage
 
       // Solo eliminar imágenes que realmente existen en el producto actual
       const deletedMediaIds = originalImages
-        .filter(node => node.mediaContentType === 'IMAGE' && node.image?.url)
-        .filter(node => !remainingMediaIds.includes(node.id))
-        .map(node => node.id)
-        .filter(id => id)
+        .filter((node) => node.mediaContentType === 'IMAGE' && node.image?.url)
+        .filter((node) => !remainingMediaIds.includes(node.id))
+        .map((node) => node.id)
+        .filter((id) => id)
 
       // Convertir ImageData a NewImage para el payload
       const newImages: NewImage[] = allImages
-        .filter(img => img.isNew)
-        .map(img => ({
+        .filter((img) => img.isNew)
+        .map((img) => ({
           mediaContentType: 'IMAGE' as const,
           originalSource: img.url,
         }))
@@ -490,24 +477,18 @@ export function ProductForm({
         // Solo enviar imágenes a eliminar si hay imágenes para eliminar
         imagesToDelete: deletedMediaIds.length > 0 ? deletedMediaIds : undefined,
 
-
         inventoryQuantity: data.inventoryQuantity ? parseInt(data.inventoryQuantity) : undefined,
-
 
         price: data.price,
 
-
         productType: data.productType,
 
-
         status: data.status as 'ACTIVE' | 'DRAFT',
-
 
         tags: data.tags
           .split(',')
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
-
 
         title: data.title,
 
@@ -516,7 +497,7 @@ export function ProductForm({
       onSave(updatePayload)
     } else {
       // Convertir ImageData a NewImage para el payload
-      const newImages: NewImage[] = allImages.map(img => ({
+      const newImages: NewImage[] = allImages.map((img) => ({
         mediaContentType: 'IMAGE' as const,
         originalSource: img.url,
       }))
@@ -557,45 +538,53 @@ export function ProductForm({
     setAllImages(images)
   }, [])
 
-  const handleTitleChange = useCallback((value: string) => {
-    form.setValue('title', value)
-    if (!isEditing && value) {
-      const generatedHandle = generateHandle(value)
-      form.setValue('handle', generatedHandle)
-    }
-  }, [ form, isEditing ])
+  const handleTitleChange = useCallback(
+    (value: string) => {
+      form.setValue('title', value)
+      if (!isEditing && value) {
+        const generatedHandle = generateHandle(value)
+        form.setValue('handle', generatedHandle)
+      }
+    },
+    [form, isEditing]
+  )
 
-  const handleTagsChange = useCallback((value: string) => {
-    form.setValue('tags', value)
-    const newTagsArray = value
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter((tag) => tag.length > 0)
-    setTagsArray(newTagsArray)
-  }, [ form ])
-
-  const removeTag = useCallback((tagToRemove: string) => {
-    const currentTags = form.getValues('tags')
-    const updatedTags = currentTags
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter((tag) => tag !== tagToRemove && tag.length > 0)
-      .join(', ')
-    form.setValue('tags', updatedTags)
-    setTagsArray(
-      updatedTags
+  const handleTagsChange = useCallback(
+    (value: string) => {
+      form.setValue('tags', value)
+      const newTagsArray = value
         .split(',')
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0)
-    )
-  }, [ form ])
+      setTagsArray(newTagsArray)
+    },
+    [form]
+  )
+
+  const removeTag = useCallback(
+    (tagToRemove: string) => {
+      const currentTags = form.getValues('tags')
+      const updatedTags = currentTags
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag !== tagToRemove && tag.length > 0)
+        .join(', ')
+      form.setValue('tags', updatedTags)
+      setTagsArray(
+        updatedTags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0)
+      )
+    },
+    [form]
+  )
 
   return (
-    <div >
+    <div>
       <div className='space-y-8'>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-
             {/* Información Básica */}
             <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
               <CardHeader className='pb-4'>
@@ -846,9 +835,8 @@ export function ProductForm({
 
                 <Separator className='bg-outline-variant' />
 
-
                 {/* Detalles de la Obra */}
-                <div >
+                <div>
                   <CardHeader className='pb-4'>
                     <CardTitle className='flex items-center gap-2 text-on-surface'>
                       <Palette className='size-5 text-secondary' />
@@ -950,7 +938,9 @@ export function ProductForm({
                           name='height'
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className='text-sm font-medium text-on-surface'>Altura</FormLabel>
+                              <FormLabel className='text-sm font-medium text-on-surface'>
+                                Altura
+                              </FormLabel>
                               <FormControl>
                                 <Input
                                   type='number'
@@ -970,7 +960,9 @@ export function ProductForm({
                           name='width'
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className='text-sm font-medium text-on-surface'>Ancho</FormLabel>
+                              <FormLabel className='text-sm font-medium text-on-surface'>
+                                Ancho
+                              </FormLabel>
                               <FormControl>
                                 <Input
                                   type='number'
@@ -990,7 +982,9 @@ export function ProductForm({
                           name='depth'
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className='text-sm font-medium text-on-surface'>Profundidad</FormLabel>
+                              <FormLabel className='text-sm font-medium text-on-surface'>
+                                Profundidad
+                              </FormLabel>
                               <FormControl>
                                 <Input
                                   type='number'
@@ -1067,10 +1061,12 @@ export function ProductForm({
                           </p>
                         )}
 
-                        {allImages.filter(img => img.isNew).length > 0 && (
+                        {allImages.filter((img) => img.isNew).length > 0 && (
                           <div className='border-success/20 mt-3 rounded-md border bg-success-container p-3'>
                             <p className='text-xs font-medium text-on-success-container'>
-                              {allImages.filter(img => img.isNew).length} nueva{allImages.filter(img => img.isNew).length !== 1 ? 's' : ''} imagen{allImages.filter(img => img.isNew).length !== 1 ? 'es' : ''}
+                              {allImages.filter((img) => img.isNew).length} nueva
+                              {allImages.filter((img) => img.isNew).length !== 1 ? 's' : ''} imagen
+                              {allImages.filter((img) => img.isNew).length !== 1 ? 'es' : ''}
                             </p>
                             <p className='text-on-success-container/70 text-xs'>
                               Se procesarán al guardar
@@ -1083,8 +1079,6 @@ export function ProductForm({
                 </div>
               </CardContent>
             </Card>
-
-
 
             {/* Tags */}
             <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
@@ -1126,7 +1120,11 @@ export function ProductForm({
                     </Label>
                     <div className='flex flex-wrap gap-2'>
                       {tagsArray.map((tag, index) => (
-                        <Badge key={index} variant='tertiary-container' className='flex items-center gap-1 font-medium'>
+                        <Badge
+                          key={index}
+                          variant='tertiary-container'
+                          className='flex items-center gap-1 font-medium'
+                        >
                           {tag}
                           <Button
                             type='button'
@@ -1144,8 +1142,6 @@ export function ProductForm({
                 )}
               </CardContent>
             </Card>
-
-
 
             {/* Nota de edición */}
             {isEditing && (
@@ -1178,7 +1174,7 @@ export function ProductForm({
             )}
 
             {/* Botones de acción */}
-            <div >
+            <div>
               <CardContent className='p-6'>
                 <div className='flex justify-end space-x-4'>
                   <Button

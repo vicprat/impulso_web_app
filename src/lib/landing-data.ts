@@ -88,7 +88,7 @@ export async function getPublicProfile(userId: string) {
       },
     })
 
-    if (!userProfile || !userProfile.firstName || !userProfile.lastName) {
+    if (!userProfile || !userProfile.firstName) {
       return null
     }
 
