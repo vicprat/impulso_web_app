@@ -3,7 +3,7 @@
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import { RefreshCw } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Guard } from '@/components/Guards'
@@ -19,6 +19,94 @@ import type { Order } from '@/src/modules/customer/types'
 export const dynamic = 'force-dynamic'
 
 type OrdersTab = 'my-orders' | 'all-orders'
+
+function OrdersContentComponent({
+  activeQuery,
+  handlePageChange,
+  handlePageSizeChange,
+  handleRefresh,
+  handleSearchSubmit,
+  orders,
+  pageInUrl,
+  pageInfo,
+  searchInUrl,
+  searchInput,
+  setSearchInput,
+  table,
+}: {
+  activeQuery: any
+  handlePageChange: (newPage: number) => void
+  handlePageSizeChange: (size: number) => void
+  handleRefresh: () => void
+  handleSearchSubmit: () => void
+  orders: Order[]
+  pageInfo: any
+  pageInUrl: number
+  searchInUrl: string
+  searchInput: string
+  setSearchInput: (value: string) => void
+  table: any
+}) {
+  return (
+    <>
+      <Table.Toolbar
+        searchTerm={searchInput}
+        onSearchChange={setSearchInput}
+        placeholder='Buscar por número de orden, cliente, email...'
+        onSubmit={handleSearchSubmit}
+      >
+        <Button variant='outline' onClick={handleRefresh} disabled={activeQuery.isFetching}>
+          <RefreshCw className={`mr-2 size-4 ${activeQuery.isFetching ? 'animate-spin' : ''}`} />
+          Actualizar
+        </Button>
+      </Table.Toolbar>
+
+      {activeQuery.isFetching && (
+        <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
+          <RefreshCw className='size-4 animate-spin' />
+          <span>Actualizando datos...</span>
+        </div>
+      )}
+
+      <div className='rounded-md border bg-card shadow-elevation-1'>
+        <Table.Data
+          table={table}
+          emptyMessage={
+            searchInUrl
+              ? `No se encontraron órdenes que coincidan con "${searchInUrl}"`
+              : 'No se encontraron órdenes.'
+          }
+        />
+      </div>
+
+      <Table.Pagination
+        table={table}
+        isServerSide={true}
+        hasNextPage={pageInfo?.hasNextPage}
+        hasPreviousPage={pageInUrl > 1}
+        currentPage={pageInUrl}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
+
+      {orders.length > 0 && (
+        <div className='text-center text-sm text-muted-foreground'>
+          Mostrando {orders.length} órdenes
+        </div>
+      )}
+    </>
+  )
+}
+
+const OrdersContent = memo(OrdersContentComponent, (prev, next) => {
+  // Only re-render if searchInput or orders data changes
+  return (
+    prev.searchInput === next.searchInput &&
+    prev.orders.length === next.orders.length &&
+    prev.activeQuery.isFetching === next.activeQuery.isFetching &&
+    prev.pageInfo === next.pageInfo
+  )
+})
 
 export default function OrdersPage() {
   const searchParams = useSearchParams()
@@ -41,11 +129,6 @@ export default function OrdersPage() {
   useEffect(() => {
     setActiveTab(activeTabInUrl as OrdersTab)
   }, [activeTabInUrl])
-
-  // Update searchInput when URL changes
-  useEffect(() => {
-    setSearchInput(searchInUrl)
-  }, [searchInUrl])
 
   const allOrdersQuery = useAllOrdersHybrid({
     after: afterCursorInUrl ?? undefined,
@@ -101,7 +184,6 @@ export default function OrdersPage() {
     }
 
     // Client-side sorting for fields not supported by Shopify API
-    // Only apply client-side sorting if the field is not supported by Shopify
     const serverSupportedSortKeys = [
       'name',
       'processedAt',
@@ -190,15 +272,15 @@ export default function OrdersPage() {
 
   const handleSorting = useCallback(
     (columnId: string) => {
-      const newUrlParams = new URLSearchParams(searchParams.toString())
-      newUrlParams.set('sortBy', columnId)
+      const currentSearchParams = new URLSearchParams(window.location.search)
+      currentSearchParams.set('sortBy', columnId)
       const newSortOrder = sortByInUrl === columnId && sortOrderInUrl === 'desc' ? 'asc' : 'desc'
-      newUrlParams.set('sortOrder', newSortOrder)
-      newUrlParams.set('page', '1')
-      newUrlParams.delete('after')
-      router.push(`/orders?${newUrlParams.toString()}`, { scroll: false })
+      currentSearchParams.set('sortOrder', newSortOrder)
+      currentSearchParams.set('page', '1')
+      currentSearchParams.delete('after')
+      router.push(`/orders?${currentSearchParams.toString()}`, { scroll: false })
     },
-    [sortByInUrl, sortOrderInUrl, router, searchParams]
+    [sortByInUrl, sortOrderInUrl, router]
   )
 
   const handlePageChange = useCallback(
@@ -234,28 +316,28 @@ export default function OrdersPage() {
 
   const handlePageSizeChange = useCallback(
     (size: number) => {
-      const newUrlParams = new URLSearchParams(searchParams.toString())
-      newUrlParams.set('pageSize', size.toString())
-      newUrlParams.set('page', '1')
-      newUrlParams.delete('after')
-      router.push(`/orders?${newUrlParams.toString()}`, { scroll: false })
+      const currentSearchParams = new URLSearchParams(window.location.search)
+      currentSearchParams.set('pageSize', size.toString())
+      currentSearchParams.set('page', '1')
+      currentSearchParams.delete('after')
+      router.push(`/orders?${currentSearchParams.toString()}`, { scroll: false })
     },
-    [router, searchParams]
+    [router]
   )
 
   const handleSearchSubmit = useCallback(() => {
     if (!activeQuery.isFetching) {
-      const newUrlParams = new URLSearchParams(searchParams.toString())
-      newUrlParams.set('page', '1')
-      newUrlParams.delete('after')
+      const currentSearchParams = new URLSearchParams(window.location.search)
+      currentSearchParams.set('page', '1')
+      currentSearchParams.delete('after')
       if (searchInput) {
-        newUrlParams.set('search', searchInput)
+        currentSearchParams.set('search', searchInput)
       } else {
-        newUrlParams.delete('search')
+        currentSearchParams.delete('search')
       }
-      router.push(`/orders?${newUrlParams.toString()}`, { scroll: false })
+      router.push(`/orders?${currentSearchParams.toString()}`, { scroll: false })
     }
-  }, [activeQuery.isFetching, searchInput, router, searchParams])
+  }, [activeQuery.isFetching, searchInput, router])
 
   const handleTabChange = useCallback(
     (tab: string) => {
@@ -376,67 +458,41 @@ export default function OrdersPage() {
         </TabsList>
 
         <TabsContent value='my-orders' className='space-y-6'>
-          <OrdersContent />
+          <OrdersContent
+            activeQuery={activeQuery}
+            handlePageChange={handlePageChange}
+            handlePageSizeChange={handlePageSizeChange}
+            handleRefresh={handleRefresh}
+            handleSearchSubmit={handleSearchSubmit}
+            orders={orders}
+            pageInfo={pageInfo}
+            pageInUrl={pageInUrl}
+            searchInUrl={searchInUrl}
+            searchInput={searchInput}
+            setSearchInput={setSearchInput}
+            table={table}
+          />
         </TabsContent>
 
         <Guard.Permission permission={PERMISSIONS.VIEW_ALL_ORDERS}>
           <TabsContent value='all-orders' className='space-y-6'>
-            <OrdersContent />
+            <OrdersContent
+              activeQuery={activeQuery}
+              handlePageChange={handlePageChange}
+              handlePageSizeChange={handlePageSizeChange}
+              handleRefresh={handleRefresh}
+              handleSearchSubmit={handleSearchSubmit}
+              orders={orders}
+              pageInfo={pageInfo}
+              pageInUrl={pageInUrl}
+              searchInUrl={searchInUrl}
+              searchInput={searchInput}
+              setSearchInput={setSearchInput}
+              table={table}
+            />
           </TabsContent>
         </Guard.Permission>
       </Tabs>
     </div>
   )
-
-  function OrdersContent() {
-    return (
-      <>
-        <Table.Toolbar
-          searchTerm={searchInput}
-          onSearchChange={setSearchInput}
-          placeholder='Buscar por número de orden, cliente, email...'
-          onSubmit={handleSearchSubmit}
-        >
-          <Button variant='outline' onClick={handleRefresh} disabled={activeQuery.isFetching}>
-            <RefreshCw className={`mr-2 size-4 ${activeQuery.isFetching ? 'animate-spin' : ''}`} />
-            Actualizar
-          </Button>
-        </Table.Toolbar>
-
-        {activeQuery.isFetching && (
-          <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
-            <RefreshCw className='size-4 animate-spin' />
-            <span>Actualizando datos...</span>
-          </div>
-        )}
-
-        <div className='rounded-md border bg-card shadow-elevation-1'>
-          <Table.Data
-            table={table}
-            emptyMessage={
-              searchInUrl
-                ? `No se encontraron órdenes que coincidan con "${searchInUrl}"`
-                : 'No se encontraron órdenes.'
-            }
-          />
-        </div>
-
-        <Table.Pagination
-          table={table}
-          isServerSide={true}
-          hasNextPage={pageInfo?.hasNextPage}
-          hasPreviousPage={pageInUrl > 1}
-          currentPage={pageInUrl}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-        />
-
-        {orders.length > 0 && (
-          <div className='text-center text-sm text-muted-foreground'>
-            Mostrando {orders.length} órdenes
-          </div>
-        )}
-      </>
-    )
-  }
 }
