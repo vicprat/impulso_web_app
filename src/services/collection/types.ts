@@ -13,6 +13,7 @@ export interface Collection {
   }
   updatedAt: string
   productsCount: number
+  publicationCount: number
   ruleSet?: {
     appliedDisjunctively: boolean
     rules: {
@@ -26,6 +27,7 @@ export interface Collection {
     title: string
     handle: string
   }[]
+  publishedOnCurrentPublication: boolean
 }
 
 export interface CreateCollectionInput {

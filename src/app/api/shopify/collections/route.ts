@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 
@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
               productsCount {
                 count
               }
+              publicationCount
               ruleSet {
                 appliedDisjunctively
                 rules {
@@ -67,7 +68,9 @@ export async function GET(request: NextRequest) {
       handle: edge.node.handle,
       id: edge.node.id,
       image: edge.node.image,
-      productsCount: edge.node.productsCount?.count || 0,
+      productsCount: edge.node.productsCount?.count ?? 0,
+      publicationCount: edge.node.publicationCount ?? 0,
+      publishedOnCurrentPublication: (edge.node.publicationCount ?? 0) > 0,
       ruleSet: edge.node.ruleSet,
       title: edge.node.title,
       updatedAt: edge.node.updatedAt,
@@ -172,39 +175,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Publicar la colección en canales de venta
-    try {
-      const PUBLISH_MUTATION = `
-        mutation collectionJoinSellingGroups($id: ID!, $input: CollectionSellingGroupInput!) {
-          collectionJoinSellingGroups(id: $id, input: $input) {
-            collection {
-              id
-              sellingGroupGids
-            }
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      `
-
-      await makeAdminApiRequest(PUBLISH_MUTATION, {
-        id: response.collectionCreate.collection.id,
-        input: {
-          sellingGroupGids: ['gid://shopify/SellingGroup/1'], // Canal de venta principal
-        },
-      })
-    } catch (publishError) {
-      console.warn('Error publishing collection to sales channels:', publishError)
-      // No fallar la creación si la publicación falla
-    }
-
     return NextResponse.json({
       data: {
         ...response.collectionCreate.collection,
         description: response.collectionCreate.collection.descriptionHtml,
         productsCount: response.collectionCreate.collection.productsCount?.count || 0,
+        sellingGroupGids: [],
       },
       statusCode: 201,
     })

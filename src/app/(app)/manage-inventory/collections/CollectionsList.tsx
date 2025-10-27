@@ -1,7 +1,18 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Edit, ExternalLink, PlusCircle, QrCode, RefreshCw, Trash2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  Edit,
+  ExternalLink,
+  EyeOff,
+  Globe,
+  MoreVertical,
+  PlusCircle,
+  QrCode,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -10,8 +21,19 @@ import { toast } from 'sonner'
 import { Confirm } from '@/components/Dialog/Confirm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useCollections, useDeleteCollection } from '@/services/collection/hooks'
+import {
+  useCollections,
+  useDeleteCollection,
+  usePublishCollection,
+  useUnpublishCollection,
+} from '@/services/collection/hooks'
 import { CollectionModal } from '@/src/components/Modals/CollectionModal'
 import { ROUTES } from '@/src/config/routes'
 
@@ -44,6 +66,24 @@ export function CollectionsList() {
       setDeletingId(null)
       setIsDeleteDialogOpen(false)
       setCollectionToDelete(null)
+    },
+  })
+
+  const publishCollectionMutation = usePublishCollection({
+    onError: (error) => {
+      toast.error(`Error al publicar colección: ${error.message}`)
+    },
+    onSuccess: () => {
+      toast.success('Colección publicada exitosamente')
+    },
+  })
+
+  const unpublishCollectionMutation = useUnpublishCollection({
+    onError: (error) => {
+      toast.error(`Error al despublicar colección: ${error.message}`)
+    },
+    onSuccess: () => {
+      toast.success('Colección despublicada exitosamente')
     },
   })
 
@@ -121,6 +161,23 @@ export function CollectionsList() {
     } catch (error) {
       console.error('Error generando QR:', error)
       toast.error('Error al generar el código QR')
+    }
+  }
+
+  const isCollectionPublished = (collection: Collection) => {
+    return collection.publishedOnCurrentPublication
+  }
+
+  const handleTogglePublish = async (
+    collection: Collection,
+    e: React.MouseEvent<HTMLDivElement>
+  ) => {
+    e.stopPropagation()
+
+    if (collection.publishedOnCurrentPublication) {
+      await unpublishCollectionMutation.mutateAsync(collection.id)
+    } else {
+      await publishCollectionMutation.mutateAsync(collection.id)
     }
   }
 
@@ -215,6 +272,15 @@ export function CollectionsList() {
                             Inteligente
                           </Badge>
                         )}
+                        {isCollectionPublished(collection) ? (
+                          <Badge variant='default' className='bg-green-600 text-xs'>
+                            Publicada
+                          </Badge>
+                        ) : (
+                          <Badge variant='outline' className='text-xs'>
+                            Borrador
+                          </Badge>
+                        )}
                       </div>
                       {collection.description && (
                         <p className='line-clamp-2 text-sm text-muted-foreground'>
@@ -229,59 +295,97 @@ export function CollectionsList() {
                       </p>
                     </div>
                     <div className='ml-4 flex items-center space-x-2'>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleEdit(collection)
-                        }}
-                        disabled={deletingId === collection.id}
-                      >
-                        <Edit className='size-4' />
-                      </Button>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleViewCollection(collection)
-                        }}
-                        disabled={deletingId === collection.id}
-                        className='text-green-600 hover:bg-green-50 hover:text-green-700'
-                        title='Ver colección'
-                      >
-                        <ExternalLink className='size-4' />
-                      </Button>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          void handleDownloadQR(collection)
-                        }}
-                        disabled={deletingId === collection.id}
-                        className='text-purple-600 hover:bg-purple-50 hover:text-purple-700'
-                        title='Descargar QR'
-                      >
-                        <QrCode className='size-4' />
-                      </Button>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteClick(collection)
-                        }}
-                        disabled={deletingId === collection.id}
-                        className='text-red-600 hover:bg-red-50 hover:text-red-700'
-                      >
-                        {deletingId === collection.id ? (
-                          <div className='size-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent' />
-                        ) : (
-                          <Trash2 className='size-4' />
-                        )}
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={(e) => e.stopPropagation()}
+                            disabled={
+                              deletingId === collection.id ||
+                              publishCollectionMutation.isPending ||
+                              unpublishCollectionMutation.isPending
+                            }
+                          >
+                            <MoreVertical className='size-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void handleTogglePublish(collection, e)
+                            }}
+                            disabled={
+                              deletingId === collection.id ||
+                              publishCollectionMutation.isPending ||
+                              unpublishCollectionMutation.isPending
+                            }
+                          >
+                            {isCollectionPublished(collection) ? (
+                              <>
+                                <EyeOff className='mr-2 size-4' />
+                                Despublicar
+                              </>
+                            ) : (
+                              <>
+                                <Globe className='mr-2 size-4' />
+                                Publicar
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEdit(collection)
+                            }}
+                            disabled={deletingId === collection.id}
+                          >
+                            <Edit className='mr-2 size-4' />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleViewCollection(collection)
+                            }}
+                            disabled={deletingId === collection.id}
+                          >
+                            <ExternalLink className='mr-2 size-4' />
+                            Ver colección
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void handleDownloadQR(collection)
+                            }}
+                            disabled={deletingId === collection.id}
+                          >
+                            <QrCode className='mr-2 size-4' />
+                            Descargar QR
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteClick(collection)
+                            }}
+                            disabled={deletingId === collection.id}
+                            className='text-red-600 focus:bg-red-50'
+                          >
+                            {deletingId === collection.id ? (
+                              <>
+                                <div className='mr-2 size-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent' />
+                                Eliminando...
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className='mr-2 size-4' />
+                                Eliminar
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>

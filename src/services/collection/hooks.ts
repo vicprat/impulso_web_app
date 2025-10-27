@@ -220,3 +220,83 @@ export function useRemoveProductsFromCollection(
     ...options,
   })
 }
+
+export const usePublishCollection = (options?: UseMutationOptions<any, Error, string>) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const encodedId = encodeURIComponent(id)
+      const response = await fetch(`/api/shopify/collections/${encodedId}/publish`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error ?? `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      return response.json()
+    },
+    onMutate: async (collectionId) => {
+      await queryClient.cancelQueries({ queryKey: COLLECTION_KEYS.lists() })
+
+      queryClient.setQueriesData<any>({ queryKey: COLLECTION_KEYS.lists() }, (old: any) => {
+        if (!old?.collections) return old
+
+        return {
+          ...old,
+          collections: old.collections.map((collection: any) =>
+            collection.id === collectionId
+              ? { ...collection, publicationCount: 1, publishedOnCurrentPublication: true }
+              : collection
+          ),
+        }
+      })
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: COLLECTION_KEYS.lists() })
+    },
+    ...options,
+  })
+}
+
+export const useUnpublishCollection = (options?: UseMutationOptions<any, Error, string>) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const encodedId = encodeURIComponent(id)
+      const response = await fetch(`/api/shopify/collections/${encodedId}/publish`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error ?? `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      return response.json()
+    },
+    onMutate: async (collectionId) => {
+      await queryClient.cancelQueries({ queryKey: COLLECTION_KEYS.lists() })
+
+      queryClient.setQueriesData<any>({ queryKey: COLLECTION_KEYS.lists() }, (old: any) => {
+        if (!old?.collections) return old
+
+        return {
+          ...old,
+          collections: old.collections.map((collection: any) =>
+            collection.id === collectionId
+              ? { ...collection, publicationCount: 0, publishedOnCurrentPublication: false }
+              : collection
+          ),
+        }
+      })
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: COLLECTION_KEYS.lists() })
+    },
+    ...options,
+  })
+}
