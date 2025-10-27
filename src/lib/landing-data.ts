@@ -166,6 +166,23 @@ export async function getBlogPosts(): Promise<PaginatedResult<PostWithRelations>
   }
 }
 
+export async function getEventPosts(): Promise<PostWithRelations[]> {
+  try {
+    const result = await blogService.listPosts({
+      page: 1,
+      pageSize: 6,
+      postType: 'EVENT',
+      sortBy: 'publishedAt',
+      sortOrder: 'desc',
+      status: 'PUBLISHED',
+    })
+    return result.items
+  } catch (error) {
+    console.error('Error fetching event posts:', error)
+    return []
+  }
+}
+
 export async function getPosts(
   filters: Partial<PostFilters> = {}
 ): Promise<PaginatedResult<PostWithRelations>> {

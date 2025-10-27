@@ -5,11 +5,13 @@ import { Landing } from '@/components/Landing'
 import { HomeStructuredData } from '@/components/StructuredData'
 import {
   getBlogPosts,
+  getEventPosts,
   getPublicArtists,
   getPublicEvents,
   getPublicProducts,
 } from '@/lib/landing-data'
 import { routeMetadata } from '@/lib/metadata'
+import { type PublicEvent } from '@/modules/shopify/service'
 import { Membership } from '@/src/components/Landing/Membership/Membership'
 import { ROUTES } from '@/src/config/routes'
 
@@ -143,10 +145,54 @@ const benefits: Benefit[] = [
 ]
 
 export default async function Page() {
-  const events = await getPublicEvents()
+  const [events, eventPosts] = await Promise.all([getPublicEvents(), getEventPosts()])
   const blogPosts = await getBlogPosts()
   const artists = await getPublicArtists()
   const products = await getPublicProducts()
+
+  // Combinar eventos de Shopify con posts de tipo EVENT
+  // Si hay eventos de Shopify, los usamos primero, si no hay suficientes, agregamos posts
+  const shopifyEvents = events
+  const eventPostsAsEvents: PublicEvent[] = eventPosts
+    .slice(0, Math.max(0, 6 - shopifyEvents.length))
+    .map((post) => ({
+      availableForSale: true,
+      createdAt: post.createdAt.toISOString(),
+      descriptionHtml: post.content,
+      eventDetails: {
+        date: post.date ? new Date(post.date).toISOString().split('T')[0] : null,
+        endTime: null,
+        location: post.location,
+        organizer: null,
+        startTime: null,
+      },
+      formattedPrice: 'Entrada gratuita',
+      handle: post.slug,
+      id: `post-${post.id}`,
+      images: post.featuredImageUrl
+        ? [
+            {
+              altText: post.title,
+              url: post.featuredImageUrl,
+            },
+          ]
+        : [],
+      isAvailable: true,
+      priceRange: {
+        maxVariantPrice: { amount: '0', currencyCode: 'MXN' },
+        minVariantPrice: { amount: '0', currencyCode: 'MXN' },
+      },
+      primaryVariant: null,
+      productType: 'Evento',
+      status: 'ACTIVE' as const,
+      tags: post.tags.map((t) => t.tag.name),
+      title: post.title,
+      updatedAt: post.updatedAt.toISOString(),
+      variants: [],
+      vendor: 'Evento',
+    }))
+
+  const combinedEvents = [...shopifyEvents, ...eventPostsAsEvents]
 
   return (
     <main className='overflow-hidden bg-surface'>
@@ -191,17 +237,19 @@ export default async function Page() {
         </Suspense>
       </Landing.LazyHero>
 
-      <Landing.Section
-        icon='Calendar'
-        title='Próximos Eventos'
-        subtitle='Sumérgete en experiencias artísticas únicas que transformarán tu perspectiva del arte'
-        actionText='Ver Todos los Eventos'
-        actionHref={ROUTES.STORE.EVENTS.PATH}
-      >
-        <Suspense fallback={<Landing.Events.Loader />}>
-          <Landing.Events.Main data={events} />
-        </Suspense>
-      </Landing.Section>
+      {combinedEvents.length > 0 && (
+        <Landing.Section
+          icon='Calendar'
+          title='Próximos Eventos'
+          subtitle='Sumérgete en experiencias artísticas únicas que transformarán tu perspectiva del arte'
+          actionText='Ver Todos los Eventos'
+          actionHref={ROUTES.STORE.EVENTS.PATH}
+        >
+          <Suspense fallback={<Landing.Events.Loader />}>
+            <Landing.Events.Main data={combinedEvents} />
+          </Suspense>
+        </Landing.Section>
+      )}
 
       <Landing.Section
         icon='Settings'

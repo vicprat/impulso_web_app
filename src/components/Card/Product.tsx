@@ -35,6 +35,9 @@ export const Product: React.FC<Props> = ({ product }) => {
         )
       : 0
 
+  // Detectar si es un post convertido (viene de posts de tipo EVENT)
+  const isEventPost = product.id.startsWith('post-')
+
   // Función para formatear el precio
   const formatPrice = (price: string, currencyCode: string) => {
     const priceValue = parseFloat(price)
@@ -68,9 +71,14 @@ export const Product: React.FC<Props> = ({ product }) => {
 
       <Link
         href={
-          product.vendor === 'Evento'
-            ? replaceRouteParams(ROUTES.STORE.EVENT_DETAIL.PATH, { handle: product.handle })
-            : replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })
+          isEventPost
+            ? ROUTES.PUBLIC.POSTS.DYNAMIC.DETAIL.PATH.replace(':postType', 'events').replace(
+                ':slug',
+                product.handle
+              )
+            : product.vendor === 'Evento'
+              ? replaceRouteParams(ROUTES.STORE.EVENT_DETAIL.PATH, { handle: product.handle })
+              : replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })
         }
         className='block focus:outline-none'
         aria-label={`Ver detalles de ${product.title}`}
@@ -113,9 +121,14 @@ export const Product: React.FC<Props> = ({ product }) => {
           <div className='space-y-0.5'>
             <Link
               href={
-                product.vendor === 'Evento'
-                  ? replaceRouteParams(ROUTES.STORE.EVENT_DETAIL.PATH, { handle: product.handle })
-                  : replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })
+                isEventPost
+                  ? ROUTES.PUBLIC.POSTS.DYNAMIC.DETAIL.PATH.replace(':postType', 'events').replace(
+                      ':slug',
+                      product.handle
+                    )
+                  : product.vendor === 'Evento'
+                    ? replaceRouteParams(ROUTES.STORE.EVENT_DETAIL.PATH, { handle: product.handle })
+                    : replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })
               }
             >
               <h3 className='line-clamp-2 text-xs font-medium leading-tight text-foreground transition-colors duration-200 hover:text-primary focus:text-primary focus:outline-none sm:text-sm'>
