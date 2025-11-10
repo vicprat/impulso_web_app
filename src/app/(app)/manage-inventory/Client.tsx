@@ -1585,9 +1585,10 @@ export function Client() {
               </span>
             </div>
           )}
-          <div className='w-full min-w-0 max-w-full'>
+          <div className='w-full min-w-0 max-w-full overflow-x-auto pb-2'>
             <Table.Data
               table={table}
+              className='min-w-[1500px]'
               emptyMessage={
                 searchInUrl
                   ? `No se encontraron productos que coincidan con "${searchInUrl}"`
@@ -1600,15 +1601,17 @@ export function Client() {
         </>
       )}
 
-      <Table.Pagination
-        table={table}
-        isServerSide={true}
-        hasNextPage={pageInfo?.hasNextPage}
-        hasPreviousPage={pageInUrl > 1}
-        currentPage={pageInUrl}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
-      />
+      <div className='w-full overflow-x-auto'>
+        <Table.Pagination
+          table={table}
+          isServerSide={true}
+          hasNextPage={pageInfo?.hasNextPage}
+          hasPreviousPage={pageInUrl > 1}
+          currentPage={pageInUrl}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      </div>
 
       {filteredProducts.length > 0 && (
         <div className='text-center text-sm text-muted-foreground'>

@@ -124,7 +124,7 @@ export const PostTypePageClient: React.FC<Props> = ({
       return 'Explora eventos emocionantes y únete a nuestra comunidad'
     }
     if (validPostType === 'EVENTS') {
-      return 'Descubre eventos únicos del store y posts sobre eventos emocionantes'
+      return 'Descubre nuestros eventos, con los que vivirás experiencias artísticas únicas'
     }
     return 'Explora contenido interesante'
   }
@@ -329,7 +329,7 @@ export const PostTypePageClient: React.FC<Props> = ({
             </div>
 
             <div className='mb-12'>
-              <h2 className='mb-6 text-2xl font-bold text-foreground'>Posts de Eventos Pasados</h2>
+              <h2 className='mb-6 text-2xl font-bold text-foreground'>Eventos Pasados</h2>
 
               {filteredPosts.length > 0 ? (
                 <>

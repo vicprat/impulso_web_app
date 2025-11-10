@@ -37,7 +37,7 @@ import {
   useGetTechniques,
   useGetVendors,
 } from '@/services/product/hook'
-import { replaceRouteParams, ROUTES } from '@/src/config/routes'
+import { ROUTES, replaceRouteParams } from '@/src/config/routes'
 
 // Componente para la celda de descuentos con dialog de confirmación
 const DiscountCell = ({
@@ -868,7 +868,7 @@ export const columns: ColumnDef<Product>[] = [
       if (!isBulkMode) return null
 
       return (
-        <div className='flex items-center justify-center'>
+        <div className='flex min-w-[56px] items-center justify-center'>
           <input
             type='checkbox'
             checked={isSelected}
@@ -890,7 +890,7 @@ export const columns: ColumnDef<Product>[] = [
       if (!isBulkMode) return null
 
       return (
-        <div className='flex items-center justify-center'>
+        <div className='flex min-w-[56px] items-center justify-center'>
           <input
             type='checkbox'
             checked={isAllSelected}
@@ -912,25 +912,22 @@ export const columns: ColumnDef<Product>[] = [
       const { updateProduct } = table.options.meta ?? {}
 
       return (
-        <ImageReplacer
-          product={product}
-          onUpdate={(productId: string, imageUrl: string | null) => {
-            // El componente ImageReplacer ahora maneja la lógica de reemplazo internamente
-            // Solo necesitamos invalidar el caché después de la actualización
-            if (imageUrl) {
-              console.log('Imagen principal actualizada:', {
-                newImageUrl: imageUrl,
-                productId,
-              })
-
-              // Invalidar el caché para refrescar los datos
-              // No necesitamos llamar a updateProduct aquí
-            }
-          }}
-        />
+        <div className='flex min-w-[128px] justify-center'>
+          <ImageReplacer
+            product={product}
+            onUpdate={(productId: string, imageUrl: string | null) => {
+              if (imageUrl) {
+                console.log('Imagen principal actualizada:', {
+                  newImageUrl: imageUrl,
+                  productId,
+                })
+              }
+            }}
+          />
+        </div>
       )
     },
-    header: 'Imagen',
+    header: () => <div className='min-w-[128px]'>Imagen</div>,
   },
   {
     accessorKey: 'title',
@@ -945,7 +942,7 @@ export const columns: ColumnDef<Product>[] = [
         isEditing && editingChanges?.title !== undefined ? editingChanges.title : product.title
 
       return (
-        <div className='flex flex-col gap-2'>
+        <div className='flex min-w-[240px] flex-col gap-2'>
           <EditableText
             value={currentValue}
             isEditing={isEditing}
@@ -966,14 +963,16 @@ export const columns: ColumnDef<Product>[] = [
       const isAsc = currentSortOrder === 'asc'
 
       return (
-        <Button
-          variant='ghost'
-          onClick={() => handleSorting?.('title')}
-          className='h-auto p-0 font-semibold'
-        >
-          Título
-          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
-        </Button>
+        <div className='min-w-[240px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('title')}
+            className='h-auto p-0 font-semibold'
+          >
+            Título
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+          </Button>
+        </div>
       )
     },
   },
@@ -999,18 +998,20 @@ export const columns: ColumnDef<Product>[] = [
         isEditing && editingChanges?.vendor !== undefined ? editingChanges.vendor : product.vendor
 
       return (
-        <EditableVendorSelect
-          value={currentValue}
-          isEditing={isEditing}
-          onUpdate={(value) => {
-            updateEditingChanges?.({ vendor: value })
-          }}
-          onCancel={() => setEditingRowId?.(null)}
-          placeholder='Artista'
-          className='font-semibold'
-          fieldName='vendor'
-          disabled={isVendorDisabled}
-        />
+        <div className='min-w-[200px]'>
+          <EditableVendorSelect
+            value={currentValue}
+            isEditing={isEditing}
+            onUpdate={(value) => {
+              updateEditingChanges?.({ vendor: value })
+            }}
+            onCancel={() => setEditingRowId?.(null)}
+            placeholder='Artista'
+            className='font-semibold'
+            fieldName='vendor'
+            disabled={isVendorDisabled}
+          />
+        </div>
       )
     },
     header: ({ column, table }) => {
@@ -1019,14 +1020,16 @@ export const columns: ColumnDef<Product>[] = [
       const isAsc = currentSortOrder === 'asc'
 
       return (
-        <Button
-          variant='ghost'
-          onClick={() => handleSorting?.('vendor')}
-          className='h-auto p-0 font-semibold'
-        >
-          Artista
-          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
-        </Button>
+        <div className='min-w-[200px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('vendor')}
+            className='h-auto p-0 font-semibold'
+          >
+            Artista
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+          </Button>
+        </div>
       )
     },
   },
@@ -1044,11 +1047,7 @@ export const columns: ColumnDef<Product>[] = [
           ? editingChanges.productType
           : product.productType
 
-      if (!isEditing) {
-        return <span className='text-sm'>{currentValue}</span>
-      }
-
-      return (
+      const content = isEditing ? (
         <EditableArtworkTypeSelect
           value={currentValue}
           isEditing={isEditing}
@@ -1060,7 +1059,11 @@ export const columns: ColumnDef<Product>[] = [
           className='w-32'
           fieldName='productType'
         />
+      ) : (
+        <span className='text-sm'>{currentValue}</span>
       )
+
+      return <div className='min-w-[192px]'>{content}</div>
     },
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
@@ -1068,14 +1071,16 @@ export const columns: ColumnDef<Product>[] = [
       const isAsc = currentSortOrder === 'asc'
 
       return (
-        <Button
-          variant='ghost'
-          onClick={() => handleSorting?.('productType')}
-          className='h-auto p-0 font-semibold'
-        >
-          Tipo de obra
-          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
-        </Button>
+        <div className='min-w-[192px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('productType')}
+            className='h-auto p-0 font-semibold'
+          >
+            Tipo de obra
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+          </Button>
+        </div>
       )
     },
   },
@@ -1094,21 +1099,23 @@ export const columns: ColumnDef<Product>[] = [
           : product.artworkDetails.medium
 
       return (
-        <EditableTechniqueSelect
-          value={currentValue}
-          isEditing={isEditing}
-          onUpdate={(value) => {
-            updateEditingChanges?.({
-              artworkDetails: {
-                medium: value || undefined,
-              },
-            })
-          }}
-          onCancel={() => setEditingRowId?.(null)}
-          placeholder='Técnica'
-          className='text-sm'
-          fieldName='medium'
-        />
+        <div className='min-w-[192px]'>
+          <EditableTechniqueSelect
+            value={currentValue}
+            isEditing={isEditing}
+            onUpdate={(value) => {
+              updateEditingChanges?.({
+                artworkDetails: {
+                  medium: value || undefined,
+                },
+              })
+            }}
+            onCancel={() => setEditingRowId?.(null)}
+            placeholder='Técnica'
+            className='text-sm'
+            fieldName='medium'
+          />
+        </div>
       )
     },
     header: ({ column, table }) => {
@@ -1117,14 +1124,16 @@ export const columns: ColumnDef<Product>[] = [
       const isAsc = currentSortOrder === 'asc'
 
       return (
-        <Button
-          variant='ghost'
-          onClick={() => handleSorting?.('medium')}
-          className='h-auto p-0 font-semibold'
-        >
-          Técnica
-          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
-        </Button>
+        <div className='min-w-[192px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('medium')}
+            className='h-auto p-0 font-semibold'
+          >
+            Técnica
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+          </Button>
+        </div>
       )
     },
   },
@@ -1143,21 +1152,23 @@ export const columns: ColumnDef<Product>[] = [
           : product.artworkDetails.year
 
       return (
-        <EditableNumber
-          value={currentValue}
-          isEditing={isEditing}
-          onUpdate={(value) => {
-            updateEditingChanges?.({
-              artworkDetails: {
-                year: value || undefined,
-              },
-            })
-          }}
-          onCancel={() => setEditingRowId?.(null)}
-          placeholder='Año'
-          className='text-sm'
-          fieldName='year'
-        />
+        <div className='min-w-[136px]'>
+          <EditableNumber
+            value={currentValue}
+            isEditing={isEditing}
+            onUpdate={(value) => {
+              updateEditingChanges?.({
+                artworkDetails: {
+                  year: value || undefined,
+                },
+              })
+            }}
+            onCancel={() => setEditingRowId?.(null)}
+            placeholder='Año'
+            className='text-sm'
+            fieldName='year'
+          />
+        </div>
       )
     },
     header: ({ column, table }) => {
@@ -1166,14 +1177,16 @@ export const columns: ColumnDef<Product>[] = [
       const isAsc = currentSortOrder === 'asc'
 
       return (
-        <Button
-          variant='ghost'
-          onClick={() => handleSorting?.('year')}
-          className='h-auto p-0 font-semibold'
-        >
-          Año
-          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
-        </Button>
+        <div className='min-w-[136px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('year')}
+            className='h-auto p-0 font-semibold'
+          >
+            Año
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+          </Button>
+        </div>
       )
     },
   },
@@ -1199,15 +1212,13 @@ export const columns: ColumnDef<Product>[] = [
           ? editingChanges.artworkDetails.depth
           : product.artworkDetails.depth
 
-      if (!isEditing) {
-        const dimensions = []
-        if (currentHeight) dimensions.push(`${currentHeight}cm`)
-        if (currentWidth) dimensions.push(`${currentWidth}cm`)
-        if (currentDepth) dimensions.push(`${currentDepth}cm`)
-        return <span className='text-sm'>{dimensions.join(' × ') || '-'}</span>
-      }
+      const dimensionValues = [
+        currentHeight && `${currentHeight}cm`,
+        currentWidth && `${currentWidth}cm`,
+        currentDepth && `${currentDepth}cm`,
+      ].filter((value): value is string => Boolean(value))
 
-      return (
+      const content = isEditing ? (
         <EditableDimensions
           height={currentHeight}
           width={currentWidth}
@@ -1225,7 +1236,11 @@ export const columns: ColumnDef<Product>[] = [
           onCancel={() => setEditingRowId?.(null)}
           fieldName='dimensions'
         />
+      ) : (
+        <span className='text-sm'>{dimensionValues.join(' × ') || '-'}</span>
       )
+
+      return <div className='min-w-[224px]'>{content}</div>
     },
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
@@ -1233,14 +1248,16 @@ export const columns: ColumnDef<Product>[] = [
       const isAsc = currentSortOrder === 'asc'
 
       return (
-        <Button
-          variant='ghost'
-          onClick={() => handleSorting?.('dimensions')}
-          className='h-auto p-0 font-semibold'
-        >
-          Medidas (cm)
-          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
-        </Button>
+        <div className='min-w-[224px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('dimensions')}
+            className='h-auto p-0 font-semibold'
+          >
+            Medidas (cm)
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+          </Button>
+        </div>
       )
     },
     id: 'dimensions',
@@ -1260,21 +1277,23 @@ export const columns: ColumnDef<Product>[] = [
           : product.artworkDetails.serie
 
       return (
-        <EditableText
-          value={currentValue}
-          isEditing={isEditing}
-          onUpdate={(value) => {
-            updateEditingChanges?.({
-              artworkDetails: {
-                serie: value || undefined,
-              },
-            })
-          }}
-          onCancel={() => setEditingRowId?.(null)}
-          placeholder='Serie'
-          className='text-sm'
-          fieldName='serie'
-        />
+        <div className='min-w-[192px]'>
+          <EditableText
+            value={currentValue}
+            isEditing={isEditing}
+            onUpdate={(value) => {
+              updateEditingChanges?.({
+                artworkDetails: {
+                  serie: value || undefined,
+                },
+              })
+            }}
+            onCancel={() => setEditingRowId?.(null)}
+            placeholder='Serie'
+            className='text-sm'
+            fieldName='serie'
+          />
+        </div>
       )
     },
     header: ({ column, table }) => {
@@ -1283,14 +1302,16 @@ export const columns: ColumnDef<Product>[] = [
       const isAsc = currentSortOrder === 'asc'
 
       return (
-        <Button
-          variant='ghost'
-          onClick={() => handleSorting?.('serie')}
-          className='h-auto p-0 font-semibold'
-        >
-          Serie
-          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
-        </Button>
+        <div className='min-w-[192px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('serie')}
+            className='h-auto p-0 font-semibold'
+          >
+            Serie
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+          </Button>
+        </div>
       )
     },
   },
@@ -1309,21 +1330,23 @@ export const columns: ColumnDef<Product>[] = [
           : product.artworkDetails.location
 
       return (
-        <EditableLocationSelect
-          value={currentValue}
-          isEditing={isEditing}
-          onUpdate={(value) => {
-            updateEditingChanges?.({
-              artworkDetails: {
-                location: value || undefined,
-              },
-            })
-          }}
-          onCancel={() => setEditingRowId?.(null)}
-          placeholder='Localización'
-          className='text-sm'
-          fieldName='location'
-        />
+        <div className='min-w-[200px]'>
+          <EditableLocationSelect
+            value={currentValue}
+            isEditing={isEditing}
+            onUpdate={(value) => {
+              updateEditingChanges?.({
+                artworkDetails: {
+                  location: value || undefined,
+                },
+              })
+            }}
+            onCancel={() => setEditingRowId?.(null)}
+            placeholder='Localización'
+            className='text-sm'
+            fieldName='location'
+          />
+        </div>
       )
     },
     header: ({ column, table }) => {
@@ -1332,14 +1355,16 @@ export const columns: ColumnDef<Product>[] = [
       const isAsc = currentSortOrder === 'asc'
 
       return (
-        <Button
-          variant='ghost'
-          onClick={() => handleSorting?.('location')}
-          className='h-auto p-0 font-semibold'
-        >
-          Localización
-          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
-        </Button>
+        <div className='min-w-[200px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('location')}
+            className='h-auto p-0 font-semibold'
+          >
+            Localización
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+          </Button>
+        </div>
       )
     },
   },
@@ -1357,11 +1382,7 @@ export const columns: ColumnDef<Product>[] = [
       const currentValue =
         isEditing && editingChanges?.price !== undefined ? editingChanges.price : currentPrice
 
-      if (!isEditing) {
-        return <span className='font-semibold'>${parseFloat(currentValue).toLocaleString()}</span>
-      }
-
-      return (
+      const content = isEditing ? (
         <EditableNumber
           value={currentValue}
           isEditing={isEditing}
@@ -1373,7 +1394,11 @@ export const columns: ColumnDef<Product>[] = [
           className='font-semibold'
           fieldName='price'
         />
+      ) : (
+        <span className='font-semibold'>${parseFloat(currentValue).toLocaleString()}</span>
       )
+
+      return <div className='min-w-[168px]'>{content}</div>
     },
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
@@ -1381,15 +1406,17 @@ export const columns: ColumnDef<Product>[] = [
       const isAsc = currentSortOrder === 'asc'
 
       return (
-        <Button
-          variant='ghost'
-          onClick={() => handleSorting?.('price')}
-          className='h-auto p-0 font-semibold'
-          title='Ordenar por precio'
-        >
-          Precio
-          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
-        </Button>
+        <div className='min-w-[168px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('price')}
+            className='h-auto p-0 font-semibold'
+            title='Ordenar por precio'
+          >
+            Precio
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+          </Button>
+        </div>
       )
     },
     id: 'price',
@@ -1410,18 +1437,7 @@ export const columns: ColumnDef<Product>[] = [
           ? editingChanges.inventoryQuantity
           : currentQuantity
 
-      if (!isEditing) {
-        return (
-          <div className='flex items-center space-x-2'>
-            <span>{currentValue}</span>
-            <Badge variant={currentValue > 0 ? 'default' : 'destructive'}>
-              {currentValue > 0 ? 'Disponible' : 'Agotado'}
-            </Badge>
-          </div>
-        )
-      }
-
-      return (
+      const content = isEditing ? (
         <EditableNumber
           value={currentValue.toString()}
           isEditing={isEditing}
@@ -1434,7 +1450,16 @@ export const columns: ColumnDef<Product>[] = [
           step='1'
           fieldName='inventoryQuantity'
         />
+      ) : (
+        <div className='flex items-center space-x-2'>
+          <span>{currentValue}</span>
+          <Badge variant={currentValue > 0 ? 'default' : 'destructive'}>
+            {currentValue > 0 ? 'Disponible' : 'Agotado'}
+          </Badge>
+        </div>
       )
+
+      return <div className='min-w-[168px]'>{content}</div>
     },
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
@@ -1442,14 +1467,16 @@ export const columns: ColumnDef<Product>[] = [
       const isAsc = currentSortOrder === 'asc'
 
       return (
-        <Button
-          variant='ghost'
-          onClick={() => handleSorting?.('inventory')}
-          className='h-auto p-0 font-semibold'
-        >
-          Inventario
-          <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
-        </Button>
+        <div className='min-w-[168px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('inventory')}
+            className='h-auto p-0 font-semibold'
+          >
+            Inventario
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+          </Button>
+        </div>
       )
     },
     id: 'inventory',
@@ -1472,29 +1499,28 @@ export const columns: ColumnDef<Product>[] = [
         { label: 'Archivado', value: 'ARCHIVED' },
       ]
 
-      if (isEditing) {
-        return (
-          <EditableSelect
-            value={currentValue}
-            isEditing={isEditing}
-            onUpdate={(value) => {
-              updateEditingChanges?.({ status: value as 'ACTIVE' | 'DRAFT' })
-            }}
-            onCancel={() => setEditingRowId?.(null)}
-            options={statusOptions}
-            placeholder='Estado'
-            className='w-32'
-            fieldName='status'
-          />
-        )
-      }
-
-      return (
+      const content = isEditing ? (
+        <EditableSelect
+          value={currentValue}
+          isEditing={isEditing}
+          onUpdate={(value) => {
+            updateEditingChanges?.({ status: value as 'ACTIVE' | 'DRAFT' })
+          }}
+          onCancel={() => setEditingRowId?.(null)}
+          options={statusOptions}
+          placeholder='Estado'
+          className='w-32'
+          fieldName='status'
+        />
+      ) : (
         <Badge variant={currentValue === 'ACTIVE' ? 'active' : 'archived'}>
           {statusOptions.find((option) => option.value === currentValue)?.label}
         </Badge>
       )
+
+      return <div className='min-w-[160px]'>{content}</div>
     },
+    header: () => <div className='min-w-[160px]'>Estado</div>,
   },
 
   {
@@ -1529,7 +1555,7 @@ export const columns: ColumnDef<Product>[] = [
       }
 
       return (
-        <div className='flex items-center space-x-2'>
+        <div className='flex min-w-[200px] items-center space-x-2'>
           <Button variant='ghost' onClick={() => setEditingRowId?.(product.id)} title='Editar'>
             <Edit className='size-4' />
           </Button>
@@ -1554,6 +1580,7 @@ export const columns: ColumnDef<Product>[] = [
         </div>
       )
     },
+    header: () => <div className='min-w-[200px]'>Acciones</div>,
     id: 'actions',
   },
   {
@@ -1569,17 +1596,19 @@ export const columns: ColumnDef<Product>[] = [
       } = table.options.meta ?? {}
 
       return (
-        <DiscountCell
-          product={product}
-          isAdmin={isAdmin ?? false}
-          onOpenAutomaticDiscountModal={onOpenAutomaticDiscountModal}
-          getProductDiscounts={getProductDiscounts}
-          getDiscountProductCount={getDiscountProductCount}
-          onDeleteDiscount={onDeleteDiscount}
-        />
+        <div className='min-w-[220px]'>
+          <DiscountCell
+            product={product}
+            isAdmin={isAdmin ?? false}
+            onOpenAutomaticDiscountModal={onOpenAutomaticDiscountModal}
+            getProductDiscounts={getProductDiscounts}
+            getDiscountProductCount={getDiscountProductCount}
+            onDeleteDiscount={onDeleteDiscount}
+          />
+        </div>
       )
     },
-    header: 'Descuentos',
+    header: () => <div className='min-w-[220px]'>Descuentos</div>,
     id: 'automaticDiscount',
   },
 ]
