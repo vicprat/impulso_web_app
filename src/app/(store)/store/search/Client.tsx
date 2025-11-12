@@ -101,6 +101,7 @@ export const Client = () => {
 
   const dimensions = searchParams.get('dimensions')?.split(',') ?? []
   const techniques = searchParams.get('techniques')?.split(',') ?? []
+  const years = searchParams.get('years')?.split(',') ?? []
 
   const storeParams = {
     artworkType: searchFilters.productType?.[0],
@@ -121,6 +122,7 @@ export const Client = () => {
     sortOrder: currentOrder === 'desc' ? ('desc' as const) : ('asc' as const),
     technique: techniques[0],
     vendor: searchFilters.vendor?.[0],
+    year: years[0],
   }
 
   const { data: productsData, error, isLoading } = useStoreProducts(storeParams)

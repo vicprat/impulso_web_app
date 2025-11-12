@@ -108,7 +108,7 @@ async function getProducts(
     }
   }
 
-  const hasMetafieldFilters = params.technique?.trim() ?? params.dimensions?.trim()
+  const hasMetafieldFilters = params.technique?.trim() ?? params.dimensions?.trim() ?? params.year?.trim()
 
   let sortKey = 'TITLE' // Default sort key
   let reverse = false // Default sort order
@@ -239,6 +239,15 @@ async function getProductsWithManualSorting(
 
       const dimensionText = depth ? `${height} x ${width} x ${depth} cm` : `${height} x ${width} cm`
       return dimensionFilters.some((filter) => dimensionText.trim() === filter.trim())
+    })
+  }
+
+  if (params.year?.trim()) {
+    const yearFilters = params.year.split(',').filter(Boolean)
+    filteredProducts = filteredProducts.filter((p) => {
+      const productYear = p.artworkDetails.year?.trim()
+      if (!productYear) return false
+      return yearFilters.some((filter) => productYear === filter.trim())
     })
   }
 
@@ -1183,7 +1192,7 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
     }
   }
 
-  const hasMetafieldFilters = params.technique?.trim() ?? params.dimensions?.trim()
+  const hasMetafieldFilters = params.technique?.trim() ?? params.dimensions?.trim() ?? params.year?.trim()
 
   let sortKey = 'TITLE' // Default sort key
   let reverse = false // Default sort order

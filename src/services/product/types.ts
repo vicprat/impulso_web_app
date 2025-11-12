@@ -14,6 +14,7 @@ export interface GetProductsParams {
   dimensions?: string
   priceMin?: number
   priceMax?: number
+  year?: string
 }
 
 export interface CreateProductPayload {

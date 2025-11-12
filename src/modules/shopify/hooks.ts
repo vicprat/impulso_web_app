@@ -142,6 +142,7 @@ export const useStoreProducts = (
     dimensions?: string
     priceMin?: number
     priceMax?: number
+    year?: string
   } = {},
   options?: Omit<UseQueryOptions<any, Error, any>, 'queryKey' | 'queryFn'>
 ) => {
@@ -160,6 +161,7 @@ export const useStoreProducts = (
       if (params.dimensions) searchParams.append('dimensions', params.dimensions)
       if (params.priceMin !== undefined) searchParams.append('priceMin', params.priceMin.toString())
       if (params.priceMax !== undefined) searchParams.append('priceMax', params.priceMax.toString())
+      if (params.year) searchParams.append('year', params.year)
 
       const response = await fetch(`/api/store/products?${searchParams.toString()}`)
 

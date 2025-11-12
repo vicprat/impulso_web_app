@@ -21,14 +21,14 @@ interface PublicHeaderProps {
 }
 
 export function Public({ isHomePage = false }: PublicHeaderProps) {
-  const [ isMobileMenuOpen, setIsMobileMenuOpen ] = useState(false)
-  const [ isScrolled, setIsScrolled ] = useState(false)
-  const [ sphere1Pos, setSphere1Pos ] = useState({ x: 15, y: 20 })
-  const [ sphere2Pos, setSphere2Pos ] = useState({ x: 85, y: 70 })
-  const [ sphere3Pos, setSphere3Pos ] = useState({ x: 60, y: 15 })
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [sphere1Pos, setSphere1Pos] = useState({ x: 15, y: 20 })
+  const [sphere2Pos, setSphere2Pos] = useState({ x: 85, y: 70 })
+  const [sphere3Pos, setSphere3Pos] = useState({ x: 60, y: 15 })
   const { user } = useAuth()
   const pathname = usePathname()
-  const [ hoveredPath, setHoveredPath ] = useState('')
+  const [hoveredPath, setHoveredPath] = useState('')
 
   useEffect(() => {
     if (!isHomePage) return
@@ -40,7 +40,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [ isHomePage ])
+  }, [isHomePage])
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -79,7 +79,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
       clearInterval(interval2)
       clearInterval(interval3)
     }
-  }, [ isMobileMenuOpen ])
+  }, [isMobileMenuOpen])
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -91,8 +91,7 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
     return () => {
       document.body.style.overflow = 'unset'
     }
-  }, [ isMobileMenuOpen ])
-
+  }, [isMobileMenuOpen])
 
   return (
     <>
@@ -197,16 +196,18 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
               >
                 <div className='relative size-5'>
                   <Menu
-                    className={`absolute inset-0 size-5 transition-all duration-300 ${isMobileMenuOpen
-                      ? 'rotate-180 scale-0 opacity-0'
-                      : 'rotate-0 scale-100 opacity-100'
-                      }`}
+                    className={`absolute inset-0 size-5 transition-all duration-300 ${
+                      isMobileMenuOpen
+                        ? 'rotate-180 scale-0 opacity-0'
+                        : 'rotate-0 scale-100 opacity-100'
+                    }`}
                   />
                   <X
-                    className={`absolute inset-0 size-5 transition-all duration-300 ${isMobileMenuOpen
-                      ? 'rotate-0 scale-100 opacity-100'
-                      : 'rotate-180 scale-0 opacity-0'
-                      }`}
+                    className={`absolute inset-0 size-5 transition-all duration-300 ${
+                      isMobileMenuOpen
+                        ? 'rotate-0 scale-100 opacity-100'
+                        : 'rotate-180 scale-0 opacity-0'
+                    }`}
                   />
                 </div>
               </button>
@@ -216,8 +217,9 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
       </header>
 
       <div
-        className={`fixed inset-0 z-40 transition-all duration-500 ease-in-out lg:hidden ${isMobileMenuOpen ? 'visible opacity-100' : 'invisible opacity-0'
-          }`}
+        className={`fixed inset-0 z-40 transition-all duration-500 ease-in-out lg:hidden ${
+          isMobileMenuOpen ? 'visible opacity-100' : 'invisible opacity-0'
+        }`}
       >
         <div className='absolute inset-0 bg-background backdrop-blur-xl'>
           <div className='absolute inset-0 bg-gradient-to-br from-background to-background'></div>
@@ -266,8 +268,9 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
                 return (
                   <div
                     key={route.PATH}
-                    className={`relative transition-all duration-700 ease-out ${isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
-                      }`}
+                    className={`relative transition-all duration-700 ease-out ${
+                      isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
+                    }`}
                     style={{
                       transitionDelay: `${isMobileMenuOpen ? index * 100 + 200 : 0}ms`,
                     }}
@@ -309,8 +312,9 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
 
               {/* Enlace Experiencias - Móvil */}
               <div
-                className={`relative transition-all duration-700 ease-out ${isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
-                  }`}
+                className={`relative transition-all duration-700 ease-out ${
+                  isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
+                }`}
                 style={{
                   transitionDelay: `${isMobileMenuOpen ? getStoreNavRoutes().length * 100 + 200 : 0}ms`,
                 }}
@@ -329,8 +333,9 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
           </div>
 
           <div
-            className={`px-8 pb-12 transition-all duration-700 ease-out md:px-16 ${isMobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-              }`}
+            className={`px-8 pb-12 transition-all duration-700 ease-out md:px-16 ${
+              isMobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+            }`}
             style={{
               transitionDelay: `${isMobileMenuOpen ? (getStoreNavRoutes().length + 1) * 100 + 400 : 0}ms`,
             }}

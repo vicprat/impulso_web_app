@@ -6,7 +6,7 @@ import { Logo } from '@/components/Logo'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { type Product as ProductType } from '@/modules/shopify/types'
-import { replaceRouteParams, ROUTES } from '@/src/config/routes'
+import { ROUTES, replaceRouteParams } from '@/src/config/routes'
 
 import type { PublicEvent } from '@/src/modules/shopify/service'
 
@@ -38,10 +38,9 @@ export const Product: React.FC<Props> = ({ product }) => {
   // Detectar si es un post convertido (viene de posts de tipo EVENT)
   const isEventPost = product.id.startsWith('post-')
 
-  // Función para formatear el precio
   const formatPrice = (price: string, currencyCode: string) => {
     const priceValue = parseFloat(price)
-    if (priceValue === 0) {
+    if (priceValue === 0 && product.vendor === 'Evento') {
       return 'Entrada gratuita'
     }
     return `$${priceValue.toLocaleString('es-MX', { maximumFractionDigits: 2, minimumFractionDigits: 2 })} ${currencyCode}`
@@ -128,7 +127,9 @@ export const Product: React.FC<Props> = ({ product }) => {
                     )
                   : product.vendor === 'Evento'
                     ? replaceRouteParams(ROUTES.STORE.EVENT_DETAIL.PATH, { handle: product.handle })
-                    : replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, { handle: product.handle })
+                    : replaceRouteParams(ROUTES.STORE.PRODUCT_DETAIL.PATH, {
+                        handle: product.handle,
+                      })
               }
             >
               <h3 className='line-clamp-2 text-xs font-medium leading-tight text-foreground transition-colors duration-200 hover:text-primary focus:text-primary focus:outline-none sm:text-sm'>

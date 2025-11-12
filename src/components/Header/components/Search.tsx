@@ -63,8 +63,11 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
     {
       artworkType: quickFilters.productType,
       limit: 5,
+      priceMax: quickFilters.priceRange ? priceRanges[quickFilters.priceRange].max : undefined,
+      priceMin: quickFilters.priceRange ? priceRanges[quickFilters.priceRange].min : undefined,
       search: debouncedQuery,
       technique: quickFilters.technique,
+      year: quickFilters.year,
     },
     {
       enabled: !!hasAnyFilter,
@@ -80,18 +83,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
 
   const products = data?.products ?? []
 
-  const filteredProducts = products.filter((product: Product) => {
-    if (quickFilters.priceRange) {
-      const price = parseFloat(product.priceRange.minVariantPrice.amount)
-      const range = priceRanges[quickFilters.priceRange]
-      if (range.min && price < range.min) return false
-      if (range.max && price > range.max) return false
-    }
-    if (quickFilters.year && product.artworkDetails?.year !== quickFilters.year) {
-      return false
-    }
-    return true
-  })
+  const filteredProducts = products
 
   const handleSelect = (handle: string) => {
     router.push(`/store/product/${handle}`)
@@ -109,7 +101,7 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
       if (range.min) params.set('price_min', range.min.toString())
       if (range.max) params.set('price_max', range.max.toString())
     }
-    if (quickFilters.year) params.set('years', quickFilters.year)
+    if (quickFilters.year) params.set('year', quickFilters.year)
 
     const queryString = params.toString()
     router.push(`/store/search${queryString ? `?${queryString}` : ''}`)

@@ -68,6 +68,7 @@ export async function GET(req: NextRequest) {
       status: 'ACTIVE',
       technique: searchParams.get('technique') ?? undefined,
       vendor: searchParams.get('vendor') ?? undefined,
+      year: searchParams.get('year') ?? undefined,
     }
 
     const result = await productService.getProductsPublic(params)
