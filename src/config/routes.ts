@@ -155,6 +155,14 @@ export const ROUTES = {
         PERMISSIONS: [PERMISSIONS.VIEW_PRIVATE_ROOMS],
         ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.VIP_CUSTOMER.NAME],
       },
+      ACCESS_DETAIL: {
+        HIDE_IN_NAV: true,
+        ICON: 'eye',
+        LABEL: 'Ver Sala Privada',
+        PATH: '/private-room/:id',
+        PERMISSIONS: [PERMISSIONS.VIEW_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.VIP_CUSTOMER.NAME],
+      },
       CREATE: {
         ICON: 'plus',
         LABEL: 'Crear Sala Privada',

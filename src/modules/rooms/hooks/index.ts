@@ -18,11 +18,19 @@ export const usePrivateRoom = (id: string) => {
   })
 }
 
-export const useUserPrivateRoom = (userId: string) => {
+export const useUserPrivateRooms = (userId: string) => {
   return useQuery({
     enabled: !!userId,
-    queryFn: () => privateRoomsApi.getPrivateRoomByUserId(userId),
-    queryKey: ['userPrivateRoom', userId],
+    queryFn: () => privateRoomsApi.getPrivateRoomsByUserId(userId),
+    queryKey: ['userPrivateRooms', userId],
+  })
+}
+
+export const usePrivateRoomProducts = (productIds: string[]) => {
+  return useQuery({
+    enabled: productIds.length > 0,
+    queryFn: () => privateRoomsApi.getProducts(productIds),
+    queryKey: ['privateRoomProducts', productIds],
   })
 }
 

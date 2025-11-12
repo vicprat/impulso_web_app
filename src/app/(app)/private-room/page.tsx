@@ -1,75 +1,58 @@
 'use client'
 
-import { Package, ShoppingBag, Sparkles, Star } from 'lucide-react'
+import { ChevronRight, Lock, Package } from 'lucide-react'
 import Link from 'next/link'
 
-import { Card } from '@/components/Card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card as ShadcnCard } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/modules/auth/context/useAuth'
-import { useUserPrivateRoom } from '@/modules/rooms/hooks'
-import { useProductsByIds } from '@/modules/shopify/hooks'
-
-import type { Product } from '@/src/modules/shopify/types'
+import { useUserPrivateRooms } from '@/modules/rooms/hooks'
+import { ROUTES, replaceRouteParams } from '@/src/config/routes'
 
 export default function PrivateRoomPage() {
   const { user } = useAuth()
   const userId = user?.id
 
-  const {
-    data: privateRoom,
-    error: roomError,
-    isLoading: isLoadingRoom,
-  } = useUserPrivateRoom(userId ?? '')
-
-  const productIds = privateRoom?.products.map((p) => p.productId) ?? []
-  const {
-    data,
-    error: productsError,
-    isLoading: isLoadingProducts,
-  } = useProductsByIds(productIds, {
-    enabled: productIds.length > 0,
-  })
-
-  const products = data?.products ?? []
-  const isLoading = isLoadingRoom || isLoadingProducts
+  const { data: privateRooms, error: roomError, isLoading } = useUserPrivateRooms(userId ?? '')
 
   if (isLoading) {
     return (
-      <div className='container mx-auto max-w-6xl p-6'>
+      <div className='container mx-auto max-w-7xl p-6'>
         <div className='space-y-6'>
           <div className='space-y-3'>
-            <Skeleton className='h-8 w-80' />
+            <Skeleton className='h-10 w-80' />
             <Skeleton className='h-4 w-96' />
           </div>
-          <Card.Loader />
+          <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className='h-48' />
+            ))}
+          </div>
         </div>
       </div>
     )
   }
 
-  // Error State
-  if (roomError || productsError) {
-    // Check if it's specifically a "no private rooms" error
+  if (roomError) {
     const isNoPrivateRoomsError = roomError?.message === 'No tienes salas privadas asignadas'
-    
+
     if (isNoPrivateRoomsError) {
       return (
         <div className='container mx-auto max-w-4xl p-6'>
           <div className='space-y-6 py-12 text-center'>
             <div className='mx-auto flex size-24 items-center justify-center rounded-full bg-muted'>
-              <ShoppingBag className='size-12 text-muted-foreground' />
+              <Lock className='size-12 text-muted-foreground' />
             </div>
             <div className='space-y-2'>
               <h1 className='text-2xl font-bold'>No tienes salas privadas asignadas</h1>
               <p className='text-muted-foreground'>
-                Actualmente no tienes salas privadas asignadas. Contacta con soporte para obtener acceso a tu experiencia VIP personalizada.
+                Actualmente no tienes salas privadas asignadas. Contacta con soporte para obtener
+                acceso a tu experiencia VIP personalizada.
               </p>
             </div>
-            {/* TODO: ROUTING - Add ROUTES.CONTACT.MAIN.PATH */}
             <Button asChild>
               <Link href='/contact'>Contactar Soporte</Link>
             </Button>
@@ -82,29 +65,27 @@ export default function PrivateRoomPage() {
       <div className='container mx-auto max-w-4xl p-6'>
         <Alert variant='destructive'>
           <AlertDescription>
-            Error loading your private room: {roomError?.message ?? productsError?.message}
+            Error loading your private rooms: {roomError?.message}
           </AlertDescription>
         </Alert>
       </div>
     )
   }
 
-  // No Room State
-  if (!privateRoom) {
+  if (!privateRooms || privateRooms.length === 0) {
     return (
       <div className='container mx-auto max-w-4xl p-6'>
         <div className='space-y-6 py-12 text-center'>
           <div className='mx-auto flex size-24 items-center justify-center rounded-full bg-muted'>
-            <ShoppingBag className='size-12 text-muted-foreground' />
+            <Lock className='size-12 text-muted-foreground' />
           </div>
           <div className='space-y-2'>
-            <h1 className='text-2xl font-bold'>No Private Room Available</h1>
+            <h1 className='text-2xl font-bold'>No Private Rooms Available</h1>
             <p className='text-muted-foreground'>
-              You don't have a private room assigned yet. Contact us to set up your personalized
+              You don't have any private rooms assigned yet. Contact us to set up your personalized
               shopping experience.
             </p>
           </div>
-          {/* TODO: ROUTING - Add ROUTES.CONTACT.MAIN.PATH */}
           <Button asChild>
             <Link href='/contact'>Contact Support</Link>
           </Button>
@@ -116,101 +97,71 @@ export default function PrivateRoomPage() {
   return (
     <div className='container mx-auto max-w-7xl p-6'>
       <div className='space-y-8'>
-        {/* Header */}
-        <div className='space-y-4 text-center'>
-          <div className='mb-2 flex items-center justify-center gap-2'>
-            <Sparkles className='size-6 text-primary' />
-            <Badge variant='secondary' className='text-sm'>
-              VIP Experience
-            </Badge>
-          </div>
-          <h1 className='text-4xl font-bold tracking-tight'>{privateRoom.name}</h1>
-          {privateRoom.description && (
-            <p className='mx-auto max-w-2xl text-xl text-muted-foreground'>
-              {privateRoom.description}
+        <div className='space-y-2'>
+          <h1 className='text-3xl font-bold tracking-tight'>Mis Salas Privadas</h1>
+          <p className='text-muted-foreground'>
+            Explora tus colecciones personalizadas y productos seleccionados exclusivamente para ti
+          </p>
+        </div>
+
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+          {privateRooms.map((room) => (
+            <Link
+              key={room.id}
+              href={replaceRouteParams(ROUTES.ADMIN.PRIVATE_ROOMS.ACCESS_DETAIL.PATH, {
+                id: room.id,
+              })}
+            >
+              <ShadcnCard className='group h-full transition-all duration-200 hover:shadow-lg'>
+                <div className='p-6'>
+                  <div className='mb-4 flex items-start justify-between'>
+                    <div className='bg-primary/10 rounded-lg p-3'>
+                      <Lock className='size-6 text-primary' />
+                    </div>
+                    <ChevronRight className='size-5 text-muted-foreground transition-transform group-hover:translate-x-1' />
+                  </div>
+
+                  <div className='space-y-3'>
+                    <div>
+                      <h3 className='text-xl font-semibold'>{room.name}</h3>
+                      {room.description && (
+                        <p className='mt-1 line-clamp-2 text-sm text-muted-foreground'>
+                          {room.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className='flex items-center gap-4 text-sm text-muted-foreground'>
+                      <div className='flex items-center gap-1'>
+                        <Package className='size-4' />
+                        <span>{room.products.length} productos</span>
+                      </div>
+                    </div>
+
+                    <div className='pt-2'>
+                      <Badge variant='secondary' className='text-xs'>
+                        VIP Collection
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </ShadcnCard>
+            </Link>
+          ))}
+        </div>
+
+        <ShadcnCard className='border-primary/20 p-8'>
+          <div className='space-y-4 text-center'>
+            <h3 className='text-xl font-semibold'>¿Necesitas ayuda?</h3>
+            <p className='text-muted-foreground'>
+              Si tienes alguna pregunta sobre tus salas privadas o necesitas asistencia, no dudes en
+              contactarnos.
             </p>
-          )}
-          <div className='flex items-center justify-center gap-4 text-sm text-muted-foreground'>
-            <div className='flex items-center gap-1'>
-              <Package className='size-4' />
-              <span>{products.length} Curated Products</span>
-            </div>
-            <div className='flex items-center gap-1'>
-              <Star className='size-4' />
-              <span>Exclusively for You</span>
-            </div>
+            <Button variant='outline' asChild>
+              <Link href='/contact'>Contactar Soporte</Link>
+            </Button>
           </div>
-        </div>
-
-        {/* Products Section */}
-        <div className='space-y-6'>
-          <div className='flex items-center justify-between'>
-            <h2 className='text-2xl font-bold'>Your Curated Collection</h2>
-            {products.length > 0 && <Badge variant='outline'>{products.length} items</Badge>}
-          </div>
-
-          {privateRoom.products.length === 0 ? (
-            <ShadcnCard className='p-12'>
-              <div className='space-y-4 text-center'>
-                <div className='mx-auto flex size-16 items-center justify-center rounded-full bg-muted'>
-                  <Package className='size-8 text-muted-foreground' />
-                </div>
-                <div className='space-y-2'>
-                  <h3 className='text-lg font-semibold'>No Products Yet</h3>
-                  <p className='text-muted-foreground'>
-                    Your curated collection is being prepared. Check back soon for exclusive
-                    products selected just for you.
-                  </p>
-                </div>
-              </div>
-            </ShadcnCard>
-          ) : products.length === 0 ? (
-            <ShadcnCard className='p-12'>
-              <div className='space-y-4 text-center'>
-                <div className='mx-auto flex size-16 items-center justify-center rounded-full bg-yellow-100'>
-                  <Package className='size-8 text-yellow-600' />
-                </div>
-                <div className='space-y-2'>
-                  <h3 className='text-lg font-semibold'>Products Not Found</h3>
-                  <p className='text-muted-foreground'>
-                    We found {privateRoom.products.length} products in your room but couldn't load
-                    their details. This might be a temporary issue.
-                  </p>
-                  <Button onClick={() => window.location.reload()} variant='outline' size='sm'>
-                    Try Again
-                  </Button>
-                </div>
-              </div>
-            </ShadcnCard>
-          ) : (
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-              {products.map((product: Product) => (
-                <Card.Product product={product} key={product.id} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {products.length > 0 && (
-          <ShadcnCard className='border-primary/20  bg-gradient-to-r p-8'>
-            <div className='space-y-4 text-center'>
-              <h3 className='text-xl font-semibold'>Ready to Shop?</h3>
-              <p className='text-muted-foreground'>
-                Explore your curated collection and discover products selected exclusively for your
-                preferences.
-              </p>
-              <div className='flex justify-center gap-3'>
-                <Button size='lg'>
-                  Start Shopping
-                  <ShoppingBag className='ml-2 size-4' />
-                </Button>
-                <Button variant='outline' size='lg' asChild>
-                  <Link href='/contact'>Need Help?</Link>
-                </Button>
-              </div>
-            </div>
-          </ShadcnCard>
-        )}
+        </ShadcnCard>
       </div>
     </div>
   )

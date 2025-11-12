@@ -1,15 +1,30 @@
+export interface PrivateRoomUser {
+  id: string
+  userId: string
+  privateRoomId: string
+  assignedAt: string
+  user?: {
+    id: string
+    email: string
+    firstName: string | null
+    lastName: string | null
+  }
+}
+
 export interface PrivateRoom {
   id: string
   name: string
   description: string | null
-  userId: string
+  userId?: string | null
   createdAt: string
   updatedAt: string
   products: PrivateRoomProduct[]
+  users?: PrivateRoomUser[]
   user?: {
     id: string
-    name: string | null
     email: string
+    firstName: string | null
+    lastName: string | null
   }
 }
 
@@ -22,13 +37,13 @@ export interface PrivateRoomProduct {
 export interface CreatePrivateRoomDto {
   name: string
   description?: string
-  userId: string
+  userIds: string[]
   productIds: string[]
 }
 
 export interface UpdatePrivateRoomDto {
   name?: string
   description?: string
-  userId?: string
+  userIds?: string[]
   productIds?: string[]
 }

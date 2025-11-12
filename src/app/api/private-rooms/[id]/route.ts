@@ -7,17 +7,21 @@ import { PERMISSIONS } from '@/src/config/Permissions'
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    await requirePermission(PERMISSIONS.MANAGE_PRIVATE_ROOMS)
+    await requirePermission(PERMISSIONS.VIEW_PRIVATE_ROOMS)
 
     const privateRoom = await prisma.privateRoom.findUnique({
       include: {
         products: true,
-        user: {
-          select: {
-            email: true,
-            firstName: true,
-            id: true,
-            lastName: true,
+        users: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                firstName: true,
+                id: true,
+                lastName: true,
+              },
+            },
           },
         },
       },
@@ -40,18 +44,23 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { id } = await params
     await requirePermission(PERMISSIONS.MANAGE_PRIVATE_ROOMS)
 
-    const { description, name, productIds, userId } = await req.json()
+    const { description, name, productIds, userIds } = await req.json()
 
     const updatedPrivateRoom = await prisma.$transaction(async (tx) => {
       await tx.privateRoomProduct.deleteMany({
         where: { privateRoomId: id },
       })
 
+      if (userIds && Array.isArray(userIds)) {
+        await tx.privateRoomUser.deleteMany({
+          where: { privateRoomId: id },
+        })
+      }
+
       await tx.privateRoom.update({
         data: {
           description,
           name,
-          userId,
         },
         where: { id },
       })
@@ -65,15 +74,28 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         })
       }
 
+      if (userIds && userIds.length > 0) {
+        await tx.privateRoomUser.createMany({
+          data: userIds.map((userId: string) => ({
+            privateRoomId: id,
+            userId,
+          })),
+        })
+      }
+
       return tx.privateRoom.findUnique({
         include: {
           products: true,
-          user: {
-            select: {
-              email: true,
-              firstName: true,
-              id: true,
-              lastName: true,
+          users: {
+            include: {
+              user: {
+                select: {
+                  email: true,
+                  firstName: true,
+                  id: true,
+                  lastName: true,
+                },
+              },
             },
           },
         },
@@ -110,31 +132,38 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     await requirePermission(PERMISSIONS.MANAGE_PRIVATE_ROOMS)
 
     const body = await req.json()
-    const { description, name, productIds, userId, ...otherFields } = body
+    const { description, name, productIds, userIds, ...otherFields } = body
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {}
 
     if (name !== undefined) updateData.name = name
     if (description !== undefined) updateData.description = description
-    if (userId !== undefined) updateData.userId = userId
 
     Object.assign(updateData, otherFields)
 
     let updatedPrivateRoom
 
-    if (productIds !== undefined) {
+    if (productIds !== undefined || userIds !== undefined) {
       updatedPrivateRoom = await prisma.$transaction(async (tx) => {
-        await tx.privateRoomProduct.deleteMany({
-          where: { privateRoomId: id },
-        })
+        if (productIds !== undefined) {
+          await tx.privateRoomProduct.deleteMany({
+            where: { privateRoomId: id },
+          })
+        }
+
+        if (userIds !== undefined) {
+          await tx.privateRoomUser.deleteMany({
+            where: { privateRoomId: id },
+          })
+        }
 
         await tx.privateRoom.update({
           data: updateData,
           where: { id },
         })
 
-        if (productIds.length > 0) {
+        if (productIds && productIds.length > 0) {
           await tx.privateRoomProduct.createMany({
             data: productIds.map((productId: string) => ({
               privateRoomId: id,
@@ -143,15 +172,28 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           })
         }
 
+        if (userIds && userIds.length > 0) {
+          await tx.privateRoomUser.createMany({
+            data: userIds.map((userId: string) => ({
+              privateRoomId: id,
+              userId,
+            })),
+          })
+        }
+
         return tx.privateRoom.findUnique({
           include: {
             products: true,
-            user: {
-              select: {
-                email: true,
-                firstName: true,
-                id: true,
-                lastName: true,
+            users: {
+              include: {
+                user: {
+                  select: {
+                    email: true,
+                    firstName: true,
+                    id: true,
+                    lastName: true,
+                  },
+                },
               },
             },
           },
@@ -163,12 +205,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         data: updateData,
         include: {
           products: true,
-          user: {
-            select: {
-              email: true,
-              firstName: true,
-              id: true,
-              lastName: true,
+          users: {
+            include: {
+              user: {
+                select: {
+                  email: true,
+                  firstName: true,
+                  id: true,
+                  lastName: true,
+                },
+              },
             },
           },
         },

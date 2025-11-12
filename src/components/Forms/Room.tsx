@@ -9,18 +9,11 @@ import { Button } from '@/components/ui/button'
 import { Card as ShadcnCard } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/use-debounce'
-import { useProducts } from '@/modules/shopify/hooks'
 import { type Product } from '@/modules/shopify/types'
 import { useUsersManagement } from '@/modules/user/hooks/management'
+import { useGetProductsPaginated } from '@/services/product/hook'
 
 import type { User } from '@/src/types/user'
 
@@ -30,7 +23,7 @@ export interface PrivateRoomData {
   id?: string
   name: string
   description?: string | null
-  userId: string
+  userIds: string[]
   products: Product[]
 }
 
@@ -53,7 +46,7 @@ export const Room: React.FC<Props> = ({
   showUserSelection = true,
   submitButtonText,
 }) => {
-  const [selectedUser, setSelectedUser] = useState<string | null>(initialData?.userId ?? null)
+  const [selectedUsers, setSelectedUsers] = useState<string[]>(initialData?.userIds ?? [])
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([])
   const [roomName, setRoomName] = useState<string>(initialData?.name ?? '')
   const [roomDescription, setRoomDescription] = useState<string>(initialData?.description ?? '')
@@ -77,19 +70,60 @@ export const Room: React.FC<Props> = ({
     data: productsData,
     isError: isProductSearchError,
     isLoading: isLoadingProducts,
-  } = useProducts(
-    {
-      filters: {
-        query: `(title:*${debouncedProductSearchQuery}*) OR (product_type:*${debouncedProductSearchQuery}*) OR (tag:*${debouncedProductSearchQuery}*)`,
+  } = useGetProductsPaginated({
+    limit: 20,
+    search: debouncedProductSearchQuery,
+  })
+
+  const products =
+    productsData?.products?.map((p: any) => ({
+      availableForSale: p.status === 'ACTIVE',
+      createdAt: p.createdAt ?? new Date().toISOString(),
+      description: p.descriptionHtml ?? '',
+      descriptionHtml: p.descriptionHtml ?? '',
+      handle: p.handle,
+      id: p.id,
+      images:
+        p.images?.edges?.map((edge: any) => ({
+          altText: edge.node.altText,
+          height: edge.node.height,
+          id: edge.node.id,
+          url: edge.node.url,
+          width: edge.node.width,
+        })) ?? [],
+      priceRange: {
+        maxVariantPrice: {
+          amount: p.variants?.edges?.[0]?.node?.price ?? '0',
+          currencyCode: 'MXN',
+        },
+        minVariantPrice: {
+          amount: p.variants?.edges?.[0]?.node?.price ?? '0',
+          currencyCode: 'MXN',
+        },
       },
-      first: 20,
-      sortKey: 'RELEVANCE',
-    },
-    {
-      enabled: !!debouncedProductSearchQuery && !isReadOnly,
-    }
-  )
-  const products = productsData?.products ?? []
+      productType: p.productType ?? '',
+      status: p.status,
+      title: p.title,
+      updatedAt: p.updatedAt ?? new Date().toISOString(),
+      variants:
+        p.variants?.edges?.map((edge: any) => ({
+          availableForSale: edge.node.inventoryQuantity > 0,
+          compareAtPrice: edge.node.compareAtPrice
+            ? {
+                amount: edge.node.compareAtPrice,
+                currencyCode: 'MXN',
+              }
+            : null,
+          id: edge.node.id,
+          price: {
+            amount: edge.node.price ?? '0',
+            currencyCode: 'MXN',
+          },
+          selectedOptions: edge.node.selectedOptions ?? [],
+          title: edge.node.title,
+        })) ?? [],
+      vendor: p.vendor ?? '',
+    })) ?? []
 
   useEffect(() => {
     if (initialData?.products && initialData.products.length > 0) {
@@ -145,8 +179,8 @@ export const Room: React.FC<Props> = ({
       return
     }
 
-    if (!selectedUser || !roomName) {
-      alert('Please select a user and provide a room name.')
+    if (selectedUsers.length === 0 || !roomName) {
+      alert('Please select at least one user and provide a room name.')
       return
     }
 
@@ -155,11 +189,20 @@ export const Room: React.FC<Props> = ({
       id: initialData?.id,
       name: roomName,
       products: selectedProducts,
-
-      userId: selectedUser,
+      userIds: selectedUsers,
     }
 
     await onSubmit(formData)
+  }
+
+  const handleUserToggle = (userId: string) => {
+    setSelectedUsers((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    )
+  }
+
+  const handleRemoveUser = (userId: string) => {
+    setSelectedUsers((prev) => prev.filter((id) => id !== userId))
   }
 
   const getConfig = () => {
@@ -247,37 +290,84 @@ export const Room: React.FC<Props> = ({
 
           {showUserSelection && (
             <div className='space-y-2'>
-              <Label htmlFor='userSelect'>VIP User</Label>
+              <Label htmlFor='userSelect'>VIP Users</Label>
               {isReadOnly ? (
-                <Input
-                  value={
-                    users.find((user: User) => user.id === selectedUser)?.email ?? 'Loading...'
-                  }
-                  disabled
-                />
+                <div className='space-y-2'>
+                  {selectedUsers.map((userId) => {
+                    const user = users.find((u: User) => u.id === userId)
+                    return (
+                      <div key={userId} className='flex items-center gap-2 rounded-md border p-2'>
+                        <span className='text-sm'>
+                          {user?.email ?? 'Unknown'} ({user?.firstName} {user?.lastName})
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
               ) : (
-                <Select value={selectedUser ?? undefined} onValueChange={setSelectedUser} required>
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        isLoadingUsers
-                          ? 'Loading users...'
-                          : users.length === 0
-                            ? 'No VIP users available'
-                            : 'Choose a VIP customer'
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {!isLoadingUsers &&
-                      users.length > 0 &&
-                      users.map((user: User) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.email} ({user.firstName} {user.lastName})
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                <div className='space-y-3'>
+                  <ShadcnCard className='max-h-48 overflow-y-auto p-3'>
+                    {isLoadingUsers ? (
+                      <div className='space-y-2'>
+                        <Skeleton className='h-8 w-full' />
+                        <Skeleton className='h-8 w-full' />
+                      </div>
+                    ) : users.length === 0 ? (
+                      <p className='text-center text-sm text-muted-foreground'>
+                        No VIP users available
+                      </p>
+                    ) : (
+                      <div className='space-y-2'>
+                        {users.map((user: User) => (
+                          <div
+                            key={user.id}
+                            className='flex items-center gap-2 rounded-md border p-2 transition-colors hover:bg-muted'
+                          >
+                            <input
+                              type='checkbox'
+                              checked={selectedUsers.includes(user.id)}
+                              onChange={() => handleUserToggle(user.id)}
+                              className='size-4 cursor-pointer'
+                            />
+                            <label
+                              className='flex-1 cursor-pointer text-sm'
+                              onClick={() => handleUserToggle(user.id)}
+                            >
+                              {user.email} ({user.firstName} {user.lastName})
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ShadcnCard>
+
+                  {selectedUsers.length > 0 && (
+                    <div className='space-y-2'>
+                      <Label className='text-sm'>Selected Users ({selectedUsers.length})</Label>
+                      <div className='flex flex-wrap gap-2'>
+                        {selectedUsers.map((userId) => {
+                          const user = users.find((u: User) => u.id === userId)
+                          return (
+                            <Badge
+                              key={userId}
+                              variant='secondary'
+                              className='flex items-center gap-1'
+                            >
+                              <span className='text-xs'>{user?.email ?? 'Unknown'}</span>
+                              <button
+                                type='button'
+                                onClick={() => handleRemoveUser(userId)}
+                                className='hover:bg-destructive/20 ml-1 rounded-full p-0.5'
+                              >
+                                <X className='size-3' />
+                              </button>
+                            </Badge>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -449,7 +539,7 @@ export const Room: React.FC<Props> = ({
               <Button
                 type='submit'
                 className='w-full'
-                disabled={((!selectedUser || !roomName) && !isDeleteMode) || isLoading}
+                disabled={((selectedUsers.length === 0 || !roomName) && !isDeleteMode) || isLoading}
                 variant={isDeleteMode ? 'destructive' : 'default'}
               >
                 {isLoading ? 'Processing...' : config.submitText}

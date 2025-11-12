@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { privateRoomsApi } from '@/modules/rooms/api'
-import { useProductsByIds } from '@/modules/shopify/hooks'
+import { usePrivateRoomProducts } from '@/modules/rooms/hooks'
 import { ROUTES } from '@/src/config/routes'
 
 interface PrivateRoomPageProps {
@@ -39,9 +39,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
     data: productsData,
     error: productsError,
     isLoading: isLoadingProducts,
-  } = useProductsByIds(productIds, {
-    enabled: productIds.length > 0,
-  })
+  } = usePrivateRoomProducts(productIds)
 
   const products = productsData?.products ?? []
 
@@ -82,7 +80,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
         description: data.description ?? undefined,
         name: data.name,
         productIds: data.products.map((p) => p.id),
-        userId: data.userId,
+        userIds: data.userIds,
       })
 
       toast.success('¡Sala privada actualizada exitosamente!')
@@ -175,8 +173,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
     id: roomData.id,
     name: roomData.name,
     products: products.length > 0 ? products : [],
-
-    userId: roomData.userId,
+    userIds: roomData.users?.map((u: any) => u.userId) ?? [],
   }
 
   const getModeConfig = () => {

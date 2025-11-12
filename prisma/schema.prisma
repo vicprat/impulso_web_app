@@ -29,6 +29,7 @@ model User {
   blogPosts         Post[]            @relation("BlogPosts")
   financialEntries  FinancialEntry[]
   privateRooms      PrivateRoom[]
+  privateRoomUsers  PrivateRoomUser[]
   sessionTokens     SessionToken[]
   tickets           Ticket[]
   UserRole          UserRole[]
@@ -162,9 +163,9 @@ model Artist {
   name         String      @unique
   bio          String?
   portfolioUrl String?
-  artistType   ArtistsEnum @default(IMPULSO)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  artistType   ArtistsEnum @default(IMPULSO)
   user         User?
 }
 
@@ -186,13 +187,13 @@ model PrivateRoom {
   id          String               @id @default(cuid())
   name        String
   description String?
-  userId      String
+  userId      String?
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   products    PrivateRoomProduct[]
-  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  users       PrivateRoomUser[]
+  user        User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, name])
   @@map("private_rooms")
 }
 
@@ -204,6 +205,18 @@ model PrivateRoomProduct {
 
   @@unique([privateRoomId, productId])
   @@map("private_room_products")
+}
+
+model PrivateRoomUser {
+  id            String      @id @default(cuid())
+  privateRoomId String
+  userId        String
+  assignedAt    DateTime    @default(now())
+  privateRoom   PrivateRoom @relation(fields: [privateRoomId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([privateRoomId, userId])
+  @@map("private_room_users")
 }
 
 model Ticket {
@@ -292,8 +305,8 @@ model Location {
   isActive        Boolean           @default(true)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
-  currentProducts Product[]         @relation("CurrentLocation")
   locationHistory LocationHistory[]
+  currentProducts Product[]         @relation("CurrentLocation")
 
   @@map("locations")
 }
@@ -307,8 +320,8 @@ model Product {
   currentLocationId String?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
-  currentLocation   Location?         @relation("CurrentLocation", fields: [currentLocationId], references: [id])
   locationHistory   LocationHistory[]
+  currentLocation   Location?         @relation("CurrentLocation", fields: [currentLocationId], references: [id])
 
   @@index([currentLocationId])
   @@map("products")
@@ -321,8 +334,8 @@ model LocationHistory {
   changedAt  DateTime  @default(now())
   changedBy  String?
   notes      String?
-  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   location   Location? @relation(fields: [locationId], references: [id])
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@index([locationId])
@@ -349,7 +362,6 @@ model Post {
   slug             String         @unique
   status           PostStatus     @default(DRAFT)
   featured         Boolean        @default(false)
-  postType         PostType       @default(BLOG)
   featuredImageUrl String?
   additionalImages String[]
   metaTitle        String?
@@ -357,9 +369,10 @@ model Post {
   publishedAt      DateTime?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+  authorId         String
   date             DateTime?
   location         String?
-  authorId         String
+  postType         PostType       @default(BLOG)
   categories       PostCategory[]
   tags             PostTag[]
   author           User           @relation("BlogPosts", fields: [authorId], references: [id])

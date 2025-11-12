@@ -291,6 +291,7 @@ async function main() {
         'view_acquired_tickets',
         'manage_finance',
         'view_financial_entries',
+        'view_private_rooms',
       ],
     },
     {
@@ -302,12 +303,19 @@ async function main() {
         'manage_employees',
         'manage_own_blog_posts',
         'manage_all_blog_posts',
+        'view_private_rooms',
       ],
     },
     {
       description: 'Proveedor de servicios o productos',
       name: 'provider',
-      permissions: ['view_profile', 'update_profile', 'manage_providers', 'view_financial_entries'],
+      permissions: [
+        'view_profile',
+        'update_profile',
+        'manage_providers',
+        'view_financial_entries',
+        'view_private_rooms',
+      ],
     },
     {
       description: 'Socio de la empresa',
@@ -318,6 +326,7 @@ async function main() {
         'manage_partners',
         'view_financial_entries',
         'view_finance_reports',
+        'view_private_rooms',
       ],
     },
     {
@@ -331,6 +340,7 @@ async function main() {
         'view_products',
         'view_logs',
         'view_acquired_tickets',
+        'view_private_rooms',
       ],
     },
     {

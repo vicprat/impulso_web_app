@@ -6,20 +6,31 @@ import { useEffect, useState } from 'react'
 
 import { Card } from '@/components/Card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card as ShadcnCard } from '@/components/ui/card'
-import { replaceRouteParams, ROUTES } from '@/src/config/routes'
+import { ROUTES, replaceRouteParams } from '@/src/config/routes'
 
 interface PrivateRoom {
   id: string
   name: string
   description?: string
-  userId: string
+  userId?: string
   user?: {
     email: string
     firstName: string
     lastName: string
   }
+  users?: {
+    id: string
+    userId: string
+    user?: {
+      id: string
+      email: string
+      firstName: string | null
+      lastName: string | null
+    }
+  }[]
   products: { id: string; productId: string }[]
   createdAt: string
   updatedAt: string
@@ -171,7 +182,9 @@ export default function PrivateRoomsListPage() {
                 <div className='space-y-4'>
                   <div className='space-y-2'>
                     <Link
-                      href={replaceRouteParams(ROUTES.ADMIN.PRIVATE_ROOMS.DETAIL.PATH, { id: room.id })}
+                      href={replaceRouteParams(ROUTES.ADMIN.PRIVATE_ROOMS.DETAIL.PATH, {
+                        id: room.id,
+                      })}
                       className='group block'
                     >
                       <h3 className='line-clamp-1 text-lg font-semibold transition-colors group-hover:text-primary'>
@@ -186,12 +199,24 @@ export default function PrivateRoomsListPage() {
                     )}
                   </div>
 
-                  {room.user && (
-                    <div className='flex items-center gap-2 text-sm'>
-                      <Users className='size-4 text-muted-foreground' />
-                      <span className='truncate'>
-                        {room.user.firstName} {room.user.lastName}
-                      </span>
+                  {room.users && room.users.length > 0 && (
+                    <div className='space-y-1'>
+                      <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                        <Users className='size-4' />
+                        <span>{room.users.length} usuarios asignados</span>
+                      </div>
+                      <div className='flex flex-wrap gap-1'>
+                        {room.users.slice(0, 3).map((userAssignment) => (
+                          <Badge key={userAssignment.id} variant='secondary' className='text-xs'>
+                            {userAssignment.user?.email ?? 'Unknown'}
+                          </Badge>
+                        ))}
+                        {room.users.length > 3 && (
+                          <Badge variant='outline' className='text-xs'>
+                            +{room.users.length - 3} más
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -209,7 +234,9 @@ export default function PrivateRoomsListPage() {
                   <div className='grid grid-cols-3 gap-2'>
                     <Button size='sm' variant='outline' asChild>
                       <Link
-                        href={replaceRouteParams(ROUTES.ADMIN.PRIVATE_ROOMS.DETAIL.PATH, { id: room.id })}
+                        href={replaceRouteParams(ROUTES.ADMIN.PRIVATE_ROOMS.DETAIL.PATH, {
+                          id: room.id,
+                        })}
                       >
                         <Eye className='mr-1 size-3' />
                         View
@@ -218,7 +245,9 @@ export default function PrivateRoomsListPage() {
 
                     <Button size='sm' variant='outline' asChild>
                       <Link
-                        href={replaceRouteParams(ROUTES.ADMIN.PRIVATE_ROOMS.DETAIL.PATH, { id: room.id })}
+                        href={replaceRouteParams(ROUTES.ADMIN.PRIVATE_ROOMS.DETAIL.PATH, {
+                          id: room.id,
+                        })}
                       >
                         <Edit3 className='mr-1 size-3' />
                         Edit

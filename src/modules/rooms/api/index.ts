@@ -46,13 +46,27 @@ export const privateRoomsApi = {
     return response.json()
   },
 
-  getPrivateRoomByUserId: async (userId: string): Promise<PrivateRoom> => {
+  getPrivateRoomsByUserId: async (userId: string): Promise<PrivateRoom[]> => {
     const response = await fetch(`${BASE_URL}/user/${userId}`)
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error('No tienes salas privadas asignadas')
       }
-      throw new Error("Failed to fetch user's private room")
+      throw new Error("Failed to fetch user's private rooms")
+    }
+    return response.json()
+  },
+
+  getProducts: async (productIds: string[]): Promise<any> => {
+    const response = await fetch(`${BASE_URL}/products`, {
+      body: JSON.stringify({ productIds }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    })
+    if (!response.ok) {
+      throw new Error('Failed to fetch products')
     }
     return response.json()
   },

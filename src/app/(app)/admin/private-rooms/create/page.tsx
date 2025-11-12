@@ -19,7 +19,7 @@ export default function CreatePrivateRoomPage() {
         description: data.description ?? undefined,
         name: data.name,
         productIds: data.products.map((p) => p.id),
-        userId: data.userId,
+        userIds: data.userIds,
       })
 
       toast.success('Private room created successfully!')

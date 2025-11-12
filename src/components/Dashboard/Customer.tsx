@@ -11,7 +11,7 @@ import {
 } from 'recharts'
 
 import { useCustomerDashboard } from '@/src/modules/dashboard/hooks/useCustomerDashboard'
-import { useUserPrivateRoom } from '@/src/modules/rooms/hooks'
+import { useUserPrivateRooms } from '@/src/modules/rooms/hooks'
 
 // Reusing components from Admin.tsx for consistency
 const MetricCard = ({
@@ -106,10 +106,10 @@ export const Customer: React.FC<CustomerDashboardProps> = ({ role, userId }) => 
   const { data, error, isLoading } = useCustomerDashboard()
   const isVipCustomer = role === 'vip_customer'
   const {
-    data: privateRoomData,
+    data: privateRoomsData,
     error: privateRoomError,
     isLoading: isLoadingPrivateRoom,
-  } = useUserPrivateRoom(userId || '')
+  } = useUserPrivateRooms(userId ?? '')
 
   if (isLoading || (isVipCustomer && isLoadingPrivateRoom)) return <LoadingDashboard />
   if (error) return <ErrorDashboard error={error} />
@@ -172,20 +172,34 @@ export const Customer: React.FC<CustomerDashboardProps> = ({ role, userId }) => 
       </div>
 
       {isVipCustomer && (
-        <ChartCard title='Tu Sala Privada'>
+        <ChartCard title='Tus Salas Privadas'>
           {isLoadingPrivateRoom ? (
-            <p>Cargando información de la sala privada...</p>
-          ) : privateRoomData ? (
-            <div className='space-y-2'>
-              <p>
-                Nombre de la Sala: <span className='font-semibold'>{privateRoomData.name}</span>
+            <p>Cargando información de las salas privadas...</p>
+          ) : privateRoomsData && privateRoomsData.length > 0 ? (
+            <div className='space-y-4'>
+              <p className='text-sm text-muted-foreground'>
+                Tienes {privateRoomsData.length} sala{privateRoomsData.length > 1 ? 's' : ''}{' '}
+                privada{privateRoomsData.length > 1 ? 's' : ''} asignada
+                {privateRoomsData.length > 1 ? 's' : ''}
               </p>
-              <p>Descripción: {privateRoomData.description}</p>
-              <p>Estado: {privateRoomData.name}</p>
-              {/* Add more private room details as needed */}
+              {privateRoomsData.map((room) => (
+                <div
+                  key={room.id}
+                  className='rounded-lg border border-outline bg-surface-container p-3'
+                >
+                  <p className='font-semibold text-foreground'>{room.name}</p>
+                  {room.description && (
+                    <p className='text-sm text-muted-foreground'>{room.description}</p>
+                  )}
+                  <p className='mt-1 text-sm text-muted-foreground'>
+                    {room.products.length} producto{room.products.length !== 1 ? 's' : ''}{' '}
+                    disponible{room.products.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              ))}
             </div>
           ) : (
-            <p>No tienes una sala privada asignada.</p>
+            <p>No tienes salas privadas asignadas.</p>
           )}
         </ChartCard>
       )}

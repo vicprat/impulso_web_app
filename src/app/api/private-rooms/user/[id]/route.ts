@@ -15,23 +15,43 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json(
-        { error: 'Unauthorized - Can only access your own private room' },
+        { error: 'Unauthorized - Can only access your own private rooms' },
         { status: 401 }
       )
     }
 
-    const privateRoom = await prisma.privateRoom.findFirst({
-      include: { products: true },
-      where: { userId: id },
+    const privateRooms = await prisma.privateRoom.findMany({
+      include: { 
+        products: true,
+        users: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+      },
+      where: {
+        users: {
+          some: {
+            userId: id,
+          },
+        },
+      },
     })
 
-    if (!privateRoom) {
-      return NextResponse.json({ error: 'Private room not found' }, { status: 404 })
+    if (!privateRooms || privateRooms.length === 0) {
+      return NextResponse.json({ error: 'No private rooms found' }, { status: 404 })
     }
 
-    return NextResponse.json(privateRoom)
+    return NextResponse.json(privateRooms)
   } catch (error) {
-    console.error('Error fetching private room:', error)
+    console.error('Error fetching private rooms:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
