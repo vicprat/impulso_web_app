@@ -52,7 +52,7 @@ export default function Page() {
               })}
               className='group'
             >
-              <div className='overflow-hidden rounded-lg bg-white shadow-md transition-shadow hover:shadow-lg'>
+              <div className='overflow-hidden rounded-lg bg-white shadow-md transition-shadow hover:shadow-lg dark:bg-surface'>
                 {collection.image && (
                   <div className='aspect-video overflow-hidden'>
                     <img

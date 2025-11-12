@@ -107,12 +107,14 @@ function convertToShopifyProductData(rawProduct: RawProduct) {
 export const api = {
   getCollectionByHandle: async (
     handle: string,
-    productsFirst = 12
+    productsFirst = 12,
+    productsAfter: string | null = null
   ): Promise<CollectionResponse> => {
     try {
       const { data, errors } = await storeClient.request(COLLECTION_BY_HANDLE_QUERY, {
         variables: {
           handle,
+          productsAfter,
           productsFirst,
         },
       })

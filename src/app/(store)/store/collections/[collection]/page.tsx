@@ -1,30 +1,118 @@
 'use client'
 
-import { useParams } from 'next/navigation'
-import { useState } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 import { Card } from '@/components/Card'
 import { Pagination } from '@/components/Pagination'
 import { useCollectionByHandle } from '@/modules/shopify/hooks'
 
+const defaultLimit = 24
+
 export default function Page() {
   const params = useParams()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const collectionHandle = params.collection as string
-  const [currentPage, setCurrentPage] = useState(1)
-  const productsPerPage = 24
+
+  const pageInUrl = parseInt(searchParams.get('page') ?? '1', 10)
+  const afterCursorInUrl = searchParams.get('after') ?? null
+
+  const [historyCursors, setHistoryCursors] = useState<Record<number, string | null>>({})
 
   const {
     data: collection,
     error,
     isLoading,
-  } = useCollectionByHandle(collectionHandle, productsPerPage * currentPage)
+  } = useCollectionByHandle(collectionHandle, defaultLimit, afterCursorInUrl)
+
+  const handlePageChange = (newPage: number) => {
+    const newUrlParams = new URLSearchParams(searchParams.toString())
+    let targetCursor: string | null | undefined = undefined
+
+    if (newPage === 1) {
+      targetCursor = null
+    } else {
+      targetCursor = historyCursors[newPage]
+    }
+
+    if (newPage > pageInUrl && newPage === pageInUrl + 1) {
+      if (collection?.pageInfo?.hasNextPage && collection.pageInfo.endCursor) {
+        targetCursor = collection.pageInfo.endCursor
+      }
+    }
+
+    newUrlParams.set('page', newPage.toString())
+    if (targetCursor === null) {
+      newUrlParams.delete('after')
+    } else if (targetCursor) {
+      newUrlParams.set('after', targetCursor)
+    } else {
+      console.warn(`Cursor para página ${newPage} no encontrado. Volviendo a página 1.`)
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+    }
+
+    router.push(`/store/collections/${collectionHandle}?${newUrlParams.toString()}`, {
+      scroll: false,
+    })
+  }
+
+  const totalPages = collection?.pageInfo?.hasNextPage ? pageInUrl + 1 : pageInUrl
+
+  const handleRetry = () => {
+    router.refresh()
+  }
+
+  useEffect(() => {
+    setHistoryCursors((prev) => {
+      const newCursors = { ...prev }
+      let changed = false
+
+      if (newCursors[pageInUrl] !== afterCursorInUrl) {
+        newCursors[pageInUrl] = afterCursorInUrl
+        changed = true
+      }
+
+      if (collection?.pageInfo?.hasNextPage && collection.pageInfo.endCursor) {
+        const nextPageNumber = pageInUrl + 1
+        if (newCursors[nextPageNumber] !== collection.pageInfo.endCursor) {
+          newCursors[nextPageNumber] = collection.pageInfo.endCursor
+          changed = true
+        }
+      } else if (collection && !collection.pageInfo?.hasNextPage) {
+        const nextPageNumber = pageInUrl + 1
+        if (nextPageNumber in newCursors) {
+          delete newCursors[nextPageNumber]
+          changed = true
+        }
+      }
+
+      return changed ? newCursors : prev
+    })
+  }, [pageInUrl, afterCursorInUrl, collection])
+
+  useEffect(() => {
+    const pageStr = searchParams.get('page')
+    const currentAfterCursor = searchParams.get('after')
+
+    if (pageStr) {
+      const pageNum = parseInt(pageStr, 10)
+      if (pageNum > 1 && !currentAfterCursor) {
+        if (collection ?? error) {
+          const params = new URLSearchParams(searchParams.toString())
+          params.set('page', '1')
+          params.delete('after')
+          router.replace(`/store/collections/${collectionHandle}?${params.toString()}`, {
+            scroll: false,
+          })
+        }
+      }
+    }
+  }, [searchParams, router, collection, error, collectionHandle])
 
   if (isLoading) {
-    return (
-      <div className='flex h-64 items-center justify-center'>
-        <div className='size-12 animate-spin rounded-full border-blue-600'></div>
-      </div>
-    )
+    return <Card.Loader />
   }
 
   if (error || !collection) {
@@ -32,23 +120,13 @@ export default function Page() {
       <div className='py-12 text-center'>
         <p className='text-lg text-red-600'>Colección no encontrada</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={handleRetry}
           className='mt-4 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
         >
           Reintentar
         </button>
       </div>
     )
-  }
-
-  const startIndex = (currentPage - 1) * productsPerPage
-  const endIndex = startIndex + productsPerPage
-  const currentProducts = collection.products.slice(startIndex, endIndex)
-  const totalPages = Math.ceil(collection.products.length / productsPerPage)
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage)
-    window.scrollTo({ behavior: 'smooth', top: 0 })
   }
 
   return (
@@ -74,16 +152,13 @@ export default function Page() {
               }}
             />
           )}
-          <p className='mt-4 text-sm text-gray-500'>
-            {collection.products.length} productos en esta colección
-          </p>
         </div>
       </div>
 
-      {currentProducts.length > 0 ? (
+      {collection.products && collection.products.length > 0 ? (
         <>
           <Card.Container>
-            {currentProducts.map((product) => (
+            {collection.products.map((product) => (
               <Card.Product key={product.id} product={product} />
             ))}
           </Card.Container>
@@ -91,7 +166,7 @@ export default function Page() {
           {totalPages > 1 && (
             <div className='flex justify-center'>
               <Pagination
-                currentPage={currentPage}
+                currentPage={pageInUrl}
                 totalPages={totalPages}
                 onPageChange={handlePageChange}
               />

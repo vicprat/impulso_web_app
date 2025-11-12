@@ -395,7 +395,7 @@ export const COLLECTIONS_QUERY = `
 `
 
 export const COLLECTION_BY_HANDLE_QUERY = `
-  query CollectionByHandle($handle: String!, $productsFirst: Int!) {
+  query CollectionByHandle($handle: String!, $productsFirst: Int!, $productsAfter: String) {
     collection(handle: $handle) {
       id
       title
@@ -409,7 +409,11 @@ export const COLLECTION_BY_HANDLE_QUERY = `
         width
         height
       }
-      products(first: $productsFirst) {
+      products(first: $productsFirst, after: $productsAfter) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
         edges {
           node {
             id

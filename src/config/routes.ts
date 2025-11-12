@@ -365,6 +365,7 @@ export const ROUTES = {
       LABEL: 'Carrito',
       PATH: '/store/cart',
     },
+
     EVENTS: {
       DESCRIPTION: 'Lista de eventos públicos',
       ICON: 'calendar',
@@ -413,13 +414,6 @@ export const ROUTES = {
       IS_PUBLIC: true,
       LABEL: 'Servicios',
       PATH: '/services',
-    },
-    CONTACT: {
-      DESCRIPTION: 'Información de contacto y ubicación',
-      ICON: 'phone',
-      IS_PUBLIC: true,
-      LABEL: 'Contacto',
-      PATH: '/contact',
     },
     TERMS: {
       DESCRIPTION: 'Términos y condiciones',
@@ -587,6 +581,7 @@ export const getStoreNavRoutes = (): RouteConfig[] => {
   const publicStoreRoutes = [
     ROUTES.PUBLIC.HOME,
     ROUTES.STORE.MAIN,
+    ROUTES.COLLECTIONS.MAIN,
     {
       ...ROUTES.PUBLIC.POSTS.DYNAMIC.MAIN,
       LABEL: 'Blog',

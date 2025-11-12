@@ -89,6 +89,10 @@ export interface Collection {
   descriptionHtml: string
   image: Image | null
   products: Product[]
+  pageInfo?: {
+    hasNextPage: boolean
+    endCursor: string | null
+  }
 }
 
 export interface RawProduct {
@@ -126,6 +130,10 @@ export interface RawCollection {
   descriptionHtml: string
   image: Image | null
   products?: {
+    pageInfo?: {
+      hasNextPage: boolean
+      endCursor: string | null
+    }
     edges: {
       node: RawProduct
     }[]

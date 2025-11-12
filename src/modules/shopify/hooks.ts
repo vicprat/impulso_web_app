@@ -101,12 +101,13 @@ export const useCollections = (
 export const useCollectionByHandle = (
   handle: string,
   productsFirst = 12,
+  productsAfter: string | null = null,
   options?: Omit<UseQueryOptions<CollectionResponse, Error, Collection>, 'queryKey' | 'queryFn'>
 ) => {
   return useQuery({
     enabled: !!handle,
-    queryFn: () => api.getCollectionByHandle(handle, productsFirst),
-    queryKey: [...SHOPIFY_KEYS.collection(handle), { productsFirst }],
+    queryFn: () => api.getCollectionByHandle(handle, productsFirst, productsAfter),
+    queryKey: [...SHOPIFY_KEYS.collection(handle), { productsAfter, productsFirst }],
     select: (response) => response.data,
     ...options,
   })

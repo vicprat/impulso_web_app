@@ -31,6 +31,7 @@ export const transformCollectionData = (rawCollection: RawCollection): Collectio
     handle: rawCollection.handle,
     id: rawCollection.id,
     image: rawCollection.image,
+    pageInfo: rawCollection.products?.pageInfo,
     products:
       rawCollection.products?.edges.map((edge: Edge<RawProduct>) =>
         transformProductData(edge.node)
