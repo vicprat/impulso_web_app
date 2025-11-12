@@ -12,6 +12,8 @@ export interface GetProductsParams {
   artworkType?: string
   technique?: string
   dimensions?: string
+  priceMin?: number
+  priceMax?: number
 }
 
 export interface CreateProductPayload {

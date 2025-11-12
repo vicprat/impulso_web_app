@@ -140,6 +140,8 @@ export const useStoreProducts = (
     artworkType?: string
     technique?: string
     dimensions?: string
+    priceMin?: number
+    priceMax?: number
   } = {},
   options?: Omit<UseQueryOptions<any, Error, any>, 'queryKey' | 'queryFn'>
 ) => {
@@ -156,6 +158,8 @@ export const useStoreProducts = (
       if (params.artworkType) searchParams.append('artworkType', params.artworkType)
       if (params.technique) searchParams.append('technique', params.technique)
       if (params.dimensions) searchParams.append('dimensions', params.dimensions)
+      if (params.priceMin !== undefined) searchParams.append('priceMin', params.priceMin.toString())
+      if (params.priceMax !== undefined) searchParams.append('priceMax', params.priceMax.toString())
 
       const response = await fetch(`/api/store/products?${searchParams.toString()}`)
 

@@ -107,6 +107,8 @@ export const Client = () => {
     cursor: cursor ?? undefined,
     dimensions: dimensions[0],
     limit: 24,
+    priceMax: searchFilters.price?.max,
+    priceMin: searchFilters.price?.min,
     search: searchFilters.query,
     sortBy:
       currentSort === 'PRICE'

@@ -44,12 +44,12 @@ export const Client = () => {
     }
     const priceMin = searchParams.get('price_min')
     const priceMax = searchParams.get('price_max')
-    if (priceMin ?? priceMax) {
+    if (priceMin || priceMax) {
       let priceQuery = ''
-      if (priceMin) priceQuery += `variants.price:>=${priceMin}`
+      if (priceMin && priceMin !== '0') priceQuery += `price:>=${priceMin}`
       if (priceMax) {
         if (priceQuery) priceQuery += ' AND '
-        priceQuery += `variants.price:<=${priceMax}`
+        priceQuery += `price:<=${priceMax}`
       }
       params.query = params.query ? `${params.query} AND (${priceQuery})` : priceQuery
     }

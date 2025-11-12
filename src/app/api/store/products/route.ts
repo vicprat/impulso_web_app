@@ -60,6 +60,8 @@ export async function GET(req: NextRequest) {
       cursor: searchParams.get('cursor') ?? undefined,
       dimensions: searchParams.get('dimensions') ?? undefined,
       limit: parseInt(searchParams.get('limit') ?? '20', 10),
+      priceMax: searchParams.get('priceMax') ? parseFloat(searchParams.get('priceMax')!) : undefined,
+      priceMin: searchParams.get('priceMin') ? parseFloat(searchParams.get('priceMin')!) : undefined,
       search: searchParams.get('search') ?? undefined,
       sortBy: searchParams.get('sortBy') ?? undefined,
       sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') ?? 'asc',

@@ -1162,6 +1162,27 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
     }
   }
 
+  if (params.priceMin !== undefined || params.priceMax !== undefined) {
+    let priceQuery = ''
+    if (params.priceMin !== undefined && params.priceMin > 0) {
+      priceQuery = `price:>=${params.priceMin}`
+    }
+    if (params.priceMax !== undefined) {
+      if (priceQuery) {
+        priceQuery += ` AND price:<=${params.priceMax}`
+      } else {
+        priceQuery = `price:<=${params.priceMax}`
+      }
+    }
+    if (priceQuery) {
+      if (shopifyQuery) {
+        shopifyQuery += ` AND (${priceQuery})`
+      } else {
+        shopifyQuery = priceQuery
+      }
+    }
+  }
+
   const hasMetafieldFilters = params.technique?.trim() ?? params.dimensions?.trim()
 
   let sortKey = 'TITLE' // Default sort key
