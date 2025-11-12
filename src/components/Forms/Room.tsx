@@ -13,9 +13,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/use-debounce'
 import { type Product } from '@/modules/shopify/types'
 import { useUsersManagement } from '@/modules/user/hooks/management'
+import { type UserProfile } from '@/modules/user/types'
 import { useGetProductsPaginated } from '@/services/product/hook'
-
-import type { User } from '@/src/types/user'
 
 export type PrivateRoomMode = 'create' | 'edit' | 'view' | 'delete'
 
@@ -63,6 +62,7 @@ export const Room: React.FC<Props> = ({
 
   // Obtener usuarios con roles que tengan permiso view_private_rooms (todos excepto 'customer')
   const { data: usersData, isLoading: isLoadingUsers } = useUsersManagement({
+    limit: 1000,
     role: [
       'vip_customer',
       'artist',
@@ -224,41 +224,41 @@ export const Room: React.FC<Props> = ({
         return {
           alertVariant: null,
           icon: <Plus className='size-5' />,
-          submitText: submitButtonText ?? 'Create Private Room',
-          subtitle: 'Set up a personalized shopping experience for selected users',
-          title: 'Create New Private Room',
+          submitText: submitButtonText ?? 'Crear Sala Privada',
+          subtitle: 'Configura una experiencia de compra personalizada para usuarios seleccionados',
+          title: 'Crear Nueva Sala Privada',
         }
       case 'edit':
         return {
           alertVariant: null,
           icon: <Edit3 className='size-5' />,
-          submitText: submitButtonText ?? 'Update Private Room',
-          subtitle: 'Update the private room details and products',
-          title: 'Edit Private Room',
+          submitText: submitButtonText ?? 'Actualizar Sala Privada',
+          subtitle: 'Actualizar los detalles y productos de la sala privada',
+          title: 'Editar Sala Privada',
         }
       case 'view':
         return {
           alertVariant: null,
           icon: <Eye className='size-5' />,
           submitText: null,
-          subtitle: 'View the private room configuration',
-          title: 'Private Room Details',
+          subtitle: 'Ver la configuración de la sala privada',
+          title: 'Detalles de Sala Privada',
         }
       case 'delete':
         return {
           alertVariant: 'destructive' as const,
           icon: <Trash2 className='size-5' />,
-          submitText: submitButtonText ?? 'Delete Private Room',
-          subtitle: 'This action cannot be undone',
-          title: 'Delete Private Room',
+          submitText: submitButtonText ?? 'Eliminar Sala Privada',
+          subtitle: 'Esta acción no se puede deshacer',
+          title: 'Eliminar Sala Privada',
         }
       default:
         return {
           alertVariant: null,
           icon: null,
-          submitText: 'Submit',
+          submitText: 'Enviar',
           subtitle: '',
-          title: 'Private Room',
+          title: 'Sala Privada',
         }
     }
   }
@@ -272,47 +272,51 @@ export const Room: React.FC<Props> = ({
           <Alert variant='destructive'>
             <Trash2 className='size-4' />
             <AlertDescription>
-              You are about to permanently delete this private room. This action cannot be undone.
+              Estás a punto de eliminar permanentemente esta sala privada. Esta acción no se puede deshacer.
             </AlertDescription>
           </Alert>
         )}
 
         <form onSubmit={handleSubmit} className='space-y-6'>
           <div className='space-y-2'>
-            <Label htmlFor='roomName'>Room Name</Label>
+            <Label htmlFor='roomName'>Nombre de la Sala</Label>
             <Input
               id='roomName'
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
-              placeholder='Enter a descriptive room name...'
+              placeholder='Ingresa un nombre descriptivo para la sala...'
               required={!isDeleteMode}
               disabled={isReadOnly}
             />
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='roomDescription'>Description (Optional)</Label>
+            <Label htmlFor='roomDescription'>Descripción (Opcional)</Label>
             <Input
               id='roomDescription'
               value={roomDescription}
               onChange={(e) => setRoomDescription(e.target.value)}
-              placeholder='Add a description for this private room...'
+              placeholder='Agrega una descripción para esta sala privada...'
               disabled={isReadOnly}
             />
           </div>
 
           {showUserSelection && (
             <div className='space-y-2'>
-              <Label htmlFor='userSelect'>Assigned Users</Label>
+              <Label htmlFor='userSelect'>Usuarios Asignados</Label>
               {isReadOnly ? (
                 <div className='space-y-2'>
                   {selectedUsers.map((userId) => {
-                    const user = users.find((u: User) => u.id === userId)
+                    const user = users.find((u: UserProfile) => u.id === userId)
+                    const userRole = user?.roles?.[0] ?? 'Sin rol'
                     return (
-                      <div key={userId} className='flex items-center gap-2 rounded-md border p-2'>
+                      <div key={userId} className='flex items-center justify-between gap-2 rounded-md border p-2'>
                         <span className='text-sm'>
-                          {user?.email ?? 'Unknown'} ({user?.firstName} {user?.lastName})
+                          {user?.email ?? 'Desconocido'} ({user?.firstName} {user?.lastName})
                         </span>
+                        <Badge variant='outline' className='text-xs'>
+                          {userRole}
+                        </Badge>
                       </div>
                     )
                   })}
@@ -327,46 +331,55 @@ export const Room: React.FC<Props> = ({
                       </div>
                     ) : users.length === 0 ? (
                       <p className='text-center text-sm text-muted-foreground'>
-                        No users available
+                        No hay usuarios disponibles
                       </p>
                     ) : (
                       <div className='space-y-2'>
-                        {users.map((user: User) => (
-                          <div
-                            key={user.id}
-                            className='flex items-center gap-2 rounded-md border p-2 transition-colors hover:bg-muted'
-                          >
-                            <input
-                              type='checkbox'
-                              checked={selectedUsers.includes(user.id)}
-                              onChange={() => handleUserToggle(user.id)}
-                              className='size-4 cursor-pointer'
-                            />
-                            <label
-                              className='flex-1 cursor-pointer text-sm'
-                              onClick={() => handleUserToggle(user.id)}
+                        {users.map((user: UserProfile) => {
+                          const userRole = user.roles?.[0] ?? 'Sin rol'
+                          return (
+                            <div
+                              key={user.id}
+                              className='flex items-center gap-2 rounded-md border p-2 transition-colors hover:bg-muted'
                             >
-                              {user.email} ({user.firstName} {user.lastName})
-                            </label>
-                          </div>
-                        ))}
+                              <input
+                                type='checkbox'
+                                checked={selectedUsers.includes(user.id)}
+                                onChange={() => handleUserToggle(user.id)}
+                                className='size-4 cursor-pointer'
+                              />
+                              <label
+                                className='flex-1 cursor-pointer text-sm'
+                                onClick={() => handleUserToggle(user.id)}
+                              >
+                                {user.email} ({user.firstName} {user.lastName})
+                              </label>
+                              <Badge variant='outline' className='text-xs'>
+                                {userRole}
+                              </Badge>
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
                   </ShadcnCard>
 
                   {selectedUsers.length > 0 && (
                     <div className='space-y-2'>
-                      <Label className='text-sm'>Selected Users ({selectedUsers.length})</Label>
+                      <Label className='text-sm'>Usuarios Seleccionados ({selectedUsers.length})</Label>
                       <div className='flex flex-wrap gap-2'>
                         {selectedUsers.map((userId) => {
-                          const user = users.find((u: User) => u.id === userId)
+                          const user = users.find((u: UserProfile) => u.id === userId)
+                          const userRole = user?.roles?.[0] ?? 'Sin rol'
                           return (
                             <Badge
                               key={userId}
                               variant='secondary'
                               className='flex items-center gap-1'
                             >
-                              <span className='text-xs'>{user?.email ?? 'Unknown'}</span>
+                              <span className='text-xs'>
+                                {user?.email ?? 'Desconocido'} ({userRole})
+                              </span>
                               <button
                                 type='button'
                                 onClick={() => handleRemoveUser(userId)}
@@ -388,7 +401,7 @@ export const Room: React.FC<Props> = ({
           {!isDeleteMode && (
             <div className='space-y-4'>
               <div className='space-y-2'>
-                <Label>Products</Label>
+                <Label>Productos</Label>
                 {!isReadOnly && (
                   <div className='relative' ref={dropdownRef}>
                     <div className='relative'>
@@ -396,7 +409,7 @@ export const Room: React.FC<Props> = ({
                       <Input
                         ref={inputRef}
                         type='text'
-                        placeholder='Search products by title, type, or tag...'
+                        placeholder='Buscar productos por título, tipo o etiqueta...'
                         value={productSearchQuery}
                         onChange={(e) => setProductSearchQuery(e.target.value)}
                         onFocus={handleInputFocus}
@@ -419,20 +432,20 @@ export const Room: React.FC<Props> = ({
                           products.length === 0 &&
                           debouncedProductSearchQuery && (
                             <div className='p-4 text-center text-muted-foreground'>
-                              No products found for &quot;{debouncedProductSearchQuery}&quot;
+                              No se encontraron productos para &quot;{debouncedProductSearchQuery}&quot;
                             </div>
                           )}
 
                         {isProductSearchError && (
                           <div className='p-4 text-center text-destructive'>
-                            Error searching for products
+                            Error al buscar productos
                           </div>
                         )}
 
                         {products.length > 0 && !isLoadingProducts && (
                           <div className='py-2'>
                             <div className='bg-muted/50 border-b px-3 py-2 text-xs font-semibold text-muted-foreground'>
-                              Products ({products.length} found)
+                              Productos ({products.length} encontrados)
                             </div>
                             {products.map((product) => (
                               <button
@@ -450,7 +463,7 @@ export const Room: React.FC<Props> = ({
                                     />
                                   ) : (
                                     <div className='flex size-full items-center justify-center bg-muted text-xs text-muted-foreground'>
-                                      No image
+                                      Sin imagen
                                     </div>
                                   )}
                                 </div>
@@ -484,11 +497,11 @@ export const Room: React.FC<Props> = ({
               <div className='space-y-3'>
                 <div className='flex items-center justify-between'>
                   <Label className='text-sm font-medium'>
-                    {isReadOnly ? 'Products in this room' : 'Selected Products'}
+                    {isReadOnly ? 'Productos en esta sala' : 'Productos Seleccionados'}
                   </Label>
                   {selectedProducts.length > 0 && (
                     <Badge variant='outline'>
-                      {selectedProducts.length} {isReadOnly ? 'products' : 'selected'}
+                      {selectedProducts.length} {isReadOnly ? 'productos' : 'seleccionados'}
                     </Badge>
                   )}
                 </div>
@@ -500,11 +513,11 @@ export const Room: React.FC<Props> = ({
                         <Search className='size-6' />
                       </div>
                       <p className='text-sm'>
-                        {isReadOnly ? 'No products in this room' : 'No products added yet'}
+                        {isReadOnly ? 'No hay productos en esta sala' : 'No se han agregado productos'}
                       </p>
                       {!isReadOnly && (
                         <p className='text-xs'>
-                          Search and select products to add them to this room
+                          Busca y selecciona productos para agregarlos a esta sala
                         </p>
                       )}
                     </div>
