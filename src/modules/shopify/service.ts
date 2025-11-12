@@ -58,19 +58,6 @@ export interface PublicEvent {
 }
 
 export const privateRoomsServerApi = {
-  getPrivateProductIds: async (): Promise<string[]> => {
-    try {
-      const privateRoomProducts = await prisma.privateRoomProduct.findMany({
-        select: {
-          productId: true,
-        },
-      })
-      return privateRoomProducts.map((p) => p.productId)
-    } catch {
-      return []
-    }
-  },
-
   getPrivateRoomByUserId: async (userId: string) => {
     try {
       const privateRoom = await prisma.privateRoom.findFirst({
@@ -87,23 +74,6 @@ export const privateRoomsServerApi = {
       return null
     }
   },
-}
-
-export const getPrivateProductIds = async (): Promise<string[]> => {
-  try {
-    if (typeof window === 'undefined') {
-      return await privateRoomsServerApi.getPrivateProductIds()
-    } else {
-      const response = await fetch('/api/private-rooms/product-ids')
-      if (!response.ok) {
-        throw new Error(`Error fetching private product IDs: ${response.statusText}`)
-      }
-      const data = await response.json()
-      return data
-    }
-  } catch {
-    return []
-  }
 }
 
 export const getPrivateRoomByUserId = async (userId: string) => {
@@ -133,14 +103,9 @@ export const shopifyService = {
       },
     }
 
-    const [allProductsResponse, privateProductIds] = await Promise.all([
-      api.getProducts(eventParams),
-      getPrivateProductIds(),
-    ])
+    const allProductsResponse = await api.getProducts(eventParams)
 
-    const eventProducts = allProductsResponse.data.products.filter(
-      (product: Product) => !privateProductIds.includes(product.id)
-    )
+    const eventProducts = allProductsResponse.data.products
 
     const events = eventProducts.map((product: Product) => {
       const variants = product.variants.map((variant) => ({
@@ -195,13 +160,10 @@ export const shopifyService = {
   },
 
   getPublicProducts: async (params: ProductSearchParams = {}): Promise<ProductsResponse> => {
-    const [allProductsResponse, privateProductIds] = await Promise.all([
-      api.getProducts(params),
-      getPrivateProductIds(),
-    ])
+    const allProductsResponse = await api.getProducts(params)
 
     const filteredProducts = allProductsResponse.data.products.filter(
-      (product: Product) => !privateProductIds.includes(product.id) && product.vendor !== 'Evento' // Excluir eventos de la tienda general
+      (product: Product) => product.vendor !== 'Evento' // Excluir eventos de la tienda general
     )
 
     return {
@@ -218,23 +180,18 @@ export const shopifyService = {
     const priceRangeQuery = `priceRange:'${product.priceRange}'`
     const combinedQuery = [vendorQuery, priceRangeQuery].filter(Boolean).join(' OR ')
 
-    const [relatedData, privateProductIds] = await Promise.all([
-      api.getProducts({
-        filters: {
-          query: combinedQuery,
-        },
-        first: 20,
-      }),
-      getPrivateProductIds(),
-    ])
+    const relatedData = await api.getProducts({
+      filters: {
+        query: combinedQuery,
+      },
+      first: 20,
+    })
 
     if (!relatedData.data.products) {
       return []
     }
 
-    const filtered = relatedData.data.products.filter(
-      (p: Product) => p.id !== product.id && !privateProductIds.includes(p.id)
-    )
+    const filtered = relatedData.data.products.filter((p: Product) => p.id !== product.id)
 
     const shuffleArray = (array: Product[]) => {
       const shuffled = [...array]

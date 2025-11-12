@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { api } from '@/modules/shopify/api'
-import { getPrivateProductIds } from '@/modules/shopify/service'
 
 // ID de ubicación por defecto para eventos públicos
 const DEFAULT_LOCATION_ID = 'gid://shopify/Location/123456789'
@@ -155,18 +154,10 @@ export async function GET(request: Request) {
       first,
     })
 
-    // Obtener IDs de productos privados
-    const privateProductIds = await getPrivateProductIds()
-
-    // Filtrar eventos privados
-    const publicProducts = response.data.products.filter(
-      (product) => !privateProductIds.includes(product.id)
-    )
-
     // Obtener eventos enriquecidos con metafields e inventario
     const enrichedEvents = []
 
-    for (const product of publicProducts) {
+    for (const product of response.data.products) {
       try {
         // Obtener metafields e inventario desde la API de administración
         let adminData = null

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { type Event } from '@/models/Event'
-import { getPrivateProductIds, shopifyService } from '@/modules/shopify/service'
+import { shopifyService } from '@/modules/shopify/service'
 import { useAuth } from '@/src/modules/auth/context/useAuth'
 import { useGetEventByHandle } from '@/src/services/event/hook'
 
@@ -19,7 +19,6 @@ interface EventPageProps {
 
 export default function EventPage({ params }: EventPageProps) {
   const [ handle, setHandle ] = useState<string | null>(null)
-  const [ privateProductIds, setPrivateProductIds ] = useState<string[]>([])
   const [ relatedEvents, setRelatedEvents ] = useState<Event[]>([])
   const [ isLoading, setIsLoading ] = useState(true)
   const [ error, setError ] = useState<Error | null>(null)
@@ -32,10 +31,6 @@ export default function EventPage({ params }: EventPageProps) {
       try {
         const { handle: eventHandle } = await params
         setHandle(eventHandle)
-
-        // Obtener IDs de productos privados
-        const privateIds = await getPrivateProductIds()
-        setPrivateProductIds(privateIds)
       } catch (err) {
         setError(err as Error)
       } finally {
@@ -82,10 +77,6 @@ export default function EventPage({ params }: EventPageProps) {
   }
 
   if (event.productType !== 'Evento') {
-    notFound()
-  }
-
-  if (privateProductIds.includes(event.id)) {
     notFound()
   }
 

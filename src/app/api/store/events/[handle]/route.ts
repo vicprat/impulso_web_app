@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { api } from '@/modules/shopify/api'
-import { getPrivateProductIds } from '@/modules/shopify/service'
 
 // ID de ubicación por defecto para eventos públicos
 const DEFAULT_LOCATION_ID = 'gid://shopify/Location/123456789'
@@ -50,19 +49,19 @@ function adaptShopifyDataToEventModel(shopifyData: any, adminData?: any) {
   // Función helper para normalizar imágenes
   const normalizeImages = (images: any) => {
     if (!images) return { edges: [] }
-    
+
     // Si ya tiene la estructura edges/node, devolverlo tal como está
     if (images.edges && Array.isArray(images.edges)) {
       return images
     }
-    
+
     // Si es un array directo, convertirlo al formato edges/node
     if (Array.isArray(images)) {
       return {
-        edges: images.map((image: any) => ({ node: image }))
+        edges: images.map((image: any) => ({ node: image })),
       }
     }
-    
+
     // Si es un objeto con otra estructura, intentar extraer las imágenes
     if (typeof images === 'object') {
       // Buscar propiedades que puedan contener imágenes
@@ -70,12 +69,12 @@ function adaptShopifyDataToEventModel(shopifyData: any, adminData?: any) {
       for (const prop of possibleImageProps) {
         if (images[prop] && Array.isArray(images[prop])) {
           return {
-            edges: images[prop].map((image: any) => ({ node: image }))
+            edges: images[prop].map((image: any) => ({ node: image })),
           }
         }
       }
     }
-    
+
     // Si no se puede determinar, devolver array vacío
     return { edges: [] }
   }
@@ -83,12 +82,12 @@ function adaptShopifyDataToEventModel(shopifyData: any, adminData?: any) {
   // Función helper para normalizar variantes
   const normalizeVariants = (variants: any) => {
     if (!variants) return { edges: [] }
-    
+
     // Si ya tiene la estructura edges/node, devolverlo tal como está
     if (variants.edges && Array.isArray(variants.edges)) {
       return variants
     }
-    
+
     // Si es un array directo, convertirlo al formato edges/node
     if (Array.isArray(variants)) {
       return {
@@ -102,7 +101,8 @@ function adaptShopifyDataToEventModel(shopifyData: any, adminData?: any) {
               // Usar datos de inventario de la API de administración
               inventoryItem: adminVariant?.inventoryItem || { tracked: false },
               inventoryPolicy: adminVariant?.inventoryPolicy || variant.inventoryPolicy || 'DENY',
-              inventoryQuantity: adminVariant?.inventoryQuantity || variant.inventoryQuantity || null,
+              inventoryQuantity:
+                adminVariant?.inventoryQuantity || variant.inventoryQuantity || null,
               // Corregir la estructura del precio
               price:
                 typeof variant.price === 'object' && variant.price.amount
@@ -110,10 +110,10 @@ function adaptShopifyDataToEventModel(shopifyData: any, adminData?: any) {
                   : variant.price,
             },
           }
-        })
+        }),
       }
     }
-    
+
     // Si no se puede determinar, devolver array vacío
     return { edges: [] }
   }
@@ -149,12 +149,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ hand
         { error: 'El producto encontrado no es un evento.' },
         { status: 404 }
       )
-    }
-
-    // Verificar que no sea privado
-    const privateProductIds = await getPrivateProductIds()
-    if (privateProductIds.includes(shopifyEventData.id)) {
-      return NextResponse.json({ error: 'Evento no encontrado.' }, { status: 404 })
     }
 
     // Obtener metafields e inventario desde la API de administración
