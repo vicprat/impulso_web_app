@@ -94,7 +94,15 @@ export const getAllUsers = async (filters: UserFilters) => {
     }),
     ...(typeof isActive === 'boolean' && { isActive }),
     ...(typeof isPublic === 'boolean' && { isPublic }),
-    ...(role && { UserRole: { some: { role: { name: role } } } }),
+    ...(role && {
+      UserRole: {
+        some: {
+          role: {
+            name: Array.isArray(role) ? { in: role } : role,
+          },
+        },
+      },
+    }),
   }
 
   const [users, total] = await prisma.$transaction([

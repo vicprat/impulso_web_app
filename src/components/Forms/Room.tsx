@@ -61,8 +61,21 @@ export const Room: React.FC<Props> = ({
   const isReadOnly = mode === 'view' || mode === 'delete'
   const isDeleteMode = mode === 'delete'
 
+  // Obtener usuarios con roles que tengan permiso view_private_rooms (todos excepto 'customer')
   const { data: usersData, isLoading: isLoadingUsers } = useUsersManagement({
-    role: 'vip_customer',
+    role: [
+      'vip_customer',
+      'artist',
+      'employee',
+      'provider',
+      'partner',
+      'support',
+      'manager',
+      'admin',
+      'finance_manager',
+      'inventory_and_content_editor',
+      'content_editor',
+    ],
   })
   const users = usersData?.users ?? []
 
@@ -212,7 +225,7 @@ export const Room: React.FC<Props> = ({
           alertVariant: null,
           icon: <Plus className='size-5' />,
           submitText: submitButtonText ?? 'Create Private Room',
-          subtitle: 'Set up a personalized shopping experience for your VIP customers',
+          subtitle: 'Set up a personalized shopping experience for selected users',
           title: 'Create New Private Room',
         }
       case 'edit':
@@ -290,7 +303,7 @@ export const Room: React.FC<Props> = ({
 
           {showUserSelection && (
             <div className='space-y-2'>
-              <Label htmlFor='userSelect'>VIP Users</Label>
+              <Label htmlFor='userSelect'>Assigned Users</Label>
               {isReadOnly ? (
                 <div className='space-y-2'>
                   {selectedUsers.map((userId) => {
@@ -314,7 +327,7 @@ export const Room: React.FC<Props> = ({
                       </div>
                     ) : users.length === 0 ? (
                       <p className='text-center text-sm text-muted-foreground'>
-                        No VIP users available
+                        No users available
                       </p>
                     ) : (
                       <div className='space-y-2'>
@@ -429,12 +442,17 @@ export const Room: React.FC<Props> = ({
                                 className='border-border/50 hover:bg-muted/50 flex w-full items-center gap-4 border-b p-3 text-left transition-colors last:border-b-0'
                               >
                                 <div className='relative size-12 shrink-0 overflow-hidden rounded-md bg-muted'>
-                                  <img
-                                    src={product.images[0]?.url ?? '/placeholder.svg'}
-                                    alt={product.title}
-                                    sizes='48px'
-                                    className='object-cover'
-                                  />
+                                  {product.images[0]?.url ? (
+                                    <img
+                                      src={product.images[0].url}
+                                      alt={product.title}
+                                      className='size-full object-cover'
+                                    />
+                                  ) : (
+                                    <div className='flex size-full items-center justify-center bg-muted text-xs text-muted-foreground'>
+                                      No image
+                                    </div>
+                                  )}
                                 </div>
                                 <div className='flex min-w-0 flex-1 flex-col space-y-1'>
                                   <span className='truncate text-sm font-medium'>
@@ -499,12 +517,17 @@ export const Room: React.FC<Props> = ({
                         >
                           <div className='flex min-w-0 flex-1 items-center gap-3'>
                             <div className='relative size-10 shrink-0 overflow-hidden rounded-md bg-muted'>
-                              <img
-                                src={product.images[0]?.url || '/placeholder.svg'}
-                                alt={product.title}
-                                sizes='40px'
-                                className='object-cover'
-                              />
+                              {product.images[0]?.url ? (
+                                <img
+                                  src={product.images[0].url}
+                                  alt={product.title}
+                                  className='size-full object-cover'
+                                />
+                              ) : (
+                                <div className='flex size-full items-center justify-center bg-muted text-xs text-muted-foreground'>
+                                  No
+                                </div>
+                              )}
                             </div>
                             <div className='flex min-w-0 flex-1 flex-col'>
                               <span className='truncate text-sm font-medium'>{product.title}</span>

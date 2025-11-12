@@ -139,7 +139,7 @@ export interface UserManagementContextType {
 
 export interface UserFilters {
   search?: string
-  role?: string
+  role?: string | string[] // Puede ser un rol único o múltiples roles
   isActive?: boolean
   isPublic?: boolean // ✅ NUEVO: Filtro para visibilidad pública del perfil
   page?: number

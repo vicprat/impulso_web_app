@@ -16,11 +16,15 @@ export async function GET(request: NextRequest) {
     const sortBy = (searchParams.get('sortBy') ?? 'createdAt') as UserFilters['sortBy']
     const sortOrder = (searchParams.get('sortOrder') ?? 'desc') as UserFilters['sortOrder']
 
+    // Obtener todos los valores de 'role' (puede haber múltiples)
+    const roleParams = searchParams.getAll('role')
+    const roleFilter = roleParams.length > 0 ? (roleParams.length === 1 ? roleParams[0] : roleParams) : undefined
+
     const filters: UserFilters = {
       isActive: searchParams.get('isActive') ? searchParams.get('isActive') === 'true' : undefined,
       limit,
       page,
-      role: searchParams.get('role') ?? undefined,
+      role: roleFilter,
       search: searchParams.get('search') ?? undefined,
       sortBy,
       sortOrder,

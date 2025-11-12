@@ -85,7 +85,7 @@ export interface UserPreferences {
 
 export interface UserFilters {
   search?: string
-  role?: string
+  role?: string | string[] // Puede ser un rol único o múltiples roles
   isActive?: boolean
   page?: number
   limit?: number

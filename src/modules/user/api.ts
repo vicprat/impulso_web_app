@@ -22,7 +22,12 @@ export const postgresUserApi = {
 
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== '') {
-        params.append(key, value.toString())
+        // Si el valor es un array, agregar múltiples parámetros con el mismo key
+        if (Array.isArray(value)) {
+          value.forEach((item) => params.append(key, item.toString()))
+        } else {
+          params.append(key, value.toString())
+        }
       }
     })
 
