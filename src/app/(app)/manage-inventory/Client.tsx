@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
-import { Check, CheckCircle, Filter, PlusCircle, RefreshCw, Search, Tag } from 'lucide-react'
+import { Check, CheckCircle, Filter, PlusCircle, RefreshCw, Search } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -21,6 +21,11 @@ import {
 import { useBulkUpdateQueue } from '@/hooks/useBulkUpdateQueue'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import {
+  useAddProductsToCollection,
+  useCollections,
+  useRemoveProductsFromCollection,
+} from '@/services/collection/hooks'
+import {
   useGetArtworkTypes,
   useGetProductsPaginated,
   useGetTechniques,
@@ -28,20 +33,9 @@ import {
   useProductStats,
   useUpdateProduct,
 } from '@/services/product/hook'
-import {
-  useCreateDiscount,
-  useDeleteDiscount,
-  useGetDiscounts,
-  useUpdateDiscount,
-} from '@/services/product/queries'
-import {
-  type CreateDiscountInput,
-  type UpdateDiscountInput,
-  type UpdateProductPayload,
-} from '@/services/product/types'
+import { useGetDiscounts } from '@/services/product/queries'
+import { type UpdateProductPayload } from '@/services/product/types'
 import { BulkUpdateProgress } from '@/src/components/BulkUpdateProgress'
-import { CouponCreatorModal } from '@/src/components/Modals/CouponCreatorModal'
-import { CouponManagerModal } from '@/src/components/Modals/CouponManagerModal'
 import { ProductAutomaticDiscountModal } from '@/src/components/Modals/ProductAutomaticDiscountModal'
 import { Table } from '@/src/components/Table'
 import { Skeleton } from '@/src/components/ui/skeleton'
@@ -82,10 +76,6 @@ interface InventoryTableMeta {
   user?: any
   isAdmin?: boolean
   isArtist?: boolean
-  onOpenAutomaticDiscountModal?: (product: { id: string; title: string }) => void
-  getProductDiscounts?: (productId: string) => any[]
-  getDiscountProductCount?: (discount: any) => number
-  onDeleteDiscount?: (discountId: string) => Promise<void>
 }
 
 const defaultPageSize = 50
@@ -114,8 +104,6 @@ export function Client() {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
   const [bulkChanges, setBulkChanges] = useState<Record<string, any>>({})
   const [hasInvalidatedCache, setHasInvalidatedCache] = useState(false)
-  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false)
-  const [isCouponManagerModalOpen, setIsCouponManagerModalOpen] = useState(false)
   const [isAutomaticDiscountModalOpen, setIsAutomaticDiscountModalOpen] = useState(false)
   const [selectedProductForDiscount, setSelectedProductForDiscount] = useState<{
     id: string
@@ -133,8 +121,16 @@ export function Client() {
   const { data: artworkTypes = [], isLoading: artworkTypesLoading } = useGetArtworkTypes()
   // const { data: locations = [], isLoading: locationsLoading } = useGetLocations()
 
-  // Obtener cupones reales desde la API
-  const { data: coupons = [], isLoading: couponsLoading } = useGetDiscounts()
+  // Obtener cupones para mostrar en la columna de descuentos
+  const { data: coupons = [] } = useGetDiscounts()
+
+  // Obtener todas las colecciones (solo colecciones manuales, no inteligentes)
+  const { data: collectionsData } = useCollections({ limit: 250 })
+  const allCollections = collectionsData?.collections ?? []
+  // Filtrar solo colecciones manuales (que no tienen ruleSet)
+  const collections = allCollections.filter(
+    (collection: any) => !collection.ruleSet || collection.ruleSet.rules?.length === 0
+  )
 
   // Función para verificar si un producto tiene descuentos aplicados
   const getProductDiscounts = useCallback(
@@ -153,6 +149,167 @@ export function Client() {
     },
     [coupons]
   )
+
+  // Función para agregar producto a colección
+  const addProductsToCollectionMutation = useAddProductsToCollection({
+    onError: (
+      error: Error & {
+        message?: string
+        details?: any[]
+        isSmartCollection?: boolean
+        alreadyInCollection?: string[]
+      }
+    ) => {
+      if (
+        error.isSmartCollection ||
+        error.message?.includes('smart collection') ||
+        error.message?.includes('inteligente')
+      ) {
+        toast.error(
+          'No se pueden agregar productos a colecciones inteligentes. Estas colecciones se gestionan automáticamente según reglas definidas.'
+        )
+      } else if (error.alreadyInCollection && error.alreadyInCollection.length > 0) {
+        toast.info(`El producto ya está en esta colección. No es necesario agregarlo nuevamente.`)
+      } else {
+        const errorMessage = error.message || error.details?.[0]?.message || 'Error desconocido'
+        toast.error(`Error al agregar producto a la colección: ${errorMessage}`)
+      }
+    },
+    onSuccess: () => {
+      toast.success('Producto agregado a la colección exitosamente')
+      void queryClient.invalidateQueries({ queryKey: ['collections'] })
+      void queryClient.invalidateQueries({ queryKey: ['managementProducts', 'paginated'] })
+    },
+  })
+
+  const handleAddProductToCollection = useCallback(
+    async (productId: string, collectionId: string) => {
+      // Los IDs ya vienen en formato gid://shopify/Product/... desde Shopify
+      // Si vienen como número, los convertimos al formato correcto
+      const formattedProductId = productId.startsWith('gid://shopify/Product/')
+        ? productId
+        : `gid://shopify/Product/${productId}`
+
+      // Las colecciones también pueden venir en formato gid o numérico
+      const formattedCollectionId = collectionId.startsWith('gid://shopify/Collection/')
+        ? collectionId
+        : (collectionId.split('/').pop() ?? collectionId)
+
+      await addProductsToCollectionMutation.mutateAsync({
+        collectionId: formattedCollectionId,
+        productIds: [formattedProductId],
+      })
+    },
+    [addProductsToCollectionMutation]
+  )
+
+  // Función para agregar múltiples productos a una colección (modo bulk)
+  const handleAddSelectedProductsToCollection = useCallback(
+    async (collectionId: string) => {
+      if (selectedRows.size === 0) {
+        toast.warning('Selecciona productos antes de agregar a una colección')
+        return
+      }
+
+      // Las colecciones pueden venir en formato gid o numérico
+      const formattedCollectionId = collectionId.startsWith('gid://shopify/Collection/')
+        ? collectionId
+        : (collectionId.split('/').pop() ?? collectionId)
+
+      // Los IDs de productos ya vienen en formato gid://shopify/Product/... desde Shopify
+      // Si vienen como número, los convertimos al formato correcto
+      const productIds = Array.from(selectedRows).map((id) =>
+        id.startsWith('gid://shopify/Product/') ? id : `gid://shopify/Product/${id}`
+      )
+
+      try {
+        await addProductsToCollectionMutation.mutateAsync({
+          collectionId: formattedCollectionId,
+          productIds,
+        })
+        toast.success(`${productIds.length} productos agregados a la colección exitosamente`)
+        setSelectedRows(new Set())
+      } catch (error) {
+        toast.error(
+          `Error al agregar productos a la colección: ${error instanceof Error ? error.message : 'Error desconocido'}`
+        )
+      }
+    },
+    [selectedRows, addProductsToCollectionMutation]
+  )
+
+  // Función para remover producto de colección
+  const removeProductsFromCollectionMutation = useRemoveProductsFromCollection({
+    onError: (error: Error & { message?: string; details?: any[] }) => {
+      const errorMessage = error.message || error.details?.[0]?.message || 'Error desconocido'
+      toast.error(`Error al remover producto de la colección: ${errorMessage}`)
+    },
+    onSuccess: () => {
+      toast.success('Producto removido de la colección exitosamente')
+      void queryClient.invalidateQueries({ queryKey: ['collections'] })
+      void queryClient.invalidateQueries({ queryKey: ['managementProducts', 'paginated'] })
+    },
+  })
+
+  const handleRemoveProductFromCollection = useCallback(
+    async (productId: string, collectionId: string) => {
+      const formattedProductId = productId.startsWith('gid://shopify/Product/')
+        ? productId
+        : `gid://shopify/Product/${productId}`
+
+      // El collectionId puede venir en formato gid://shopify/Collection/... o solo el número
+      // Necesitamos mantener el formato completo si ya lo tiene, o construirlo si solo es el número
+      let formattedCollectionId = collectionId
+      if (!collectionId.startsWith('gid://shopify/Collection/')) {
+        // Si solo es el número, extraerlo y construir el formato completo
+        const numericId = collectionId.split('/').pop() ?? collectionId
+        formattedCollectionId = `gid://shopify/Collection/${numericId}`
+      }
+
+      await removeProductsFromCollectionMutation.mutateAsync({
+        collectionId: formattedCollectionId,
+        productIds: [formattedProductId],
+      })
+    },
+    [removeProductsFromCollectionMutation]
+  )
+
+  // Función para remover múltiples productos de una colección (modo bulk)
+  const handleRemoveSelectedProductsFromCollection = useCallback(
+    async (collectionId: string) => {
+      if (selectedRows.size === 0) {
+        toast.warning('Selecciona productos antes de remover de una colección')
+        return
+      }
+
+      const formattedCollectionId = collectionId.startsWith('gid://shopify/Collection/')
+        ? collectionId
+        : (collectionId.split('/').pop() ?? collectionId)
+
+      const productIds = Array.from(selectedRows).map((id) =>
+        id.startsWith('gid://shopify/Product/') ? id : `gid://shopify/Product/${id}`
+      )
+
+      try {
+        await removeProductsFromCollectionMutation.mutateAsync({
+          collectionId: formattedCollectionId,
+          productIds,
+        })
+        toast.success(`${productIds.length} productos removidos de la colección exitosamente`)
+        setSelectedRows(new Set())
+      } catch (error) {
+        toast.error(
+          `Error al remover productos de la colección: ${error instanceof Error ? error.message : 'Error desconocido'}`
+        )
+      }
+    },
+    [selectedRows, removeProductsFromCollectionMutation]
+  )
+
+  const handleOpenAutomaticDiscountModal = useCallback((product: { id: string; title: string }) => {
+    setSelectedProductForDiscount(product)
+    setIsAutomaticDiscountModalOpen(true)
+  }, [])
 
   const [shouldUpdateStats, setShouldUpdateStats] = useState(true)
 
@@ -304,22 +461,6 @@ export function Client() {
 
   const products = paginatedData?.products ?? []
   const pageInfo = paginatedData?.pageInfo
-
-  // Función para contar cuántos productos tienen un descuento específico
-  const getDiscountProductCount = useCallback(
-    (discount: any) => {
-      if (discount.appliesTo === 'ALL_PRODUCTS') {
-        // Si aplica a todos los productos, contar todos los productos en la tabla
-        return products.length
-      }
-      if (discount.appliesTo === 'SPECIFIC_PRODUCTS' && discount.productIds) {
-        // Si aplica a productos específicos, contar esos productos
-        return discount.productIds.length
-      }
-      return 1
-    },
-    [products]
-  )
 
   const filteredProducts = products
 
@@ -664,96 +805,6 @@ export function Client() {
     }))
   }, [])
 
-  const handleOpenCouponModal = useCallback(() => {
-    setIsCouponModalOpen(true)
-  }, [])
-
-  const handleOpenCouponManagerModal = useCallback(() => {
-    setIsCouponManagerModalOpen(true)
-  }, [])
-
-  const handleOpenAutomaticDiscountModal = useCallback(() => {
-    setSelectedProductForDiscount(null)
-    setIsAutomaticDiscountModalOpen(true)
-  }, [])
-
-  const handleOpenAutomaticDiscountModalForProduct = useCallback(
-    (product: { id: string; title: string }) => {
-      setSelectedProductForDiscount(product)
-      setIsAutomaticDiscountModalOpen(true)
-    },
-    []
-  )
-
-  const handleDeleteDiscount = useCallback(
-    async (discountId: string) => {
-      try {
-        const response = await fetch(`/api/shopify/discounts/${encodeURIComponent(discountId)}`, {
-          method: 'DELETE',
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Error al eliminar descuento')
-        }
-
-        // Invalidar caché para refrescar la lista de cupones
-        void queryClient.invalidateQueries({ queryKey: ['discounts'] })
-      } catch (error) {
-        console.error('Error al eliminar descuento:', error)
-        throw error
-      }
-    },
-    [queryClient]
-  )
-
-  // Mutations para cupones
-  const createDiscountMutation = useCreateDiscount()
-  const updateDiscountMutation = useUpdateDiscount()
-  const deleteDiscountMutation = useDeleteDiscount()
-
-  const handleCouponCreated = useCallback(
-    (coupon: CreateDiscountInput) => {
-      createDiscountMutation.mutate(coupon, {
-        onError: (error) => {
-          toast.error(`Error al crear cupón: ${error.message}`)
-        },
-        onSuccess: () => {
-          toast.success('Cupón creado exitosamente')
-        },
-      })
-    },
-    [createDiscountMutation]
-  )
-
-  const handleCouponUpdated = useCallback(
-    (coupon: UpdateDiscountInput) => {
-      updateDiscountMutation.mutate(coupon, {
-        onError: (error) => {
-          toast.error(`Error al actualizar cupón: ${error.message}`)
-        },
-        onSuccess: () => {
-          toast.success('Cupón actualizado exitosamente')
-        },
-      })
-    },
-    [updateDiscountMutation]
-  )
-
-  const handleCouponDeleted = useCallback(
-    (couponId: string) => {
-      deleteDiscountMutation.mutate(couponId, {
-        onError: (error) => {
-          toast.error(`Error al eliminar cupón: ${error.message}`)
-        },
-        onSuccess: () => {
-          toast.success('Cupón eliminado exitosamente')
-        },
-      })
-    },
-    [deleteDiscountMutation]
-  )
-
   const handleApplyBulkChanges = useCallback(() => {
     if (selectedRows.size === 0) {
       toast.warning('Selecciona productos antes de aplicar cambios')
@@ -839,21 +890,24 @@ export function Client() {
     getCoreRowModel: getCoreRowModel(),
     meta: {
       bulkChanges,
+      collections,
       currentSortBy: sortByInUrl,
       currentSortOrder: sortOrderInUrl,
       editingChanges,
       editingRowId,
-      getDiscountProductCount,
       getProductDiscounts,
+      handleAddProductToCollection,
+      handleRemoveProductFromCollection,
       handleSorting,
       isAdmin,
       isArtist,
       isBulkMode,
       isUpdating: updateMutation.isPending,
+      onAddSelectedProductsToCollection: handleAddSelectedProductsToCollection,
       onApplyBulkChanges: handleApplyBulkChanges,
       onBulkChange: handleBulkChange,
-      onDeleteDiscount: handleDeleteDiscount,
-      onOpenAutomaticDiscountModal: handleOpenAutomaticDiscountModalForProduct,
+      onOpenAutomaticDiscountModal: handleOpenAutomaticDiscountModal,
+      onRemoveSelectedProductsFromCollection: handleRemoveSelectedProductsFromCollection,
       onRowSelectionChange: handleRowSelectionChange,
       onSelectAllChange: handleSelectAllChange,
       saveAllChanges,
@@ -924,42 +978,9 @@ export function Client() {
               'Modo Bulk'
             )}
           </Button>
-          {selectedRows.size > 0 && (
-            <>
-              <Button
-                variant='outline'
-                onClick={handleOpenCouponModal}
-                className='bg-blue-50 text-blue-700 hover:bg-blue-100'
-              >
-                <Tag className='mr-2 size-4' />
-                Crear Cupón ({selectedRows.size})
-              </Button>
-              <Button
-                variant='outline'
-                onClick={handleOpenAutomaticDiscountModal}
-                className='bg-purple-50 text-purple-700 hover:bg-purple-100'
-              >
-                <Tag className='mr-2 size-4' />
-                Descuento Automático ({selectedRows.size})
-              </Button>
-            </>
-          )}
-          <Button
-            variant='outline'
-            onClick={handleOpenCouponManagerModal}
-            className='bg-green-50 text-green-700 hover:bg-green-100'
-          >
-            <Tag className='mr-2 size-4' />
-            Gestionar Cupones
-          </Button>
-          <Link href='/manage-inventory/collections'>
-            <Button variant='outline' className='bg-orange-50 text-orange-700 hover:bg-orange-100'>
-              <Tag className='mr-2 size-4' />
-              Gestionar Colecciones
-            </Button>
-          </Link>
+
           <Link href='/manage-inventory/create-bulk'>
-            <Button variant='outline' className='bg-indigo-50 text-indigo-700 hover:bg-indigo-100'>
+            <Button variant='container-success'>
               <PlusCircle className='mr-2 size-4' />
               Creación en Lote
             </Button>
@@ -1508,6 +1529,41 @@ export function Client() {
                 }
               />
             </div>
+
+            <div className='space-y-2'>
+              <label className='text-sm font-medium'>Colección</label>
+              <div className='flex items-center gap-2'>
+                <Select
+                  value=''
+                  onValueChange={async (collectionId) => {
+                    if (collectionId) {
+                      await handleAddSelectedProductsToCollection(collectionId)
+                    }
+                  }}
+                  disabled={selectedRows.size === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Agregar a colección...' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {collections.length > 0 ? (
+                      collections.map((collection: any) => (
+                        <SelectItem key={collection.id} value={collection.id}>
+                          {collection.title}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value='' disabled>
+                        No hay colecciones disponibles
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                Selecciona una colección para agregar los productos seleccionados
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -1624,32 +1680,7 @@ export function Client() {
         </div>
       )}
 
-      {/* Modales */}
-
-      <CouponCreatorModal
-        isOpen={isCouponModalOpen}
-        onClose={() => {
-          setIsCouponModalOpen(false)
-        }}
-        selectedProducts={filteredProducts
-          .filter((p) => selectedRows.has(p.id))
-          .map((p) => ({ id: p.id, title: p.title }))}
-        onCouponCreated={handleCouponCreated}
-      />
-
-      <CouponManagerModal
-        isOpen={isCouponManagerModalOpen}
-        onClose={() => setIsCouponManagerModalOpen(false)}
-        selectedProducts={filteredProducts
-          .filter((p) => selectedRows.has(p.id))
-          .map((p) => ({ id: p.id, title: p.title }))}
-        coupons={coupons}
-        isLoading={couponsLoading}
-        onCouponCreated={handleCouponCreated}
-        onCouponUpdated={handleCouponUpdated}
-        onCouponDeleted={handleCouponDeleted}
-      />
-
+      {/* Modal para descuentos automáticos */}
       <ProductAutomaticDiscountModal
         isOpen={isAutomaticDiscountModalOpen}
         onClose={() => {

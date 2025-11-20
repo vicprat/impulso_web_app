@@ -85,7 +85,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
 
       toast.success('¡Sala privada actualizada exitosamente!')
       setCurrentMode('view')
-      router.replace(`/admin/private-rooms/${id}?mode=view`)
+      router.replace(`/manage-inventory/private-rooms/${id}?mode=view`)
       await loadRoomData()
     } catch (error) {
       console.error('Error updating private room:', error)
@@ -109,7 +109,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
       await privateRoomsApi.deletePrivateRoom(id)
 
       toast.success('¡Sala privada eliminada exitosamente!')
-      router.push('/admin/private-rooms')
+      router.push('/manage-inventory/private-rooms')
     } catch (error) {
       console.error('Error deleting private room:', error)
       toast.error('Error al eliminar la sala privada.')
@@ -120,12 +120,12 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
 
   const changeMode = (newMode: PrivateRoomMode) => {
     setCurrentMode(newMode)
-    router.replace(`/admin/private-rooms/${id}?mode=${newMode}`)
+    router.replace(`/manage-inventory/private-rooms/${id}?mode=${newMode}`)
   }
 
   const cancelEdit = () => {
     setCurrentMode('view')
-    router.replace(`/admin/private-rooms/${id}?mode=view`)
+    router.replace(`/manage-inventory/private-rooms/${id}?mode=view`)
   }
 
   const isLoadingAll = isLoadingRoom || (productIds.length > 0 && isLoadingProducts)
@@ -152,7 +152,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
       <div className='container mx-auto max-w-4xl p-6'>
         <div className='space-y-4'>
           <Button variant='ghost' asChild>
-            <Link href={ROUTES.ADMIN.PRIVATE_ROOMS.CREATE.PATH}>
+            <Link href={ROUTES.INVENTORY.PRIVATE_ROOMS.MAIN.PATH}>
               <ArrowLeft className='mr-2 size-4' />
               Volver a Salas Privadas
             </Link>
@@ -216,7 +216,7 @@ export default function PrivateRoomPage({ params }: PrivateRoomPageProps) {
       <div className='space-y-6'>
         <div className='space-y-4'>
           <Button variant='ghost' asChild>
-            <Link href={ROUTES.ADMIN.PRIVATE_ROOMS.CREATE.PATH}>
+            <Link href={ROUTES.INVENTORY.PRIVATE_ROOMS.MAIN.PATH}>
               <ArrowLeft className='mr-2 size-4' />
               Volver a Salas Privadas
             </Link>

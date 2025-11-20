@@ -28,11 +28,12 @@ import {
   ShoppingBag,
   ShoppingCart,
   Star,
+  Tag,
   Ticket,
   TrendingUp,
   User,
   Users,
-  X
+  X,
 } from 'lucide-react'
 
 export const Icons = {
@@ -56,7 +57,7 @@ export const Icons = {
   'log-in': LogIn,
   'map-pin': MapPin,
   'message-square': MessageSquare,
-  'newspaper': Newspaper,
+  newspaper: Newspaper,
   package: Package,
   plus: Plus,
   search: Search,
@@ -65,6 +66,7 @@ export const Icons = {
   'shopping-bag': ShoppingBag,
   'shopping-cart': ShoppingCart,
   star: Star,
+  tag: Tag,
   ticket: Ticket,
   'trending-up': TrendingUp,
   user: User,
@@ -82,7 +84,7 @@ export interface IconProps {
 }
 
 export const Icon = ({ className, name, size = 24 }: IconProps) => {
-  const IconComponent = Icons[ name ]
+  const IconComponent = Icons[name]
 
   if (!IconComponent) {
     console.warn(`Icon "${name}" not found`)

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
 
 import {
   type CreateShopifyDiscountInput,
@@ -66,6 +66,15 @@ export const PRODUCT_FRAGMENT = `
           namespace
           key
           value
+        }
+      }
+    }
+    collections(first: 50) {
+      edges {
+        node {
+          id
+          title
+          handle
         }
       }
     }
@@ -516,6 +525,27 @@ export const useGetDiscounts = (filters?: DiscountFilters) => {
   })
 }
 
+export const useDiscount = (
+  id: string,
+  options?: Omit<UseQueryOptions<any, Error, any>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery({
+    enabled: !!id,
+    queryFn: async () => {
+      const encodedId = encodeURIComponent(id)
+      const response = await fetch(`/api/shopify/discounts/${encodedId}`)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error ?? `HTTP ${response.status}: ${response.statusText}`)
+      }
+      return response.json()
+    },
+    queryKey: ['discounts', 'detail', id],
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    ...options,
+  })
+}
+
 export const useCreateDiscount = () => {
   const queryClient = useQueryClient()
 
@@ -537,13 +567,16 @@ export const useCreateDiscount = () => {
       return response.json()
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['discounts'] })
-      queryClient.invalidateQueries({ queryKey: ['managementProducts'] })
+      void queryClient.invalidateQueries({ queryKey: ['discounts'] })
+      void queryClient.invalidateQueries({ queryKey: ['managementProducts'] })
     },
   })
 }
 
-export const useUpdateDiscount = () => {
+export const useUpdateDiscount = (options?: {
+  onError?: (error: Error) => void
+  onSuccess?: () => void
+}) => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -564,14 +597,19 @@ export const useUpdateDiscount = () => {
 
       return response.json()
     },
+    onError: options?.onError,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['discounts'] })
       queryClient.invalidateQueries({ queryKey: ['managementProducts'] })
+      options?.onSuccess?.()
     },
   })
 }
 
-export const useDeleteDiscount = () => {
+export const useDeleteDiscount = (options?: {
+  onError?: (error: Error) => void
+  onSuccess?: () => void
+}) => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -588,9 +626,11 @@ export const useDeleteDiscount = () => {
 
       return response.json()
     },
+    onError: options?.onError,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['discounts'] })
       queryClient.invalidateQueries({ queryKey: ['managementProducts'] })
+      options?.onSuccess?.()
     },
   })
 }

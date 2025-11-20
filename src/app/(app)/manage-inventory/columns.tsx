@@ -1,26 +1,20 @@
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
-import {
-  ArrowUpDown,
-  Check,
-  Edit,
-  ExternalLink,
-  Eye,
-  Loader2,
-  Percent,
-  Tag,
-  Trash2,
-  Upload,
-  X,
-} from 'lucide-react'
+import { ArrowUpDown, Check, Edit, ExternalLink, Eye, Grid, Loader2, Upload, X } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-import { Confirm } from '@/components/Dialog/Confirm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -39,127 +33,54 @@ import {
 } from '@/services/product/hook'
 import { ROUTES, replaceRouteParams } from '@/src/config/routes'
 
-// Componente para la celda de descuentos con dialog de confirmación
+// Componente para la celda de descuentos (solo visualización)
 const DiscountCell = ({
-  getDiscountProductCount,
   getProductDiscounts,
   isAdmin,
-  onDeleteDiscount,
-  onOpenAutomaticDiscountModal,
   product,
 }: {
   product: any
   isAdmin: boolean
-  onOpenAutomaticDiscountModal?: (product: { id: string; title: string }) => void
   getProductDiscounts?: (productId: string) => any[]
-  getDiscountProductCount?: (discount: any) => number
-  onDeleteDiscount?: (discountId: string) => Promise<void>
 }) => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [discountToDelete, setDiscountToDelete] = useState<{
-    id: string
-    title: string
-    productCount: number
-  } | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-
   if (!isAdmin) return null
 
   const productDiscounts = getProductDiscounts?.(product.id) ?? []
   const activeDiscounts = productDiscounts.filter((discount) => discount.isActive)
 
-  const handleDeleteClick = (discount: any) => {
-    // Contar cuántos productos tienen este descuento
-    const productCount = getDiscountProductCount?.(discount) ?? 1
-
-    setDiscountToDelete({
-      id: discount.id,
-      productCount,
-      title: discount.title,
-    })
-    setIsDeleteDialogOpen(true)
+  const getCouponId = (coupon: any) => {
+    return coupon.id.split('/').pop() ?? coupon.id
   }
 
-  const handleConfirmDelete = async () => {
-    if (!discountToDelete || !onDeleteDiscount) return
-
-    setIsDeleting(true)
-    try {
-      await onDeleteDiscount(discountToDelete.id)
-      toast.success('Descuento eliminado exitosamente')
-    } catch (error) {
-      toast.error('Error al eliminar el descuento')
-      console.error('Error al eliminar descuento:', error)
-    } finally {
-      setIsDeleting(false)
-      setIsDeleteDialogOpen(false)
-      setDiscountToDelete(null)
-    }
+  if (activeDiscounts.length === 0) {
+    return <span className='text-sm text-muted-foreground'>-</span>
   }
-
   return (
-    <>
-      <div className='flex flex-col gap-2'>
-        {/* Mostrar descuentos activos */}
-        {activeDiscounts.length > 0 && (
-          <div className='flex flex-wrap gap-1'>
-            {activeDiscounts.map((discount, index) => (
-              <div key={index} className='flex items-center gap-1'>
-                <Badge
-                  variant='secondary'
-                  className='bg-green-100 text-green-800 hover:bg-green-200'
-                  title={`${discount.title} - ${discount.type === 'PERCENTAGE' ? `${discount.value}%` : `$${discount.value}`} OFF`}
-                >
-                  <Percent className='mr-1 size-3' />
-                  {discount.type === 'PERCENTAGE' ? `${discount.value}%` : `$${discount.value}`}
-                </Badge>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => handleDeleteClick(discount)}
-                  className='size-5 p-0 text-red-600 hover:bg-red-100 hover:text-red-700'
-                  title={`Eliminar descuento "${discount.title}"`}
-                >
-                  <Trash2 className='size-3' />
-                </Button>
+    <div className='flex flex-wrap gap-1'>
+      {activeDiscounts.map((discount, index) => {
+        const couponId = getCouponId(discount)
+        return (
+          <Link
+            key={index}
+            href={replaceRouteParams(ROUTES.INVENTORY.COUPONS.DETAIL.PATH, {
+              id: couponId,
+            })}
+            className='inline-flex'
+          >
+            <Badge
+              variant='secondary'
+              className='cursor-pointer flex-col items-center bg-green-100 text-green-800 transition-colors hover:bg-green-200'
+              title={`${discount.title} - ${discount.type === 'PERCENTAGE' ? `${discount.value}%` : `$${discount.value}`} OFF`}
+            >
+              <div className='flex items-center gap-1'>
+                {discount.type === 'PERCENTAGE' ? `${discount.value}%` : `$${discount.value}`}
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Botón para crear/editar descuentos */}
-        <Button
-          variant='outline'
-          size='sm'
-          onClick={() => onOpenAutomaticDiscountModal?.({ id: product.id, title: product.title })}
-          className='bg-purple-50 text-purple-700 hover:bg-purple-100'
-          title={activeDiscounts.length > 0 ? 'Editar descuentos' : 'Crear descuento automático'}
-        >
-          <Tag className='mr-1 size-3' />
-          {activeDiscounts.length > 0 ? 'Editar' : 'Descuento'}
-        </Button>
-      </div>
-
-      {/* Dialog de confirmación */}
-      <Confirm
-        isOpen={isDeleteDialogOpen}
-        onClose={() => {
-          setIsDeleteDialogOpen(false)
-          setDiscountToDelete(null)
-        }}
-        onConfirm={handleConfirmDelete}
-        title='Eliminar Descuento'
-        message={
-          discountToDelete
-            ? `¿Estás seguro de que quieres eliminar el descuento "${discountToDelete.title}"?\n\n⚠️ Advertencia: Este descuento se eliminará de ${discountToDelete.productCount} producto${discountToDelete.productCount > 1 ? 's' : ''} que lo tengan aplicado.`
-            : ''
-        }
-        confirmButtonText='Eliminar'
-        cancelButtonText='Cancelar'
-        variant='destructive'
-        isLoading={isDeleting}
-      />
-    </>
+              {discount.code && <span className='text-xs opacity-75'>{discount.code}</span>}
+            </Badge>
+          </Link>
+        )
+      })}
+    </div>
   )
 }
 
@@ -211,11 +132,12 @@ declare module '@tanstack/react-table' {
     bulkChanges?: Record<string, any>
     onBulkChange?: (field: string, value: any) => void
     onApplyBulkChanges?: () => void
-    onOpenCouponModal?: (product: { id: string; title: string }) => void
-    onOpenAutomaticDiscountModal?: (product: { id: string; title: string }) => void
     getProductDiscounts?: (productId: string) => any[]
-    getDiscountProductCount?: (discount: any) => number
-    onDeleteDiscount?: (discountId: string) => Promise<void>
+    collections?: any[]
+    handleAddProductToCollection?: (productId: string, collectionId: string) => Promise<void>
+    handleRemoveProductFromCollection?: (productId: string, collectionId: string) => Promise<void>
+    onAddSelectedProductsToCollection?: (collectionId: string) => Promise<void>
+    onRemoveSelectedProductsFromCollection?: (collectionId: string) => Promise<void>
   }
 }
 
@@ -355,6 +277,183 @@ const EditableSelect = ({
           ))}
         </SelectContent>
       </Select>
+    </div>
+  )
+}
+
+// Componente para edición inline de colecciones
+const EditableCollectionSelect = ({
+  className = '',
+  collections = [],
+  isEditing,
+  onCancel,
+  onUpdate,
+  placeholder = 'Seleccionar colección',
+  productId,
+}: {
+  productId: string
+  isEditing: boolean
+  onUpdate: (collectionId: string) => Promise<void>
+  onCancel: () => void
+  collections: any[]
+  placeholder?: string
+  className?: string
+}) => {
+  const [selectedCollection, setSelectedCollection] = useState('')
+  const [isAdding, setIsAdding] = useState(false)
+
+  if (!isEditing) {
+    return null
+  }
+
+  const handleCollectionChange = async (collectionId: string) => {
+    if (!collectionId) return
+
+    setIsAdding(true)
+    try {
+      setSelectedCollection(collectionId)
+      await onUpdate(collectionId)
+      // Limpiar la selección después de agregar
+      setSelectedCollection('')
+    } catch (error) {
+      console.error('Error al agregar producto a colección:', error)
+      // Mantener la selección en caso de error para que el usuario pueda intentar de nuevo
+    } finally {
+      setIsAdding(false)
+    }
+  }
+
+  return (
+    <div className='flex items-center space-x-2'>
+      <Select
+        value={selectedCollection || undefined}
+        onValueChange={handleCollectionChange}
+        disabled={isAdding}
+      >
+        <SelectTrigger className={`h-8 ${className}`}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {collections.map((collection) => (
+            <SelectItem key={collection.id} value={collection.id}>
+              {collection.title}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {isAdding && <Loader2 className='size-4 animate-spin' />}
+    </div>
+  )
+}
+
+// Componente para mostrar las colecciones de un producto
+const CollectionCell = ({
+  collections = [],
+  handleAddProductToCollection,
+  handleRemoveProductFromCollection,
+  isAdmin,
+  isEditing,
+  product,
+}: {
+  product: any
+  isAdmin: boolean
+  isEditing: boolean
+  collections?: any[]
+  handleAddProductToCollection?: (productId: string, collectionId: string) => Promise<void>
+  handleRemoveProductFromCollection?: (productId: string, collectionId: string) => Promise<void>
+}) => {
+  if (!isAdmin) return null
+
+  // Obtener las colecciones del producto (vienen en el objeto product)
+  const productCollections = product.collections || []
+
+  if (isEditing) {
+    return (
+      <div className='space-y-2'>
+        <EditableCollectionSelect
+          productId={product.id}
+          collections={collections}
+          isEditing={isEditing}
+          onUpdate={async (collectionId) => {
+            if (handleAddProductToCollection) {
+              try {
+                await handleAddProductToCollection(product.id, collectionId)
+                // No cerrar el modo de edición, permitir seguir editando otros campos
+              } catch (error) {
+                console.error('Error al agregar producto a colección:', error)
+              }
+            }
+          }}
+          onCancel={() => {
+            // No-op: no necesitamos cancelar nada aquí
+          }}
+          placeholder='Agregar a colección...'
+        />
+        {productCollections.length > 0 && (
+          <div className='flex flex-wrap gap-1'>
+            {productCollections.map((collection: { id: string; title: string; handle: string }) => {
+              return (
+                <Badge
+                  key={collection.id}
+                  variant='secondary'
+                  className='inline-flex items-center gap-1 bg-red-100 text-red-800'
+                  title={collection.title}
+                >
+                  <span>{collection.title}</span>
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation()
+                      if (handleRemoveProductFromCollection) {
+                        try {
+                          await handleRemoveProductFromCollection(product.id, collection.id)
+                        } catch (error) {
+                          console.error('Error al remover producto de colección:', error)
+                        }
+                      }
+                    }}
+                    className='ml-1 rounded-full hover:bg-red-200'
+                    type='button'
+                  >
+                    <X className='size-3' />
+                  </button>
+                </Badge>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Mostrar las colecciones del producto
+  if (productCollections.length === 0) {
+    return <span className='text-sm text-muted-foreground'>-</span>
+  }
+
+  return (
+    <div className='flex flex-wrap gap-1'>
+      {productCollections.map((collection: { id: string; title: string; handle: string }) => {
+        const collectionId = collection.id.split('/').pop() ?? collection.id
+        return (
+          <Link
+            key={collection.id}
+            href={replaceRouteParams(ROUTES.INVENTORY.COLLECTIONS.DETAIL.PATH, {
+              id: collectionId,
+            })}
+            className='inline-flex'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Badge
+              variant='secondary'
+              className='cursor-pointer bg-blue-100 text-blue-800 transition-colors hover:bg-blue-200'
+              title={collection.title}
+            >
+              <Grid className='mr-1 size-3' />
+              {collection.title}
+            </Badge>
+          </Link>
+        )
+      })}
     </div>
   )
 }
@@ -643,7 +742,6 @@ const EditableLocationSelect = ({
   )
 }
 
-// Componente para reemplazar la imagen principal (solo para tabla)
 const ImageReplacer = ({
   onUpdate,
   product,
@@ -651,7 +749,7 @@ const ImageReplacer = ({
   product: Product
   onUpdate: (productId: string, imageUrl: string | null) => void
 }) => {
-  const [isEditing, setIsEditing] = useState(false)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(
     product.images.length > 0 ? product.images[0].url : null
   )
@@ -668,15 +766,13 @@ const ImageReplacer = ({
 
     const file = files[0]
     await uploadFile(file)
-    event.target.value = '' // Limpiar input
+    event.target.value = ''
   }
 
   const uploadFile = async (file: File) => {
     setIsUploading(true)
-    const preview = URL.createObjectURL(file)
 
     try {
-      // 1. Subir el archivo
       const formData = new FormData()
       formData.append('file', file)
 
@@ -692,7 +788,6 @@ const ImageReplacer = ({
 
       const uploadData = await uploadResponse.json()
 
-      // 2. Reemplazar la imagen principal usando la API de Shopify
       const productId = product.id.split('/').pop()
       if (!productId) throw new Error('ID de producto inválido')
 
@@ -716,11 +811,11 @@ const ImageReplacer = ({
       }
 
       const replaceData = await replaceResponse.json()
+      const newImageUrl =
+        replaceData.product?.images?.edges?.[0]?.node?.url || uploadData.resourceUrl
 
-      // 3. Actualizar el estado local
-      setCurrentImageUrl(uploadData.resourceUrl)
-      onUpdate(product.id, uploadData.resourceUrl)
-      setIsEditing(false)
+      setCurrentImageUrl(newImageUrl)
+      onUpdate(product.id, newImageUrl)
 
       toast.success(`Imagen principal actualizada`)
     } catch (error) {
@@ -731,131 +826,147 @@ const ImageReplacer = ({
     }
   }
 
-  if (isEditing) {
-    return (
-      <div className='w-32 space-y-2'>
-        <div className='flex items-center gap-2'>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            disabled={isUploading}
-            onClick={() => document.getElementById(`image-input-${product.id}`)?.click()}
-            className='flex h-8 items-center gap-1 px-2 text-xs'
-          >
-            {isUploading ? (
-              <Loader2 className='size-3 animate-spin' />
-            ) : (
-              <Upload className='size-3' />
-            )}
-            {isUploading ? 'Subiendo...' : 'Reemplazar'}
-          </Button>
+  const handleRemoveImage = async () => {
+    if (!currentImageUrl) return
 
-          <Input
-            id={`image-input-${product.id}`}
-            type='file'
-            accept='image/*'
-            onChange={handleFileChange}
-            className='hidden'
-          />
+    setIsUploading(true)
+    try {
+      const productId = product.id.split('/').pop()
+      if (!productId) throw new Error('ID de producto inválido')
 
-          {currentImageUrl && (
-            <Button
-              type='button'
-              variant='destructive'
-              size='sm'
-              onClick={() => {
-                setCurrentImageUrl(null)
-                onUpdate(product.id, null)
-                setIsEditing(false)
-              }}
-              className='h-8 px-2 text-xs'
-            >
-              <X className='size-3' />
-            </Button>
-          )}
-        </div>
+      const removeResponse = await fetch(
+        `/api/management/products/${productId}/remove-main-image`,
+        {
+          body: JSON.stringify({
+            imageId: product.images[0]?.id || null,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          method: 'DELETE',
+        }
+      )
 
-        {/* Preview compacto */}
-        {currentImageUrl && (
-          <div className='relative overflow-hidden rounded border'>
-            <div className='relative aspect-square w-16'>
-              <img
-                src={currentImageUrl}
-                alt={product.images[0]?.altText ?? product.title}
-                className='size-full object-cover'
-              />
+      if (!removeResponse.ok) {
+        const errorData = await removeResponse.json()
+        throw new Error(errorData.error ?? 'Error al remover imagen')
+      }
 
-              {/* Overlay de estado */}
-              {isUploading && (
-                <div className='absolute inset-0 flex items-center justify-center bg-black/40'>
-                  <Loader2 className='size-4 animate-spin text-white' />
-                </div>
-              )}
-            </div>
+      setCurrentImageUrl(null)
+      onUpdate(product.id, null)
+      setIsPreviewOpen(false)
 
-            {/* Información compacta */}
-            <div className='p-1 text-center'>
-              <p className='text-xs text-gray-600'>Imagen principal</p>
-            </div>
-          </div>
-        )}
-
-        {/* Placeholder compacto */}
-        {!currentImageUrl && (
-          <div className='flex size-16 items-center justify-center rounded border-2 border-dashed border-gray-300 text-center'>
-            <div className='flex flex-col items-center'>
-              <Upload className='size-4 text-gray-400' />
-              <span className='text-xs text-gray-500'>Sin imagen</span>
-            </div>
-          </div>
-        )}
-
-        <div className='flex justify-end space-x-1'>
-          <Button
-            size='sm'
-            variant='outline'
-            onClick={() => setIsEditing(false)}
-            className='h-6 px-2 text-xs'
-          >
-            Cancelar
-          </Button>
-        </div>
-      </div>
-    )
+      toast.success(`Imagen removida`)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      toast.error(`Error al remover imagen: ${errorMessage}`)
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   return (
-    <div
-      className='group relative size-16 cursor-pointer overflow-hidden rounded-md'
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={() => setIsEditing(true)}
-    >
-      {currentImageUrl ? (
-        <>
-          <img
-            src={currentImageUrl}
-            alt={product.images[0]?.altText ?? product.title}
-            className='size-full object-cover transition-all group-hover:brightness-75'
-            sizes='64px'
-          />
-          {/* Overlay con ícono de editar */}
-          {isHovered && (
-            <div className='absolute inset-0 flex items-center justify-center bg-black/50 transition-all'>
-              <Edit className='size-4 text-white' />
+    <>
+      <div
+        className='group relative size-16 cursor-pointer overflow-hidden rounded-md'
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={() => setIsPreviewOpen(true)}
+      >
+        {currentImageUrl ? (
+          <>
+            <img
+              src={currentImageUrl}
+              alt={product.images[0]?.altText ?? product.title}
+              className='size-full object-cover transition-all group-hover:brightness-75'
+              sizes='64px'
+            />
+            {isHovered && (
+              <div className='absolute inset-0 flex items-center justify-center bg-black/50 transition-all'>
+                <Eye className='size-4 text-white' />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className='flex size-16 items-center justify-center rounded-md border-2 border-dashed border-gray-300 transition-all hover:border-gray-400 hover:bg-gray-50'>
+            <div className='flex flex-col items-center'>
+              <Edit className='mb-1 size-4 text-gray-400' />
+              <span className='text-xs text-gray-500'>Agregar</span>
             </div>
-          )}
-        </>
-      ) : (
-        <div className='flex size-16 items-center justify-center rounded-md border-2 border-dashed border-gray-300 transition-all hover:border-gray-400 hover:bg-gray-50'>
-          <div className='flex flex-col items-center'>
-            <Edit className='mb-1 size-4 text-gray-400' />
-            <span className='text-xs text-gray-500'>Agregar</span>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className='max-w-3xl'>
+          <DialogHeader>
+            <DialogTitle>Imagen del producto</DialogTitle>
+          </DialogHeader>
+
+          <div className='flex flex-col items-center gap-4'>
+            {currentImageUrl ? (
+              <div className='relative max-h-[60vh] w-full overflow-hidden rounded-lg border'>
+                <img
+                  src={currentImageUrl}
+                  alt={product.images[0]?.altText ?? product.title}
+                  className='h-auto w-full object-contain'
+                />
+                {isUploading && (
+                  <div className='absolute inset-0 flex items-center justify-center bg-black/40'>
+                    <Loader2 className='size-8 animate-spin text-white' />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className='flex h-64 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300'>
+                <div className='flex flex-col items-center gap-2'>
+                  <Upload className='size-8 text-gray-400' />
+                  <span className='text-sm text-gray-500'>Sin imagen</span>
+                </div>
+              </div>
+            )}
+
+            <div className='text-sm text-muted-foreground'>{product.title}</div>
+          </div>
+
+          <DialogFooter className='flex-row justify-end gap-2'>
+            <Input
+              id={`image-input-${product.id}`}
+              type='file'
+              accept='image/*'
+              onChange={handleFileChange}
+              className='hidden'
+            />
+            <Button
+              variant='outline'
+              disabled={isUploading}
+              onClick={() => document.getElementById(`image-input-${product.id}`)?.click()}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className='mr-2 size-4 animate-spin' />
+                  Subiendo...
+                </>
+              ) : (
+                <>
+                  <Upload className='mr-2 size-4' />
+                  Reemplazar imagen
+                </>
+              )}
+            </Button>
+            {currentImageUrl && (
+              <Button variant='destructive' disabled={isUploading} onClick={handleRemoveImage}>
+                <X className='mr-2 size-4' />
+                Remover imagen
+              </Button>
+            )}
+            <Button variant='outline' onClick={() => setIsPreviewOpen(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
@@ -916,12 +1027,7 @@ export const columns: ColumnDef<Product>[] = [
           <ImageReplacer
             product={product}
             onUpdate={(productId: string, imageUrl: string | null) => {
-              if (imageUrl) {
-                console.log('Imagen principal actualizada:', {
-                  newImageUrl: imageUrl,
-                  productId,
-                })
-              }
+              // Imagen actualizada en el componente ImageReplacer
             }}
           />
         </div>
@@ -1524,6 +1630,61 @@ export const columns: ColumnDef<Product>[] = [
   },
 
   {
+    accessorKey: 'automaticDiscount',
+    cell: ({ row, table }) => {
+      const product = row.original
+      const { getProductDiscounts, isAdmin } = table.options.meta ?? {}
+
+      return (
+        <div className='min-w-[220px]'>
+          <DiscountCell
+            product={product}
+            isAdmin={isAdmin ?? false}
+            getProductDiscounts={getProductDiscounts}
+          />
+        </div>
+      )
+    },
+    header: () => <div className='min-w-[220px]'>Descuentos</div>,
+    id: 'automaticDiscount',
+  },
+
+  {
+    accessorKey: 'collections',
+    cell: ({ row, table }) => {
+      const product = row.original
+      const {
+        collections,
+        editingRowId,
+        handleAddProductToCollection,
+        handleRemoveProductFromCollection,
+        isAdmin,
+      } = table.options.meta ?? {}
+      const isEditing = editingRowId === product.id
+
+      return (
+        <div className='min-w-[200px]'>
+          <CollectionCell
+            product={product}
+            isAdmin={isAdmin ?? false}
+            isEditing={isEditing}
+            collections={collections}
+            handleAddProductToCollection={handleAddProductToCollection}
+            handleRemoveProductFromCollection={handleRemoveProductFromCollection}
+          />
+        </div>
+      )
+    },
+    header: () => (
+      <div className='flex items-center gap-2'>
+        <Grid className='size-4' />
+        <span className='min-w-[200px]'>Colecciones</span>
+      </div>
+    ),
+    id: 'collections',
+  },
+
+  {
     cell: ({ row, table }) => {
       const product = row.original
       const { editingRowId, isUpdating, saveAllChanges, setEditingRowId } = table.options.meta ?? {}
@@ -1582,33 +1743,5 @@ export const columns: ColumnDef<Product>[] = [
     },
     header: () => <div className='min-w-[200px]'>Acciones</div>,
     id: 'actions',
-  },
-  {
-    accessorKey: 'automaticDiscount',
-    cell: ({ row, table }) => {
-      const product = row.original
-      const {
-        getDiscountProductCount,
-        getProductDiscounts,
-        isAdmin,
-        onDeleteDiscount,
-        onOpenAutomaticDiscountModal,
-      } = table.options.meta ?? {}
-
-      return (
-        <div className='min-w-[220px]'>
-          <DiscountCell
-            product={product}
-            isAdmin={isAdmin ?? false}
-            onOpenAutomaticDiscountModal={onOpenAutomaticDiscountModal}
-            getProductDiscounts={getProductDiscounts}
-            getDiscountProductCount={getDiscountProductCount}
-            onDeleteDiscount={onDeleteDiscount}
-          />
-        </div>
-      )
-    },
-    header: () => <div className='min-w-[220px]'>Descuentos</div>,
-    id: 'automaticDiscount',
   },
 ]

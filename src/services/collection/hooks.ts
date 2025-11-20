@@ -177,14 +177,29 @@ export function useAddProductsToCollection(
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Error adding products to collection')
+        const errorMessage =
+          errorData.message || errorData.error || 'Error adding products to collection'
+        const error = new Error(errorMessage) as Error & {
+          details?: any[]
+          isSmartCollection?: boolean
+          alreadyInCollection?: string[]
+        }
+        error.details = errorData.details
+        error.isSmartCollection =
+          errorData.isSmartCollection || errorMessage.toLowerCase().includes('smart collection')
+        error.alreadyInCollection = errorData.alreadyInCollection
+        throw error
       }
 
       return response.json()
     },
-    onSuccess: ({ collectionId }) => {
+    onSuccess: (data, variables) => {
+      const collectionId = data?.data?.id || variables.collectionId
       void queryClient.invalidateQueries({ queryKey: COLLECTION_KEYS.lists() })
-      void queryClient.invalidateQueries({ queryKey: COLLECTION_KEYS.detail(collectionId) })
+      if (collectionId) {
+        void queryClient.invalidateQueries({ queryKey: COLLECTION_KEYS.detail(collectionId) })
+      }
+      void queryClient.invalidateQueries({ queryKey: ['managementProducts', 'paginated'] })
     },
     ...options,
   })
@@ -208,14 +223,24 @@ export function useRemoveProductsFromCollection(
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Error removing products from collection')
+        const errorMessage =
+          errorData.message || errorData.error || 'Error removing products from collection'
+        const error = new Error(errorMessage) as Error & {
+          details?: any[]
+        }
+        error.details = errorData.details
+        throw error
       }
 
       return response.json()
     },
-    onSuccess: ({ collectionId }) => {
+    onSuccess: (_data, variables) => {
+      const collectionId = variables.collectionId
       void queryClient.invalidateQueries({ queryKey: COLLECTION_KEYS.lists() })
-      void queryClient.invalidateQueries({ queryKey: COLLECTION_KEYS.detail(collectionId) })
+      if (collectionId) {
+        void queryClient.invalidateQueries({ queryKey: COLLECTION_KEYS.detail(collectionId) })
+      }
+      void queryClient.invalidateQueries({ queryKey: ['managementProducts', 'paginated'] })
     },
     ...options,
   })

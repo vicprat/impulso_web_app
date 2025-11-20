@@ -18,10 +18,10 @@ interface EventPageProps {
 }
 
 export default function EventPage({ params }: EventPageProps) {
-  const [ handle, setHandle ] = useState<string | null>(null)
-  const [ relatedEvents, setRelatedEvents ] = useState<Event[]>([])
-  const [ isLoading, setIsLoading ] = useState(true)
-  const [ error, setError ] = useState<Error | null>(null)
+  const [handle, setHandle] = useState<string | null>(null)
+  const [relatedEvents, setRelatedEvents] = useState<Event[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
   const { user } = useAuth()
   const { data: event, isLoading: eventLoading } = useGetEventByHandle(handle || '')
@@ -39,7 +39,7 @@ export default function EventPage({ params }: EventPageProps) {
     }
 
     void initializePage()
-  }, [ params ])
+  }, [params])
 
   useEffect(() => {
     const fetchRelatedEvents = async () => {
@@ -58,7 +58,7 @@ export default function EventPage({ params }: EventPageProps) {
     if (event) {
       void fetchRelatedEvents()
     }
-  }, [ event ])
+  }, [event])
 
   // Mostrar loading mientras se inicializa
   if (isLoading || eventLoading) {

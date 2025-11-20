@@ -82,6 +82,15 @@ interface ShopifyProductData {
   metafields: {
     edges: { node: ShopifyMetafieldNode }[]
   }
+  collections?: {
+    edges: {
+      node: {
+        id: string
+        title: string
+        handle: string
+      }
+    }[]
+  }
 }
 
 interface ShopifyMetafieldInput {
@@ -220,6 +229,7 @@ export class Product {
   manualTags: string[] = []
   autoTags: string[] = []
   artworkDetails: ArtworkDetails
+  collections: { id: string; title: string; handle: string }[] = []
   private primaryLocationId: string
 
   constructor(shopifyProductData: ShopifyProductData, primaryLocationId: string) {
@@ -244,6 +254,15 @@ export class Product {
 
     // Extraer información de los tags después de que se procesen
     this._extractInfoFromTags()
+
+    // Procesar colecciones
+    if (shopifyProductData.collections?.edges) {
+      this.collections = shopifyProductData.collections.edges.map((edge) => ({
+        id: edge.node.id,
+        title: edge.node.title,
+        handle: edge.node.handle,
+      }))
+    }
   }
 
   private _convertVariantFromApi(apiVariant: ShopifyVariantNode): Variant {

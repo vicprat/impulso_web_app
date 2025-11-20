@@ -95,7 +95,7 @@ export default function PrivateRoomsListPage() {
           </div>
           <div className='flex items-center space-x-2'>
             <Button asChild>
-              <Link href={ROUTES.ADMIN.PRIVATE_ROOMS.CREATE.PATH}>
+              <Link href={ROUTES.INVENTORY.PRIVATE_ROOMS.CREATE.PATH}>
                 <Plus className='mr-2 size-5' />
                 Create New Room
               </Link>
@@ -168,7 +168,7 @@ export default function PrivateRoomsListPage() {
                 </p>
               </div>
               <Button asChild>
-                <Link href={ROUTES.ADMIN.PRIVATE_ROOMS.CREATE.PATH}>
+                <Link href={ROUTES.INVENTORY.PRIVATE_ROOMS.CREATE.PATH}>
                   <Plus className='mr-2 size-4' />
                   Create First Room
                 </Link>
@@ -182,7 +182,7 @@ export default function PrivateRoomsListPage() {
                 <div className='space-y-4'>
                   <div className='space-y-2'>
                     <Link
-                      href={replaceRouteParams(ROUTES.ADMIN.PRIVATE_ROOMS.DETAIL.PATH, {
+                      href={replaceRouteParams(ROUTES.INVENTORY.PRIVATE_ROOMS.DETAIL.PATH, {
                         id: room.id,
                       })}
                       className='group block'
@@ -234,7 +234,7 @@ export default function PrivateRoomsListPage() {
                   <div className='grid grid-cols-3 gap-2'>
                     <Button size='sm' variant='outline' asChild>
                       <Link
-                        href={replaceRouteParams(ROUTES.ADMIN.PRIVATE_ROOMS.DETAIL.PATH, {
+                        href={replaceRouteParams(ROUTES.INVENTORY.PRIVATE_ROOMS.DETAIL.PATH, {
                           id: room.id,
                         })}
                       >
@@ -245,7 +245,7 @@ export default function PrivateRoomsListPage() {
 
                     <Button size='sm' variant='outline' asChild>
                       <Link
-                        href={replaceRouteParams(ROUTES.ADMIN.PRIVATE_ROOMS.DETAIL.PATH, {
+                        href={replaceRouteParams(ROUTES.INVENTORY.PRIVATE_ROOMS.DETAIL.PATH, {
                           id: room.id,
                         })}
                       >
@@ -256,7 +256,7 @@ export default function PrivateRoomsListPage() {
 
                     <Button size='sm' variant='destructive' asChild>
                       <Link
-                        href={replaceRouteParams(ROUTES.ADMIN.PRIVATE_ROOMS.DETAIL.PATH, {
+                        href={replaceRouteParams(ROUTES.INVENTORY.PRIVATE_ROOMS.DETAIL.PATH, {
                           id: room.id,
                           mode: 'delete',
                         })}

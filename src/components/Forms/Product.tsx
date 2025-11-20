@@ -129,25 +129,53 @@ const AddOptionSelect = ({
             </SelectItem>
           ))}
           <Separator />
-          <div className='p-2'>
+          <div
+            className='p-2'
+            onKeyDown={(e) => e.stopPropagation()}
+            onKeyUp={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className='flex items-center gap-2'>
               <Input
                 placeholder='Agregar nuevo...'
                 value={newValue}
                 onChange={(e) => setNewValue(e.target.value)}
+                onKeyDown={(e) => {
+                  e.stopPropagation()
+                }}
+                onKeyUp={(e) => {
+                  e.stopPropagation()
+                }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                }}
+                onFocus={(e) => {
+                  e.stopPropagation()
+                }}
                 className='h-8'
                 disabled={isAdding}
               />
               <Button
                 type='button'
                 size='sm'
-                onClick={handleAddNew}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void handleAddNew()
+                }}
                 disabled={!newValue.trim() || isAdding}
               >
                 {isAdding ? 'Agregando...' : 'Agregar'}
               </Button>
               {newValue && (
-                <Button type='button' size='sm' variant='outline' onClick={handleCancel}>
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleCancel()
+                  }}
+                >
                   Cancelar
                 </Button>
               )}
@@ -433,9 +461,9 @@ export function ProductForm({
   }, [isArtist, form])
 
   const onSubmit = async (data: ProductFormData) => {
-    if (isEditing) {
+    if (isEditing && product) {
       // Obtener las imágenes originales del producto
-      const originalImages = product?.media || []
+      const originalImages = product.media || []
 
       // Identificar imágenes que fueron eliminadas usando mediaId
       const remainingMediaIds = allImages
@@ -494,7 +522,7 @@ export function ProductForm({
 
         vendor: data.vendor,
       }
-      onSave(updatePayload)
+      ;(onSave as (payload: UpdateProductPayload) => void)(updatePayload)
     } else {
       // Convertir ImageData a NewImage para el payload
       const newImages: NewImage[] = allImages.map((img) => ({
@@ -530,7 +558,7 @@ export function ProductForm({
         vendor: vendorValue,
       }
 
-      onSave(createPayload)
+      ;(onSave as (payload: CreateProductPayload) => void)(createPayload)
     }
   }
 

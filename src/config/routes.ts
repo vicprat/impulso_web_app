@@ -163,28 +163,6 @@ export const ROUTES = {
         PERMISSIONS: [PERMISSIONS.VIEW_PRIVATE_ROOMS],
         ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.VIP_CUSTOMER.NAME],
       },
-      CREATE: {
-        ICON: 'plus',
-        LABEL: 'Crear Sala Privada',
-        PATH: '/admin/private-rooms/create',
-        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-      DETAIL: {
-        ICON: 'edit',
-        LABEL: 'Editar Sala Privada',
-        PATH: '/admin/private-rooms/:id',
-        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-      MAIN: {
-        DESCRIPTION: 'Gestionar Salas Privadas',
-        ICON: 'lock',
-        LABEL: 'Salas Privadas',
-        PATH: '/admin/private-rooms',
-        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
     },
     USERS: {
       DETAIL: {
@@ -280,10 +258,58 @@ export const ROUTES = {
   },
 
   INVENTORY: {
+    COLLECTIONS: {
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Detalle de Colección',
+        PATH: '/manage-inventory/collections/:id',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar Colecciones',
+        ICON: 'grid',
+        LABEL: 'Colecciones',
+        PATH: '/manage-inventory/collections',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      },
+    },
+    COUPONS: {
+      CREATE: {
+        ICON: 'plus',
+        LABEL: 'Crear Cupón',
+        PATH: '/manage-inventory/coupons/create',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      },
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Detalle de Cupón',
+        PATH: '/manage-inventory/coupons/:id',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar Cupones',
+        ICON: 'tag',
+        LABEL: 'Cupones',
+        PATH: '/manage-inventory/coupons',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+      },
+    },
     CREATE: {
       ICON: 'plus',
       LABEL: 'Crear Producto',
       PATH: '/manage-inventory/create',
+      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+    },
+    CREATE_BULK: {
+      ICON: 'plus',
+      LABEL: 'Crear Productos en Lote',
+      PATH: '/manage-inventory/create-bulk',
       PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
@@ -294,12 +320,45 @@ export const ROUTES = {
       PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
+    GROUP: {
+      HIDE_IN_NAV: true,
+      ICON: 'archive',
+      LABEL: 'Gestión de Inventario',
+      PATH: '/manage-inventory',
+      PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+    },
+
     MAIN: {
       ICON: 'archive',
       LABEL: 'Inventario',
       PATH: '/manage-inventory',
       PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+    },
+    PRIVATE_ROOMS: {
+      CREATE: {
+        ICON: 'plus',
+        LABEL: 'Crear Sala Privada',
+        PATH: '/manage-inventory/private-rooms/create',
+        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Editar Sala Privada',
+        PATH: '/manage-inventory/private-rooms/:id',
+        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar Salas Privadas',
+        ICON: 'lock',
+        LABEL: 'Salas Privadas',
+        PATH: '/manage-inventory/private-rooms',
+        PERMISSIONS: [PERMISSIONS.MANAGE_PRIVATE_ROOMS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
     },
   },
 
@@ -540,7 +599,6 @@ export const getDashboardNavRoutes = (
     // Rutas administrativas agrupadas
     ROUTES.ADMIN.EVENTS.MAIN,
     ROUTES.ADMIN.USERS.MAIN,
-    ROUTES.ADMIN.PRIVATE_ROOMS.MAIN,
     ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN,
     ROUTES.ADMIN.FINANCE.ENTRIES.MAIN,
     ROUTES.ADMIN.FINANCE.REPORTS.MAIN,
@@ -557,14 +615,17 @@ export const getDashboardNavRoutes = (
 export const getGroupedDashboardNavRoutes = (
   userRoles: string[],
   userPermissions: string[]
-): { groupedRoutes: RouteConfig[]; individualRoutes: RouteConfig[] } => {
+): {
+  groupedRoutes: RouteConfig[]
+  individualRoutes: RouteConfig[]
+  inventoryGroupRoutes: RouteConfig[]
+} => {
   const allRoutes = getDashboardNavRoutes(userRoles, userPermissions)
 
   // Rutas que deben estar agrupadas bajo Administración
   const adminGroupRoutes = [
     ROUTES.ADMIN.EVENTS.MAIN,
     ROUTES.ADMIN.USERS.MAIN,
-    ROUTES.ADMIN.PRIVATE_ROOMS.MAIN,
     ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN,
     ROUTES.ADMIN.FINANCE.ENTRIES.MAIN,
     ROUTES.ADMIN.FINANCE.REPORTS.MAIN,
@@ -574,14 +635,29 @@ export const getGroupedDashboardNavRoutes = (
       !('HIDE_IN_NAV' in route && route.HIDE_IN_NAV)
   )
 
+  // Rutas que deben estar agrupadas bajo Gestión de Inventario
+  const inventoryGroupRoutes = [
+    ROUTES.INVENTORY.MAIN,
+    ROUTES.INVENTORY.COUPONS.MAIN,
+    ROUTES.INVENTORY.COLLECTIONS.MAIN,
+    ROUTES.INVENTORY.PRIVATE_ROOMS.MAIN,
+  ].filter(
+    (route) =>
+      filterRoutesByAccess([route], userRoles, userPermissions).length > 0 &&
+      !('HIDE_IN_NAV' in route && route.HIDE_IN_NAV)
+  )
+
   // Rutas que deben estar individuales (incluyendo ACCESS que no está en el grupo)
   const individualRoutes = allRoutes.filter(
-    (route) => !adminGroupRoutes.some((adminRoute) => adminRoute.PATH === route.PATH)
+    (route) =>
+      !adminGroupRoutes.some((adminRoute) => adminRoute.PATH === route.PATH) &&
+      !inventoryGroupRoutes.some((inventoryRoute) => inventoryRoute.PATH === route.PATH)
   )
 
   return {
     groupedRoutes: adminGroupRoutes,
     individualRoutes,
+    inventoryGroupRoutes,
   }
 }
 

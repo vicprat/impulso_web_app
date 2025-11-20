@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react'
 import { Logo } from '@/components/Logo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarMenu } from '@/components/ui/sidebar'
-import { getGroupedDashboardNavRoutes, ROUTES, type RouteConfig } from '@/config/routes'
+import { ROUTES, getGroupedDashboardNavRoutes, type RouteConfig } from '@/config/routes'
 import { useAuth } from '@/modules/auth/context/useAuth'
 
 import { MenuGroup } from './MenuGroup'
@@ -24,8 +24,8 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
 
   const { isLoading, logout, user } = useAuth()
 
-  const [visibleRoutes, setVisibleRoutes] = useState<RouteConfig[]>([])
   const [groupedRoutes, setGroupedRoutes] = useState<RouteConfig[]>([])
+  const [inventoryGroupRoutes, setInventoryGroupRoutes] = useState<RouteConfig[]>([])
   const [individualRoutes, setIndividualRoutes] = useState<RouteConfig[]>([])
 
   useEffect(() => {
@@ -33,11 +33,14 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
 
     const userRoles = user.roles
     const userPermissions = user.permissions
-    const { groupedRoutes, individualRoutes } = getGroupedDashboardNavRoutes(userRoles, userPermissions)
-    
+    const { groupedRoutes, individualRoutes, inventoryGroupRoutes } = getGroupedDashboardNavRoutes(
+      userRoles,
+      userPermissions
+    )
+
     setGroupedRoutes(groupedRoutes)
+    setInventoryGroupRoutes(inventoryGroupRoutes)
     setIndividualRoutes(individualRoutes)
-    setVisibleRoutes([...groupedRoutes, ...individualRoutes])
   }, [user, isLoading, routes])
 
   const handleLogout = () => {
@@ -63,13 +66,15 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
         <SidebarMenu>
           {/* Rutas individuales */}
           {individualRoutes.map(renderRoute)}
-          
+
+          {/* Grupo de Gestión de Inventario */}
+          {inventoryGroupRoutes.length > 0 && (
+            <MenuGroup route={ROUTES.INVENTORY.GROUP} children={inventoryGroupRoutes} />
+          )}
+
           {/* Grupo de Administración */}
           {groupedRoutes.length > 0 && (
-            <MenuGroup 
-              route={ROUTES.ADMIN.GROUP} 
-              children={groupedRoutes}
-            />
+            <MenuGroup route={ROUTES.ADMIN.GROUP} children={groupedRoutes} />
           )}
         </SidebarMenu>
       </SidebarContent>

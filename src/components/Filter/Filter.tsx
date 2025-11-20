@@ -7,9 +7,7 @@ import {
   Filter as FilterIcon,
   Package,
   Palette,
-  Ruler,
   Square,
-  Tag,
   User,
   X,
 } from 'lucide-react'
@@ -94,7 +92,6 @@ interface FilterProps {
 export const Filter = ({ isOpen, onClose }: FilterProps) => {
   const [filters, setFilters] = useState(defaultFilters)
   const [openSections, setOpenSections] = useState<string[]>(['vendors', 'price', 'sorting'])
-  const [searchTerms, setSearchTerms] = useState<Record<string, string>>({})
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -218,7 +215,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
         .sort((a, b) => b.label.localeCompare(a.label)) ?? [],
     [filterOptions]
   )
-  const otherTagOptions = useMemo(
+  const _otherTagOptions = useMemo(
     () =>
       filterOptions?.otherTags
         .map((o) => ({ label: o.label, value: o.input }))
@@ -228,7 +225,6 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
 
   const clearFilters = () => {
     setFilters(defaultFilters)
-    setSearchTerms({})
     const currentSort = searchParams.get('sort')
     const currentOrder = searchParams.get('order')
 
@@ -256,11 +252,6 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     if (filters.priceRange.min || filters.priceRange.max) count++
     if (filters.sortBy !== 'TITLE' || filters.sortOrder !== 'asc') count++
     return count
-  }
-
-  const filtersOptions = (options: { value: string; label: string }[], searchTerm: string) => {
-    if (!searchTerm) return options
-    return options.filter((option) => option.label.toLowerCase().includes(searchTerm.toLowerCase()))
   }
 
   useEffect(() => {
@@ -296,7 +287,6 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     options,
     sectionKey,
     selectedValues,
-    showSearch = false,
     title,
   }: {
     title: string
@@ -312,11 +302,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       | 'formats'
       | 'years'
       | 'dimensions'
-    showSearch?: boolean
   }) => {
-    const searchTerm = searchTerms[sectionKey] || ''
-    const filteredOptions = filtersOptions(options, searchTerm)
-
     if (options.length === 0) return null
 
     return (
@@ -347,19 +333,6 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
 
         {openSections.includes(sectionKey) && (
           <div className='border-t p-3 sm:p-4'>
-            {showSearch && (
-              <div className='relative mb-3 sm:mb-4'>
-                <Input
-                  placeholder={`Buscar ${title.toLowerCase()}...`}
-                  value={searchTerm}
-                  onChange={(e) =>
-                    setSearchTerms((prev) => ({ ...prev, [sectionKey]: e.target.value }))
-                  }
-                  className='h-8 text-sm sm:h-9'
-                />
-              </div>
-            )}
-
             {selectedValues.length > 0 && (
               <div className='mb-3 flex flex-wrap gap-1.5 sm:mb-4 sm:gap-2'>
                 {selectedValues.map((value) => {
@@ -384,7 +357,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
 
             <ScrollArea className='h-40 sm:h-48'>
               <div className='space-y-1 pr-2'>
-                {filteredOptions.map((option) => (
+                {options.map((option) => (
                   <div
                     key={option.value}
                     onClick={() => handleOptionToggle(filterKey, option.value)}
@@ -400,7 +373,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
               </div>
             </ScrollArea>
 
-            {filteredOptions.length === 0 && (
+            {options.length === 0 && (
               <p className='py-4 text-center text-xs text-muted-foreground sm:text-sm'>
                 No se encontraron opciones
               </p>
@@ -539,73 +512,6 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                 )}
               </Card>
 
-              <FilterSection
-                title='Artistas'
-                icon={User}
-                sectionKey='vendors'
-                options={vendorOptions}
-                selectedValues={filters.vendors}
-                filterKey='vendors'
-                showSearch={vendorOptions.length > 5}
-              />
-              <FilterSection
-                title='Tipo de Obra'
-                icon={Package}
-                sectionKey='productTypes'
-                options={productTypeOptions}
-                selectedValues={filters.productTypes}
-                filterKey='productTypes'
-                showSearch={productTypeOptions.length > 5}
-              />
-
-              <FilterSection
-                title='Técnicas'
-                icon={Palette}
-                sectionKey='techniques'
-                options={techniqueOptions}
-                selectedValues={filters.techniques}
-                filterKey='techniques'
-                showSearch
-              />
-              {dimensionOptions.length === 0 && (
-                <FilterSection
-                  title='Formatos'
-                  icon={Square}
-                  sectionKey='formats'
-                  options={formatOptions}
-                  selectedValues={filters.formats}
-                  filterKey='formats'
-                  showSearch
-                />
-              )}
-              <FilterSection
-                title='Año'
-                icon={CalendarDays}
-                sectionKey='years'
-                options={yearOptions}
-                selectedValues={filters.years}
-                filterKey='years'
-                showSearch
-              />
-              <FilterSection
-                title='Dimensiones'
-                icon={Ruler}
-                sectionKey='dimensions'
-                options={dimensionOptions}
-                selectedValues={filters.dimensions}
-                filterKey='dimensions'
-                showSearch
-              />
-              <FilterSection
-                title='Otros Tags'
-                icon={Tag}
-                sectionKey='otherTags'
-                options={otherTagOptions}
-                selectedValues={filters.tags}
-                filterKey='tags'
-                showSearch
-              />
-
               {/* Rango de precio */}
               <Card className='border shadow-sm'>
                 <div
@@ -674,6 +580,50 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                   </div>
                 )}
               </Card>
+
+              <FilterSection
+                title='Artistas'
+                icon={User}
+                sectionKey='vendors'
+                options={vendorOptions}
+                selectedValues={filters.vendors}
+                filterKey='vendors'
+              />
+              <FilterSection
+                title='Tipo de Obra'
+                icon={Package}
+                sectionKey='productTypes'
+                options={productTypeOptions}
+                selectedValues={filters.productTypes}
+                filterKey='productTypes'
+              />
+
+              <FilterSection
+                title='Técnicas'
+                icon={Palette}
+                sectionKey='techniques'
+                options={techniqueOptions}
+                selectedValues={filters.techniques}
+                filterKey='techniques'
+              />
+              {dimensionOptions.length === 0 && (
+                <FilterSection
+                  title='Formatos'
+                  icon={Square}
+                  sectionKey='formats'
+                  options={formatOptions}
+                  selectedValues={filters.formats}
+                  filterKey='formats'
+                />
+              )}
+              <FilterSection
+                title='Año'
+                icon={CalendarDays}
+                sectionKey='years'
+                options={yearOptions}
+                selectedValues={filters.years}
+                filterKey='years'
+              />
             </div>
           )}
         </div>

@@ -108,7 +108,8 @@ async function getProducts(
     }
   }
 
-  const hasMetafieldFilters = params.technique?.trim() ?? params.dimensions?.trim() ?? params.year?.trim()
+  const hasMetafieldFilters =
+    params.technique?.trim() ?? params.dimensions?.trim() ?? params.year?.trim()
 
   let sortKey = 'TITLE' // Default sort key
   let reverse = false // Default sort order
@@ -1192,7 +1193,8 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
     }
   }
 
-  const hasMetafieldFilters = params.technique?.trim() ?? params.dimensions?.trim() ?? params.year?.trim()
+  const hasMetafieldFilters =
+    params.technique?.trim() ?? params.dimensions?.trim() ?? params.year?.trim()
 
   let sortKey = 'TITLE' // Default sort key
   let reverse = false // Default sort order

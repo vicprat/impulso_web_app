@@ -272,7 +272,8 @@ export const Room: React.FC<Props> = ({
           <Alert variant='destructive'>
             <Trash2 className='size-4' />
             <AlertDescription>
-              Estás a punto de eliminar permanentemente esta sala privada. Esta acción no se puede deshacer.
+              Estás a punto de eliminar permanentemente esta sala privada. Esta acción no se puede
+              deshacer.
             </AlertDescription>
           </Alert>
         )}
@@ -310,7 +311,10 @@ export const Room: React.FC<Props> = ({
                     const user = users.find((u: UserProfile) => u.id === userId)
                     const userRole = user?.roles?.[0] ?? 'Sin rol'
                     return (
-                      <div key={userId} className='flex items-center justify-between gap-2 rounded-md border p-2'>
+                      <div
+                        key={userId}
+                        className='flex items-center justify-between gap-2 rounded-md border p-2'
+                      >
                         <span className='text-sm'>
                           {user?.email ?? 'Desconocido'} ({user?.firstName} {user?.lastName})
                         </span>
@@ -366,7 +370,9 @@ export const Room: React.FC<Props> = ({
 
                   {selectedUsers.length > 0 && (
                     <div className='space-y-2'>
-                      <Label className='text-sm'>Usuarios Seleccionados ({selectedUsers.length})</Label>
+                      <Label className='text-sm'>
+                        Usuarios Seleccionados ({selectedUsers.length})
+                      </Label>
                       <div className='flex flex-wrap gap-2'>
                         {selectedUsers.map((userId) => {
                           const user = users.find((u: UserProfile) => u.id === userId)
@@ -432,7 +438,8 @@ export const Room: React.FC<Props> = ({
                           products.length === 0 &&
                           debouncedProductSearchQuery && (
                             <div className='p-4 text-center text-muted-foreground'>
-                              No se encontraron productos para &quot;{debouncedProductSearchQuery}&quot;
+                              No se encontraron productos para &quot;{debouncedProductSearchQuery}
+                              &quot;
                             </div>
                           )}
 
@@ -513,7 +520,9 @@ export const Room: React.FC<Props> = ({
                         <Search className='size-6' />
                       </div>
                       <p className='text-sm'>
-                        {isReadOnly ? 'No hay productos en esta sala' : 'No se han agregado productos'}
+                        {isReadOnly
+                          ? 'No hay productos en esta sala'
+                          : 'No se han agregado productos'}
                       </p>
                       {!isReadOnly && (
                         <p className='text-xs'>
