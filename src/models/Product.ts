@@ -258,9 +258,9 @@ export class Product {
     // Procesar colecciones
     if (shopifyProductData.collections?.edges) {
       this.collections = shopifyProductData.collections.edges.map((edge) => ({
+        handle: edge.node.handle,
         id: edge.node.id,
         title: edge.node.title,
-        handle: edge.node.handle,
       }))
     }
   }
