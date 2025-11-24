@@ -3,7 +3,7 @@ import {
   categorizeDimensions,
   formatDimensions,
 } from '@/helpers/dimensions'
-import { buildProductSearchQuery } from '@/helpers/search'
+import { buildProductSearchQuery, normalizeText } from '@/helpers/search'
 import { prisma } from '@/lib/prisma'
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { Product } from '@/models/Product'
@@ -55,6 +55,35 @@ function validateSession(session: AuthSession): asserts session is ValidatedSess
   if (!session.user.id) {
     throw new Error('Sesión no válida o usuario no autenticado.')
   }
+}
+
+function filterProductsByExactSearch(products: Product[], searchTerm: string): Product[] {
+  if (!searchTerm?.trim()) return products
+
+  const normalizedSearch = normalizeText(searchTerm)
+  const searchWords = normalizedSearch.split(/\s+/).filter((word) => word.length >= 2)
+
+  if (searchWords.length < 2) {
+    return products
+  }
+
+  return products.filter((product) => {
+    const searchableText = normalizeText(
+      [
+        product.title,
+        product.vendor,
+        product.productType,
+        product.artworkDetails.medium,
+        product.artworkDetails.location,
+        product.artworkDetails.serie,
+        ...product.tags,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    )
+
+    return searchWords.every((word) => searchableText.includes(word))
+  })
 }
 
 export async function getPrimaryLocationId(): Promise<string> {
@@ -178,7 +207,11 @@ async function getProducts(
       variables
     )
     const locationId = await getPrimaryLocationId()
-    const products = response.products.edges.map((edge) => new Product(edge.node, locationId))
+    let products = response.products.edges.map((edge) => new Product(edge.node, locationId))
+
+    if (params.search?.trim()) {
+      products = filterProductsByExactSearch(products, params.search)
+    }
 
     return { pageInfo: response.products.pageInfo, products }
   }
@@ -271,6 +304,10 @@ async function getProductsWithManualSorting(
       if (!productYear) return false
       return yearFilters.some((filter) => productYear === filter.trim())
     })
+  }
+
+  if (params.search?.trim()) {
+    filteredProducts = filterProductsByExactSearch(filteredProducts, params.search)
   }
 
   if (sortField) {
@@ -1281,7 +1318,11 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
       variables
     )
     const locationId = await getPrimaryLocationId()
-    const products = response.products.edges.map((edge) => new Product(edge.node, locationId))
+    let products = response.products.edges.map((edge) => new Product(edge.node, locationId))
+
+    if (params.search?.trim()) {
+      products = filterProductsByExactSearch(products, params.search)
+    }
 
     return { pageInfo: response.products.pageInfo, products }
   }
