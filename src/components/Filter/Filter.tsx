@@ -28,6 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  getAllTechniquesForCategories,
+  normalizeTechniqueCategory,
+} from '@/lib/technique-categories'
 import { useFilterOptions } from '@/modules/shopify/hooks'
 
 interface State {
@@ -151,8 +155,16 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       newSearchParams.set('product_types', filters.productTypes.join(','))
     if (filters.vendors.length > 0) newSearchParams.set('vendor', filters.vendors.join(','))
     if (filters.tags.length > 0) newSearchParams.set('tags', filters.tags.join(','))
-    if (filters.techniques.length > 0)
-      newSearchParams.set('techniques', filters.techniques.join(','))
+    if (filters.techniques.length > 0) {
+      const allTechniqueNames = filterOptions?.techniques.map((t) => t.input) ?? []
+      const expandedTechniques = getAllTechniquesForCategories(
+        filters.techniques,
+        allTechniqueNames
+      )
+      if (expandedTechniques.length > 0) {
+        newSearchParams.set('techniques', expandedTechniques.join(','))
+      }
+    }
     if (filters.formats.length > 0) newSearchParams.set('formats', filters.formats.join(','))
     if (filters.years.length > 0) newSearchParams.set('years', filters.years.join(','))
     if (filters.dimensions.length > 0)
@@ -187,13 +199,27 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     [filterOptions]
   )
 
-  const techniqueOptions = useMemo(
-    () =>
-      filterOptions?.techniques
-        .map((o) => ({ label: o.label, value: o.input }))
-        .sort((a, b) => a.label.localeCompare(b.label)) ?? [],
-    [filterOptions]
-  )
+  const techniqueOptions = useMemo(() => {
+    if (!filterOptions?.techniques) return []
+
+    const categoryMap = new Map<string, string>()
+
+    for (const technique of filterOptions.techniques) {
+      const category = normalizeTechniqueCategory(technique.input)
+      if (category) {
+        if (!categoryMap.has(category)) {
+          categoryMap.set(category, category)
+        }
+      }
+    }
+
+    const categories = Array.from(categoryMap.keys()).sort((a, b) => a.localeCompare(b))
+
+    return categories.map((category) => ({
+      label: category,
+      value: category,
+    }))
+  }, [filterOptions])
   const formatOptions = useMemo(
     () =>
       filterOptions?.formats
@@ -258,7 +284,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     const productTypes = searchParams.get('product_types')?.split(',').filter(Boolean) ?? []
     const vendors = searchParams.get('vendor')?.split(',').filter(Boolean) ?? []
     const tags = searchParams.get('tags')?.split(',').filter(Boolean) ?? []
-    const techniques = searchParams.get('techniques')?.split(',').filter(Boolean) ?? []
+    const techniquesFromUrl = searchParams.get('techniques')?.split(',').filter(Boolean) ?? []
     const formats = searchParams.get('formats')?.split(',').filter(Boolean) ?? []
     const years = searchParams.get('years')?.split(',').filter(Boolean) ?? []
     const dimensions = searchParams.get('dimensions')?.split(',').filter(Boolean) ?? []
@@ -266,6 +292,32 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     const priceMax = searchParams.get('price_max') ?? ''
     const sortBy = (searchParams.get('sort') as State['sortBy']) || 'TITLE'
     const sortOrder = (searchParams.get('order') as State['sortOrder']) || 'asc'
+
+    const normalizedTechniques = new Set<string>()
+    const categoryCounts = new Map<string, number>()
+    
+    for (const technique of techniquesFromUrl) {
+      const category = normalizeTechniqueCategory(technique)
+      if (category) {
+        categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1)
+      }
+    }
+
+    const uniqueCategories = Array.from(categoryCounts.keys())
+    const totalTechniques = techniquesFromUrl.length
+
+    if (uniqueCategories.length === 1 && categoryCounts.get(uniqueCategories[0]) === totalTechniques) {
+      normalizedTechniques.add(uniqueCategories[0])
+    } else {
+      for (const technique of techniquesFromUrl) {
+        const category = normalizeTechniqueCategory(technique)
+        if (category) {
+          normalizedTechniques.add(category)
+        } else {
+          normalizedTechniques.add(technique)
+        }
+      }
+    }
 
     setFilters({
       dimensions,
@@ -275,7 +327,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       sortBy,
       sortOrder,
       tags,
-      techniques,
+      techniques: Array.from(normalizedTechniques),
       vendors,
       years,
     })

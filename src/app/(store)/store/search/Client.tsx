@@ -100,7 +100,7 @@ export const Client = () => {
   const currentOrder = searchParams.get('order')
 
   const dimensions = searchParams.get('dimensions')?.split(',') ?? []
-  const techniques = searchParams.get('techniques')?.split(',') ?? []
+  const techniques = searchParams.get('techniques')?.split(',').filter(Boolean) ?? []
   const years = searchParams.get('years')?.split(',') ?? []
 
   const storeParams = {
@@ -120,7 +120,7 @@ export const Client = () => {
             ? 'createdAt'
             : undefined,
     sortOrder: currentOrder === 'desc' ? ('desc' as const) : ('asc' as const),
-    technique: techniques[0],
+    technique: techniques.length > 0 ? techniques.join(',') : undefined,
     vendor: searchFilters.vendor?.[0],
     year: years[0],
   }

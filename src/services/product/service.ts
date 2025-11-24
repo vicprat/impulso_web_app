@@ -226,7 +226,11 @@ async function getProductsWithManualSorting(
   let filteredProducts = allProducts
 
   if (params.technique?.trim()) {
-    filteredProducts = filteredProducts.filter((p) => p.artworkDetails.medium === params.technique)
+    const techniqueFilters = params.technique.split(',').map((t) => t.trim().toLowerCase())
+    filteredProducts = filteredProducts.filter((p) => {
+      const productTechnique = p.artworkDetails.medium?.toLowerCase() ?? ''
+      return techniqueFilters.some((filter) => productTechnique.includes(filter))
+    })
   }
 
   if (params.dimensions?.trim()) {
