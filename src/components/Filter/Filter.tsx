@@ -227,13 +227,24 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
         .sort((a, b) => a.label.localeCompare(b.label)) ?? [],
     [filterOptions]
   )
-  const dimensionOptions = useMemo(
-    () =>
-      filterOptions?.dimensions
-        .map((o) => ({ label: o.label, value: o.input }))
-        .sort((a, b) => a.label.localeCompare(b.label)) ?? [],
-    [filterOptions]
-  )
+  const dimensionOptions = useMemo(() => {
+    if (!filterOptions?.dimensions) return []
+
+    const categoryOrder: Record<string, number> = {
+      chico: 1,
+      'extra-grande': 4,
+      grande: 3,
+      mediano: 2,
+    }
+
+    return filterOptions.dimensions
+      .map((o) => ({ label: o.label, value: o.input }))
+      .sort((a, b) => {
+        const orderA = categoryOrder[a.value] ?? 999
+        const orderB = categoryOrder[b.value] ?? 999
+        return orderA - orderB
+      })
+  }, [filterOptions])
   const yearOptions = useMemo(
     () =>
       filterOptions?.years
@@ -295,7 +306,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
 
     const normalizedTechniques = new Set<string>()
     const categoryCounts = new Map<string, number>()
-    
+
     for (const technique of techniquesFromUrl) {
       const category = normalizeTechniqueCategory(technique)
       if (category) {
@@ -306,7 +317,10 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     const uniqueCategories = Array.from(categoryCounts.keys())
     const totalTechniques = techniquesFromUrl.length
 
-    if (uniqueCategories.length === 1 && categoryCounts.get(uniqueCategories[0]) === totalTechniques) {
+    if (
+      uniqueCategories.length === 1 &&
+      categoryCounts.get(uniqueCategories[0]) === totalTechniques
+    ) {
       normalizedTechniques.add(uniqueCategories[0])
     } else {
       for (const technique of techniquesFromUrl) {
@@ -658,6 +672,25 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                 selectedValues={filters.techniques}
                 filterKey='techniques'
               />
+
+              <FilterSection
+                title='Año'
+                icon={CalendarDays}
+                sectionKey='years'
+                options={yearOptions}
+                selectedValues={filters.years}
+                filterKey='years'
+              />
+              {dimensionOptions.length > 0 && (
+                <FilterSection
+                  title='Medidas'
+                  icon={Square}
+                  sectionKey='dimensions'
+                  options={dimensionOptions}
+                  selectedValues={filters.dimensions}
+                  filterKey='dimensions'
+                />
+              )}
               {dimensionOptions.length === 0 && (
                 <FilterSection
                   title='Formatos'
@@ -668,14 +701,6 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                   filterKey='formats'
                 />
               )}
-              <FilterSection
-                title='Año'
-                icon={CalendarDays}
-                sectionKey='years'
-                options={yearOptions}
-                selectedValues={filters.years}
-                filterKey='years'
-              />
             </div>
           )}
         </div>

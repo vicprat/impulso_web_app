@@ -1144,11 +1144,14 @@ export function Client() {
           <Select value={dimensionsFilterInUrl} onValueChange={handleDimensionsFilterChange}>
             <SelectTrigger className='w-44'>
               <Filter className='mr-2 size-4' />
-              <SelectValue placeholder='Filtrar por dimensiones' />
+              <SelectValue placeholder='Filtrar por medidas' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='all'>Todas las dimensiones</SelectItem>
-              {/* Las opciones de dimensiones se cargarán dinámicamente desde la API */}
+              <SelectItem value='all'>Todas las medidas</SelectItem>
+              <SelectItem value='chico'>Chico</SelectItem>
+              <SelectItem value='mediano'>Mediano</SelectItem>
+              <SelectItem value='grande'>Grande</SelectItem>
+              <SelectItem value='extra-grande'>Extra Grande</SelectItem>
             </SelectContent>
           </Select>
         </div>

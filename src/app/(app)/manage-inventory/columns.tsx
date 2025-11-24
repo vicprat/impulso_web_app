@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
+import { formatDimensionsWithUnit } from '@/helpers/dimensions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -487,8 +488,11 @@ const EditableDimensions = ({
   }, [height, width, depth, isEditing])
 
   if (!isEditing) {
-    const dimensions = [height, width, depth].filter(Boolean)
-    return <span className='text-sm'>{dimensions.length > 0 ? dimensions.join(' × ') : '-'}</span>
+    return (
+      <span className='text-sm'>
+        {formatDimensionsWithUnit(height, width, depth) || '-'}
+      </span>
+    )
   }
 
   return (
@@ -1318,12 +1322,6 @@ export const columns: ColumnDef<Product>[] = [
           ? editingChanges.artworkDetails.depth
           : product.artworkDetails.depth
 
-      const dimensionValues = [
-        currentHeight && `${currentHeight}cm`,
-        currentWidth && `${currentWidth}cm`,
-        currentDepth && `${currentDepth}cm`,
-      ].filter((value): value is string => Boolean(value))
-
       const content = isEditing ? (
         <EditableDimensions
           height={currentHeight}
@@ -1343,7 +1341,9 @@ export const columns: ColumnDef<Product>[] = [
           fieldName='dimensions'
         />
       ) : (
-        <span className='text-sm'>{dimensionValues.join(' × ') || '-'}</span>
+        <span className='text-sm'>
+          {formatDimensionsWithUnit(currentHeight, currentWidth, currentDepth) || '-'}
+        </span>
       )
 
       return <div className='min-w-[224px]'>{content}</div>

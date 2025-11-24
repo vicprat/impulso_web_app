@@ -1,3 +1,8 @@
+import {
+  calculateDimensionValue,
+  categorizeDimensions,
+  formatDimensions,
+} from '@/helpers/dimensions'
 import { buildProductSearchQuery } from '@/helpers/search'
 import { prisma } from '@/lib/prisma'
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
@@ -234,7 +239,10 @@ async function getProductsWithManualSorting(
   }
 
   if (params.dimensions?.trim()) {
-    const dimensionFilters = params.dimensions.split(',')
+    const dimensionFilters = params.dimensions.split(',').map((f) => f.trim())
+    const categoryFilters = ['chico', 'mediano', 'grande', 'extra-grande']
+    const isCategoryFilter = dimensionFilters.some((f) => categoryFilters.includes(f))
+
     filteredProducts = filteredProducts.filter((p) => {
       const height = p.artworkDetails.height
       const width = p.artworkDetails.width
@@ -242,8 +250,17 @@ async function getProductsWithManualSorting(
 
       if (!height || !width) return false
 
-      const dimensionText = depth ? `${height} x ${width} x ${depth} cm` : `${height} x ${width} cm`
-      return dimensionFilters.some((filter) => dimensionText.trim() === filter.trim())
+      if (isCategoryFilter) {
+        const category = categorizeDimensions(height, width, depth)
+        return category && dimensionFilters.includes(category)
+      } else {
+        const dimensionText = formatDimensions(height, width, depth)
+        return dimensionFilters.some((filter) => {
+          const normalizedFilter = filter.replace(/\s*cm\s*/gi, '').trim()
+          const normalizedDimension = dimensionText.replace(/\s*cm\s*/gi, '').trim()
+          return normalizedDimension === normalizedFilter || dimensionText.includes(filter)
+        })
+      }
     })
   }
 
@@ -283,14 +300,16 @@ async function getProductsWithManualSorting(
           valueB = b.artworkDetails.location ?? ''
           break
         case 'dimensions': {
-          const heightA = parseFloat(a.artworkDetails.height ?? '0')
-          const widthA = parseFloat(a.artworkDetails.width ?? '0')
-          const depthA = parseFloat(a.artworkDetails.depth ?? '0')
-          const heightB = parseFloat(b.artworkDetails.height ?? '0')
-          const widthB = parseFloat(b.artworkDetails.width ?? '0')
-          const depthB = parseFloat(b.artworkDetails.depth ?? '0')
-          valueA = heightA * widthA * depthA
-          valueB = heightB * widthB * depthB
+          valueA = calculateDimensionValue(
+            a.artworkDetails.height,
+            a.artworkDetails.width,
+            a.artworkDetails.depth
+          )
+          valueB = calculateDimensionValue(
+            b.artworkDetails.height,
+            b.artworkDetails.width,
+            b.artworkDetails.depth
+          )
           break
         }
         default:

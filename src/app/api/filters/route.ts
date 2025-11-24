@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server'
 
+import {
+  categorizeDimensions,
+  getDimensionCategoryLabel,
+  type DimensionCategory,
+} from '@/helpers/dimensions'
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { type EnrichedFilterOptions, type FilterValue } from '@/modules/shopify/types'
 
@@ -120,7 +125,7 @@ export async function GET() {
     const allTags = new Set<string>()
     const allVendors = new Set<string>()
     const allProductTypes = new Set<string>()
-    const allDimensions = new Set<string>()
+    const dimensionCategories = new Set<string>()
     let minPrice = Infinity
     let maxPrice = 0
 
@@ -132,17 +137,17 @@ export async function GET() {
       if (price < minPrice) minPrice = price
       if (price > maxPrice) maxPrice = price
 
-      // Extraer dimensiones de los metafields
+      // Extraer dimensiones de los metafields y categorizar
       if (product.metafields) {
         const height = product.metafields.find((mf) => mf.key === 'height')?.value
         const width = product.metafields.find((mf) => mf.key === 'width')?.value
         const depth = product.metafields.find((mf) => mf.key === 'depth')?.value
 
         if (height && width) {
-          const dimensionText = depth
-            ? `${height} x ${width} x ${depth} cm`
-            : `${height} x ${width} cm`
-          allDimensions.add(dimensionText)
+          const category = categorizeDimensions(height, width, depth)
+          if (category) {
+            dimensionCategories.add(category)
+          }
         }
       }
     })
@@ -152,8 +157,12 @@ export async function GET() {
 
     const structuredFilters: EnrichedFilterOptions = {
       artists: [...allVendors].map((v) => ({ count: 0, input: v, label: v })),
-      dimensions: [...allDimensions].map((d) => ({ count: 0, input: d, label: d })),
-      formats: allDimensions.size > 0 ? [] : [],
+      dimensions: [...dimensionCategories].map((cat) => ({
+        count: 0,
+        input: cat,
+        label: getDimensionCategoryLabel(cat as DimensionCategory),
+      })),
+      formats: dimensionCategories.size > 0 ? [] : [],
       otherTags: [],
       price: {
         max: Math.ceil(maxPrice === 0 ? 10000 : maxPrice),
@@ -170,7 +179,7 @@ export async function GET() {
     }
 
     allTags.forEach((tag) => {
-      const { category, label } = categorizeTag(tag, allDimensions.size > 0)
+      const { category, label } = categorizeTag(tag, dimensionCategories.size > 0)
       const categoryArray = structuredFilters[category] as FilterValue[]
       if (!categoryArray.some((item) => item.input === tag)) {
         categoryArray.push({ count: 0, input: tag, label })
