@@ -80,7 +80,7 @@ async function getProducts(
   let shopifyQuery = ''
 
   if (params.search?.trim()) {
-    shopifyQuery = `(title:*${params.search}* OR product_type:*${params.search}* OR vendor:*${params.search}*)`
+    shopifyQuery = buildProductSearchQuery(params.search)
   }
 
   // Usar el vendor del parámetro (ya establecido en getProductsFromRequest para artistas)
