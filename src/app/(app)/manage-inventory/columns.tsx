@@ -1040,6 +1040,38 @@ export const columns: ColumnDef<Product>[] = [
     header: () => <div className='min-w-[128px]'>Imagen</div>,
   },
   {
+    accessorKey: 'id',
+    cell: ({ row, table }) => {
+      const product = row.original
+      const productId = product.id.split('/').pop() ?? product.id
+
+      return (
+        <div className='min-w-[120px]'>
+          <span className='font-mono text-sm text-muted-foreground'>{productId}</span>
+        </div>
+      )
+    },
+    header: ({ column, table }) => {
+      const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'id'
+      const isAsc = currentSortOrder === 'asc'
+
+      return (
+        <div className='min-w-[120px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('id')}
+            className='h-auto p-0 font-semibold'
+          >
+            ID
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+          </Button>
+        </div>
+      )
+    },
+    id: 'id',
+  },
+  {
     accessorKey: 'title',
     cell: ({ row, table }) => {
       const product = row.original

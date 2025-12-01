@@ -27,6 +27,7 @@ import {
 } from '@/services/collection/hooks'
 import {
   useGetArtworkTypes,
+  useGetLocations,
   useGetProductsPaginated,
   useGetTechniques,
   useGetVendors,
@@ -119,7 +120,7 @@ export function Client() {
   const { data: vendors = [], isLoading: vendorsLoading } = useGetVendors()
   const { data: techniques = [], isLoading: techniquesLoading } = useGetTechniques()
   const { data: artworkTypes = [], isLoading: artworkTypesLoading } = useGetArtworkTypes()
-  // const { data: locations = [], isLoading: locationsLoading } = useGetLocations()
+  const { data: locations = [], isLoading: locationsLoading } = useGetLocations()
 
   // Obtener cupones para mostrar en la columna de descuentos
   const { data: coupons = [] } = useGetDiscounts()
@@ -602,6 +603,7 @@ export function Client() {
     (columnId: string) => {
       const sortMapping: Record<string, string> = {
         dimensions: 'dimensions',
+        id: 'id',
         inventory: 'inventoryQuantity',
         location: 'location',
         medium: 'medium',
@@ -1171,6 +1173,7 @@ export function Client() {
               <SelectValue placeholder='Ordenar por' />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value='id'>ID</SelectItem>
               <SelectItem value='title'>Título</SelectItem>
               <SelectItem value='vendor'>Artista</SelectItem>
               <SelectItem value='productType'>Tipo de obra</SelectItem>
@@ -1237,13 +1240,18 @@ export function Client() {
           <div className='mb-4 flex items-center justify-between'>
             <div className='flex items-center space-x-3'>
               <h3 className='text-lg font-semibold'>Edición en Lote</h3>
-              {(vendorsLoading || techniquesLoading || artworkTypesLoading) && (
+              {(vendorsLoading || techniquesLoading || artworkTypesLoading || locationsLoading) && (
                 <Badge variant='outline' className='animate-pulse bg-blue-50 text-blue-700'>
                   <RefreshCw className='mr-1 size-3 animate-spin' />
                   Cargando opciones...
                 </Badge>
               )}
-              {!(vendorsLoading || techniquesLoading || artworkTypesLoading) && (
+              {!(
+                vendorsLoading ||
+                techniquesLoading ||
+                artworkTypesLoading ||
+                locationsLoading
+              ) && (
                 <Button
                   variant='ghost'
                   size='sm'
@@ -1251,6 +1259,7 @@ export function Client() {
                     void queryClient.invalidateQueries({ queryKey: ['vendors'] })
                     void queryClient.invalidateQueries({ queryKey: ['techniques'] })
                     void queryClient.invalidateQueries({ queryKey: ['artwork_types'] })
+                    void queryClient.invalidateQueries({ queryKey: ['locations'] })
                   }}
                   className='h-6 px-2 text-xs'
                 >
@@ -1457,16 +1466,40 @@ export function Client() {
 
             <div>
               <label className='text-sm font-medium'>Localización</label>
-              <Input
-                placeholder='Nueva localización'
+              <Select
                 value={bulkChanges.artworkDetails?.location || ''}
-                onChange={(e) =>
+                onValueChange={(value) =>
                   handleBulkChange('artworkDetails', {
                     ...bulkChanges.artworkDetails,
-                    location: e.target.value,
+                    location: value,
                   })
                 }
-              />
+                disabled={locationsLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={locationsLoading ? 'Cargando...' : 'Seleccionar localización'}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {locationsLoading ? (
+                    <div className='p-2 text-center text-sm text-muted-foreground'>
+                      <RefreshCw className='mx-auto size-4 animate-spin' />
+                      Cargando localizaciones...
+                    </div>
+                  ) : locations && locations.length > 0 ? (
+                    locations.map((location: { id: string; name: string }) => (
+                      <SelectItem key={location.id} value={location.name}>
+                        {location.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className='p-2 text-center text-sm text-muted-foreground'>
+                      No hay localizaciones disponibles
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

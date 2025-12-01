@@ -61,15 +61,17 @@ function filterProductsByExactSearch(products: Product[], searchTerm: string): P
   if (!searchTerm?.trim()) return products
 
   const normalizedSearch = normalizeText(searchTerm)
-  const searchWords = normalizedSearch.split(/\s+/).filter((word) => word.length >= 2)
+  const searchWords = normalizedSearch.split(/\s+/).filter((word) => word.length >= 1)
 
-  if (searchWords.length < 2) {
+  if (searchWords.length === 0) {
     return products
   }
 
   return products.filter((product) => {
+    const productId = product.id.split('/').pop() ?? product.id
     const searchableText = normalizeText(
       [
+        productId,
         product.title,
         product.vendor,
         product.productType,
@@ -82,7 +84,13 @@ function filterProductsByExactSearch(products: Product[], searchTerm: string): P
         .join(' ')
     )
 
-    return searchWords.every((word) => searchableText.includes(word))
+    // Para búsquedas de una palabra, buscar si contiene la palabra
+    // Para búsquedas de múltiples palabras, todas deben estar presentes
+    if (searchWords.length === 1) {
+      return searchableText.includes(searchWords[0])
+    } else {
+      return searchWords.every((word) => searchableText.includes(word))
+    }
   })
 }
 
@@ -170,6 +178,7 @@ async function getProducts(
       case 'inventoryQuantity':
         sortKey = 'INVENTORY_TOTAL'
         break
+      case 'id':
       case 'price':
       case 'medium':
       case 'year':
@@ -316,6 +325,13 @@ async function getProductsWithManualSorting(
       let valueB: string | number = ''
 
       switch (sortField) {
+        case 'id': {
+          const idA = a.id.split('/').pop() ?? a.id
+          const idB = b.id.split('/').pop() ?? b.id
+          valueA = parseInt(idA.replace(/\D/g, '')) || 0
+          valueB = parseInt(idB.replace(/\D/g, '')) || 0
+          break
+        }
         case 'price':
           valueA = parseFloat(a.variants[0]?.price?.amount ?? '0')
           valueB = parseFloat(b.variants[0]?.price?.amount ?? '0')
@@ -1281,6 +1297,7 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
       case 'inventoryQuantity':
         sortKey = 'INVENTORY_TOTAL'
         break
+      case 'id':
       case 'price':
       case 'medium':
       case 'year':

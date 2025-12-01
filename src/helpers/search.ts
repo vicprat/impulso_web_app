@@ -36,6 +36,7 @@ export function buildFlexibleSearchQuery(searchTerm: string): string {
 export function buildProductSearchQuery(
   searchTerm: string,
   options?: {
+    includeId?: boolean
     includePrice?: boolean
     includeProductType?: boolean
     includeTags?: boolean
@@ -48,6 +49,7 @@ export function buildProductSearchQuery(
   if (!searchTerm?.trim()) return ''
 
   const {
+    includeId = true,
     includePrice = true,
     includeProductType = true,
     includeTags = true,
@@ -58,11 +60,12 @@ export function buildProductSearchQuery(
   } = options ?? {}
 
   // Usar tanto el término original como el normalizado para búsqueda flexible
-  const originalTerm = searchTerm.trim().toLowerCase()
+  const originalTerm = searchTerm.trim()
+  const lowerTerm = originalTerm.toLowerCase()
   const normalizedTerm = normalizeText(searchTerm)
 
   const words = normalizedTerm.split(/\s+/).filter((word) => word.length >= minWordLength)
-  const originalWords = originalTerm.split(/\s+/).filter((word) => word.length >= minWordLength)
+  const originalWords = lowerTerm.split(/\s+/).filter((word) => word.length >= minWordLength)
 
   if (words.length === 0) return ''
 
@@ -81,11 +84,30 @@ export function buildProductSearchQuery(
     const fieldQueries: string[] = []
 
     searchFields.forEach((field) => {
-      fieldQueries.push(`${field}:*${originalWord}*`)
-      if (originalWord !== word) {
-        fieldQueries.push(`${field}:*${word}*`)
+      // Para títulos, usar búsqueda más flexible
+      if (field === 'title') {
+        // Búsqueda case-insensitive con wildcards (Shopify es case-insensitive por defecto)
+        fieldQueries.push(`${field}:*${originalWord}*`)
+        // También buscar con el término normalizado (sin acentos)
+        if (originalWord !== word) {
+          fieldQueries.push(`${field}:*${word}*`)
+        }
+      } else {
+        fieldQueries.push(`${field}:*${originalWord}*`)
+        if (originalWord !== word) {
+          fieldQueries.push(`${field}:*${word}*`)
+        }
       }
     })
+
+    // Agregar búsqueda por ID si está habilitada
+    if (includeId) {
+      // Buscar por ID numérico (extraer solo números del término de búsqueda)
+      const numericId = originalWord.replace(/\D/g, '')
+      if (numericId.length > 0) {
+        fieldQueries.push(`id:${numericId}`)
+      }
+    }
 
     // Agregar búsqueda en metafields de técnica (medium)
     if (includeTechnique) {
@@ -118,11 +140,27 @@ export function buildProductSearchQuery(
       const fieldQueries: string[] = []
 
       searchFields.forEach((field) => {
-        fieldQueries.push(`${field}:*${originalWord}*`)
-        if (originalWord !== word) {
-          fieldQueries.push(`${field}:*${word}*`)
+        // Para títulos, usar búsqueda más flexible
+        if (field === 'title') {
+          fieldQueries.push(`${field}:*${originalWord}*`)
+          if (originalWord !== word) {
+            fieldQueries.push(`${field}:*${word}*`)
+          }
+        } else {
+          fieldQueries.push(`${field}:*${originalWord}*`)
+          if (originalWord !== word) {
+            fieldQueries.push(`${field}:*${word}*`)
+          }
         }
       })
+
+      // Agregar búsqueda por ID si está habilitada
+      if (includeId) {
+        const numericId = originalWord.replace(/\D/g, '')
+        if (numericId.length > 0) {
+          fieldQueries.push(`id:${numericId}`)
+        }
+      }
 
       // Agregar búsqueda en metafields de técnica (medium)
       if (includeTechnique) {
