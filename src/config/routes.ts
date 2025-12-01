@@ -264,7 +264,7 @@ export const ROUTES = {
         LABEL: 'Detalle de Colección',
         PATH: '/manage-inventory/collections/:id',
         PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
       MAIN: {
         DESCRIPTION: 'Gestionar Colecciones',
@@ -272,7 +272,7 @@ export const ROUTES = {
         LABEL: 'Colecciones',
         PATH: '/manage-inventory/collections',
         PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
     COUPONS: {
@@ -281,14 +281,14 @@ export const ROUTES = {
         LABEL: 'Crear Cupón',
         PATH: '/manage-inventory/coupons/create',
         PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
       DETAIL: {
         ICON: 'edit',
         LABEL: 'Detalle de Cupón',
         PATH: '/manage-inventory/coupons/:id',
         PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
       MAIN: {
         DESCRIPTION: 'Gestionar Cupones',
@@ -296,7 +296,7 @@ export const ROUTES = {
         LABEL: 'Cupones',
         PATH: '/manage-inventory/coupons',
         PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
     CREATE: {

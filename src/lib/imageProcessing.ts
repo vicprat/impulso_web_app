@@ -40,10 +40,15 @@ export async function processImageToWebP(
 
   // Obtener información de la imagen original
   const originalImage = sharp(Buffer.from(fileBuffer))
-  const metadata = await originalImage.metadata()
+
+  // Aplicar corrección automática de orientación EXIF
+  const orientedImage = originalImage.rotate()
+
+  // Obtener metadatos después de aplicar la orientación
+  const metadata = await orientedImage.metadata()
 
   // Procesar la imagen
-  const processedBuffer = await originalImage
+  const processedBuffer = await orientedImage
     .webp({ quality })
     .resize(maxWidth, maxHeight, { fit, withoutEnlargement })
     .toBuffer()
@@ -84,7 +89,12 @@ export async function processImage(
 
   // Obtener información de la imagen original
   const originalImage = sharp(Buffer.from(fileBuffer))
-  const metadata = await originalImage.metadata()
+
+  // Aplicar corrección automática de orientación EXIF
+  const orientedImage = originalImage.rotate()
+
+  // Obtener metadatos después de aplicar la orientación
+  const metadata = await orientedImage.metadata()
 
   let processedBuffer: Buffer
   let mimeType: string
@@ -93,7 +103,7 @@ export async function processImage(
   // Procesar según el formato especificado
   switch (format) {
     case 'webp':
-      processedBuffer = await originalImage
+      processedBuffer = await orientedImage
         .webp({ quality })
         .resize(maxWidth, maxHeight, { fit, withoutEnlargement })
         .toBuffer()
@@ -102,7 +112,7 @@ export async function processImage(
       break
 
     case 'jpeg':
-      processedBuffer = await originalImage
+      processedBuffer = await orientedImage
         .jpeg({ quality })
         .resize(maxWidth, maxHeight, { fit, withoutEnlargement })
         .toBuffer()
@@ -111,7 +121,7 @@ export async function processImage(
       break
 
     case 'png':
-      processedBuffer = await originalImage
+      processedBuffer = await orientedImage
         .png({ quality })
         .resize(maxWidth, maxHeight, { fit, withoutEnlargement })
         .toBuffer()
@@ -163,10 +173,10 @@ export function generateUniqueFilename(originalFilename: string, folder?: string
   const timestamp = Date.now()
   const randomId = Math.random().toString(36).substring(2, 15)
   const extension = originalFilename.split('.').pop()
-  
+
   const baseName = originalFilename.replace(/\.[^/.]+$/, '')
   const uniqueName = `${baseName}_${timestamp}_${randomId}.${extension}`
-  
+
   return folder ? `${folder}/${uniqueName}` : uniqueName
 }
 
@@ -181,7 +191,7 @@ export const imageProcessingPresets = {
     maxWidth: 512,
     quality: 90,
   },
-  
+
   background: {
     fit: 'inside' as const,
     format: 'webp' as const,
@@ -189,7 +199,7 @@ export const imageProcessingPresets = {
     maxWidth: 1920,
     quality: 85,
   },
-  
+
   blog: {
     fit: 'inside' as const,
     format: 'webp' as const,
@@ -197,7 +207,7 @@ export const imageProcessingPresets = {
     maxWidth: 1200,
     quality: 85,
   },
-  
+
   product: {
     fit: 'inside' as const,
     format: 'webp' as const,
@@ -205,7 +215,7 @@ export const imageProcessingPresets = {
     maxWidth: 2048,
     quality: 80,
   },
-  
+
   thumbnail: {
     fit: 'inside' as const,
     format: 'webp' as const,
@@ -213,4 +223,4 @@ export const imageProcessingPresets = {
     maxWidth: 400,
     quality: 90,
   },
-} 
+}

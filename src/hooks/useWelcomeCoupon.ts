@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 
+import { ROLES } from '@/config/Roles'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import { useCustomerOrders } from '@/modules/customer/hooks'
 import { useGetDiscounts } from '@/services/product/queries'
 
 export function useWelcomeCoupon() {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth()
+  const { isAuthenticated, isLoading: authLoading, user, hasRole } = useAuth()
   const [hasShownWelcome, setHasShownWelcome] = useState(false)
   const [shouldShowDialog, setShouldShowDialog] = useState(false)
 
@@ -33,10 +34,15 @@ export function useWelcomeCoupon() {
   // Verificar si el usuario tiene órdenes
   const hasOrders = (ordersData?.customer?.orders?.edges?.length ?? 0) > 0
 
+  // Verificar si el usuario tiene un rol válido (customer o vip_customer)
+  const hasValidRole =
+    hasRole(ROLES.CUSTOMER.NAME) || hasRole(ROLES.VIP_CUSTOMER.NAME)
+
   // Verificar si debe mostrar el dialog
   const checkShouldShowDialog = useCallback(() => {
     if (authLoading || ordersLoading || discountsLoading) return false
     if (!isAuthenticated || !user) return false
+    if (!hasValidRole) return false
     if (hasShownWelcome) return false
     if (hasOrders) return false
     if (!welcomeCoupon) return false
@@ -48,6 +54,7 @@ export function useWelcomeCoupon() {
     discountsLoading,
     isAuthenticated,
     user,
+    hasValidRole,
     hasShownWelcome,
     hasOrders,
     welcomeCoupon,
