@@ -49,8 +49,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         size: 0,
         status: 'completed',
       })
-    } else if (!value && uploadedImage && uploadedImage.id === 'initial') {
-      // Clear if value becomes null and it was an initial image
+    } else if (!value && uploadedImage) {
+      // Clear if value becomes null/undefined, regardless of the image id
+      if (uploadedImage.preview?.startsWith('blob:')) {
+        URL.revokeObjectURL(uploadedImage.preview)
+      }
       setUploadedImage(null)
     }
   }, [value, uploadedImage])

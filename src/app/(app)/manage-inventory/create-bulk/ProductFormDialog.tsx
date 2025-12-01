@@ -154,6 +154,7 @@ export function ProductFormDialog({
               Imagen <span className='text-muted-foreground'>(opcional)</span>
             </Label>
             <ImageUploader
+              key={product?.id || `new-${isOpen}`}
               value={formData.imageUrl}
               onChange={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))}
             />
