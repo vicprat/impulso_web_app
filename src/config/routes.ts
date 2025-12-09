@@ -23,14 +23,14 @@ export const ROUTES = {
         LABEL: 'Crear Post',
         PATH: '/posts/create',
         PERMISSIONS: [PERMISSIONS.MANAGE_ALL_BLOG_POSTS, PERMISSIONS.MANAGE_OWN_BLOG_POSTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
       DETAIL: {
         ICON: 'edit',
         LABEL: 'Editar Post',
         PATH: '/posts/:id',
         PERMISSIONS: [PERMISSIONS.MANAGE_ALL_BLOG_POSTS, PERMISSIONS.MANAGE_OWN_BLOG_POSTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
       MAIN: {
         DESCRIPTION: 'Gestionar entradas del blog',
@@ -38,7 +38,7 @@ export const ROUTES = {
         LABEL: 'Posts',
         PATH: '/posts',
         PERMISSIONS: [PERMISSIONS.MANAGE_ALL_BLOG_POSTS, PERMISSIONS.MANAGE_OWN_BLOG_POSTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
     EVENTS: {
@@ -299,30 +299,6 @@ export const ROUTES = {
         ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
-    LOCATIONS: {
-      CREATE: {
-        ICON: 'plus',
-        LABEL: 'Crear Localización',
-        PATH: '/manage-inventory/locations/create',
-        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-      DETAIL: {
-        ICON: 'edit',
-        LABEL: 'Editar Localización',
-        PATH: '/manage-inventory/locations/:id',
-        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-      MAIN: {
-        DESCRIPTION: 'Gestionar Localizaciones',
-        ICON: 'map-pin',
-        LABEL: 'Localizaciones',
-        PATH: '/manage-inventory/locations',
-        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-    },
     CREATE: {
       ICON: 'plus',
       LABEL: 'Crear Producto',
@@ -351,6 +327,30 @@ export const ROUTES = {
       PATH: '/manage-inventory',
       PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+    },
+    LOCATIONS: {
+      CREATE: {
+        ICON: 'plus',
+        LABEL: 'Crear Localización',
+        PATH: '/manage-inventory/locations/create',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Editar Localización',
+        PATH: '/manage-inventory/locations/:id',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar Localizaciones',
+        ICON: 'map-pin',
+        LABEL: 'Localizaciones',
+        PATH: '/manage-inventory/locations',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
     },
 
     MAIN: {
