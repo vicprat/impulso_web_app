@@ -2,15 +2,14 @@
 
 import { Suspense } from 'react'
 
-import { CouponsList } from './CouponsList'
+import { Client } from './Client'
 
 export const dynamic = 'force-dynamic'
 
 export default function CouponsPage() {
   return (
     <Suspense>
-      <CouponsList />
+      <Client />
     </Suspense>
   )
 }
-

@@ -299,6 +299,30 @@ export const ROUTES = {
         ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
+    LOCATIONS: {
+      CREATE: {
+        ICON: 'plus',
+        LABEL: 'Crear Localización',
+        PATH: '/manage-inventory/locations/create',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Editar Localización',
+        PATH: '/manage-inventory/locations/:id',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar Localizaciones',
+        ICON: 'map-pin',
+        LABEL: 'Localizaciones',
+        PATH: '/manage-inventory/locations',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+    },
     CREATE: {
       ICON: 'plus',
       LABEL: 'Crear Producto',
@@ -626,7 +650,7 @@ export const getGroupedDashboardNavRoutes = (
   const adminGroupRoutes = [
     ROUTES.ADMIN.EVENTS.MAIN,
     ROUTES.ADMIN.USERS.MAIN,
-    ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN,
+    //  ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN,
     ROUTES.ADMIN.FINANCE.ENTRIES.MAIN,
     ROUTES.ADMIN.FINANCE.REPORTS.MAIN,
   ].filter(
@@ -640,6 +664,7 @@ export const getGroupedDashboardNavRoutes = (
     ROUTES.INVENTORY.MAIN,
     ROUTES.INVENTORY.COUPONS.MAIN,
     ROUTES.INVENTORY.COLLECTIONS.MAIN,
+    ROUTES.INVENTORY.LOCATIONS.MAIN,
     ROUTES.INVENTORY.PRIVATE_ROOMS.MAIN,
   ].filter(
     (route) =>

@@ -2,14 +2,14 @@
 
 import { Suspense } from 'react'
 
-import { CollectionsList } from './CollectionsList'
+import { Client } from './Client'
 
 export const dynamic = 'force-dynamic'
 
 export default function CollectionsPage() {
   return (
     <Suspense>
-      <CollectionsList />
+      <Client />
     </Suspense>
   )
 }

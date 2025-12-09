@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-import { formatDimensionsWithUnit } from '@/helpers/dimensions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -25,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { formatDimensionsWithUnit } from '@/helpers/dimensions'
 import { type Product } from '@/models/Product'
 import {
   useGetArtworkTypes,
@@ -488,11 +488,7 @@ const EditableDimensions = ({
   }, [height, width, depth, isEditing])
 
   if (!isEditing) {
-    return (
-      <span className='text-sm'>
-        {formatDimensionsWithUnit(height, width, depth) || '-'}
-      </span>
-    )
+    return <span className='text-sm'>{formatDimensionsWithUnit(height, width, depth) || '-'}</span>
   }
 
   return (
@@ -1037,6 +1033,7 @@ export const columns: ColumnDef<Product>[] = [
         </div>
       )
     },
+    enableHiding: false,
     header: () => <div className='min-w-[128px]'>Imagen</div>,
   },
   {
@@ -1046,7 +1043,7 @@ export const columns: ColumnDef<Product>[] = [
       const productId = product.id.split('/').pop() ?? product.id
 
       return (
-        <div className='min-w-[120px]'>
+        <div className='w-[120px]'>
           <span className='font-mono text-sm text-muted-foreground'>{productId}</span>
         </div>
       )
@@ -1057,7 +1054,7 @@ export const columns: ColumnDef<Product>[] = [
       const isAsc = currentSortOrder === 'asc'
 
       return (
-        <div className='min-w-[120px]'>
+        <div className='w-[120px]'>
           <Button
             variant='ghost'
             onClick={() => handleSorting?.('id')}
@@ -1070,6 +1067,7 @@ export const columns: ColumnDef<Product>[] = [
       )
     },
     id: 'id',
+    size: 120,
   },
   {
     accessorKey: 'title',
@@ -1099,6 +1097,7 @@ export const columns: ColumnDef<Product>[] = [
         </div>
       )
     },
+    enableHiding: false,
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'title'
@@ -1156,6 +1155,7 @@ export const columns: ColumnDef<Product>[] = [
         </div>
       )
     },
+    enableHiding: false,
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'vendor'

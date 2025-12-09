@@ -251,6 +251,76 @@ export const useGetLocations = () => {
   })
 }
 
+export const useGetLocation = (id: string | null) => {
+  return useQuery({
+    enabled: !!id,
+    queryFn: async () => {
+      if (!id) throw new Error('Location ID is required')
+      const { data } = await axios.get('/api/options/locations')
+      const location = data.find((loc: any) => loc.id === id)
+      if (!location) throw new Error('Location not found')
+      return location
+    },
+    queryKey: ['locations', id],
+    retry: 1,
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export const useCreateLocation = (options?: {
+  onSuccess?: () => void
+  onError?: (error: any) => void
+}) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const { data } = await axios.post('/api/options/locations', { name })
+      return data
+    },
+    onError: options?.onError,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['locations'] })
+      options?.onSuccess?.()
+    },
+  })
+}
+
+export const useUpdateLocation = (options?: {
+  onSuccess?: () => void
+  onError?: (error: any) => void
+}) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { data } = await axios.put(`/api/options/locations`, { id, name })
+      return data
+    },
+    onError: options?.onError,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['locations'] })
+      options?.onSuccess?.()
+    },
+  })
+}
+
+export const useDeleteLocation = (options?: {
+  onSuccess?: () => void
+  onError?: (error: any) => void
+}) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await axios.delete(`/api/options/locations?id=${id}`)
+      return data
+    },
+    onError: options?.onError,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['locations'] })
+      options?.onSuccess?.()
+    },
+  })
+}
+
 export const useGetLocationHistory = (productId: string | null) => {
   return useQuery({
     enabled: !!productId,

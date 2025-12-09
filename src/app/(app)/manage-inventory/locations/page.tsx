@@ -6,7 +6,7 @@ import { Client } from './Client'
 
 export const dynamic = 'force-dynamic'
 
-export default function PrivateRoomsPage() {
+export default function LocationsPage() {
   return (
     <Suspense>
       <Client />

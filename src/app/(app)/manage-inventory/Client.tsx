@@ -1,8 +1,8 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
-import { Check, CheckCircle, Filter, PlusCircle, RefreshCw, Search } from 'lucide-react'
+import { getCoreRowModel, useReactTable, type VisibilityState } from '@tanstack/react-table'
+import { Check, CheckCircle, Columns, Filter, PlusCircle, RefreshCw, Search } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -10,6 +10,14 @@ import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -80,6 +88,7 @@ interface InventoryTableMeta {
 }
 
 const defaultPageSize = 50
+const FIXED_COLUMNS = ['image', 'title', 'vendor', 'select', 'actions']
 
 export function Client() {
   const searchParams = useSearchParams()
@@ -110,6 +119,21 @@ export function Client() {
     id: string
     title: string
   } | null>(null)
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [tempColumnVisibility, setTempColumnVisibility] = useState<VisibilityState>({})
+  const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false)
+
+  const handleApplyColumnVisibility = useCallback(() => {
+    setColumnVisibility(tempColumnVisibility)
+    setIsColumnMenuOpen(false)
+  }, [tempColumnVisibility])
+
+  const handleToggleTempColumnVisibility = useCallback((columnId: string, isVisible: boolean) => {
+    setTempColumnVisibility((prev) => ({
+      ...prev,
+      [columnId]: isVisible,
+    }))
+  }, [])
 
   const queryClient = useQueryClient()
   const { hasPermission, user } = useAuth()
@@ -919,7 +943,25 @@ export function Client() {
       updateProduct: handleUpdateProduct,
       user,
     } as InventoryTableMeta,
+    onColumnVisibilityChange: setColumnVisibility,
+    state: {
+      columnVisibility,
+    },
   })
+
+  const getToggleableColumns = useCallback(() => {
+    return table.getAllColumns().filter((column) => !FIXED_COLUMNS.includes(column.id))
+  }, [table])
+
+  useEffect(() => {
+    if (isColumnMenuOpen && table) {
+      const currentVisibility: VisibilityState = {}
+      getToggleableColumns().forEach((column) => {
+        currentVisibility[column.id] = column.getIsVisible()
+      })
+      setTempColumnVisibility(currentVisibility)
+    }
+  }, [isColumnMenuOpen, getToggleableColumns, table])
 
   if ((isLoading || isLoadingStats) && !products.length) {
     return (
@@ -962,6 +1004,62 @@ export function Client() {
             <RefreshCw className={`mr-2 size-4 ${isFetching ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
+          <DropdownMenu open={isColumnMenuOpen} onOpenChange={setIsColumnMenuOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button variant='outline' disabled={isFetching}>
+                <Columns className='mr-2 size-4' />
+                Columnas
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align='end'
+              className='w-56'
+              onCloseAutoFocus={(e) => e.preventDefault()}
+            >
+              <DropdownMenuLabel>Mostrar columnas</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className='max-h-[300px] overflow-y-auto'>
+                {getToggleableColumns().map((column) => {
+                  const columnLabels: Record<string, string> = {
+                    Status: 'Estado',
+                    'artworkDetails.location': 'Localización',
+                    'artworkDetails.medium': 'Técnica',
+                    'artworkDetails.serie': 'Serie',
+                    'artworkDetails.year': 'Año',
+                    automaticDiscount: 'Descuentos',
+                    collections: 'Colecciones',
+                    dimensions: 'Medidas',
+                    id: 'ID',
+                    inventory: 'Inventario',
+                    price: 'Precio',
+                    productType: 'Tipo de obra',
+                  }
+                  const label = columnLabels[column.id] || column.id
+                  const isVisible = tempColumnVisibility[column.id] !== false
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      checked={isVisible}
+                      onCheckedChange={(value) => {
+                        handleToggleTempColumnVisibility(column.id, !!value)
+                      }}
+                      onSelect={(e) => {
+                        e.preventDefault()
+                      }}
+                    >
+                      {label}
+                    </DropdownMenuCheckboxItem>
+                  )
+                })}
+              </div>
+              <DropdownMenuSeparator />
+              <div className='p-2'>
+                <Button onClick={handleApplyColumnVisibility} className='w-full' size='sm'>
+                  Aplicar
+                </Button>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant={isBulkMode ? 'default' : 'outline'}
             onClick={handleBulkModeToggle}

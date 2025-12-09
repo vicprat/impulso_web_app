@@ -541,6 +541,10 @@ export const shopifyDiscountService = {
   },
 
   async deleteDiscount(id: string): Promise<void> {
+    const formattedId = id.startsWith('gid://shopify/DiscountCodeNode/')
+      ? id
+      : `gid://shopify/DiscountCodeNode/${id}`
+
     const DELETE_MUTATION = `
       mutation discountCodeDelete($id: ID!) {
         discountCodeDelete(id: $id) {
@@ -553,7 +557,9 @@ export const shopifyDiscountService = {
       }
     `
 
-    const response = await makeAdminApiRequest<DeleteDiscountResponse>(DELETE_MUTATION, { id })
+    const response = await makeAdminApiRequest<DeleteDiscountResponse>(DELETE_MUTATION, {
+      id: formattedId,
+    })
 
     if (response.discountCodeDelete?.userErrors?.length > 0) {
       const error = response.discountCodeDelete.userErrors[0]
@@ -571,7 +577,7 @@ export const shopifyDiscountService = {
 
         const simpleResponse = await makeAdminApiRequest<DeleteDiscountResponse>(
           DELETE_MUTATION_SIMPLE,
-          { id }
+          { id: formattedId }
         )
 
         if (simpleResponse.discountCodeDelete?.userErrors?.length > 0) {
@@ -585,6 +591,10 @@ export const shopifyDiscountService = {
   },
 
   async getDiscount(id: string): Promise<ShopifyDiscount | null> {
+    const formattedId = id.startsWith('gid://shopify/DiscountCodeNode/')
+      ? id
+      : `gid://shopify/DiscountCodeNode/${id}`
+
     const GET_DISCOUNT_QUERY = `
       query getDiscount($id: ID!) {
         codeDiscountNode(id: $id) {
@@ -650,7 +660,9 @@ export const shopifyDiscountService = {
       }
     `
 
-    const response = await makeAdminApiRequest<GetDiscountResponse>(GET_DISCOUNT_QUERY, { id })
+    const response = await makeAdminApiRequest<GetDiscountResponse>(GET_DISCOUNT_QUERY, {
+      id: formattedId,
+    })
 
     if (!response.codeDiscountNode) {
       return null
@@ -777,6 +789,10 @@ export const shopifyDiscountService = {
   },
 
   async toggleDiscountStatus(id: string, isActive: boolean): Promise<void> {
+    const formattedId = id.startsWith('gid://shopify/DiscountCodeNode/')
+      ? id
+      : `gid://shopify/DiscountCodeNode/${id}`
+
     const now = new Date().toISOString()
     const future = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -806,7 +822,7 @@ export const shopifyDiscountService = {
 
     const response = await makeAdminApiRequest<UpdateDiscountResponse>(TOGGLE_MUTATION, {
       basicCodeDiscount: updateInput,
-      id,
+      id: formattedId,
     })
 
     if (response.discountCodeBasicUpdate?.userErrors?.length > 0) {
@@ -816,6 +832,10 @@ export const shopifyDiscountService = {
   },
 
   async updateDiscount(input: UpdateShopifyDiscountInput): Promise<ShopifyDiscount> {
+    const formattedId = input.id.startsWith('gid://shopify/DiscountCodeNode/')
+      ? input.id
+      : `gid://shopify/DiscountCodeNode/${input.id}`
+
     const UPDATE_DISCOUNT_MUTATION = `
       mutation discountCodeBasicUpdate($id: ID!, $basicCodeDiscount: DiscountCodeBasicInput!) {
         discountCodeBasicUpdate(id: $id, basicCodeDiscount: $basicCodeDiscount) {
@@ -953,7 +973,7 @@ export const shopifyDiscountService = {
 
     const response = await makeAdminApiRequest<UpdateDiscountResponse>(UPDATE_DISCOUNT_MUTATION, {
       basicCodeDiscount: updateInput,
-      id: input.id,
+      id: formattedId,
     })
 
     if (response.discountCodeBasicUpdate?.userErrors?.length > 0) {
