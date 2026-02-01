@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
+import { columns } from './columns'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -49,8 +51,6 @@ import { ProductAutomaticDiscountModal } from '@/src/components/Modals/ProductAu
 import { Table } from '@/src/components/Table'
 import { Skeleton } from '@/src/components/ui/skeleton'
 import { ROUTES } from '@/src/config/routes'
-
-import { columns } from './columns'
 
 export const dynamic = 'force-dynamic'
 

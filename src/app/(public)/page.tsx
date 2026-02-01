@@ -1,6 +1,8 @@
 import { BookOpen, DollarSign, Frame, Image, Printer, TrendingUp } from 'lucide-react'
 import { Suspense } from 'react'
 
+import type { Metadata } from 'next'
+
 import { Landing } from '@/components/Landing'
 import { HomeStructuredData } from '@/components/StructuredData'
 import {
@@ -14,8 +16,6 @@ import { routeMetadata } from '@/lib/metadata'
 import { type PublicEvent } from '@/modules/shopify/service'
 import { Membership } from '@/src/components/Landing/Membership/Membership'
 import { ROUTES } from '@/src/config/routes'
-
-import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = routeMetadata['/']
@@ -69,7 +69,6 @@ export interface Service {
   description: string
   icon: React.ComponentType<{ className?: string }>
   features?: string[]
-  highlighted?: boolean
 }
 
 const services: Service[] = [
@@ -77,7 +76,6 @@ const services: Service[] = [
     description:
       'Desarrollamos artistas a través de la venta de obra original y gráfica con asesoría especializada.',
     features: ['Obra original', 'Gráfica limitada', 'Asesoría de ventas', 'Promoción de artistas'],
-    highlighted: true,
     icon: DollarSign,
     id: '1',
     title: 'Venta de Obra Original',
@@ -102,7 +100,6 @@ const services: Service[] = [
     description:
       'El arte como inversión mantiene su valor y se comporta diferente a otros activos financieros.',
     features: ['Asesoría especializada', 'Valuación', 'Portafolio de arte', 'Análisis de mercado'],
-    highlighted: true,
     icon: TrendingUp,
     id: '4',
     title: 'Inversión en Arte',

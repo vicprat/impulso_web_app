@@ -1,48 +1,33 @@
-import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+
+import type { Service } from '@/app/(public)/page'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ROUTES } from '@/src/config/routes'
 
-import type { Service } from '@/app/(public)/page'
-
-
 interface Props {
   data: Service[]
 }
-
 
 const ServiceCard = ({ service }: { service: Service; _index: number }) => {
   const IconComponent = service.icon
 
   return (
-    <div
-      className='group h-full'
-    >
-      <Card className={`h-full transition-all duration-300 hover:-translate-y-2 hover:shadow-elevation-4 ${service.highlighted
-        ? 'border-primary/30 relative overflow-hidden bg-card shadow-elevation-3'
-        : 'bg-card shadow-elevation-1 hover:shadow-elevation-3'
-        }`}>
-        {/* Subtle glow effect for highlighted services */}
-        {service.highlighted && (
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent" />
-        )}
+    <div className='group h-full'>
+      <Card
+        className={`border-primary/30 relative h-full overflow-hidden bg-card shadow-elevation-3 transition-all duration-300 hover:-translate-y-2 hover:shadow-elevation-4`}
+      >
+        <div className='pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent' />
+
         <CardContent className='relative z-10 flex h-full flex-col p-6'>
           {/* Header con ícono */}
           <div className='mb-4 flex items-start gap-4'>
-            <div className={`flex size-14 shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110 ${service.highlighted
-              ? 'bg-primary text-on-primary shadow-elevation-2'
-              : 'bg-primary-container text-primary shadow-elevation-1'
-              }`}>
+            <div
+              className={`flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary text-on-primary shadow-elevation-2 transition-all duration-300 group-hover:scale-110`}
+            >
               <IconComponent className='size-7 text-white' />
             </div>
-
-            {service.highlighted && (
-              <div className='bg-primary/90 rounded-full px-3 py-1.5  font-medium  shadow-elevation-1 backdrop-blur-sm'>
-                Destacado
-              </div>
-            )}
           </div>
 
           {/* Título */}
@@ -58,40 +43,25 @@ const ServiceCard = ({ service }: { service: Service; _index: number }) => {
           {/* Features si existen */}
           {service.features && (
             <div className='mt-auto space-y-2'>
-              <div className='text-xs font-medium text-foreground'>
-                Incluye:
-              </div>
               <div className='flex flex-wrap gap-1'>
                 {service.features.slice(0, 3).map((feature, idx) => (
                   <span
                     key={idx}
-                    className={`inline-flex items-center rounded-md border px-2 py-1 text-xs transition-colors ${service.highlighted
-                      ? 'border-primary/30 bg-primary/20 font-medium text-primary'
-                      : 'bg-surface-container text-on-surface'
-                      }`}
+                    className={`inline-flex items-center rounded-md border bg-surface-container px-2 py-1 text-xs text-on-surface transition-colors`}
                   >
                     {feature}
                   </span>
                 ))}
                 {service.features.length > 3 && (
-                  <span className={`inline-flex items-center rounded-md border px-2 py-1 text-xs ${service.highlighted
-                    ? 'border-primary/30 bg-primary/20 font-medium text-primary'
-                    : 'bg-surface-container text-on-surface'
-                    }`}>
+                  <span
+                    className={`inline-flex items-center rounded-md border bg-surface-container px-2 py-1 text-xs text-on-surface`}
+                  >
                     +{service.features.length - 3} más
                   </span>
                 )}
               </div>
             </div>
           )}
-
-          {/* Hover indicator */}
-          <div className='border-border/50 mt-4 border-t pt-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100'>
-            <div className='flex items-center gap-2 text-sm font-medium text-primary'>
-              <span>Conocer más</span>
-              <ArrowRight className='size-4 transition-transform duration-300 group-hover:translate-x-1' />
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
@@ -119,7 +89,8 @@ export const Services: React.FC<Props> = ({ data }) => {
             ¿Necesitas un servicio personalizado?
           </h3>
           <p className='text-muted-foreground'>
-            Contacta con nuestro equipo para desarrollar una solución específica para tus necesidades artísticas
+            Contacta con nuestro equipo para desarrollar una solución específica para tus
+            necesidades artísticas
           </p>
           <div className='flex flex-col justify-center gap-4 sm:flex-row'>
             <Button
@@ -128,9 +99,7 @@ export const Services: React.FC<Props> = ({ data }) => {
               size='lg'
               className='border-border hover:bg-surface-container'
             >
-              <Link href={ROUTES.STORE.SERVICES.PATH}>
-                Ver Detalles
-              </Link>
+              <Link href={ROUTES.STORE.SERVICES.PATH}>Ver Detalles</Link>
             </Button>
           </div>
         </div>

@@ -168,13 +168,6 @@ const config = tseslint.config(
 
       // Security
       'no-secrets/no-secrets': ['warn', { tolerance: 4.2 }],
-
-      // Import extensions
-      'import/extensions': [
-        'error',
-        'ignorePackages',
-        { js: 'never', jsx: 'never', ts: 'never', tsx: 'never' },
-      ],
     },
   },
 

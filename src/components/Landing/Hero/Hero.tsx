@@ -2,7 +2,6 @@
 
 import { motion, useSpring, useTransform } from 'framer-motion'
 import { ArrowDown, Pause, Play, Volume2, VolumeX } from 'lucide-react'
-import { useTheme } from 'next-themes'
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -35,9 +34,6 @@ export const Hero: React.FC<Props> = () => {
   const [showControls, setShowControls] = useState(false)
   const [isTabletOrMobile, setIsTabletOrMobile] = useState(false)
   const [isClient, setIsClient] = useState(false)
-
-  const { setTheme, theme } = useTheme()
-  const userPreferredThemeRef = useRef<string | undefined>(undefined)
 
   const particlePositions = useMemo(() => generateParticlePositions(10), [])
 
@@ -114,23 +110,6 @@ export const Hero: React.FC<Props> = () => {
             video.pause()
           }
         }
-
-        if (entry.isIntersecting) {
-          if (entry.intersectionRatio > 0.5) {
-            if (theme !== 'dark') {
-              userPreferredThemeRef.current = theme
-              setTheme('dark')
-            }
-          } else {
-            if (userPreferredThemeRef.current && theme !== userPreferredThemeRef.current) {
-              setTheme(userPreferredThemeRef.current)
-            }
-          }
-        } else {
-          if (userPreferredThemeRef.current && theme !== userPreferredThemeRef.current) {
-            setTheme(userPreferredThemeRef.current)
-          }
-        }
       },
       { threshold: [0, 0.25, 0.5, 0.75, 1] }
     )
@@ -145,7 +124,7 @@ export const Hero: React.FC<Props> = () => {
         observer.unobserve(currentRef)
       }
     }
-  }, [isLoaded, theme, setTheme])
+  }, [isLoaded])
 
   const handlePlayPause = () => {
     const video = videoRef.current
