@@ -212,7 +212,7 @@ export const Customer: React.FC<CustomerDashboardProps> = ({ role, userId }) => 
             <YAxis />
             <Tooltip
               formatter={(value) => [
-                `${parseFloat(value.toString()).toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`,
+                `${parseFloat((value ?? 0).toString()).toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`,
                 'Gasto',
               ]}
             />

@@ -31,13 +31,13 @@ import {
   YAxis,
 } from 'recharts'
 
+import { Badge } from '../ui/badge'
+
 import {
   useAdminDashboard,
   useAdvancedAnalytics,
   useProductMetrics,
 } from '@/src/modules/dashboard/hooks'
-
-import { Badge } from '../ui/badge'
 
 interface TopProduct {
   name: string
@@ -159,7 +159,7 @@ const MetricCard = ({
 
   return (
     <div
-      className={`rounded-lg border-outline p-6 ${colorClasses[ color ]} transition-all hover:shadow-md`}
+      className={`rounded-lg border-outline p-6 ${colorClasses[color]} transition-all hover:shadow-md`}
     >
       <div className='flex items-center justify-between'>
         <div>
@@ -205,12 +205,12 @@ const LoadingDashboard = () => (
     <div className='animate-pulse space-y-6'>
       <div className='h-8 w-1/3 rounded bg-gray-200'></div>
       <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
-        {[ ...Array(4) ].map((_, i) => (
+        {[...Array(4)].map((_, i) => (
           <div key={i} className='h-32 rounded-lg bg-gray-200'></div>
         ))}
       </div>
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-        {[ ...Array(4) ].map((_, i) => (
+        {[...Array(4)].map((_, i) => (
           <div key={i} className='h-64 rounded-lg bg-gray-200'></div>
         ))}
       </div>
@@ -234,8 +234,8 @@ export const Admin = () => {
   const advancedAnalytics = useAdvancedAnalytics()
 
   // Estado para los accordions
-  const [ expandedArtists, setExpandedArtists ] = useState(false)
-  const [ expandedEvents, setExpandedEvents ] = useState(false)
+  const [expandedArtists, setExpandedArtists] = useState(false)
+  const [expandedEvents, setExpandedEvents] = useState(false)
 
   // Console logs para analizar la data
   console.log('=== ADMIN DASHBOARD DATA ===')
@@ -317,7 +317,6 @@ export const Admin = () => {
         </div>
       </div>
 
-
       {/* Resumen financiero */}
       {/* <ChartCard title='Resumen Financiero'>
         <div className='grid grid-cols-1 gap-6 md:grid-cols-4'>
@@ -347,7 +346,6 @@ export const Admin = () => {
           </div>
         </div>
       </ChartCard> */}
-
 
       {/* Estado del inventario y productos destacados */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
@@ -400,8 +398,6 @@ export const Admin = () => {
         </ChartCard>
       </div>
 
-
-
       {/* Product Metrics */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <ChartCard title='Métricas de Producto'>
@@ -432,7 +428,6 @@ export const Admin = () => {
                   ${parseFloat(productMetrics.data.averagePrice).toFixed(2)}
                 </span>
               </div>
-
             </div>
           )}
         </ChartCard>
@@ -491,7 +486,12 @@ export const Admin = () => {
               <CartesianGrid strokeDasharray='3 3' />
               <XAxis dataKey='month' />
               <YAxis />
-              <Tooltip formatter={(value) => [ `${value.toLocaleString()}`, 'Ventas' ]} />
+              <Tooltip
+                formatter={(value) => [
+                  `${(value as number | undefined)?.toLocaleString() ?? '0'}`,
+                  'Ventas',
+                ]}
+              />
               <Area
                 type='monotone'
                 dataKey='sales'
@@ -527,19 +527,18 @@ export const Admin = () => {
         </ChartCard>
       </div>
 
-
       {/* Distribución por Artista */}
       <ChartCard title='Distribución por Artista'>
         {productMetrics.data?.productsByArtist && (
           <ResponsiveContainer width='100%' height={400}>
             <BarChart
               data={Object.entries(productMetrics.data.productsByArtist)
-                .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+                .sort(([, a], [, b]) => (b as number) - (a as number))
                 .slice(0, 10) // Top 10 artistas
-                .map(([ artist, count ], index) => ({
+                .map(([artist, count], index) => ({
                   color: `hsl(${(index * 137.5) % 360}, 70%, 50%)`,
                   name: artist,
-                  value: count as number
+                  value: count as number,
                 }))}
               margin={{ bottom: 5, left: 20, right: 30, top: 5 }}
             >
@@ -552,21 +551,23 @@ export const Admin = () => {
                 tick={{ fontSize: 10 }}
               />
               <YAxis />
-              <Tooltip formatter={(value) => [ value, 'Obras' ]} />
+              <Tooltip formatter={(value) => [value, 'Obras']} />
               <Bar dataKey='value' fill='#8884d8' />
             </BarChart>
           </ResponsiveContainer>
         )}
       </ChartCard>
 
-
-
       {/* Eventos en el Sistema */}
       <AccordionCard
         title='Eventos en el Sistema'
         isExpanded={expandedEvents}
         onToggle={() => setExpandedEvents(!expandedEvents)}
-        totalItems={productMetrics.data?.productsDetails?.filter((product: any) => product.productType === 'Evento').length || 0}
+        totalItems={
+          productMetrics.data?.productsDetails?.filter(
+            (product: any) => product.productType === 'Evento'
+          ).length || 0
+        }
         visibleItems={5}
       >
         {productMetrics.data?.productsDetails ? (
@@ -575,7 +576,10 @@ export const Admin = () => {
               .filter((product: any) => product.productType === 'Evento')
               .slice(0, expandedEvents ? undefined : 5)
               .map((event: any, index: number) => (
-                <div key={index} className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'>
+                <div
+                  key={index}
+                  className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'
+                >
                   <div className='flex-1'>
                     <div className='flex items-center'>
                       <Calendar className='mr-2 size-4 text-primary' />
@@ -601,8 +605,12 @@ export const Admin = () => {
                   </div>
                 </div>
               ))}
-            {productMetrics.data.productsDetails.filter((product: any) => product.productType === 'Evento').length === 0 && (
-              <p className='text-center text-muted-foreground'>No hay eventos registrados en el sistema</p>
+            {productMetrics.data.productsDetails.filter(
+              (product: any) => product.productType === 'Evento'
+            ).length === 0 && (
+              <p className='text-center text-muted-foreground'>
+                No hay eventos registrados en el sistema
+              </p>
             )}
           </>
         ) : (
@@ -610,18 +618,16 @@ export const Admin = () => {
         )}
       </AccordionCard>
 
-
-
       {/* Análisis de Ubicaciones y Series */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <ChartCard title='Distribución por Ubicación'>
           {productMetrics.data?.productsByLocation && (
             <div className='space-y-4'>
               {Object.entries(productMetrics.data.productsByLocation)
-                .filter(([ location ]) => location !== 'Sin ubicación especificada')
-                .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+                .filter(([location]) => location !== 'Sin ubicación especificada')
+                .sort(([, a], [, b]) => (b as number) - (a as number))
                 .slice(0, 10)
-                .map(([ location, count ]) => (
+                .map(([location, count]) => (
                   <div key={location} className='flex items-center justify-between'>
                     <div className='flex items-center'>
                       <MapPin className='mr-2 size-4 text-primary' />
@@ -638,10 +644,10 @@ export const Admin = () => {
           {productMetrics.data?.productsBySerie && (
             <div className='space-y-4'>
               {Object.entries(productMetrics.data.productsBySerie)
-                .filter(([ serie ]) => serie !== 'Sin serie especificada')
-                .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+                .filter(([serie]) => serie !== 'Sin serie especificada')
+                .sort(([, a], [, b]) => (b as number) - (a as number))
                 .slice(0, 10)
-                .map(([ serie, count ]) => (
+                .map(([serie, count]) => (
                   <div key={serie} className='flex items-center justify-between'>
                     <div className='flex items-center'>
                       <BookOpen className='mr-2 size-4 text-primary' />
@@ -660,16 +666,24 @@ export const Admin = () => {
         title='Análisis por Artista'
         isExpanded={expandedArtists}
         onToggle={() => setExpandedArtists(!expandedArtists)}
-        totalItems={productMetrics.data?.productsByArtist ? Object.keys(productMetrics.data.productsByArtist).length : 0}
+        totalItems={
+          productMetrics.data?.productsByArtist
+            ? Object.keys(productMetrics.data.productsByArtist).length
+            : 0
+        }
         visibleItems={5}
       >
-        {productMetrics.data?.productsByArtist && Object.keys(productMetrics.data.productsByArtist).length > 0 ? (
+        {productMetrics.data?.productsByArtist &&
+        Object.keys(productMetrics.data.productsByArtist).length > 0 ? (
           <>
             {Object.entries(productMetrics.data.productsByArtist)
-              .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+              .sort(([, a], [, b]) => (b as number) - (a as number))
               .slice(0, expandedArtists ? undefined : 5)
-              .map(([ artist, count ]) => (
-                <div key={artist} className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'>
+              .map(([artist, count]) => (
+                <div
+                  key={artist}
+                  className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'
+                >
                   <div className='flex-1'>
                     <div className='flex items-center'>
                       <Star className='mr-2 size-4 text-warning' />
@@ -678,16 +692,21 @@ export const Admin = () => {
                     <div className='mt-2 flex flex-wrap gap-2'>
                       <Badge variant='secondary'>{count as number} obras</Badge>
                       {productMetrics.data?.averagePrice && (
-                        <Badge variant='outline'>${parseFloat(productMetrics.data.averagePrice).toFixed(2)} promedio</Badge>
+                        <Badge variant='outline'>
+                          ${parseFloat(productMetrics.data.averagePrice).toFixed(2)} promedio
+                        </Badge>
                       )}
                     </div>
                   </div>
                   <div className='text-right'>
                     <p className='text-sm text-muted-foreground'>Valor estimado</p>
                     <p className='font-bold text-success'>
-                      ${productMetrics.data?.averagePrice ?
-                        (parseFloat(productMetrics.data.averagePrice) * (count as number)).toLocaleString() :
-                        '0'}
+                      $
+                      {productMetrics.data?.averagePrice
+                        ? (
+                            parseFloat(productMetrics.data.averagePrice) * (count as number)
+                          ).toLocaleString()
+                        : '0'}
                     </p>
                   </div>
                 </div>
@@ -697,11 +716,6 @@ export const Admin = () => {
           <p className='text-center text-muted-foreground'>No hay datos de artistas disponibles</p>
         )}
       </AccordionCard>
-
-
-
-
-
 
       {/* <FinanceOverview role={ROLES.ADMIN.NAME} /> */}
     </div>

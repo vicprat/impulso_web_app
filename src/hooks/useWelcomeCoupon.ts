@@ -5,14 +5,16 @@ import { useAuth } from '@/modules/auth/context/useAuth'
 import { useCustomerOrders } from '@/modules/customer/hooks'
 import { useGetDiscounts } from '@/services/product/queries'
 
+const COUPON_CODE = 'BIENVENIDOIMPULSO'
+
 export function useWelcomeCoupon() {
-  const { isAuthenticated, isLoading: authLoading, user, hasRole } = useAuth()
+  const { hasRole, isAuthenticated, isLoading: authLoading, user } = useAuth()
   const [hasShownWelcome, setHasShownWelcome] = useState(false)
   const [shouldShowDialog, setShouldShowDialog] = useState(false)
 
   // Obtener órdenes del usuario
   const { data: ordersData, isLoading: ordersLoading } = useCustomerOrders(
-    { first: 1 }, // Solo necesitamos verificar si tiene al menos una orden
+    { first: 1 },
     { enabled: isAuthenticated }
   )
 
@@ -20,23 +22,20 @@ export function useWelcomeCoupon() {
   const { data: discounts = [], isLoading: discountsLoading } = useGetDiscounts({
     appliesTo: 'ALL_PRODUCTS',
     isActive: true,
+    search: 'BIENVENIDOIMPULSO',
   })
 
   // Buscar el cupón de bienvenida específico
   const welcomeCoupon = discounts.find(
     (discount: any) =>
-      discount.code === 'BIENVENIDOIMPULSO' &&
-      discount.type === 'PERCENTAGE' &&
-      discount.value === 10 &&
-      discount.isActive
+      discount.code === COUPON_CODE && discount.type === 'PERCENTAGE' && discount.isActive
   )
 
   // Verificar si el usuario tiene órdenes
   const hasOrders = (ordersData?.customer?.orders?.edges?.length ?? 0) > 0
 
   // Verificar si el usuario tiene un rol válido (customer o vip_customer)
-  const hasValidRole =
-    hasRole(ROLES.CUSTOMER.NAME) || hasRole(ROLES.VIP_CUSTOMER.NAME)
+  const hasValidRole = hasRole(ROLES.CUSTOMER.NAME) || hasRole(ROLES.VIP_CUSTOMER.NAME)
 
   // Verificar si debe mostrar el dialog
   const checkShouldShowDialog = useCallback(() => {

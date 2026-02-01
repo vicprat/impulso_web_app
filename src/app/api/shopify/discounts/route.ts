@@ -3,14 +3,21 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/src/modules/auth/server/server'
 import { shopifyDiscountService } from '@/src/modules/shopify/discounts'
 
+const COUPON_CODE = 'BIENVENIDOIMPULSO'
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession()
-    if (!session?.user) {
+
+    // Permitir acceso público solo para consultar el cupón de bienvenida
+    const { searchParams } = new URL(request.url)
+    const search = searchParams.get('search')
+
+    const isPublicCouponCheck = search === COUPON_CODE
+
+    if (!session?.user && !isPublicCouponCheck) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
-
-    const { searchParams } = new URL(request.url)
     const filters = {
       appliesTo: searchParams.get('appliesTo') as
         | 'ALL_PRODUCTS'

@@ -23,16 +23,16 @@ import {
   YAxis,
 } from 'recharts'
 
+import { Guard } from '../Guards'
+import { Badge } from '../ui/badge'
+import { FinanceOverview } from './FinanceOverview'
+
 import { PERMISSIONS } from '@/config/Permissions'
 import {
   useAdminDashboard,
   useAdvancedAnalytics,
   useProductMetrics,
 } from '@/src/modules/dashboard/hooks'
-
-import { Guard } from '../Guards'
-import { FinanceOverview } from './FinanceOverview'
-import { Badge } from '../ui/badge'
 
 interface TopProduct {
   name: string
@@ -257,7 +257,12 @@ export const Manager = () => {
               <CartesianGrid strokeDasharray='3 3' />
               <XAxis dataKey='month' />
               <YAxis />
-              <Tooltip formatter={(value) => [`${value.toLocaleString()}`, 'Ventas']} />
+              <Tooltip
+                formatter={(value: number | undefined) => [
+                  value ? `${value.toLocaleString()}` : '0',
+                  'Ventas',
+                ]}
+              />
               <Area
                 type='monotone'
                 dataKey='sales'

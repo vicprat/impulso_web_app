@@ -1,9 +1,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Gift, Sparkles, Star } from 'lucide-react'
+import { Copy, Gift, Sparkles, Star } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -13,14 +14,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { useWelcomeCoupon } from '@/hooks/useWelcomeCoupon'
 import { ROUTES } from '@/src/config/routes'
 import { useAuth } from '@/src/modules/auth/context/useAuth'
 
 export function RegistrationDialog() {
   const [isVisible, setIsVisible] = useState(true)
   const { user } = useAuth()
+  const { welcomeCoupon } = useWelcomeCoupon()
 
-  // Solo mostrar el dialog si no hay usuario autenticado y el dialog está visible
+  const handleCopyCode = useCallback(() => {
+    if (welcomeCoupon?.code) {
+      void navigator.clipboard.writeText(welcomeCoupon.code)
+      toast.success('Código copiado al portapapeles')
+    }
+  }, [welcomeCoupon?.code])
+
   if (!isVisible || user) return null
 
   const handleClose = () => {
@@ -30,9 +39,7 @@ export function RegistrationDialog() {
   return (
     <Dialog open={isVisible} onOpenChange={handleClose}>
       <DialogContent className='max-w-lg border-0 bg-transparent p-0 shadow-none'>
-        <div className=' border-border/50 relative overflow-hidden rounded-3xl border bg-gradient-to-br from-background shadow-2xl backdrop-blur-xl'>
-          <div className=' absolute inset-0 bg-gradient-to-br via-transparent' />
-
+        <div className=' border-border/50 relative overflow-hidden rounded-3xl border bg-background shadow-2xl backdrop-blur-xl'>
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -55,7 +62,7 @@ export function RegistrationDialog() {
 
             <div className='p-8'>
               <DialogHeader className='mb-8 text-center'>
-                <DialogTitle className='mb-3 bg-gradient-to-r from-foreground bg-clip-text text-3xl font-bold text-transparent'>
+                <DialogTitle className='mb-3 text-3xl font-bold'>
                   ¡Únete a nuestra comunidad!
                 </DialogTitle>
 
@@ -84,17 +91,32 @@ export function RegistrationDialog() {
                     <span>Acceso a productos exclusivos</span>
                   </motion.div>
 
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.8, duration: 0.4 }}
-                    className='flex items-center gap-3 text-sm text-muted-foreground'
-                  >
-                    <div className='bg-primary/10 flex size-8 items-center justify-center rounded-full'>
-                      <Gift className='size-4 text-primary' />
-                    </div>
-                    <span>10% de descuento en tu primera compra</span>
-                  </motion.div>
+                  {welcomeCoupon && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.8, duration: 0.4 }}
+                      className='flex items-center justify-between text-sm text-muted-foreground'
+                    >
+                      <div className='flex items-center gap-3'>
+                        <div className='bg-primary/10 flex size-8 items-center justify-center rounded-full'>
+                          <Gift className='size-4 text-primary' />
+                        </div>
+                        <span>
+                          {welcomeCoupon.value}% de descuento en tu primera compra con el código:{' '}
+                          <span className='font-bold text-foreground'>{welcomeCoupon.code}</span>
+                        </span>
+                      </div>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={handleCopyCode}
+                        className='hover:bg-muted/50 size-8 p-0'
+                      >
+                        <Copy className='size-4' />
+                      </Button>
+                    </motion.div>
+                  )}
 
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
@@ -134,26 +156,6 @@ export function RegistrationDialog() {
               </motion.div>
             </div>
           </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
-            className=' absolute -bottom-2 -right-2 size-24 rounded-full bg-gradient-to-br blur-2xl'
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1, duration: 0.8 }}
-            className=' absolute -left-2 -top-2 size-20 rounded-full bg-gradient-to-br blur-xl'
-          />
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 0.6 }}
-            className='absolute left-1/2 top-1/2 size-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br blur-3xl'
-          />
         </div>
       </DialogContent>
     </Dialog>
