@@ -102,6 +102,7 @@ export function Client() {
   const dimensionsFilterInUrl = searchParams.get('dimensions') ?? 'all'
   const techniqueFilterInUrl = searchParams.get('technique') ?? 'all'
   const artworkTypeFilterInUrl = searchParams.get('artworkType') ?? 'all'
+  const vendorFilterInUrl = searchParams.get('vendor') ?? 'all'
   const sortByInUrl = searchParams.get('sortBy') ?? 'title'
   const sortOrderInUrl = (searchParams.get('sortOrder') ?? 'asc') as 'asc' | 'desc'
 
@@ -351,6 +352,7 @@ export function Client() {
     dimensionsFilterInUrl,
     techniqueFilterInUrl,
     artworkTypeFilterInUrl,
+    vendorFilterInUrl,
     sortByInUrl,
     sortOrderInUrl,
     pageInUrl,
@@ -372,6 +374,7 @@ export function Client() {
     sortOrder: sortOrderInUrl,
     status: statusFilterInUrl !== 'all' ? statusFilterInUrl : undefined,
     technique: techniqueFilterInUrl !== 'all' ? techniqueFilterInUrl : undefined,
+    vendor: vendorFilterInUrl !== 'all' ? vendorFilterInUrl : undefined,
   })
 
   const {
@@ -608,11 +611,10 @@ export function Client() {
         onSuccess: () => {
           toast.success('Producto actualizado con éxito.')
           setEditingRowId(null)
-          // No invalidar caché aquí - useUpdateProduct ya lo maneja
         },
       })
     },
-    [updateMutation, refetch, queryClient]
+    [updateMutation]
   )
 
   const handleRefresh = useCallback(() => {
@@ -747,6 +749,21 @@ export function Client() {
         newUrlParams.delete('artworkType')
       } else {
         newUrlParams.set('artworkType', artworkType)
+      }
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
+
+  const handleVendorFilterChange = useCallback(
+    (vendor: string) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      if (vendor === 'all') {
+        newUrlParams.delete('vendor')
+      } else {
+        newUrlParams.set('vendor', vendor)
       }
       newUrlParams.set('page', '1')
       newUrlParams.delete('after')
@@ -946,6 +963,10 @@ export function Client() {
     onColumnVisibilityChange: setColumnVisibility,
     state: {
       columnVisibility,
+      pagination: {
+        pageIndex: pageInUrl - 1,
+        pageSize: pageSizeInUrl,
+      },
     },
   })
 
@@ -1133,52 +1154,8 @@ export function Client() {
         </div>
       </div>
 
-      <div className='flex min-w-0 flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0'>
-        <div className='relative flex max-w-sm flex-1'>
-          <Input
-            placeholder='Buscar por título, artista, tipo, técnica, localización...'
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearchSubmit()
-              }
-            }}
-            className='rounded-r-none'
-            disabled={isFetching}
-          />
-          <Button
-            onClick={handleSearchSubmit}
-            className='rounded-l-none px-3'
-            variant='default'
-            disabled={isFetching}
-          >
-            {isFetching ? (
-              <RefreshCw className='size-4 animate-spin' />
-            ) : (
-              <Search className='size-4' />
-            )}
-          </Button>
-          {searchInUrl && (
-            <Button
-              onClick={handleClearSearch}
-              className='ml-2 px-3'
-              variant='outline'
-              size='sm'
-              disabled={isFetching}
-            >
-              Limpiar
-            </Button>
-          )}
-        </div>
-
-        {searchInUrl && (
-          <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
-            <Search className='size-4' />
-            <span>Buscando: "{searchInUrl}"</span>
-          </div>
-        )}
-
+      <div className='flex w-full items-center justify-start space-x-2 p-1'>
+        <span className='ml-2 text-sm font-medium'>Filtrar:</span>
         <div className='flex items-center space-x-1'>
           <Select value={statusFilterInUrl} onValueChange={handleStatusFilterChange}>
             <SelectTrigger className='w-44'>
@@ -1190,6 +1167,29 @@ export function Client() {
               <SelectItem value='ACTIVE'>Activos</SelectItem>
               <SelectItem value='DRAFT'>Borradores</SelectItem>
               <SelectItem value='ARCHIVED'>Archivados</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='flex items-center space-x-1'>
+          <Select value={vendorFilterInUrl} onValueChange={handleVendorFilterChange}>
+            <SelectTrigger className='w-44'>
+              <Filter className='mr-2 size-4' />
+              <SelectValue placeholder='Filtrar por artista' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>Todos los artistas</SelectItem>
+              {vendors && vendors.length > 0 ? (
+                vendors.map((vendor: string) => (
+                  <SelectItem key={vendor} value={vendor}>
+                    {vendor}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value='all' disabled>
+                  Cargando...
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -1255,8 +1255,56 @@ export function Client() {
             </SelectContent>
           </Select>
         </div>
+      </div>
 
-        <div className='flex items-center space-x-1'>
+      <div className='flex min-w-0 flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0'>
+        <div className='relative flex max-w-sm flex-1'>
+          <Input
+            placeholder='Buscar por título, artista, tipo, técnica, localización...'
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearchSubmit()
+              }
+            }}
+            className='rounded-r-none'
+            disabled={isFetching}
+          />
+          <Button
+            onClick={handleSearchSubmit}
+            className='rounded-l-none px-3'
+            variant='default'
+            disabled={isFetching}
+          >
+            {isFetching ? (
+              <RefreshCw className='size-4 animate-spin' />
+            ) : (
+              <Search className='size-4' />
+            )}
+          </Button>
+          {searchInUrl && (
+            <Button
+              onClick={handleClearSearch}
+              className='ml-2 px-3'
+              variant='outline'
+              size='sm'
+              disabled={isFetching}
+            >
+              Limpiar
+            </Button>
+          )}
+        </div>
+
+        {searchInUrl && (
+          <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
+            <Search className='size-4' />
+            <span>Buscando: "{searchInUrl}"</span>
+          </div>
+        )}
+
+        <div className='flex items-center space-x-2 p-1'>
+          <span className='ml-2 text-sm font-medium'>Ordenar:</span>
           <Select
             value={sortByInUrl}
             onValueChange={(value) => {
@@ -1285,9 +1333,7 @@ export function Client() {
               <SelectItem value='inventoryQuantity'>Cantidad en inventario</SelectItem>
             </SelectContent>
           </Select>
-        </div>
 
-        <div className='flex items-center space-x-1'>
           <Select
             value={sortOrderInUrl}
             onValueChange={(value) => {
