@@ -111,10 +111,17 @@ export function MiniCart({ children }: Props) {
                 {cartSummary?.lines.map((line) => (
                   <div key={line.id} className='flex items-start space-x-4'>
                     <div className='aspect-square size-16 overflow-hidden rounded-md border'>
-                      {line.merchandise.image ? (
+                      {line.merchandise.image || line.merchandise.product.featuredImage ? (
                         <img
-                          src={line.merchandise.image.url}
-                          alt={line.merchandise.image.altText ?? line.merchandise.title}
+                          src={
+                            line.merchandise.image?.url ??
+                            line.merchandise.product.featuredImage?.url
+                          }
+                          alt={
+                            line.merchandise.image?.altText ??
+                            line.merchandise.product.featuredImage?.altText ??
+                            line.merchandise.title
+                          }
                           className='size-full object-cover'
                         />
                       ) : (
@@ -128,6 +135,9 @@ export function MiniCart({ children }: Props) {
                       <h4 className='line-clamp-2 text-sm font-medium'>
                         {line.merchandise.product.title}
                       </h4>
+                      <p className='line-clamp-2 text-sm text-muted-foreground'>
+                        {line.merchandise.product.vendor}
+                      </p>
 
                       {line.merchandise?.selectedOptions?.length > 0 && (
                         <p className='text-xs text-muted-foreground'>
@@ -206,15 +216,6 @@ export function MiniCart({ children }: Props) {
                         )}
                     </span>
                   </div>
-
-                  {cartSummary?.tax && (
-                    <div className='flex justify-between text-sm'>
-                      <span>Impuestos:</span>
-                      <span>
-                        {formatCurrency(cartSummary.tax.amount, cartSummary.tax.currencyCode)}
-                      </span>
-                    </div>
-                  )}
 
                   <div className='flex justify-between border-t pt-2 font-medium'>
                     <span>Total:</span>

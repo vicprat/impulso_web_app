@@ -153,7 +153,7 @@ export default function CartPage() {
                             </Link>
 
                             <p className='mt-1 text-sm text-muted-foreground'>
-                              {line.merchandise.title}
+                              {line.merchandise.product.vendor}
                             </p>
 
                             {line?.merchandise?.selectedOptions?.length > 0 && (
@@ -241,16 +241,6 @@ export default function CartPage() {
                               </Button>
                             </div>
                           </div>
-
-                          <div className='text-right'>
-                            <p className='text-sm font-medium'>
-                              Subtotal:{' '}
-                              {formatCurrency(
-                                line.cost.totalAmount.amount,
-                                line.cost.totalAmount.currencyCode
-                              )}
-                            </p>
-                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -275,15 +265,6 @@ export default function CartPage() {
                         )}
                     </span>
                   </div>
-
-                  {cartSummary?.tax && parseFloat(cartSummary.tax.amount) > 0 && (
-                    <div className='flex justify-between'>
-                      <span>Impuestos:</span>
-                      <span>
-                        {formatCurrency(cartSummary.tax.amount, cartSummary.tax.currencyCode)}
-                      </span>
-                    </div>
-                  )}
 
                   {cart?.discountAllocations && cart.discountAllocations.length > 0 && (
                     <>

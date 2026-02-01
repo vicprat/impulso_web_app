@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 
-import { useAuth } from '@/modules/auth/context/useAuth'
-
 import { api } from './api'
 import { type CartLineInput, type CartLineUpdateInput } from './types'
+
+import { useAuth } from '@/modules/auth/context/useAuth'
 
 export function useCart() {
   const { cart, isAuthenticated, isLoading } = useAuth()

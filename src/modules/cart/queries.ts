@@ -41,10 +41,19 @@ const CART_FRAGMENT = `
                 amount
                 currencyCode
               }
+              image {
+                url
+                altText
+              }
               product {
                 id
                 title
                 handle
+                vendor
+                featuredImage {
+                  url
+                  altText
+                }
               }
             }
           }

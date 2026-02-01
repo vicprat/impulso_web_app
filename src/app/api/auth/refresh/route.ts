@@ -44,7 +44,6 @@ export async function POST(request: NextRequest) {
       refreshed: true,
       user: refreshedSession.user,
     })
-
     const tokenExpiresInSeconds = Math.floor(
       (refreshedSession.tokens.expiresAt.getTime() - Date.now()) / 1000
     )

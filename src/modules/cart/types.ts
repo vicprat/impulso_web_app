@@ -1,4 +1,4 @@
-import { type Money, type Image } from '@/modules/shopify/types'
+import { type Image, type Money } from '@/modules/shopify/types'
 
 export interface CartLineInput {
   merchandiseId: string
@@ -47,6 +47,7 @@ export interface CartLine {
       title: string
       handle: string
       featuredImage?: Image
+      vendor: string
     }
     image?: Image
     price: Money
