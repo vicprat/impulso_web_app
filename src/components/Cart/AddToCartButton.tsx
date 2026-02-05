@@ -1,10 +1,12 @@
 'use client'
 
 import { Loader2, Minus, Plus, ShoppingCart } from 'lucide-react'
+import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
+import { ROUTES } from '@/config/routes'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import { useCartActions } from '@/modules/cart/hook'
 import { type IProductForCart, type Variant } from '@/modules/shopify/types'
@@ -31,7 +33,7 @@ const defaultTitles = {
   addMore: 'Agregar más',
   adding: 'Agregando...',
   alreadyInCart: 'Ya tienes {quantity} en tu carrito',
-  loginPrompt: 'Iniciar sesión para comprar',
+  loginPrompt: 'Añadir al carrito',
   primary: 'Agregar al carrito',
   unavailable: 'Este producto no está disponible para la venta',
 }
@@ -58,18 +60,15 @@ export function AddToCartButton({
   const { addProduct, cartSummary, isAdding } = useCartActions()
   const [quantity, setQuantity] = useState(initialQuantity)
 
-  // Usar títulos personalizados o detectar si es evento para usar títulos apropiados
   const isEvent = product.vendor === 'Evento' || product.title?.toLowerCase().includes('evento')
-  const titles = title || (isEvent ? eventTitles : defaultTitles)
+  const titles = title ?? (isEvent ? eventTitles : defaultTitles)
 
   const variantToAdd = selectedVariant ?? product.variants[0]
   const existingLine = cartSummary?.lines.find((line) => line.merchandise.id === variantToAdd.id)
 
   const handleAddToCart = async () => {
     if (!isAuthenticated && !authLoading) {
-      toast.error(
-        `Debes iniciar sesión para ${isEvent ? 'registrarte al evento' : 'agregar productos al carrito'}`
-      )
+      toast.error(`${isEvent ? 'registrarte al evento' : 'agregar productos al carrito'}`)
       login()
       return
     }
@@ -105,10 +104,15 @@ export function AddToCartButton({
 
   if (!isAuthenticated) {
     return (
-      <Button onClick={login} size={size} className={className} variant='outline'>
-        <ShoppingCart className='mr-2 size-4' />
-        {titles.loginPrompt}
-      </Button>
+      <Link
+        href={ROUTES.AUTH.LOGIN.PATH}
+        className='text-xs text-muted-foreground transition-colors hover:text-primary hover:underline'
+      >
+        <Button onClick={login} size={size} className={className} variant='outline'>
+          <ShoppingCart className='mr-2 size-4' />
+          {titles.loginPrompt}
+        </Button>
+      </Link>
     )
   }
 

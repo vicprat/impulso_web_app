@@ -34,13 +34,13 @@ const socialLinks = [
   },
   {
     handle: '@impulsogaleria',
-    href: 'https://youtube.com/impulsogaleria',
+    href: 'https://youtube.com/@impulsogaleria',
     icon: Youtube,
     name: 'YouTube',
   },
   {
     handle: '@impulsogaleria',
-    href: 'https://tiktok.com/impulsogaleria',
+    href: 'https://tiktok.com/@impulsogaleria',
     icon: FaTiktok,
     name: 'TikTok',
   },

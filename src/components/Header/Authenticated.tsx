@@ -2,15 +2,15 @@
 
 import { PanelLeft } from 'lucide-react'
 
-import { MiniCart } from '@/components/Cart/MiniCart'
-import { useSidebar } from '@/components/ui/sidebar'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useCurrentUser } from '@/modules/user/hooks/management'
-
 import { Breadcrumbs } from '../Navigation/Breadcrumbs'
 import { Button } from '../ui/button'
 import { SearchTrigger } from './components/SearchTrigger'
 import { ThemeSwitch } from './components/ThemeSwitch'
+
+import { MiniCart } from '@/components/Cart/MiniCart'
+import { useSidebar } from '@/components/ui/sidebar'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useCurrentUser } from '@/modules/user/hooks/management'
 
 const AuthenticatedSkeleton = () => (
   <div className='border-b shadow-sm'>
