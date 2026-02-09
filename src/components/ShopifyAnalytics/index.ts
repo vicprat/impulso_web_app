@@ -1,0 +1,1 @@
+export { ShopifyAnalytics } from './ShopifyAnalytics'

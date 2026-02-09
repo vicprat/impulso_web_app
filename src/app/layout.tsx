@@ -1,5 +1,3 @@
-import { Analytics } from '@vercel/analytics/next'
-
 import type { Metadata } from 'next'
 
 import { Providers } from '@/components/Providers'
@@ -36,10 +34,7 @@ export default function RootLayout({
         <link rel='dns-prefetch' href='//fonts.gstatic.com' />
       </head>
       <body className='min-h-screen' suppressHydrationWarning>
-        <Providers>
-          {children}
-          <Analytics />
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
