@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useBankAccounts, useDeleteBankAccount } from '@/modules/finance/hooks'
-import { ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
 
 export default function BankAccountsPage() {
@@ -80,7 +79,7 @@ export default function BankAccountsPage() {
     <div className='space-y-6 p-6'>
       <div className='flex items-center justify-between'>
         <h1 className='text-2xl font-bold'>Cuentas Bancarias</h1>
-        <Link href={ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.CREATE.PATH}>
+        <Link href=''>
           <Button>
             <Plus className='mr-2 size-4' />
             Nueva Cuenta
@@ -153,14 +152,12 @@ export default function BankAccountsPage() {
                     </div>
                   </div>
                   <div className='flex gap-2'>
-                    <Link
-                      href={ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.DETAIL.PATH.replace(':id', account.id)}
-                    >
+                    <Link href=''>
                       <Button variant='outline' size='sm'>
                         Ver
                       </Button>
                     </Link>
-                    <Link href={ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.EDIT.PATH.replace(':id', account.id)}>
+                    <Link href=''>
                       <Button variant='outline' size='sm'>
                         Editar
                       </Button>

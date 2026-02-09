@@ -72,73 +72,73 @@ export const ROUTES = {
         ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
-    FINANCE: {
-      BANK_ACCOUNTS: {
-        CREATE: {
-          ICON: 'plus',
-          LABEL: 'Crear Cuenta Bancaria',
-          PATH: '/admin/finance/bank-accounts/new',
-          PERMISSIONS: [PERMISSIONS.MANAGE_BANK_ACCOUNTS],
-          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-        },
-        DETAIL: {
-          ICON: 'edit',
-          LABEL: 'Detalle de Cuenta Bancaria',
-          PATH: '/admin/finance/bank-accounts/:id',
-          PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
-          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-        },
-        EDIT: {
-          ICON: 'edit',
-          LABEL: 'Editar Cuenta Bancaria',
-          PATH: '/admin/finance/bank-accounts/:id/edit',
-          PERMISSIONS: [PERMISSIONS.MANAGE_BANK_ACCOUNTS],
-          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-        },
-        MAIN: {
-          DESCRIPTION: 'Gestionar Cuentas Bancarias',
-          ICON: 'credit-card',
-          LABEL: 'Cuentas Bancarias',
-          PATH: '/admin/finance/bank-accounts',
-          PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
-          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-        },
-      },
-      ENTRIES: {
-        CREATE: {
-          ICON: 'plus',
-          LABEL: 'Crear Movimiento',
-          PATH: '/admin/finance/entries/new',
-          PERMISSIONS: [PERMISSIONS.MANAGE_FINANCIAL_ENTRIES],
-          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-        },
-        DETAIL: {
-          ICON: 'edit',
-          LABEL: 'Detalle de Movimiento',
-          PATH: '/admin/finance/entries/:id',
-          PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES, PERMISSIONS.MANAGE_FINANCIAL_ENTRIES],
-          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-        },
-        MAIN: {
-          DESCRIPTION: 'Gestionar Movimientos Financieros',
-          ICON: 'trending-up',
-          LABEL: 'Movimientos',
-          PATH: '/admin/finance/entries',
-          PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
-          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-        },
-      },
-      REPORTS: {
-        MAIN: {
-          DESCRIPTION: 'Reportes Financieros',
-          ICON: 'bar-chart-3',
-          LABEL: 'Reportes',
-          PATH: '/admin/finance/reports',
-          PERMISSIONS: [PERMISSIONS.VIEW_FINANCE_REPORTS],
-          ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.PARTNER.NAME],
-        },
-      },
-    },
+    // FINANCE: {
+    //   BANK_ACCOUNTS: {
+    //     CREATE: {
+    //       ICON: 'plus',
+    //       LABEL: 'Crear Cuenta Bancaria',
+    //       PATH: '/admin/finance/bank-accounts/new',
+    //       PERMISSIONS: [PERMISSIONS.MANAGE_BANK_ACCOUNTS],
+    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    //     },
+    //     DETAIL: {
+    //       ICON: 'edit',
+    //       LABEL: 'Detalle de Cuenta Bancaria',
+    //       PATH: '/admin/finance/bank-accounts/:id',
+    //       PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
+    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    //     },
+    //     EDIT: {
+    //       ICON: 'edit',
+    //       LABEL: 'Editar Cuenta Bancaria',
+    //       PATH: '/admin/finance/bank-accounts/:id/edit',
+    //       PERMISSIONS: [PERMISSIONS.MANAGE_BANK_ACCOUNTS],
+    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    //     },
+    //     MAIN: {
+    //       DESCRIPTION: 'Gestionar Cuentas Bancarias',
+    //       ICON: 'credit-card',
+    //       LABEL: 'Cuentas Bancarias',
+    //       PATH: '/admin/finance/bank-accounts',
+    //       PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
+    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    //     },
+    //   },
+    //   ENTRIES: {
+    //     CREATE: {
+    //       ICON: 'plus',
+    //       LABEL: 'Crear Movimiento',
+    //       PATH: '/admin/finance/entries/new',
+    //       PERMISSIONS: [PERMISSIONS.MANAGE_FINANCIAL_ENTRIES],
+    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    //     },
+    //     DETAIL: {
+    //       ICON: 'edit',
+    //       LABEL: 'Detalle de Movimiento',
+    //       PATH: '/admin/finance/entries/:id',
+    //       PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES, PERMISSIONS.MANAGE_FINANCIAL_ENTRIES],
+    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    //     },
+    //     MAIN: {
+    //       DESCRIPTION: 'Gestionar Movimientos Financieros',
+    //       ICON: 'trending-up',
+    //       LABEL: 'Movimientos',
+    //       PATH: '/admin/finance/entries',
+    //       PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
+    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+    //     },
+    //   },
+    //   REPORTS: {
+    //     MAIN: {
+    //       DESCRIPTION: 'Reportes Financieros',
+    //       ICON: 'bar-chart-3',
+    //       LABEL: 'Reportes',
+    //       PATH: '/admin/finance/reports',
+    //       PERMISSIONS: [PERMISSIONS.VIEW_FINANCE_REPORTS],
+    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.PARTNER.NAME],
+    //     },
+    //   },
+    // },
     GROUP: {
       HIDE_IN_NAV: true,
       ICON: 'settings',
@@ -183,7 +183,6 @@ export const ROUTES = {
     },
   },
 
-  // (sección ADMIN ya declarada arriba)
   ARTIST: {
     DASHBOARD: {
       DESCRIPTION: 'Dashboard específico para artistas',
@@ -622,10 +621,10 @@ export const getDashboardNavRoutes = (
     ROUTES.CUSTOMER.PROFILE,
     // Rutas administrativas agrupadas
     ROUTES.ADMIN.EVENTS.MAIN,
-    ROUTES.ADMIN.USERS.MAIN,
-    ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN,
-    ROUTES.ADMIN.FINANCE.ENTRIES.MAIN,
-    ROUTES.ADMIN.FINANCE.REPORTS.MAIN,
+    // ROUTES.ADMIN.USERS.MAIN,
+    // ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN,
+    // ROUTES.ADMIN.FINANCE.ENTRIES.MAIN,
+    // ROUTES.ADMIN.FINANCE.REPORTS.MAIN,
     // Rutas individuales que no están en ADMIN
     ROUTES.ADMIN.PRIVATE_ROOMS.ACCESS,
     ROUTES.TICKETS.MAIN,
@@ -651,8 +650,8 @@ export const getGroupedDashboardNavRoutes = (
     ROUTES.ADMIN.EVENTS.MAIN,
     ROUTES.ADMIN.USERS.MAIN,
     //  ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN,
-    ROUTES.ADMIN.FINANCE.ENTRIES.MAIN,
-    ROUTES.ADMIN.FINANCE.REPORTS.MAIN,
+    // ROUTES.ADMIN.FINANCE.ENTRIES.MAIN,
+    // ROUTES.ADMIN.FINANCE.REPORTS.MAIN,
   ].filter(
     (route) =>
       filterRoutesByAccess([route], userRoles, userPermissions).length > 0 &&
