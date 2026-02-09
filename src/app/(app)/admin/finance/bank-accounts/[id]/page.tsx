@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useBankAccount, useDeleteBankAccount, useFinancialEntries } from '@/modules/finance/hooks'
-import { ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
 
 export default function BankAccountDetailPage() {
@@ -28,7 +27,7 @@ export default function BankAccountDetailPage() {
       try {
         await deleteBankAccount.mutateAsync(accountId)
         toast.success('Cuenta bancaria eliminada exitosamente')
-        router.push(ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN.PATH)
+        // router.push(ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN.PATH)
       } catch (error) {
         console.error('Error deleting bank account:', error)
         toast.error('Error al eliminar la cuenta bancaria')
@@ -106,7 +105,7 @@ export default function BankAccountDetailPage() {
     <div className='space-y-6 p-6'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-4'>
-          <Link href={ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN.PATH}>
+          <Link href=''>
             <Button variant='outline' size='sm'>
               <ArrowLeft className='mr-2 size-4' />
               Volver
@@ -118,7 +117,7 @@ export default function BankAccountDetailPage() {
           </div>
         </div>
         <div className='flex gap-2'>
-          <Link href={ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.EDIT.PATH.replace(':id', accountId)}>
+          <Link href=''>
             <Button variant='outline'>
               <Edit className='mr-2 size-4' />
               Editar
@@ -253,7 +252,7 @@ export default function BankAccountDetailPage() {
 
           {movements && movements.length > 10 && (
             <div className='mt-4 text-center'>
-              <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?bankAccountId=${accountId}`}>
+              <Link href=''>
                 <Button variant='outline'>Ver todos los movimientos</Button>
               </Link>
             </div>

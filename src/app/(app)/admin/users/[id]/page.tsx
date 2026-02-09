@@ -6,11 +6,9 @@ import {
   CreditCard,
   DollarSign,
   Edit,
-  FileText,
   Handshake,
   Mail,
   Phone,
-  Plus,
   Shield,
   Tag,
   TrendingUp,
@@ -43,11 +41,7 @@ export default function UserDetailPage() {
   const [artistTypeEditDialogOpen, setArtistTypeEditDialogOpen] = useState(false)
 
   const { data: user, isError, isLoading } = useUserById(userId)
-  const primaryRole = user?.roles[0] || 'customer'
-
-  console.log('User data:', user)
-  console.log('Primary role:', primaryRole)
-  console.log('User ID:', userId)
+  const primaryRole = user?.roles[0] ?? 'customer'
 
   const { data: financeData, isLoading: financeLoading } = useUserFinance(
     userId,
@@ -510,7 +504,7 @@ function ProviderSection({
           </p>
         </div>
       </CardContent>
-      <CardContent className='border-t pt-4'>
+      {/* <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
           <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
@@ -525,7 +519,7 @@ function ProviderSection({
             </Button>
           </Link>
         </div>
-      </CardContent>
+      </CardContent> */}
     </Card>
   )
 }
@@ -598,7 +592,7 @@ function EmployeeSection({
           </p>
         </div>
       </CardContent>
-      <CardContent className='border-t pt-4'>
+      {/* <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
           <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
@@ -613,7 +607,7 @@ function EmployeeSection({
             </Button>
           </Link>
         </div>
-      </CardContent>
+      </CardContent> */}
     </Card>
   )
 }
@@ -686,7 +680,7 @@ function PartnerSection({
           </p>
         </div>
       </CardContent>
-      <CardContent className='border-t pt-4'>
+      {/* <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
           <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
@@ -701,7 +695,7 @@ function PartnerSection({
             </Button>
           </Link>
         </div>
-      </CardContent>
+      </CardContent> */}
     </Card>
   )
 }
@@ -793,7 +787,7 @@ function ArtistSection({
           </p>
         </div>
       </CardContent>
-      <CardContent className='border-t pt-4'>
+      {/* <CardContent className='border-t pt-4'>
         <div className='flex gap-2'>
           <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
             <Button variant='outline' size='sm'>
@@ -820,7 +814,7 @@ function ArtistSection({
             Editar Tipo
           </Button>
         </div>
-      </CardContent>
+      </CardContent> */}
     </Card>
   )
 }
@@ -894,14 +888,14 @@ function CustomerSection({
               Ver Perfil Público
             </Button>
           </Link>
-          {customerInfo?.orders && customerInfo.orders.length > 0 && (
+          {/* {customerInfo?.orders && customerInfo.orders.length > 0 && (
             <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
               <Button variant='outline' size='sm'>
                 <FileText className='mr-2 size-4' />
                 Ver Movimientos
               </Button>
             </Link>
-          )}
+          )} */}
         </div>
       </CardContent>
     </Card>

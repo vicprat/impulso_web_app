@@ -44,7 +44,7 @@ export default function NewFinancialEntryPage() {
   // Establecer userId cuando se carga la página
   useEffect(() => {
     if (userId) {
-      setFormData(prev => ({ ...prev, userId }))
+      setFormData((prev) => ({ ...prev, userId }))
     }
   }, [userId])
 
@@ -113,12 +113,12 @@ export default function NewFinancialEntryPage() {
       await createEntry.mutateAsync(entryData)
 
       toast.success('Movimiento financiero creado exitosamente')
-      
+
       // Redirigir de vuelta al usuario si se creó desde su página
       if (userId) {
         router.push(`${ROUTES.ADMIN.USERS.DETAIL.PATH.replace(':id', userId)}`)
       } else {
-        router.push(ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH)
+        // router.push(ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH)
       }
     } catch (error) {
       console.error('Error creating financial entry:', error)
@@ -136,7 +136,8 @@ export default function NewFinancialEntryPage() {
   return (
     <div className='space-y-6 p-6'>
       <div className='flex items-center gap-4'>
-        <Link href={userId ? `${ROUTES.ADMIN.USERS.DETAIL.PATH.replace(':id', userId)}` : ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}>
+        <Link href=''>
+          {' '}
           <Button variant='outline' size='sm'>
             <ArrowLeft className='mr-2 size-4' />
             Volver
@@ -144,7 +145,11 @@ export default function NewFinancialEntryPage() {
         </Link>
         <h1 className='text-2xl font-bold'>
           Nuevo Movimiento Financiero
-          {userId && <span className='ml-2 text-sm font-normal text-muted-foreground'>(para usuario específico)</span>}
+          {userId && (
+            <span className='ml-2 text-sm font-normal text-muted-foreground'>
+              (para usuario específico)
+            </span>
+          )}
         </h1>
       </div>
 
@@ -335,7 +340,7 @@ export default function NewFinancialEntryPage() {
                   </>
                 )}
               </Button>
-              <Link href={userId ? `${ROUTES.ADMIN.USERS.DETAIL.PATH.replace(':id', userId)}` : ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}>
+              <Link href=''>
                 <Button type='button' variant='outline'>
                   Cancelar
                 </Button>

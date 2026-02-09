@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useBankAccount, useUpdateBankAccount } from '@/modules/finance/hooks'
-import { ROUTES } from '@/src/config/routes'
 
 export default function EditBankAccountPage() {
   const params = useParams()
@@ -96,7 +95,7 @@ export default function EditBankAccountPage() {
       })
 
       toast.success('Cuenta bancaria actualizada exitosamente')
-      router.push(ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.DETAIL.PATH.replace(':id', accountId))
+      // router.push(ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.DETAIL.PATH.replace(':id', accountId))
     } catch (error) {
       console.error('Error updating bank account:', error)
       toast.error('Error al actualizar la cuenta bancaria')
@@ -162,7 +161,7 @@ export default function EditBankAccountPage() {
   return (
     <div className='space-y-6 p-6'>
       <div className='flex items-center gap-4'>
-        <Link href={ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.DETAIL.PATH.replace(':id', accountId)}>
+        <Link href=''>
           <Button variant='outline' size='sm'>
             <ArrowLeft className='mr-2 size-4' />
             Volver
@@ -251,10 +250,7 @@ export default function EditBankAccountPage() {
                 <Save className='mr-2 size-4' />
                 {updateBankAccount.isPending ? 'Actualizando...' : 'Actualizar Cuenta'}
               </Button>
-              <Link
-                href={ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.DETAIL.PATH.replace(':id', accountId)}
-                className='flex-1'
-              >
+              <Link href=''>
                 <Button type='button' variant='outline' className='w-full'>
                   Cancelar
                 </Button>

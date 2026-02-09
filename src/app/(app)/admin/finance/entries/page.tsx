@@ -5,16 +5,15 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import type { FinancialEntryFilters } from '@/src/modules/finance'
+import type { FinancialEntryStatus, FinancialEntryType } from '@prisma/client'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useDeleteFinancialEntry, useFinancialEntries } from '@/modules/finance/hooks'
-import { ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
-
-import type { FinancialEntryFilters } from '@/src/modules/finance'
-import type { FinancialEntryStatus, FinancialEntryType } from '@prisma/client'
 
 export default function FinancialEntriesPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -109,7 +108,7 @@ export default function FinancialEntriesPage() {
     <div className='space-y-6 p-6'>
       <div className='flex items-center justify-between'>
         <h1 className='text-2xl font-bold'>Movimientos Financieros</h1>
-        <Link href={ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH}>
+        <Link href=''>
           <Button>
             <Plus className='mr-2 size-4' />
             Nuevo Movimiento
@@ -254,13 +253,15 @@ export default function FinancialEntriesPage() {
                           Usuario: {entry.user.firstName} {entry.user.lastName} ({entry.user.email})
                           {entry.user.UserRole && entry.user.UserRole.length > 0 && (
                             <span className='ml-2'>
-                              - {entry.user.UserRole.map(ur => ur.role.name).join(', ')}
+                              - {entry.user.UserRole.map((ur) => ur.role.name).join(', ')}
                             </span>
                           )}
                         </p>
                       )}
                       {entry.bankAccount && (
-                        <p>Cuenta: {entry.bankAccount.name} ({entry.bankAccount.bankName})</p>
+                        <p>
+                          Cuenta: {entry.bankAccount.name} ({entry.bankAccount.bankName})
+                        </p>
                       )}
                       {entry.amountPaid > 0 && (
                         <p>
@@ -282,12 +283,12 @@ export default function FinancialEntriesPage() {
                       <p className='text-sm text-muted-foreground'>{entry.currency}</p>
                     </div>
                     <div className='flex gap-2'>
-                      <Link href={ROUTES.ADMIN.FINANCE.ENTRIES.DETAIL.PATH.replace(':id', entry.id)}>
+                      <Link href=''>
                         <Button variant='outline' size='sm'>
                           Ver
                         </Button>
                       </Link>
-                      <Link href={ROUTES.ADMIN.FINANCE.ENTRIES.DETAIL.PATH.replace(':id', entry.id)}>
+                      <Link href=''>
                         <Button variant='outline' size='sm'>
                           Ver/Editar
                         </Button>

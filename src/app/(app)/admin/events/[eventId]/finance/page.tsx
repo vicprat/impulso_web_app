@@ -545,13 +545,11 @@ export default function EventFinancePage() {
                           </Badge>
                         )}
                       </div>
-                      <Link
-                        href={ROUTES.ADMIN.FINANCE.ENTRIES.DETAIL.PATH.replace(':id', entry.id)}
-                      >
+                      {/* <Link href=''>
                         <Button variant='outline' size='sm'>
                           Ver Detalle
                         </Button>
-                      </Link>
+                      </Link> */}
                     </div>
                   </div>
                 ))}
