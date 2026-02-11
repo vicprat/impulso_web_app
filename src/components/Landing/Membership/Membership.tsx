@@ -1,16 +1,19 @@
 import { Check } from 'lucide-react'
 import Link from 'next/link'
+import { type ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/src/config/routes'
 
-import type { Benefit } from '@/app/(public)/page'
-
-interface Props {
-  data: Benefit[]
+interface LocalizedBenefit {
+  id: string
+  text: ReactNode
+  order: number
 }
 
-
+interface Props {
+  data: LocalizedBenefit[]
+}
 
 export const Membership: React.FC<Props> = ({ data }) => {
   return (
@@ -44,9 +47,7 @@ export const Membership: React.FC<Props> = ({ data }) => {
           </h3>
           <div className='mb-4'>
             <span className='text-sm text-gray-600 dark:text-gray-400'>POR SOLO</span>
-            <div className='text-4xl font-bold text-gray-900 dark:text-white'>
-              $500.00
-            </div>
+            <div className='text-4xl font-bold text-gray-900 dark:text-white'>$500.00</div>
             <span className='text-sm text-gray-600 dark:text-gray-400'>MXN/mensual</span>
           </div>
           <div className='mx-auto mb-6 h-px w-24 bg-amber-400'></div>
@@ -57,11 +58,9 @@ export const Membership: React.FC<Props> = ({ data }) => {
           size='lg'
           className='w-full bg-gray-900 text-white transition-colors duration-200 hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100'
         >
-          <Link href={ROUTES.STORE.MEMBERSHIP.PATH}>
-            Adquirir
-          </Link>
+          <Link href={ROUTES.STORE.MEMBERSHIP.PATH}>Adquirir</Link>
         </Button>
       </div>
     </div>
   )
-} 
+}

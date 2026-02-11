@@ -1,8 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Headphones, Settings, Shield, Star } from 'lucide-react'
 
+import { iconMap } from '@/lib/icon-map'
 import { slideUp } from '@/src/helpers/animations'
 
 interface Feature {
@@ -17,15 +17,8 @@ interface Props {
   index: number
 }
 
-const iconMap = {
-  Headphones,
-  Settings,
-  Shield,
-  Star,
-} as const
-
 export const Feature: React.FC<Props> = ({ feature, index }) => {
-  const IconComponent = iconMap[feature.iconName as keyof typeof iconMap]
+  const IconComponent = iconMap[feature.iconName as keyof typeof iconMap] || iconMap.Settings
 
   return (
     <motion.div

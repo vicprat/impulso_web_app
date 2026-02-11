@@ -1,17 +1,16 @@
 import Link from 'next/link'
 
-import type { Service } from '@/app/(public)/page'
-
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { iconMap } from '@/lib/icon-map'
 import { ROUTES } from '@/src/config/routes'
 
 interface Props {
-  data: Service[]
+  data: any[] // Simplified for now as we'll pass processed Notion data
 }
 
-const ServiceCard = ({ service }: { service: Service; _index: number }) => {
-  const IconComponent = service.icon
+const ServiceCard = ({ service }: { service: any; _index: number }) => {
+  const IconComponent = iconMap[service.iconName as keyof typeof iconMap] || iconMap.Settings
 
   return (
     <div className='group h-full'>
@@ -44,7 +43,7 @@ const ServiceCard = ({ service }: { service: Service; _index: number }) => {
           {service.features && (
             <div className='mt-auto space-y-2'>
               <div className='flex flex-wrap gap-1'>
-                {service.features.slice(0, 3).map((feature, idx) => (
+                {service.features.slice(0, 3).map((feature: string, idx: number) => (
                   <span
                     key={idx}
                     className={`inline-flex items-center rounded-md border bg-surface-container px-2 py-1 text-xs text-on-surface transition-colors`}

@@ -1,64 +1,33 @@
-import { routeMetadata } from '@/lib/metadata'
-
 import { CTA } from './components/CTA'
 import { Feature } from './components/Feature'
 import { Hero } from './components/Hero'
 import { MembershipCard } from './components/MembershipCard'
 
+import type { Locale } from '@/types/notion-content.types'
 import type { Metadata } from 'next'
+
+import { getBenefits, getFeatures } from '@/lib/landing-data'
+import { routeMetadata } from '@/lib/metadata'
 
 export const metadata: Metadata = routeMetadata['/membership']
 
-interface Benefit {
-  id: string
-  text: string
-}
+export default async function Page() {
+  const [notionBenefits, notionFeatures] = await Promise.all([
+    getBenefits('membership'),
+    getFeatures(),
+  ])
 
-interface FeatureType {
-  id: string
-  title: string
-  description: string
-  iconName: string
-}
+  const benefits = notionBenefits.map((b) => ({
+    id: b.id,
+    text: (b.text as Record<Locale, string>).es,
+  }))
 
-const benefits: Benefit[] = [
-  { id: '1', text: 'Venta de obras' },
-  { id: '2', text: 'Impresión digital para reproducciones giclée' },
-  { id: '3', text: 'Exposición internacional' },
-  { id: '4', text: 'Publicidad' },
-  { id: '5', text: 'Pagos seguros' },
-  { id: '6', text: 'Sin exclusividad' },
-  { id: '7', text: 'Nos encargamos de generar tus guías de envío' },
-]
-
-const features: FeatureType[] = [
-  {
-    description: 'Transacciones seguras y protección de tus obras',
-    iconName: 'Shield',
-    id: '1',
-    title: 'SEGURIDAD',
-  },
-  {
-    description: 'Presencia en exposiciones internacionales prestigiosas',
-    iconName: 'Star',
-    id: '2',
-    title: 'RECONOCIMIENTO',
-  },
-  {
-    description: 'Atención personalizada en cada paso del proceso',
-    iconName: 'Headphones',
-    id: '3',
-    title: 'SOPORTE',
-  },
-  {
-    description: 'Impresiones giclée de máxima calidad profesional',
-    iconName: 'Settings',
-    id: '4',
-    title: 'CALIDAD',
-  },
-]
-
-export default function Page() {
+  const features = notionFeatures.map((f) => ({
+    description: f.description.es,
+    iconName: f.iconName,
+    id: f.id,
+    title: f.title.es,
+  }))
   return (
     <>
       <div className='min-h-screen'>

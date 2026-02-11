@@ -1,16 +1,19 @@
-import { BookOpen, DollarSign, Frame, Image, Printer, TrendingUp } from 'lucide-react'
 import { Suspense } from 'react'
 
+import type { Locale } from '@/types/notion-content.types'
 import type { Metadata } from 'next'
 
 import { Landing } from '@/components/Landing'
 import { HomeStructuredData } from '@/components/StructuredData'
 import {
+  getBenefits,
   getBlogPosts,
+  getCarouselSlides,
   getEventPosts,
   getPublicArtists,
   getPublicEvents,
   getPublicProducts,
+  getServices,
 } from '@/lib/landing-data'
 import { routeMetadata } from '@/lib/metadata'
 import { type PublicEvent } from '@/modules/shopify/service'
@@ -20,132 +23,54 @@ import { ROUTES } from '@/src/config/routes'
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = routeMetadata['/']
 
-interface Slide {
-  imageUrl: string
-  alt: string
-  title: string
-  subtitle: string
-  parallaxFactor?: number
-  actionUrl: string
-  actionText: string
-}
-
-const slides: Slide[] = [
-  {
-    actionText: 'Explorar la Galería',
-    actionUrl: ROUTES.STORE.MAIN.PATH,
-    alt: 'Espacio de Impulso Galería',
-    imageUrl:
-      'https://xhsidbbijujrdjjymhbs.supabase.co/storage/v1/object/public/images/general/CrutityStudio-3378.webp',
-    parallaxFactor: 1.2,
-    subtitle: 'Descubre obras únicas de artistas emergentes y consagrados.',
-    title: 'Explora un Mundo de Arte',
-  },
-  {
-    actionText: 'Ver Eventos',
-    actionUrl: ROUTES.STORE.EVENTS.PATH,
-    alt: 'Exposición de arte contemporáneo',
-    imageUrl:
-      'https://xhsidbbijujrdjjymhbs.supabase.co/storage/v1/object/public/images/general/CrutityStudio-3381.webp',
-    parallaxFactor: 1.1,
-    subtitle: 'Sumérgete en experiencias artísticas inolvidables.',
-    title: 'Eventos y Exposiciones Exclusivas',
-  },
-  {
-    actionText: 'Conocer Servicios',
-    actionUrl: ROUTES.STORE.SERVICES.PATH,
-    alt: 'Detalle de una obra de arte',
-    imageUrl:
-      'https://xhsidbbijujrdjjymhbs.supabase.co/storage/v1/object/public/images/general/IMG_3321-scaled-16-9-rectangle.webp',
-    parallaxFactor: 1.5,
-    subtitle: 'Nuestra colección curada tiene algo especial para cada amante del arte.',
-    title: 'Encuentra la Pieza Perfecta',
-  },
-]
-
-export interface Service {
-  id: string
-  title: string
-  description: string
-  icon: React.ComponentType<{ className?: string }>
-  features?: string[]
-}
-
-const services: Service[] = [
-  {
-    description:
-      'Desarrollamos artistas a través de la venta de obra original y gráfica con asesoría especializada.',
-    features: ['Obra original', 'Gráfica limitada', 'Asesoría de ventas', 'Promoción de artistas'],
-    icon: DollarSign,
-    id: '1',
-    title: 'Venta de Obra Original',
-  },
-  {
-    description:
-      'Mantenemos altos estándares de calidad para la conservación profesional de obras de arte.',
-    features: ['Marcos personalizados', 'Conservación', 'Cristales UV', 'Montaje profesional'],
-    icon: Frame,
-    id: '2',
-    title: 'Enmarcado Profesional',
-  },
-  {
-    description:
-      'Equipos de alta calidad para reproducciones de arte con variedad de papeles premium.',
-    features: ['Impresión Giclée', 'Papeles de arte', 'Ediciones limitadas', 'Control de calidad'],
-    icon: Printer,
-    id: '3',
-    title: 'Estudio de Impresión',
-  },
-  {
-    description:
-      'El arte como inversión mantiene su valor y se comporta diferente a otros activos financieros.',
-    features: ['Asesoría especializada', 'Valuación', 'Portafolio de arte', 'Análisis de mercado'],
-    icon: TrendingUp,
-    id: '4',
-    title: 'Inversión en Arte',
-  },
-  {
-    description: 'Facilita el colgado de cuadros con una gama completa de sistemas profesionales.',
-    features: ['Sistemas modulares', 'Hardware profesional', 'Instalación', 'Mantenimiento'],
-    icon: Image,
-    id: '5',
-    title: 'Sistema de Colgajes',
-  },
-  {
-    description:
-      'Impresión especializada de revistas, folletos, catálogos y libros de arte de alta calidad.',
-    features: [
-      'Catálogos de arte',
-      'Libros especializados',
-      'Diseño editorial',
-      'Acabados premium',
-    ],
-    icon: BookOpen,
-    id: '6',
-    title: 'Fabricación de Catálogos',
-  },
-]
-
-export interface Benefit {
-  id: string
-  text: string
-}
-
-const benefits: Benefit[] = [
-  { id: '1', text: 'Venta de obras' },
-  { id: '2', text: 'Impresión digital para reproducciones giclée' },
-  { id: '3', text: 'Exposición internacional' },
-  { id: '4', text: 'Publicidad' },
-  { id: '5', text: 'Pagos seguros' },
-  { id: '6', text: 'Sin exclusividad' },
-  { id: '7', text: 'Nos encargamos de generar tus guías de envío' },
-]
+// Notion data will be fetched in the Page component
 
 export default async function Page() {
-  const [events, eventPosts] = await Promise.all([getPublicEvents(), getEventPosts()])
-  const blogPosts = await getBlogPosts()
-  const artists = await getPublicArtists()
-  const products = await getPublicProducts()
+  const [
+    events,
+    eventPosts,
+    blogPosts,
+    artists,
+    products,
+    notionSlides,
+    notionServices,
+    notionBenefits,
+  ] = await Promise.all([
+    getPublicEvents(),
+    getEventPosts(),
+    getBlogPosts(),
+    getPublicArtists(),
+    getPublicProducts(),
+    getCarouselSlides('es'),
+    getServices(false),
+    getBenefits('landing'),
+  ])
+
+  // Transform Notion data to localized versions for components
+  const slides = notionSlides.map((s) => ({
+    actionText: s.actionText.es,
+    actionUrl: s.actionUrl,
+    alt: s.title.es,
+    imageUrl: s.imageUrl,
+    order: s.order,
+    subtitle: s.subtitle.es,
+    title: s.title.es,
+  }))
+
+  const services = notionServices.map((s) => ({
+    description: s.description.es,
+    features: s.features,
+    iconName: s.iconName,
+    id: s.id,
+    order: s.order,
+    title: s.title.es,
+  }))
+
+  const benefits = notionBenefits.map((b) => ({
+    id: b.id,
+    order: b.order,
+    text: (b.text as Record<Locale, string>).es,
+  }))
 
   // Combinar eventos de Shopify con posts de tipo EVENT
   // Si hay eventos de Shopify, los usamos primero, si no hay suficientes, agregamos posts

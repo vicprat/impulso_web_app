@@ -228,3 +228,12 @@ export async function getBlogPostBySlug(slug: string): Promise<PostWithRelations
     return null
   }
 }
+
+// Notion Content Services
+export {
+  getBenefits,
+  getCarouselSlides,
+  getFeatures,
+  getServices,
+  getTermsSections,
+} from './services/notion-content.service'

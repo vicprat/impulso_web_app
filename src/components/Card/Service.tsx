@@ -1,16 +1,9 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import {
-  ArrowRight,
-  BookOpen,
-  DollarSign,
-  Frame,
-  Image,
-  Printer,
-  Sparkles,
-  TrendingUp,
-} from 'lucide-react'
+import { ArrowRight, Sparkles } from 'lucide-react'
+
+import { iconMap } from '@/lib/icon-map'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -32,17 +25,8 @@ interface Props {
   index: number
 }
 
-const iconMap = {
-  BookOpen,
-  DollarSign,
-  Frame,
-  Image,
-  Printer,
-  TrendingUp,
-} as const
-
 export const Service: React.FC<Props> = ({ index, service }) => {
-  const IconComponent = iconMap[service.iconName as keyof typeof iconMap]
+  const IconComponent = iconMap[service.iconName as keyof typeof iconMap] || iconMap.Settings
   const isLarge = service.size === 'large'
 
   return (
