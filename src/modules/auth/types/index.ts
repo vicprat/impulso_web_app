@@ -27,6 +27,7 @@ export interface AuthContextType {
   updateCart: (cart: Cart) => void
   hasPermission: (permission: string) => boolean
   hasRole: (role: string) => boolean
+  simulateExpireIn: (seconds: number) => void
 }
 
 export interface AuthMeResponse {

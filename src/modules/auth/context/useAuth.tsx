@@ -2,13 +2,12 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
-import { type Cart } from '@/modules/cart/types'
-
 import { type AuthContextType, type AuthMeResponse, type User } from '../types'
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+import { type Cart } from '@/modules/cart/types'
 
-const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const REFRESH_BEFORE_EXPIRY_MS = 2 * 60 * 1000
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -26,13 +25,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const timeUntilRefresh = expiryTime - now - REFRESH_BEFORE_EXPIRY_MS
 
     if (timeUntilRefresh > 0) {
+      console.log(`[AuthProvider] Scheduling refresh in ${timeUntilRefresh / 1000}s`)
       refreshTimeoutRef.current = setTimeout(async () => {
+        console.log('[AuthProvider] Triggering scheduled refresh...')
         try {
           const response = await fetch('/api/auth/refresh', {
             credentials: 'include',
             method: 'POST',
           })
           if (response.ok) {
+            console.log('[AuthProvider] Scheduled refresh successful')
             const data: AuthMeResponse = await response.json()
             setUser(data.user)
             setCart(data.cart)
@@ -40,13 +42,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const nextExpiresAt = new Date(data.expiresAt)
             scheduleTokenRefresh(nextExpiresAt)
           } else {
+            console.log('[AuthProvider] Scheduled refresh failed')
             setUser(null)
             setCart(null)
             if (refreshTimeoutRef.current) {
               clearTimeout(refreshTimeoutRef.current)
             }
           }
-        } catch {
+        } catch (e) {
+          console.error('[AuthProvider] Scheduled refresh error:', e)
           setUser(null)
           setCart(null)
           if (refreshTimeoutRef.current) {
@@ -128,12 +132,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (response.ok) {
           const data: AuthMeResponse = await response.json()
+          console.log('[AuthProvider] Initial check success. User:', data.user.email)
           setUser(data.user)
           setCart(data.cart)
 
           const expiresAt = new Date(data.expiresAt)
+          console.log('[AuthProvider] Token expires at:', expiresAt)
           scheduleTokenRefresh(expiresAt)
         } else {
+          console.log('[AuthProvider] Initial check failed:', response.status)
           setUser(null)
           setCart(null)
         }
@@ -220,6 +227,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     logout,
     refresh,
+    simulateExpireIn: (seconds: number) => {
+      const now = Date.now()
+      const fakeExpiresAt = new Date(now + seconds * 1000)
+      scheduleTokenRefresh(fakeExpiresAt)
+    },
     updateCart,
     user,
   }

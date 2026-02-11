@@ -1,14 +1,14 @@
 import { type Links, type Profile } from '@prisma/client'
 
-import { prisma } from '@/src/lib/prisma'
-import { type AuthConfig, type CustomerInfo, type TokenResponse } from '@/src/types'
-
 import {
   calculateExpiresAt,
   exchangeCodeForTokens,
   getCustomerInfo,
   refreshAccessToken,
 } from '../utils'
+
+import { prisma } from '@/src/lib/prisma'
+import { type AuthConfig, type CustomerInfo, type TokenResponse } from '@/src/types'
 
 export interface AuthSession {
   user: {
@@ -21,7 +21,7 @@ export interface AuthSession {
     permissions: string[]
     profile?: Profile | null
     links?: Links[] | null
-    artist?: { id: string; name: string; } | null
+    artist?: { id: string; name: string } | null
   }
   tokens: {
     accessToken: string
@@ -249,7 +249,7 @@ export class AuthService {
     try {
       await prisma.sessionToken.deleteMany({
         where: {
-          OR: [ { expiresAt: { lt: new Date() } }, { isActive: false } ],
+          OR: [{ expiresAt: { lt: new Date() } }, { isActive: false }],
         },
       })
     } catch (error) {
@@ -402,7 +402,7 @@ export class AuthService {
       const tokenData = {
         accessToken: tokens.access_token.trim(),
         expiresAt,
-        idToken: tokens.id_token.trim(),
+        idToken: tokens.id_token ? tokens.id_token.trim() : null,
         isActive: true,
         refreshToken: tokens.refresh_token.trim(),
         userId,

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { AuthDebugger } from '@/components/dev/AuthDebugger'
 import { Providers } from '@/components/Providers'
 import { baseMetadata } from '@/lib/metadata'
 
@@ -34,7 +35,14 @@ export default function RootLayout({
         <link rel='dns-prefetch' href='//fonts.gstatic.com' />
       </head>
       <body className='min-h-screen' suppressHydrationWarning>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          {process.env.NODE_ENV === 'development' && (
+            <div className='fixed bottom-4 left-4 z-50'>
+              <AuthDebugger />
+            </div>
+          )}
+        </Providers>
       </body>
     </html>
   )

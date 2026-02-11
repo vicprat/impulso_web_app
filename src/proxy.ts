@@ -1,9 +1,17 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { getRouteMeta, isPublicRoute, ROUTES } from '@/config/routes'
-
 const tokenVerificationCache = new Map<string, { valid: boolean; timestamp: number }>()
-const CACHE_DURATION = 5 * 60 * 1000
+const CACHE_DURATION = 60 * 1000 // Reduced to 1 minute
+
+function parseJwt(token: string) {
+  try {
+    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString())
+  } catch (e) {
+    console.error('Failed to parse JWT:', e)
+    return null
+  }
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -30,44 +38,80 @@ export async function proxy(request: NextRequest) {
   const refreshToken = request.cookies.get('refresh_token')?.value
 
   if (!accessToken) {
+    console.error('[Middleware] No access token found. Redirecting to login.')
     const loginUrl = new URL(ROUTES.AUTH.LOGIN.PATH, request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
   try {
-    let isValid = await verifyTokenWithCache(accessToken)
+    const payload = parseJwt(accessToken)
+    const now = Math.floor(Date.now() / 1000)
+    let isValid = false
 
-    if (!isValid && refreshToken) {
-      const newTokens = await refreshTokens(refreshToken)
+    if (payload?.exp) {
+      const expiresIn = payload.exp - now
+      console.error(
+        `[Middleware] Token check: exp=${payload.exp}, now=${now}, expiresIn=${expiresIn}s`
+      )
 
-      if (newTokens) {
-        const response = NextResponse.next()
+      if (expiresIn < 60) {
+        console.log('[Middleware] Token expiring soon or expired. Attempting refresh.')
+        if (refreshToken) {
+          const newTokens = await refreshTokens(refreshToken)
+          if (newTokens) {
+            console.log('[Middleware] Token refresh successful.')
+            const response = NextResponse.next()
 
-        const accessTokenOptions = {
-          httpOnly: true,
-          maxAge: 60 * 60,
-          path: '/',
+            const newPayload = parseJwt(newTokens.accessToken)
+            const newExpiresIn = newPayload?.exp ? newPayload.exp - now : 3600
 
-          sameSite: 'lax' as const,
-          secure: process.env.NODE_ENV === 'production',
+            const accessTokenOptions = {
+              httpOnly: true,
+              maxAge: newExpiresIn,
+              path: '/',
+              sameSite: 'lax' as const,
+              secure: process.env.NODE_ENV === 'production',
+            }
+
+            const refreshTokenOptions = {
+              ...accessTokenOptions,
+              maxAge: 30 * 24 * 60 * 60,
+            }
+
+            response.cookies.set('access_token', newTokens.accessToken, accessTokenOptions)
+            response.cookies.set('refresh_token', newTokens.refreshToken, refreshTokenOptions)
+
+            tokenVerificationCache.set(newTokens.accessToken, {
+              timestamp: Date.now(),
+              valid: true,
+            })
+
+            return response
+          } else {
+            console.log('[Middleware] Refresh failed.')
+          }
         }
-
-        const refreshTokenOptions = {
-          ...accessTokenOptions,
-          maxAge: 30 * 24 * 60 * 60,
-        }
-
-        response.cookies.set('access_token', newTokens.accessToken, accessTokenOptions)
-        response.cookies.set('refresh_token', newTokens.refreshToken, refreshTokenOptions)
-
-        tokenVerificationCache.delete(accessToken)
-
+      } else {
         isValid = true
+      }
+    } else {
+      console.log('[Middleware] Could not parse token expiry. Falling back to verification.')
+    }
+
+    if (isValid) {
+      isValid = await verifyTokenWithCache(accessToken)
+      if (!isValid) {
+        console.log('[Middleware] Token failed revocation check.')
       }
     }
 
+    if (!isValid && refreshToken) {
+      console.log('[Middleware] Token invalid. Trying fallback refresh.')
+    }
+
     if (!isValid) {
+      console.error('[Middleware] Session invalid. Redirecting to login.')
       const loginUrl = new URL(ROUTES.AUTH.LOGIN.PATH, request.url)
       loginUrl.searchParams.set('redirect', pathname)
 
@@ -88,13 +132,14 @@ export async function proxy(request: NextRequest) {
       )
 
       if (!hasAccess) {
+        console.error('[Middleware] User lacks required permissions.')
         return NextResponse.redirect(new URL(ROUTES.UTILITY.UNAUTHORIZED.PATH, request.url))
       }
     }
 
     return NextResponse.next()
   } catch (error) {
-    console.error('Middleware error:', error)
+    console.error('[Middleware] Unexpected error:', error)
 
     const loginUrl = new URL(ROUTES.AUTH.LOGIN.PATH, request.url)
     loginUrl.searchParams.set('redirect', pathname)
@@ -114,13 +159,16 @@ async function verifyTokenWithCache(accessToken: string): Promise<boolean> {
     return cached.valid
   }
 
+  console.error('[Middleware] Verifying token with Shopify...')
   const isValid = await verifyTokenWithShopify(accessToken)
+  console.error(`[Middleware] Token verification result: ${isValid}`)
 
   tokenVerificationCache.set(accessToken, {
     timestamp: Date.now(),
     valid: isValid,
   })
 
+  // Cleanup old cache entries
   for (const [token, data] of tokenVerificationCache.entries()) {
     if (Date.now() - data.timestamp > CACHE_DURATION) {
       tokenVerificationCache.delete(token)
@@ -157,7 +205,7 @@ async function verifyTokenWithShopify(accessToken: string): Promise<boolean> {
 
     return response.ok
   } catch (error) {
-    console.error('Token verification error:', error)
+    console.error('[Middleware] Token verification error:', error)
     return false
   }
 }
@@ -167,6 +215,7 @@ async function refreshTokens(refreshToken: string): Promise<{
   refreshToken: string
 } | null> {
   try {
+    console.error('[Middleware] Refreshing tokens...')
     const shopId = process.env.SHOPIFY_SHOP_ID
     const clientId = process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID
     const clientSecret = process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET
@@ -193,7 +242,7 @@ async function refreshTokens(refreshToken: string): Promise<{
     })
 
     if (!response.ok) {
-      console.error('Token refresh failed:', response.status)
+      console.error('[Middleware] Token refresh failed:', response.status)
       return null
     }
 
@@ -204,7 +253,7 @@ async function refreshTokens(refreshToken: string): Promise<{
       refreshToken: data.refresh_token,
     }
   } catch (error) {
-    console.error('Token refresh error:', error)
+    console.error('[Middleware] Token refresh error:', error)
     return null
   }
 }

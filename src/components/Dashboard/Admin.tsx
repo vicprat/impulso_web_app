@@ -237,12 +237,6 @@ export const Admin = () => {
   const [expandedArtists, setExpandedArtists] = useState(false)
   const [expandedEvents, setExpandedEvents] = useState(false)
 
-  // Console logs para analizar la data
-  console.log('=== ADMIN DASHBOARD DATA ===')
-  console.log('data:', data)
-  console.log('productMetrics.data:', productMetrics.data)
-  console.log('advancedAnalytics.data:', advancedAnalytics.data)
-
   if (isLoading || productMetrics.isLoading || advancedAnalytics.isLoading)
     return <LoadingDashboard />
   if (error) return <ErrorDashboard error={error as Error} />
