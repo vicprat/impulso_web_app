@@ -7,6 +7,8 @@ export const notion = new Client({
 
 // Page IDs
 export const PAGES = {
+  BANNERS: process.env.NEXT_PUBLIC_NOTION_PAGE_ID_BANNERS as string,
+  CONTACT: process.env.NEXT_PUBLIC_NOTION_PAGE_ID_CONTACT as string,
   HOME: process.env.NEXT_PUBLIC_NOTION_PAGE_ID_HOME as string,
   MEMBERSHIP: process.env.NEXT_PUBLIC_NOTION_PAGE_ID_MEMBERSHIP as string,
   SERVICES: process.env.NEXT_PUBLIC_NOTION_PAGE_ID_SERVICES as string,
@@ -33,11 +35,22 @@ export function getFileUrl(property: any): string {
 }
 
 export async function getChildDatabases(pageId: string) {
-  const response = await notion.blocks.children.list({
-    block_id: pageId,
-  })
+  const results = []
+  let cursor: string | undefined = undefined
+  let hasMore = true
 
-  return response.results.filter((block: any) => block.type === 'child_database')
+  while (hasMore) {
+    const response = await notion.blocks.children.list({
+      block_id: pageId,
+      start_cursor: cursor,
+    })
+
+    results.push(...response.results)
+    hasMore = response.has_more
+    cursor = response.next_cursor || undefined
+  }
+
+  return results.filter((block: any) => block.type === 'child_database')
 }
 
 export async function queryDatabase(databaseId: string) {

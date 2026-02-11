@@ -8,11 +8,29 @@ import { CONTACT } from '@/config/constants'
 
 import { Button } from './ui/button'
 
-export const WhatsAppButton = () => {
-  const [ showBanner, setShowBanner ] = useState(true)
+interface WhatsAppButtonProps {
+  buttonLabel?: string
+  buttonTitle?: string
+  closeLabel?: string
+  greeting?: string
+  subtitle?: string
+  whatsappUrl?: string
+}
+
+export const WhatsAppButton = ({
+  buttonLabel = 'Contactar por WhatsApp',
+  buttonTitle = '¡Escríbenos por WhatsApp!',
+  closeLabel = 'Cerrar mensaje',
+  greeting = '¡Hola! 👋 ¿Necesitas ayuda?',
+  subtitle = 'Descubre nuestra galeria, eventos y experiencias',
+  whatsappUrl,
+}: WhatsAppButtonProps) => {
+  const [showBanner, setShowBanner] = useState(true)
+
+  const resolvedUrl = whatsappUrl ?? CONTACT.WHATSAPP.URL
 
   const handleWhatsAppClick = () => {
-    window.open(CONTACT.WHATSAPP.URL, '_blank')
+    window.open(resolvedUrl, '_blank')
   }
 
   const handleCloseBanner = () => {
@@ -20,7 +38,7 @@ export const WhatsAppButton = () => {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className='fixed bottom-6 right-6 z-50'>
       <AnimatePresence>
         {showBanner && (
           <motion.div
@@ -31,77 +49,70 @@ export const WhatsAppButton = () => {
               damping: 20,
               duration: 0.5,
               stiffness: 200,
-              type: "spring"
+              type: 'spring',
             }}
-            className="absolute bottom-full right-0 mb-4"
+            className='absolute bottom-full right-0 mb-4'
           >
-            <div className="relative">
+            <div className='relative'>
               <motion.div
-                className="flex w-72 flex-col gap-3 rounded-xl bg-white px-6 py-4 shadow-2xl ring-1 ring-black/5"
+                className='flex w-72 flex-col gap-3 rounded-xl bg-white px-6 py-4 shadow-2xl ring-1 ring-black/5'
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
               >
                 <div className='flex w-full justify-end'>
                   <Button
                     onClick={handleCloseBanner}
-                    size="sm"
-                    variant="ghost"
-                    className="size-6 rounded-full p-0 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                    aria-label="Cerrar mensaje"
+                    size='sm'
+                    variant='ghost'
+                    className='size-6 rounded-full p-0 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                    aria-label={closeLabel}
                   >
                     <FaTimes size={10} />
                   </Button>
                 </div>
-                <div className="flex-1">
-                  <p className="text-base font-semibold text-gray-900">
-                    ¡Hola! 👋 ¿Necesitas ayuda?
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Descubre nuestra galeria, eventos y experiencias
-                  </p>
+                <div className='flex-1'>
+                  <p className='text-base font-semibold text-gray-900'>{greeting}</p>
+                  <p className='text-sm text-gray-600'>{subtitle}</p>
                 </div>
-
-
               </motion.div>
 
-              <div className="absolute left-3/4 top-full -translate-x-1/2">
-                <div className="border-8 border-transparent border-t-white drop-shadow-sm"></div>
+              <div className='absolute left-3/4 top-full -translate-x-1/2'>
+                <div className='border-8 border-transparent border-t-white drop-shadow-sm'></div>
               </div>
             </div>
-          </motion.div >
-        )
-        }
-      </AnimatePresence >
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      < div className="absolute inset-0 animate-ping rounded-full bg-[#25D366] opacity-20" />
+      <div className='absolute inset-0 animate-ping rounded-full bg-[#25D366] opacity-20' />
 
-      < motion.div
+      <motion.div
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        transition={{ damping: 20, stiffness: 300, type: "spring" }}
+        transition={{ damping: 20, stiffness: 300, type: 'spring' }}
       >
         <Button
           onClick={handleWhatsAppClick}
-          size="icon"
-          className="group relative size-14 rounded-full bg-[#25D366] text-white shadow-lg transition-all duration-300 ease-out hover:bg-[#128C7E] hover:shadow-2xl hover:shadow-[#25D366]/30 focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2"
-          aria-label="Contactar por WhatsApp"
-          title="¡Escríbenos por WhatsApp!"
+          size='icon'
+          className='group relative size-14 rounded-full bg-[#25D366] text-white shadow-lg transition-all duration-300 ease-out hover:bg-[#128C7E] hover:shadow-2xl hover:shadow-[#25D366]/30 focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2'
+          aria-label={buttonLabel}
+          title={buttonTitle}
         >
           <motion.div
-            animate={{ rotate: [ 0, 5, -5, 0 ] }}
+            animate={{ rotate: [0, 5, -5, 0] }}
             transition={{
               duration: 0.5,
-              ease: "easeInOut",
+              ease: 'easeInOut',
               repeat: Infinity,
-              repeatDelay: 3
+              repeatDelay: 3,
             }}
           >
             <FaWhatsapp size={28} />
           </motion.div>
 
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+          <div className='absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100'></div>
         </Button>
-      </motion.div >
-    </div >
+      </motion.div>
+    </div>
   )
 }

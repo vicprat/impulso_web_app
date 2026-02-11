@@ -8,12 +8,15 @@ import { HomeStructuredData } from '@/components/StructuredData'
 import {
   getBenefits,
   getBlogPosts,
+  getCardContent,
   getCarouselSlides,
+  getCTAContent,
   getEventPosts,
-  getPageContent,
+  getHeroContent,
   getPublicArtists,
   getPublicEvents,
   getPublicProducts,
+  getSectionContent,
   getServices,
 } from '@/lib/landing-data'
 import { routeMetadata } from '@/lib/metadata'
@@ -36,7 +39,10 @@ export default async function Page() {
     notionSlides,
     notionServices,
     notionBenefits,
-    pageContent,
+    hero,
+    cta,
+    section,
+    card,
   ] = await Promise.all([
     getPublicEvents(),
     getEventPosts(),
@@ -46,13 +52,16 @@ export default async function Page() {
     getCarouselSlides('es'),
     getServices(false),
     getBenefits('landing'),
-    getPageContent('landing'),
+    getHeroContent('landing'),
+    getCTAContent('landing'),
+    getSectionContent('landing'),
+    getCardContent('landing'),
   ])
 
-  // Helper to get content from Notion with a fallback
+  const pageContent = { ...hero, ...cta, ...section, ...card }
+
   const t = (key: string, fallback = '') => pageContent[key]?.es ?? fallback
 
-  // Transform Notion data to localized versions for components
   const slides = notionSlides.map((s) => ({
     actionText: s.actionText.es,
     actionUrl: s.actionUrl,

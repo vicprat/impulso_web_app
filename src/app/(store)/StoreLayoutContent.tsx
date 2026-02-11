@@ -5,12 +5,11 @@ import { useMemo, useState } from 'react'
 
 import { AnimatedSpheres, GradientBackground } from '@/components/Animations'
 import { Filter } from '@/components/Filter'
-import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { Navigation } from '@/components/Navigation'
 
 export function StoreLayoutContent({ children }: { children: React.ReactNode }) {
-  const [ isFilterOpen, setIsFilterOpen ] = useState(false)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
   const searchParams = useSearchParams()
 
   const activeFiltersCount = useMemo(() => {
@@ -32,7 +31,7 @@ export function StoreLayoutContent({ children }: { children: React.ReactNode }) 
     if (order && order !== 'asc') count++
 
     return count
-  }, [ searchParams ])
+  }, [searchParams])
 
   const handleOpenFilters = () => {
     setIsFilterOpen(true)
@@ -64,8 +63,6 @@ export function StoreLayoutContent({ children }: { children: React.ReactNode }) 
 
           <div className='container mx-auto px-6 py-8'>{children}</div>
         </main>
-
-        <Footer />
 
         <Filter isOpen={isFilterOpen} onClose={handleCloseFilters} />
       </div>

@@ -4,49 +4,88 @@ import { Facebook, Instagram, Mail, MapPin, Phone, Youtube } from 'lucide-react'
 import Link from 'next/link'
 import { FaTiktok } from 'react-icons/fa'
 
+import type { NavigationLink, SocialLink } from '@/types/notion-content.types'
+
 import {
   AnimatedSpheres,
   FloatingParticles,
   GradientBackground,
   GridOverlay,
 } from '@/components/Animations'
-import { CONTACT } from '@/src/config/constants'
 import { ROUTES } from '@/src/config/routes'
 
-const navigationLinks = [
+// Icon mapping for social link names
+const SOCIAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Facebook,
+  Instagram,
+  TikTok: FaTiktok,
+  YouTube: Youtube,
+}
+
+// Fallback data
+const FALLBACK_NAV_LINKS = [
   { href: ROUTES.STORE.MAIN.PATH, name: 'Galería' },
   { href: ROUTES.STORE.EVENTS.PATH, name: 'Eventos' },
   { href: ROUTES.STORE.TERMS.PATH, name: 'Términos y condiciones' },
 ]
 
-const socialLinks = [
+const FALLBACK_SOCIAL_LINKS: SocialLink[] = [
   {
     handle: '/impulsogaleria',
-    href: 'https://facebook.com/impulsogaleria',
-    icon: Facebook,
     name: 'Facebook',
+    order: 1,
+    url: 'https://facebook.com/impulsogaleria',
   },
   {
     handle: '@impulsogaleria',
-    href: 'https://instagram.com/impulsogaleria',
-    icon: Instagram,
     name: 'Instagram',
+    order: 2,
+    url: 'https://instagram.com/impulsogaleria',
   },
   {
     handle: '@impulsogaleria',
-    href: 'https://youtube.com/@impulsogaleria',
-    icon: Youtube,
     name: 'YouTube',
+    order: 3,
+    url: 'https://youtube.com/@impulsogaleria',
   },
   {
     handle: '@impulsogaleria',
-    href: 'https://tiktok.com/@impulsogaleria',
-    icon: FaTiktok,
     name: 'TikTok',
+    order: 4,
+    url: 'https://tiktok.com/@impulsogaleria',
   },
 ]
 
-export const Footer = () => {
+interface FooterClientProps {
+  contactContent?: Record<string, { en: string; es: string }>
+  footerContent?: Record<string, { en: string; es: string }>
+  navigationLinks?: NavigationLink[]
+  socialLinks?: SocialLink[]
+}
+
+export const FooterClient = ({
+  contactContent = {},
+  footerContent = {},
+  navigationLinks = [],
+  socialLinks = [],
+}: FooterClientProps) => {
+  const tc = (key: string, fallback: string) => contactContent[key]?.es ?? fallback
+  const tf = (key: string, fallback: string) => footerContent[key]?.es ?? fallback
+
+  const address = tc(
+    'contact.address',
+    'Hacienda Escolásticas 107, Jardines de la Hacienda, 76180 Santiago de Querétaro, Querétaro.'
+  )
+  const email = tc('contact.email', 'info@impulsogaleria.com')
+  const phone = tc('contact.phone', '4425826262')
+
+  const resolvedNavLinks =
+    navigationLinks.length > 0
+      ? navigationLinks.map((l) => ({ href: l.path, name: l.name.es }))
+      : FALLBACK_NAV_LINKS
+
+  const resolvedSocialLinks = socialLinks.length > 0 ? socialLinks : FALLBACK_SOCIAL_LINKS
+
   return (
     <footer className='relative overflow-hidden bg-zinc-900'>
       <GradientBackground className='absolute inset-0' />
@@ -101,58 +140,66 @@ export const Footer = () => {
               </div>
             </div>
             <div className='space-y-4'>
-              <h3 className='mb-6 text-lg font-semibold text-white'>Contacto</h3>
+              <h3 className='mb-6 text-lg font-semibold text-white'>
+                {tf('footer.contact.heading', 'Contacto')}
+              </h3>
               <div className='space-y-4'>
                 <div className='group flex items-start'>
                   <Link
-                    href={`https://maps.google.com/?q=${encodeURIComponent(CONTACT.ADDRESS)}`}
+                    href={`https://maps.google.com/?q=${encodeURIComponent(address)}`}
                     target='_blank'
                     rel='noopener noreferrer'
                     className='mr-3 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gray-800 transition-all duration-300 hover:scale-110 hover:bg-primary hover:text-on-primary'
-                    aria-label={`Ver ubicación en Google Maps: ${CONTACT.ADDRESS}`}
+                    aria-label={`Ver ubicación en Google Maps: ${address}`}
                   >
                     <MapPin className='size-4 text-gray-400 group-hover:text-on-primary' />
                   </Link>
                   <div>
-                    <p className='mb-1 text-sm font-medium text-white'>Dirección</p>
-                    <p className='text-sm leading-relaxed text-gray-300'>{CONTACT.ADDRESS}</p>
+                    <p className='mb-1 text-sm font-medium text-white'>
+                      {tf('footer.contact.addressLabel', 'Dirección')}
+                    </p>
+                    <p className='text-sm leading-relaxed text-gray-300'>{address}</p>
                   </div>
                 </div>
 
                 <div className='group flex items-start'>
                   <Link
-                    href={`mailto:${CONTACT.EMAIL_INFO}`}
+                    href={`mailto:${email}`}
                     className='mr-3 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gray-800 transition-all duration-300 hover:scale-110 hover:bg-primary hover:text-on-primary'
-                    aria-label={`Enviar email a: ${CONTACT.EMAIL_INFO}`}
+                    aria-label={`Enviar email a: ${email}`}
                   >
                     <Mail className='size-4 text-gray-400 group-hover:text-on-primary' />
                   </Link>
                   <div>
-                    <p className='mb-1 text-sm font-medium text-white'>Email</p>
+                    <p className='mb-1 text-sm font-medium text-white'>
+                      {tf('footer.contact.emailLabel', 'Email')}
+                    </p>
                     <Link
-                      href={`mailto:${CONTACT.EMAIL_INFO}`}
+                      href={`mailto:${email}`}
                       className='text-sm text-gray-300 transition-colors hover:text-primary'
                     >
-                      {CONTACT.EMAIL_INFO}
+                      {email}
                     </Link>
                   </div>
                 </div>
 
                 <div className='group flex items-start'>
                   <Link
-                    href={`tel:${CONTACT.PHONE}`}
+                    href={`tel:${phone}`}
                     className='mr-3 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-gray-800 transition-all duration-300 hover:scale-110 hover:bg-primary hover:text-on-primary'
-                    aria-label={`Llamar al teléfono: ${CONTACT.PHONE}`}
+                    aria-label={`Llamar al teléfono: ${phone}`}
                   >
                     <Phone className='size-4 text-gray-400 group-hover:text-on-primary' />
                   </Link>
                   <div>
-                    <p className='mb-1 text-sm font-medium text-white'>Teléfono</p>
+                    <p className='mb-1 text-sm font-medium text-white'>
+                      {tf('footer.contact.phoneLabel', 'Teléfono')}
+                    </p>
                     <Link
-                      href={`tel:${CONTACT.PHONE}`}
+                      href={`tel:${phone}`}
                       className='text-sm text-gray-300 transition-colors hover:text-primary'
                     >
-                      {CONTACT.PHONE}
+                      {phone}
                     </Link>
                   </div>
                 </div>
@@ -160,9 +207,11 @@ export const Footer = () => {
             </div>
 
             <div className='space-y-4'>
-              <h3 className='mb-6 text-lg font-semibold text-white'>Enlaces</h3>
+              <h3 className='mb-6 text-lg font-semibold text-white'>
+                {tf('footer.links.heading', 'Enlaces')}
+              </h3>
               <div className='space-y-3'>
-                {navigationLinks.map((link) => (
+                {resolvedNavLinks.map((link) => (
                   <Link key={link.name} href={link.href} className='group flex items-center'>
                     <div className='mr-3 size-2 rounded-full bg-primary transition-all duration-300 group-hover:scale-125 group-hover:bg-primary'></div>
                     <span className='text-sm text-gray-300 transition-colors duration-300 group-hover:text-white'>
@@ -174,14 +223,17 @@ export const Footer = () => {
             </div>
 
             <div className='space-y-4'>
-              <h3 className='mb-6 text-lg font-semibold text-white'>Redes Sociales</h3>
+              <h3 className='mb-6 text-lg font-semibold text-white'>
+                {tf('footer.social.heading', 'Redes Sociales')}
+              </h3>
               <div className='space-y-4'>
-                {socialLinks.map((social) => {
-                  const IconComponent = social.icon
+                {resolvedSocialLinks.map((social) => {
+                  const IconComponent = SOCIAL_ICONS[social.name]
+                  if (!IconComponent) return null
                   return (
                     <Link
                       key={social.name}
-                      href={social.href}
+                      href={social.url}
                       className='group flex items-center'
                       target='_blank'
                       rel='noopener noreferrer'
@@ -206,14 +258,17 @@ export const Footer = () => {
           <div className='mt-12 border-t border-gray-700 pt-8'>
             <div className='flex flex-col items-center justify-between gap-4 md:flex-row'>
               <p className='text-sm text-gray-400'>
-                © {new Date().getFullYear()} Impulso Galería. Todos los derechos reservados.
+                {tf(
+                  'footer.copyright',
+                  `© ${new Date().getFullYear()} Impulso Galería. Todos los derechos reservados.`
+                )}
               </p>
               <div className='flex items-center gap-4'>
                 <Link
                   href={ROUTES.STORE.TERMS.PATH}
                   className='text-xs text-gray-400 transition-colors hover:text-primary'
                 >
-                  Términos de Uso
+                  {tf('footer.termsLink', 'Términos de Uso')}
                 </Link>
               </div>
             </div>

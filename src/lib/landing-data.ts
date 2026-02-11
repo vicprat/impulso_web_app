@@ -231,10 +231,19 @@ export async function getBlogPostBySlug(slug: string): Promise<PostWithRelations
 
 // Notion Content Services
 export {
+  getBannerContent,
   getBenefits,
+  getCardContent,
   getCarouselSlides,
+  getContactContent,
+  getCTAContent,
   getFeatures,
+  getFilterContent,
+  getHeroContent,
+  getNavigationLinks,
   getPageContent,
+  getSectionContent,
   getServices,
+  getSocialLinks,
   getTermsSections,
 } from './services/notion-content.service'

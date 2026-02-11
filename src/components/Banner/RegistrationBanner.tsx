@@ -8,7 +8,19 @@ import { useState } from 'react'
 import { ROUTES } from '@/src/config/routes'
 import { useAuth } from '@/src/modules/auth/context/useAuth'
 
-export function RegistrationBanner() {
+interface RegistrationBannerProps {
+  buttonText?: string
+  closeLabel?: string
+  subtitle?: string
+  title?: string
+}
+
+export function RegistrationBanner({
+  buttonText = 'Registrarse',
+  closeLabel = 'Cerrar banner',
+  subtitle = 'Únete a nuestra comunidad creativa',
+  title = 'Descubre el arte que te inspira',
+}: RegistrationBannerProps) {
   const [isVisible, setIsVisible] = useState(true)
   const { user } = useAuth()
 
@@ -59,12 +71,8 @@ export function RegistrationBanner() {
             </motion.div>
 
             <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3'>
-              <span className='text-sm font-medium tracking-wide text-white/90'>
-                Descubre el arte que te inspira
-              </span>
-              <span className='text-xs font-light text-white/60'>
-                Únete a nuestra comunidad creativa
-              </span>
+              <span className='text-sm font-medium tracking-wide text-white/90'>{title}</span>
+              <span className='text-xs font-light text-white/60'>{subtitle}</span>
             </div>
           </div>
 
@@ -73,7 +81,7 @@ export function RegistrationBanner() {
               href={ROUTES.AUTH.LOGIN.PATH}
               className='group flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:border-white/30 hover:bg-white/20 hover:shadow-lg hover:shadow-white/10'
             >
-              <span className='text-white/90 group-hover:text-white'>Registrarse</span>
+              <span className='text-white/90 group-hover:text-white'>{buttonText}</span>
               <motion.div initial={{ x: 0 }} whileHover={{ x: 2 }} transition={{ duration: 0.2 }}>
                 <ArrowRight className='size-4 text-white/70 group-hover:text-white/90' />
               </motion.div>
@@ -82,7 +90,7 @@ export function RegistrationBanner() {
             <button
               onClick={() => setIsVisible(false)}
               className='group rounded-lg p-1.5 transition-all duration-200 hover:scale-105 hover:bg-white/10'
-              aria-label='Cerrar banner'
+              aria-label={closeLabel}
             >
               <X className='size-4 text-white/60 group-hover:text-white/90' />
             </button>

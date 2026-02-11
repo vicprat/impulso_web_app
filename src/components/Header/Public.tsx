@@ -6,15 +6,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-import { RegistrationBanner } from '@/components/Banner'
+import { SearchTrigger } from './components/SearchTrigger'
+import { ThemeSwitch } from './components/ThemeSwitch'
+import { UserMenu } from './components/UserMenu'
+
 import { MiniCart } from '@/components/Cart/MiniCart'
 import { Logo } from '@/components/Logo'
 import { getStoreNavRoutes } from '@/config/routes'
 import { useAuth } from '@/src/modules/auth/context/useAuth'
-
-import { SearchTrigger } from './components/SearchTrigger'
-import { ThemeSwitch } from './components/ThemeSwitch'
-import { UserMenu } from './components/UserMenu'
 
 interface PublicHeaderProps {
   isHomePage?: boolean
@@ -98,7 +97,6 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
       <header
         className={`${isHomePage ? 'fixed shadow-md' : 'sticky'} bg-background/95 supports-[backdrop-filter]:bg-background/60 top-0 z-50 w-full translate-y-0 border-b backdrop-blur transition-transform duration-300 ease-in-out`}
       >
-        <RegistrationBanner />
         <div className='container mx-auto px-3 sm:px-4 lg:px-6'>
           <div className='flex h-14 items-center justify-between gap-2 sm:h-16 sm:gap-4'>
             {/* Logo - empujado a la izquierda */}

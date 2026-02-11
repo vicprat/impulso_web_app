@@ -45,3 +45,16 @@ export interface TermsSection {
   content: Record<Locale, string>
   order: number
 }
+
+export interface SocialLink {
+  name: string
+  handle: string
+  url: string
+  order: number
+}
+
+export interface NavigationLink {
+  name: Record<Locale, string>
+  path: string
+  order: number
+}
