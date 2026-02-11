@@ -34,10 +34,12 @@ export function RegistrationBanner({
       exit={{ opacity: 0, y: -100 }}
       transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
       className='relative overflow-hidden border-b border-slate-700/50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white backdrop-blur-xl'
+      suppressHydrationWarning
     >
       {/* Elementos decorativos sutiles */}
-      <div className='absolute inset-0'>
+      <div className='absolute inset-0' suppressHydrationWarning>
         <div
+          suppressHydrationWarning
           className='absolute left-8 top-4 size-1 animate-pulse rounded-full bg-white/30'
           style={{ animationDuration: '3s' }}
         />

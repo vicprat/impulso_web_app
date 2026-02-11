@@ -5,7 +5,7 @@ import { getRouteMeta, isPublicRoute, ROUTES } from '@/config/routes'
 const tokenVerificationCache = new Map<string, { valid: boolean; timestamp: number }>()
 const CACHE_DURATION = 5 * 60 * 1000
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (pathname.startsWith('/api/')) {

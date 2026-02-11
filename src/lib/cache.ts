@@ -35,67 +35,63 @@ export class CacheManager {
 
   // Revalidar cache de productos
   static revalidateProducts(productId?: string, handle?: string, vendor?: string) {
-    revalidateTag(this.PRODUCT_TAGS.all)
-    
+    revalidateTag(this.PRODUCT_TAGS.all, 'max')
+
     if (productId) {
-      revalidateTag(this.PRODUCT_TAGS.byId(productId))
+      revalidateTag(this.PRODUCT_TAGS.byId(productId), 'max')
     }
-    
+
     if (handle) {
-      revalidateTag(this.PRODUCT_TAGS.byHandle(handle))
+      revalidateTag(this.PRODUCT_TAGS.byHandle(handle), 'max')
     }
-    
+
     if (vendor) {
-      revalidateTag(this.PRODUCT_TAGS.byVendor(vendor))
+      revalidateTag(this.PRODUCT_TAGS.byVendor(vendor), 'max')
     }
   }
 
   // Revalidar cache de inventario
   static revalidateInventory(productId?: string) {
-    revalidateTag(this.INVENTORY_TAGS.all)
-    
+    revalidateTag(this.INVENTORY_TAGS.all, 'max')
+
     if (productId) {
-      revalidateTag(this.INVENTORY_TAGS.byProductId(productId))
+      revalidateTag(this.INVENTORY_TAGS.byProductId(productId), 'max')
     }
   }
 
   // Revalidar cache de artistas
   static revalidateArtists(artistId?: string) {
-    revalidateTag(this.ARTIST_TAGS.all)
-    
+    revalidateTag(this.ARTIST_TAGS.all, 'max')
+
     if (artistId) {
-      revalidateTag(this.ARTIST_TAGS.byId(artistId))
+      revalidateTag(this.ARTIST_TAGS.byId(artistId), 'max')
     }
   }
 
   // Revalidar cache de colecciones
   static revalidateCollections(handle?: string) {
-    revalidateTag(this.COLLECTION_TAGS.all)
-    
+    revalidateTag(this.COLLECTION_TAGS.all, 'max')
+
     if (handle) {
-      revalidateTag(this.COLLECTION_TAGS.byHandle(handle))
+      revalidateTag(this.COLLECTION_TAGS.byHandle(handle), 'max')
     }
   }
 
   // Revalidar cache de página principal
   static revalidateHomepage() {
-    revalidateTag(this.HOMEPAGE_TAGS.all)
-    revalidateTag(this.HOMEPAGE_TAGS.featured)
+    revalidateTag(this.HOMEPAGE_TAGS.all, 'max')
+    revalidateTag(this.HOMEPAGE_TAGS.featured, 'max')
   }
 
   // Revalidar todo el cache relacionado con un producto
-  static revalidateProductCache(product: {
-    id: string
-    handle: string
-    vendor?: string
-  }) {
+  static revalidateProductCache(product: { id: string; handle: string; vendor?: string }) {
     this.revalidateProducts(product.id, product.handle, product.vendor)
     this.revalidateInventory(product.id)
     this.revalidateCollections()
     this.revalidateHomepage()
-    
+
     if (product.vendor) {
       this.revalidateArtists()
     }
   }
-} 
+}

@@ -44,8 +44,7 @@ export async function POST(request: Request) {
         case 'inventory':
           CacheManager.revalidateInventory()
           if (productId) {
-            revalidateTag(`product-${productId}`)
-            revalidateTag('products')
+            CacheManager.revalidateProducts(productId)
           }
           break
         case 'artists':
@@ -76,7 +75,7 @@ export async function POST(request: Request) {
 
     // Revalidar por tag específico
     if (finalTag) {
-      revalidateTag(finalTag)
+      revalidateTag(finalTag, 'max')
     }
 
     return NextResponse.json({
@@ -100,6 +99,7 @@ export async function POST(request: Request) {
   }
 }
 
+// TEST TO REVALIDATE IN "Health Check"
 export async function GET() {
   return NextResponse.json({
     availableTypes: ['products', 'inventory', 'artists', 'collections', 'homepage', 'all'],
@@ -111,4 +111,4 @@ export async function GET() {
       revalidateByType: 'POST /api/revalidate?token=YOUR_TOKEN&type=products',
     },
   })
-} 
+}

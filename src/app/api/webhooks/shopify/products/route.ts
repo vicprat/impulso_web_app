@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 import { NextResponse } from 'next/server'
 
 import { CacheManager } from '@/lib/cache'
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
     // Verificar autenticidad del webhook
     const isValid = verifyShopifyWebhook(body, signature)
-    
+
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
@@ -61,14 +61,7 @@ export async function POST(request: Request) {
       vendor: product.vendor,
     })
 
-    // Revalidar tags específicos para actualización de UI
-    revalidateTag(`product-${product.id}`)
-    revalidateTag(`product-handle-${productHandle}`)
-    if (product.vendor) {
-      revalidateTag(`products-vendor-${product.vendor}`)
-    }
-    revalidateTag('products')
-    revalidateTag('homepage')
+    // Revalidación ya manejada por CacheManager arriba
 
     // Revalidar rutas específicas según el tipo
     if (isEvent) {
@@ -98,20 +91,14 @@ export async function POST(request: Request) {
       productHandle,
       productId: product.id,
       productType: isEvent ? 'event' : 'product',
-      revalidatedPaths: isEvent 
-        ? [
-            `/store/event/${productHandle}`,
-            '/store/events',
-            '/store/event/[handle]',
-            '/store',
-            '/'
-          ]
+      revalidatedPaths: isEvent
+        ? [`/store/event/${productHandle}`, '/store/events', '/store/event/[handle]', '/store', '/']
         : [
             `/store/product/${productHandle}`,
             '/store/product/[handle]',
             '/store',
             '/',
-            ...(product.vendor && !isEvent ? ['/artists'] : [])
+            ...(product.vendor && !isEvent ? ['/artists'] : []),
           ],
       success: true,
       vendor: product.vendor,
@@ -138,4 +125,4 @@ export async function GET() {
     supportedTypes: ['products', 'events'],
     timestamp: new Date().toISOString(),
   })
-} 
+}

@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -11,7 +15,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": false,
@@ -22,24 +26,68 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/app/*": ["src/app/*"],
-      "@/src/*": ["src/*"],
-      "@/modules/*": ["src/modules/*"],
-      "@/components/*": ["src/components/*"],
-      "@/lib/*": ["src/lib/*"],
-      "@/hooks/*": ["src/hooks/*"],
-      "@/types/*": ["src/types/*"],
-      "@/styles/*": ["src/styles/*"],
-      "@/utils/*": ["src/utils/*"],
-      "@/config/*": ["src/config/*"],
-      "@/helpers/*": ["src/helpers/*"],
-      "@/services/*": ["src/services/*"],
-      "@/prisma/*": ["prisma/*"],
-      "@/scripts/*": ["scripts/*"],
-      "@/public/*": ["public/*"],
-      "@/models/*": ["src/models/*"]
+      "@/app/*": [
+        "src/app/*"
+      ],
+      "@/src/*": [
+        "src/*"
+      ],
+      "@/modules/*": [
+        "src/modules/*"
+      ],
+      "@/components/*": [
+        "src/components/*"
+      ],
+      "@/lib/*": [
+        "src/lib/*"
+      ],
+      "@/hooks/*": [
+        "src/hooks/*"
+      ],
+      "@/types/*": [
+        "src/types/*"
+      ],
+      "@/styles/*": [
+        "src/styles/*"
+      ],
+      "@/utils/*": [
+        "src/utils/*"
+      ],
+      "@/config/*": [
+        "src/config/*"
+      ],
+      "@/helpers/*": [
+        "src/helpers/*"
+      ],
+      "@/services/*": [
+        "src/services/*"
+      ],
+      "@/prisma/*": [
+        "prisma/*"
+      ],
+      "@/scripts/*": [
+        "scripts/*"
+      ],
+      "@/public/*": [
+        "public/*"
+      ],
+      "@/models/*": [
+        "src/models/*"
+      ]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", ".next", "out", "dist", "build"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "out",
+    "dist",
+    "build"
+  ]
 }
