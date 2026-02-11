@@ -13,6 +13,7 @@ const FloatingParticles = lazy(() =>
 
 interface Props {
   className?: string
+  content?: Record<string, { en: string; es: string }>
 }
 
 const generateParticlePositions = (count: number) => {
@@ -24,7 +25,7 @@ const generateParticlePositions = (count: number) => {
   }))
 }
 
-export const Hero: React.FC<Props> = () => {
+export const Hero: React.FC<Props> = ({ content = {} }) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLElement | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -39,10 +40,17 @@ export const Hero: React.FC<Props> = () => {
 
   const { mousePosition } = useMouseTracking(containerRef as React.RefObject<HTMLElement>)
 
-  const VIDEO_URL =
+  // Helper to get content from Notion with a fallback
+  const t = (key: string, fallback: string) => content[key]?.es ?? fallback
+
+  const VIDEO_URL = t(
+    'landing.hero.videoUrl',
     'https://xhsidbbijujrdjjymhbs.supabase.co/storage/v1/object/public/images/general/impulso.mp4'
-  const VIDEO_POSTER =
+  )
+  const VIDEO_POSTER = t(
+    'landing.hero.videoPoster',
     'https://xhsidbbijujrdjjymhbs.supabase.co/storage/v1/object/public/images/general/impulso.webp'
+  )
 
   const springConfig = { damping: 30, restDelta: 0.001, stiffness: 100 }
   const mouseX = useSpring(mousePosition.x, springConfig)
@@ -273,7 +281,7 @@ export const Hero: React.FC<Props> = () => {
     bg-gradient-to-r from-white via-white/95 to-white/90 bg-clip-text text-transparent
     shadow-black/50 drop-shadow-lg`}
           >
-            Bienvenido a Impulso Galería
+            {t('landing.hero.title', 'Bienvenido a Impulso Galería')}
           </motion.h1>
 
           <motion.p
@@ -289,9 +297,10 @@ export const Hero: React.FC<Props> = () => {
               isTabletOrMobile ? 'max-w-sm' : 'max-w-2xl'
             } font-medium italic tracking-wide`}
           >
-            Impulso Galería tiene como objetivo crear un espacio que fomente el arte como plataforma
-            cultural; impulsando el desarrollo de artistas emergentes, y de artistas consolidados,
-            para así brindar calidad a nuestros clientes.
+            {t(
+              'landing.hero.subtitle',
+              'Impulso Galería tiene como objetivo crear un espacio que fomente el arte como plataforma cultural; impulsando el desarrollo de artistas emergentes, y de artistas consolidados, para así brindar calidad a nuestros clientes.'
+            )}
           </motion.p>
         </div>
 
@@ -311,9 +320,9 @@ export const Hero: React.FC<Props> = () => {
             >
               <div>
                 <span className='text-lg font-bold text-green-400 sm:text-xl md:text-2xl'>
-                  500+
+                  {t('landing.hero.stat1Value', '500+')}
                 </span>{' '}
-                Obras
+                {t('landing.hero.stat1Label', 'Obras')}
               </div>
             </div>
 
@@ -323,7 +332,7 @@ export const Hero: React.FC<Props> = () => {
                 <div className='absolute inset-0 size-2 animate-ping rounded-full bg-red-500 sm:size-3' />
               </div>
               <span className='text-xs font-semibold tracking-wider sm:text-sm'>
-                EXPERIENCIAS EN VIVO
+                {t('landing.hero.stat2Label', 'EXPERIENCIAS EN VIVO')}
               </span>
             </div>
           </div>
@@ -371,7 +380,7 @@ export const Hero: React.FC<Props> = () => {
       >
         <div className='flex flex-col items-center gap-2 sm:gap-3'>
           <span className='text-[10px] font-light uppercase tracking-[0.2em] sm:text-xs'>
-            Descubre más
+            {t('landing.hero.cta', 'Descubre más')}
           </span>
           <motion.div
             animate={{ y: [0, 8, 0] }}

@@ -3,7 +3,7 @@ import { Hero } from './components/Hero'
 
 import type { Metadata } from 'next'
 
-import { getTermsSections } from '@/lib/landing-data'
+import { getPageContent, getTermsSections } from '@/lib/landing-data'
 import { routeMetadata } from '@/lib/metadata'
 
 export const metadata: Metadata = routeMetadata['/terms']
@@ -11,7 +11,12 @@ export const metadata: Metadata = routeMetadata['/terms']
 // Data fetched in the Page component
 
 export default async function Page() {
-  const notionTerms = await getTermsSections()
+  const [notionTerms, pageContent] = await Promise.all([
+    getTermsSections(),
+    getPageContent('terms'),
+  ])
+
+  const t = (key: string, fallback = '') => pageContent[key]?.es ?? fallback
 
   const termsSections = notionTerms.map((s) => ({
     content: s.content.es,
@@ -21,7 +26,7 @@ export default async function Page() {
   return (
     <>
       <div className='min-h-screen'>
-        <Hero />
+        <Hero content={pageContent} />
 
         <section className='py-16 lg:py-24' aria-label='Términos y condiciones'>
           <div className='container mx-auto px-6'>
@@ -30,7 +35,9 @@ export default async function Page() {
                 <div key={section.id} className='border-b border-gray-200 pb-8 last:border-b-0'>
                   <div className='mb-4'>
                     <h2 className='mb-2 text-2xl font-bold'>{section.title}</h2>
-                    <p className='text-sm font-medium'>Texto sugerido:</p>
+                    <p className='text-sm font-medium'>
+                      {t('terms.sections.suggestedLabel', 'Texto sugerido:')}
+                    </p>
                   </div>
                   <div className='max-w-none'>
                     {section.content.split('\n\n').map((paragraph, pIndex) => (
@@ -42,7 +49,7 @@ export default async function Page() {
                 </div>
               ))}
             </div>
-            <CTA />
+            <CTA content={pageContent} />
           </div>
         </section>
       </div>

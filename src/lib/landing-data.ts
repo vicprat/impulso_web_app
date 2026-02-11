@@ -234,6 +234,7 @@ export {
   getBenefits,
   getCarouselSlides,
   getFeatures,
+  getPageContent,
   getServices,
   getTermsSections,
 } from './services/notion-content.service'

@@ -1,11 +1,11 @@
 import { Users } from 'lucide-react'
 
-import { getPublicArtists } from '@/lib/landing-data'
-import { routeMetadata } from '@/lib/metadata'
-
 import { Grid } from './components/Grid'
 
 import type { Metadata } from 'next'
+
+import { getPublicArtists } from '@/lib/landing-data'
+import { routeMetadata } from '@/lib/metadata'
 
 export const metadata: Metadata = routeMetadata['/artists']
 export const dynamic = 'force-dynamic'

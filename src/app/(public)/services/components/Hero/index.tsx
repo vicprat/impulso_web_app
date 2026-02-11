@@ -4,7 +4,13 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 
 import { GradientBackground } from '@/src/components/Animations'
 
-export const Hero: React.FC = () => {
+interface Props {
+  content?: Record<string, { en: string; es: string }>
+}
+
+export const Hero: React.FC<Props> = ({ content = {} }) => {
+  const t = (key: string, fallback: string) => content[key]?.es ?? fallback
+
   const { scrollY } = useScroll()
   const y1 = useTransform(scrollY, [0, 300], [0, -50])
   const y2 = useTransform(scrollY, [0, 300], [0, -100])
@@ -35,7 +41,7 @@ export const Hero: React.FC = () => {
             className='mb-6 text-5xl font-bold leading-tight text-white md:text-6xl lg:text-7xl xl:text-8xl'
             style={{ opacity }}
           >
-            Servicios que
+            {t('services.hero.title', 'Servicios que')}
             <motion.span
               className='block bg-gradient-to-r from-primary via-primary to-primary bg-clip-text text-transparent'
               animate={{
@@ -43,7 +49,7 @@ export const Hero: React.FC = () => {
               }}
               transition={{ duration: 5, repeat: Infinity }}
             >
-              Transforman Ideas
+              {t('services.hero.titleHighlight', 'Transforman Ideas')}
             </motion.span>
           </motion.h1>
 
@@ -53,8 +59,10 @@ export const Hero: React.FC = () => {
             transition={{ delay: 0.6, duration: 0.8 }}
             className='mx-auto mb-12 max-w-3xl text-xl leading-relaxed text-white lg:text-2xl'
           >
-            Desde la venta de obra original hasta servicios técnicos de vanguardia, creamos
-            experiencias artísticas que trascienden lo convencional
+            {t(
+              'services.hero.subtitle',
+              'Desde la venta de obra original hasta servicios técnicos de vanguardia, creamos experiencias artísticas que trascienden lo convencional'
+            )}
           </motion.p>
         </motion.header>
       </div>

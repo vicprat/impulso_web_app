@@ -252,3 +252,47 @@ export async function getTermsSections(): Promise<TermsSection[]> {
     return []
   }
 }
+
+export async function getPageContent(
+  page?: string
+): Promise<Record<string, { en: string; es: string }>> {
+  try {
+    const databases = await getChildDatabases(PAGES.HOME)
+    const contentDb = databases.find((db: any) =>
+      db.child_database.title.toLowerCase().includes('page content')
+    )
+
+    if (!contentDb) {
+      console.warn('Page Content database not found')
+      return {}
+    }
+
+    const results = await queryDatabase(contentDb.id)
+
+    const content: Record<string, { en: string; es: string }> = {}
+
+    for (const item of results) {
+      const p = item as any
+      const key = getRichTextPlain(p.properties.Key?.title ?? [])
+      if (!key) continue
+
+      // Filter by page if specified
+      if (page) {
+        const itemPage = p.properties.Page?.select?.name
+        if (itemPage && itemPage !== page) continue
+      }
+
+      content[key] = {
+        en: getRichTextPlain(
+          p.properties['Value EN']?.rich_text ?? p.properties['Value ES']?.rich_text ?? []
+        ),
+        es: getRichTextPlain(p.properties['Value ES']?.rich_text ?? []),
+      }
+    }
+
+    return content
+  } catch (error) {
+    console.error('Error fetching page content:', error)
+    return {}
+  }
+}

@@ -7,6 +7,7 @@ import { ROUTES } from '@/src/config/routes'
 
 interface Props {
   data: any[] // Simplified for now as we'll pass processed Notion data
+  content?: Record<string, { en: string; es: string }>
 }
 
 const ServiceCard = ({ service }: { service: any; _index: number }) => {
@@ -67,11 +68,13 @@ const ServiceCard = ({ service }: { service: any; _index: number }) => {
   )
 }
 
-export const Services: React.FC<Props> = ({ data }) => {
+export const Services: React.FC<Props> = ({ data, content = {} }) => {
+  const t = (key: string, fallback: string) => content[key]?.es ?? fallback
+
   return (
     <>
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8'>
-        {data.map((service, _index) => (
+      <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+        {data.map((service: any, _index: number) => (
           <div
             key={service.id}
             className='animate-fade-in-up'
@@ -85,11 +88,13 @@ export const Services: React.FC<Props> = ({ data }) => {
       <div className='mt-12 animate-fade-in-up text-center' style={{ animationDelay: '0.6s' }}>
         <div className='mx-auto max-w-2xl space-y-4'>
           <h3 className='text-xl font-semibold text-foreground'>
-            ¿Necesitas un servicio personalizado?
+            {t('landing.services.cta.title', '¿Necesitas un servicio personalizado?')}
           </h3>
           <p className='text-muted-foreground'>
-            Contacta con nuestro equipo para desarrollar una solución específica para tus
-            necesidades artísticas
+            {t(
+              'landing.services.cta.subtitle',
+              'Contacta con nuestro equipo para desarrollar una solución específica para tus necesidades artísticas'
+            )}
           </p>
           <div className='flex flex-col justify-center gap-4 sm:flex-row'>
             <Button
@@ -98,7 +103,9 @@ export const Services: React.FC<Props> = ({ data }) => {
               size='lg'
               className='border-border hover:bg-surface-container'
             >
-              <Link href={ROUTES.STORE.SERVICES.PATH}>Ver Detalles</Link>
+              <Link href={ROUTES.STORE.SERVICES.PATH}>
+                {t('landing.services.cta.button', 'Ver Detalles')}
+              </Link>
             </Button>
           </div>
         </div>

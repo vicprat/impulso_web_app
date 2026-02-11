@@ -5,7 +5,13 @@ import { FileText, Shield } from 'lucide-react'
 
 import { GradientBackground } from '@/src/components/Animations'
 
-export const Hero: React.FC = () => {
+interface Props {
+  content?: Record<string, { en: string; es: string }>
+}
+
+export const Hero: React.FC<Props> = ({ content = {} }) => {
+  const t = (key: string, fallback: string) => content[key]?.es ?? fallback
+
   const { scrollY } = useScroll()
   const y1 = useTransform(scrollY, [0, 300], [0, -50])
   const y2 = useTransform(scrollY, [0, 300], [0, -100])
@@ -37,7 +43,9 @@ export const Hero: React.FC = () => {
           >
             <div className='bg-card/80 mb-8 inline-flex items-center gap-3 rounded-full px-6 py-3 shadow-elevation-2 backdrop-blur-sm'>
               <Shield className='size-5 text-primary' />
-              <span className='text-sm font-medium text-white'>Política de Privacidad</span>
+              <span className='text-sm font-medium text-white'>
+                {t('terms.hero.badge', 'Política de Privacidad')}
+              </span>
             </div>
           </motion.div>
 
@@ -48,7 +56,7 @@ export const Hero: React.FC = () => {
             className='mb-6 text-5xl font-bold leading-tight text-white md:text-6xl lg:text-7xl xl:text-8xl'
             style={{ opacity }}
           >
-            Términos y
+            {t('terms.hero.title', 'Términos y')}
             <motion.span
               className='block bg-gradient-to-r from-primary via-primary to-primary bg-clip-text text-transparent'
               animate={{
@@ -56,7 +64,7 @@ export const Hero: React.FC = () => {
               }}
               transition={{ duration: 5, repeat: Infinity }}
             >
-              Condiciones
+              {t('terms.hero.titleHighlight', 'Condiciones')}
             </motion.span>
           </motion.h1>
 
@@ -66,8 +74,10 @@ export const Hero: React.FC = () => {
             transition={{ delay: 0.6, duration: 0.8 }}
             className='mx-auto mb-12 max-w-3xl text-xl leading-relaxed text-white lg:text-2xl'
           >
-            Conoce nuestras políticas de privacidad y términos de uso para una experiencia
-            transparente y segura
+            {t(
+              'terms.hero.subtitle',
+              'Conoce nuestras políticas de privacidad y términos de uso para una experiencia transparente y segura'
+            )}
           </motion.p>
 
           <motion.div
@@ -77,7 +87,9 @@ export const Hero: React.FC = () => {
             className='flex items-center justify-center gap-2 text-sm text-white'
           >
             <FileText className='size-4' />
-            <span>Información importante sobre el uso de nuestros servicios</span>
+            <span>
+              {t('terms.hero.tagline', 'Información importante sobre el uso de nuestros servicios')}
+            </span>
           </motion.div>
         </motion.header>
       </div>

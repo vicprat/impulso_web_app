@@ -3,7 +3,7 @@ import { Hero } from './components/Hero'
 
 import type { Metadata } from 'next'
 
-import { getServices } from '@/lib/landing-data'
+import { getPageContent, getServices } from '@/lib/landing-data'
 import { routeMetadata } from '@/lib/metadata'
 import { Card } from '@/src/components/Card'
 
@@ -12,7 +12,10 @@ export const metadata: Metadata = routeMetadata['/services']
 // Data fetched in the Page component
 
 export default async function Page() {
-  const notionServices = await getServices(true)
+  const [notionServices, pageContent] = await Promise.all([
+    getServices(true),
+    getPageContent('services'),
+  ])
 
   const services = notionServices.map((s) => ({
     description: s.description.es,
@@ -28,7 +31,7 @@ export default async function Page() {
   return (
     <>
       <div className='min-h-screen '>
-        <Hero />
+        <Hero content={pageContent} />
 
         <section className='py-16 lg:py-24' aria-label='Servicios disponibles'>
           <div className='container mx-auto px-6'>
@@ -37,7 +40,7 @@ export default async function Page() {
                 <Card.Service key={service.id} service={service} index={index} />
               ))}
             </div>
-            <CTA />
+            <CTA content={pageContent} />
           </div>
         </section>
       </div>

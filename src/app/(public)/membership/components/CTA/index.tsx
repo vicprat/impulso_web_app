@@ -5,7 +5,13 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
-export const CTA: React.FC = () => {
+interface Props {
+  content?: Record<string, { en: string; es: string }>
+}
+
+export const CTA: React.FC<Props> = ({ content = {} }) => {
+  const t = (key: string, fallback: string) => content[key]?.es ?? fallback
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -22,14 +28,19 @@ export const CTA: React.FC = () => {
 
           <div className='relative z-10 space-y-6'>
             <h2 className='text-3xl font-bold text-foreground lg:text-4xl'>
-              ¿Listo para comenzar tu viaje artístico?
+              {t('membership.cta.title', '¿Listo para comenzar tu viaje artístico?')}
             </h2>
             <p className='mx-auto max-w-2xl text-xl text-muted-foreground'>
-              Únete a nuestra comunidad de artistas exitosos y lleva tu arte al siguiente nivel
+              {t(
+                'membership.cta.subtitle',
+                'Únete a nuestra comunidad de artistas exitosos y lleva tu arte al siguiente nivel'
+              )}
             </p>
             <div className='flex flex-col justify-center gap-4 sm:flex-row'>
               <Button variant='container-success' asChild>
-                <a href='mailto:impulsogaleria@gmail.com'>Obtener Membresía</a>
+                <a href='mailto:impulsogaleria@gmail.com'>
+                  {t('membership.cta.button', 'Obtener Membresía')}
+                </a>
               </Button>
             </div>
           </div>

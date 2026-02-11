@@ -10,6 +10,7 @@ import {
   getBlogPosts,
   getCarouselSlides,
   getEventPosts,
+  getPageContent,
   getPublicArtists,
   getPublicEvents,
   getPublicProducts,
@@ -35,6 +36,7 @@ export default async function Page() {
     notionSlides,
     notionServices,
     notionBenefits,
+    pageContent,
   ] = await Promise.all([
     getPublicEvents(),
     getEventPosts(),
@@ -44,7 +46,11 @@ export default async function Page() {
     getCarouselSlides('es'),
     getServices(false),
     getBenefits('landing'),
+    getPageContent('landing'),
   ])
+
+  // Helper to get content from Notion with a fallback
+  const t = (key: string, fallback = '') => pageContent[key]?.es ?? fallback
 
   // Transform Notion data to localized versions for components
   const slides = notionSlides.map((s) => ({
@@ -88,7 +94,7 @@ export default async function Page() {
         organizer: null,
         startTime: null,
       },
-      formattedPrice: 'Entrada gratuita',
+      formattedPrice: t('landing.events.freeEntry', 'Entrada gratuita'),
       handle: post.slug,
       id: `post-${post.id}`,
       images: post.featuredImageUrl
@@ -105,13 +111,13 @@ export default async function Page() {
         minVariantPrice: { amount: '0', currencyCode: 'MXN' },
       },
       primaryVariant: null,
-      productType: 'Evento',
+      productType: t('landing.events.eventLabel', 'Evento'),
       status: 'ACTIVE' as const,
       tags: post.tags.map((t) => t.tag.name),
       title: post.title,
       updatedAt: post.updatedAt.toISOString(),
       variants: [],
-      vendor: 'Evento',
+      vendor: t('landing.events.eventLabel', 'Evento'),
     }))
 
   const combinedEvents = [...shopifyEvents, ...eventPostsAsEvents]
@@ -124,9 +130,12 @@ export default async function Page() {
 
       <Landing.Section
         icon='Palette'
-        title='Obras Seleccionadas'
-        subtitle='Descubre piezas únicas cuidadosamente curadas que capturan la esencia del arte contemporáneo'
-        actionText='Explorar Galería'
+        title={t('landing.section.obras.title', 'Obras Seleccionadas')}
+        subtitle={t(
+          'landing.section.obras.subtitle',
+          'Descubre piezas únicas cuidadosamente curadas que capturan la esencia del arte contemporáneo'
+        )}
+        actionText={t('landing.section.obras.actionText', 'Explorar Galería')}
         actionHref={ROUTES.STORE.MAIN.PATH}
       >
         <Suspense fallback={<Landing.Products.Loader />}>
@@ -136,17 +145,23 @@ export default async function Page() {
 
       <Landing.Section
         icon='Users'
-        title='Artistas Destacados'
-        subtitle='Conoce el talento excepcional de nuestra comunidad de artistas emergentes y consagrados'
-        actionText='Ver Todos los Artistas'
+        title={t('landing.section.artistas.title', 'Artistas Destacados')}
+        subtitle={t(
+          'landing.section.artistas.subtitle',
+          'Conoce el talento excepcional de nuestra comunidad de artistas emergentes y consagrados'
+        )}
+        actionText={t('landing.section.artistas.actionText', 'Ver Todos los Artistas')}
         actionHref={ROUTES.PUBLIC.ARTISTS.PATH}
         wrapperElement='section'
       >
         <Suspense fallback={<Landing.Artists.Loader />}>
           <Landing.Artists.Carousel
             artists={artists}
-            title='Artistas Destacados'
-            subtitle='Conoce el talento excepcional de nuestra comunidad de artistas emergentes y consagrados'
+            title={t('landing.section.artistas.title', 'Artistas Destacados')}
+            subtitle={t(
+              'landing.section.artistas.subtitle',
+              'Conoce el talento excepcional de nuestra comunidad de artistas emergentes y consagrados'
+            )}
             autoplay={true}
             scrollSpeed={0.5}
           />
@@ -155,16 +170,19 @@ export default async function Page() {
 
       <Landing.LazyHero rootMargin='600px'>
         <Suspense fallback={<div className='min-h-[90vh] bg-black' />}>
-          <Landing.Hero />
+          <Landing.Hero content={pageContent} />
         </Suspense>
       </Landing.LazyHero>
 
       {combinedEvents.length > 0 && (
         <Landing.Section
           icon='Calendar'
-          title='Próximos Eventos'
-          subtitle='Sumérgete en experiencias artísticas únicas que transformarán tu perspectiva del arte'
-          actionText='Ver Todos los Eventos'
+          title={t('landing.section.eventos.title', 'Próximos Eventos')}
+          subtitle={t(
+            'landing.section.eventos.subtitle',
+            'Sumérgete en experiencias artísticas únicas que transformarán tu perspectiva del arte'
+          )}
+          actionText={t('landing.section.eventos.actionText', 'Ver Todos los Eventos')}
           actionHref={ROUTES.STORE.EVENTS.PATH}
         >
           <Suspense fallback={<Landing.Events.Loader />}>
@@ -175,41 +193,53 @@ export default async function Page() {
 
       <Landing.Section
         icon='Settings'
-        title='Nuestros Servicios'
-        subtitle='Ofrecemos una gama completa de servicios especializados para el mundo del arte, desde la venta de obra original hasta servicios técnicos de alta calidad'
-        actionText='Ver Todos los Servicios'
+        title={t('landing.section.servicios.title', 'Nuestros Servicios')}
+        subtitle={t(
+          'landing.section.servicios.subtitle',
+          'Ofrecemos una gama completa de servicios especializados para el mundo del arte, desde la venta de obra original hasta servicios técnicos de alta calidad'
+        )}
+        actionText={t('landing.section.servicios.actionText', 'Ver Todos los Servicios')}
         actionHref={ROUTES.STORE.SERVICES.PATH}
       >
         <Suspense fallback={<Landing.Services.Loader />}>
-          <Landing.Services.Main data={services} />
+          <Landing.Services.Main data={services} content={pageContent} />
         </Suspense>
       </Landing.Section>
 
       <Landing.Section
         icon='Crown'
-        title='Vende tus obras'
-        subtitle='Adquiere un plan de membresía y disfruta de los grandes beneficios de vender tu arte con nosotros'
-        actionText='Más información'
+        title={t('landing.section.membresia.title', 'Vende tus obras')}
+        subtitle={t(
+          'landing.section.membresia.subtitle',
+          'Adquiere un plan de membresía y disfruta de los grandes beneficios de vender tu arte con nosotros'
+        )}
+        actionText={t('landing.section.membresia.actionText', 'Más información')}
         actionHref={ROUTES.STORE.MEMBERSHIP.PATH}
         paddingY='py-20'
         containerClassName='container relative z-10 mx-auto px-6'
       >
-        <Membership data={benefits} />
+        <Membership data={benefits} content={pageContent} />
       </Landing.Section>
 
       <Landing.Section
         icon='Sparkles'
-        title='Últimos Artículos'
-        subtitle='Explora las historias más recientes del mundo del arte y nuestra comunidad creativa'
-        actionText='Ver todo el Blog'
+        title={t('landing.section.blog.title', 'Últimos Artículos')}
+        subtitle={t(
+          'landing.section.blog.subtitle',
+          'Explora las historias más recientes del mundo del arte y nuestra comunidad creativa'
+        )}
+        actionText={t('landing.section.blog.actionText', 'Ver todo el Blog')}
         actionHref={ROUTES.PUBLIC.POSTS.DYNAMIC.MAIN.PATH.replace(':postType', 'blog')}
         paddingY='py-12 lg:py-16'
       >
         <Suspense fallback={<Landing.Blog.Loader />}>
           <Landing.Blog.Carousel
             posts={blogPosts}
-            title='Últimos Artículos'
-            subtitle='Explora las historias más recientes del mundo del arte y nuestra comunidad creativa'
+            title={t('landing.section.blog.title', 'Últimos Artículos')}
+            subtitle={t(
+              'landing.section.blog.subtitle',
+              'Explora las historias más recientes del mundo del arte y nuestra comunidad creativa'
+            )}
             autoplay={true}
             scrollSpeed={0.5}
           />

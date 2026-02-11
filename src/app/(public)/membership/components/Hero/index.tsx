@@ -5,7 +5,13 @@ import { Crown, Star } from 'lucide-react'
 
 import { GradientBackground } from '@/src/components/Animations'
 
-export const Hero: React.FC = () => {
+interface Props {
+  content?: Record<string, { en: string; es: string }>
+}
+
+export const Hero: React.FC<Props> = ({ content = {} }) => {
+  const t = (key: string, fallback: string) => content[key]?.es ?? fallback
+
   const { scrollY } = useScroll()
   const y1 = useTransform(scrollY, [0, 300], [0, -50])
   const y2 = useTransform(scrollY, [0, 300], [0, -100])
@@ -37,7 +43,9 @@ export const Hero: React.FC = () => {
           >
             <div className='bg-card/80 mb-8 inline-flex items-center gap-3 rounded-full px-6 py-3 shadow-elevation-2 backdrop-blur-sm'>
               <Crown className='size-5 text-primary' />
-              <span className='text-sm font-medium text-white'>Membresía Premium</span>
+              <span className='text-sm font-medium text-white'>
+                {t('membership.hero.badge', 'Membresía Premium')}
+              </span>
             </div>
           </motion.div>
 
@@ -48,7 +56,7 @@ export const Hero: React.FC = () => {
             className='mb-6 text-5xl font-bold leading-tight text-white md:text-6xl lg:text-7xl xl:text-8xl'
             style={{ opacity }}
           >
-            Vende tus obras
+            {t('membership.hero.title', 'Vende tus obras')}
             <motion.span
               className='block bg-gradient-to-r from-primary via-primary to-primary bg-clip-text text-transparent'
               animate={{
@@ -56,7 +64,7 @@ export const Hero: React.FC = () => {
               }}
               transition={{ duration: 5, repeat: Infinity }}
             >
-              con nosotros
+              {t('membership.hero.titleHighlight', 'con nosotros')}
             </motion.span>
           </motion.h1>
 
@@ -66,8 +74,10 @@ export const Hero: React.FC = () => {
             transition={{ delay: 0.6, duration: 0.8 }}
             className='mx-auto mb-12 max-w-3xl text-xl leading-relaxed text-white lg:text-2xl'
           >
-            Adquiere un plan de membresía y disfruta de los grandes beneficios de vender tu arte con
-            nosotros
+            {t(
+              'membership.hero.subtitle',
+              'Adquiere un plan de membresía y disfruta de los grandes beneficios de vender tu arte con nosotros'
+            )}
           </motion.p>
 
           <motion.div
@@ -77,7 +87,9 @@ export const Hero: React.FC = () => {
             className='flex items-center justify-center gap-2 text-sm text-white'
           >
             <Star className='size-4' />
-            <span>Únete a nuestra comunidad de artistas exitosos</span>
+            <span>
+              {t('membership.hero.tagline', 'Únete a nuestra comunidad de artistas exitosos')}
+            </span>
           </motion.div>
         </motion.header>
       </div>

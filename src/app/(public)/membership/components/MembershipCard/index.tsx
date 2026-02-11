@@ -20,11 +20,13 @@ interface MembershipCardProps {
   subtitle: string
   description: string
   buttonText: string
+  content?: Record<string, { en: string; es: string }>
 }
 
 export const MembershipCard: React.FC<MembershipCardProps> = ({
   benefits,
   buttonText,
+  content = {},
   currency,
   description,
   period,
@@ -32,6 +34,8 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   subtitle,
   title,
 }) => {
+  const t = (key: string, fallback: string) => content[key]?.es ?? fallback
+
   const handleMembershipClick = () => {
     const subject = encodeURIComponent('Solicitud de Membresía - Impulso Galería')
     const body = encodeURIComponent(
@@ -51,12 +55,13 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
           className='mb-16 text-center'
         >
           <h2 className='mb-6 text-4xl font-bold md:text-5xl'>
-            Nos ocuparemos de todas tus necesidades
+            {t('membership.card.heading', 'Nos ocuparemos de todas tus necesidades')}
           </h2>
           <p className='mx-auto max-w-3xl text-lg'>
-            Somos especialistas en vender obras de arte de artistas nacionales, nuevos, establecidos
-            y emergentes. Nuestro equipo calificado puede ayudarlo a determinar y lograr el mejor
-            precio por su trabajo, a través de una promoción efectiva en línea.
+            {t(
+              'membership.card.headingDescription',
+              'Somos especialistas en vender obras de arte de artistas nacionales, nuevos, establecidos y emergentes. Nuestro equipo calificado puede ayudarlo a determinar y lograr el mejor precio por su trabajo, a través de una promoción efectiva en línea.'
+            )}
           </p>
         </motion.div>
 
@@ -90,7 +95,9 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
             <div className='mb-6 text-center'>
               <h2 className='mb-2 text-2xl font-bold text-gray-900'>{subtitle}</h2>
               <div className='mb-4'>
-                <span className='text-sm text-gray-600'>POR SOLO</span>
+                <span className='text-sm text-gray-600'>
+                  {t('membership.card.priceLabel', 'POR SOLO')}
+                </span>
                 <div className='text-4xl font-bold text-gray-900'>
                   {currency}
                   {price}
@@ -101,7 +108,9 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
             </div>
 
             <div className='mb-6'>
-              <h3 className='mb-4 text-lg font-semibold text-gray-900'>Beneficios para ti</h3>
+              <h3 className='mb-4 text-lg font-semibold text-gray-900'>
+                {t('membership.card.benefitsTitle', 'Beneficios para ti')}
+              </h3>
               <div className='space-y-3'>
                 {benefits.map((benefit) => (
                   <div key={benefit.id} className='flex items-start gap-3'>
@@ -117,7 +126,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
               className='w-full bg-gray-900 text-white transition-colors duration-200 hover:bg-gray-800'
               onClick={handleMembershipClick}
             >
-              Adquirir
+              {t('membership.card.acquireButton', 'Adquirir')}
             </Button>
           </motion.div>
         </div>
