@@ -14,6 +14,7 @@ const SHOP_DATA = {
   acceptedLanguage: 'ES' as const,
   currency: 'MXN' as const,
   shopId: `gid://shopify/Shop/${process.env.NEXT_PUBLIC_SHOPIFY_SHOP_ID}`,
+  storefrontAccessToken: process.env.NEXT_PUBLIC_API_SHOPIFY_STOREFRONT ?? '',
 }
 
 function ShopifyAnalyticsInner() {
