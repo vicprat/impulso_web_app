@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { type IProductForCart, type Variant } from '@/modules/shopify/types'
+import { useShopifyAnalytics } from '@/src/components/ShopifyAnalytics'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 // Tipo para producto plano (sin métodos de clase)
@@ -164,6 +165,7 @@ const INITIAL_STATE: State = {
 
 export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
   const [state, setState] = useState(INITIAL_STATE)
+  const { trackProductView } = useShopifyAnalytics()
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
     {
@@ -199,6 +201,24 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
       setState((previous) => ({ ...previous, variant: product.variants[0] }))
     }
   }, [product.variants, state.variant])
+
+  // Shopify Analytics: Track Product View
+  useEffect(() => {
+    const variant = state.variant ?? product.primaryVariant
+    if (!variant) return
+
+    trackProductView({
+      brand: product.vendor,
+      category: product.productType,
+      name: product.title,
+      price: variant.price.amount,
+      productGid: product.id,
+      sku: variant.sku,
+      variantGid: variant.id,
+      variantName: variant.title,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id])
 
   const classNames = (...classes: string[]) => {
     return classes.filter(Boolean).join(' ')

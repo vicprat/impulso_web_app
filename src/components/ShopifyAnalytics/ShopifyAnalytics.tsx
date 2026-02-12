@@ -10,12 +10,7 @@ import {
 import { usePathname, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useRef } from 'react'
 
-const SHOP_DATA = {
-  acceptedLanguage: 'ES' as const,
-  currency: 'MXN' as const,
-  shopId: `gid://shopify/Shop/${process.env.NEXT_PUBLIC_SHOPIFY_SHOP_ID}`,
-  storefrontAccessToken: process.env.NEXT_PUBLIC_API_SHOPIFY_STOREFRONT ?? '',
-}
+import { CONSENT_DATA, SHOP_DATA } from './analytics-config'
 
 function ShopifyAnalyticsInner() {
   const pathname = usePathname()
@@ -38,7 +33,7 @@ function ShopifyAnalyticsInner() {
     const payload: ShopifyPageViewPayload = {
       ...getClientBrowserParameters(),
       ...SHOP_DATA,
-      hasUserConsent: true,
+      ...CONSENT_DATA,
     }
 
     void sendShopifyAnalytics({

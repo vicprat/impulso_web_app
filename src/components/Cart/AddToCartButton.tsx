@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { useShopifyAnalytics } from '@/components/ShopifyAnalytics'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/config/routes'
 import { useAuth } from '@/modules/auth/context/useAuth'
@@ -57,7 +58,8 @@ export function AddToCartButton({
   title,
 }: AddToCartButtonProps) {
   const { isAuthenticated, isLoading: authLoading, login } = useAuth()
-  const { addProduct, cartSummary, isAdding } = useCartActions()
+  const { addProduct, cart, cartSummary, isAdding } = useCartActions()
+  const { trackAddToCart } = useShopifyAnalytics()
   const [quantity, setQuantity] = useState(initialQuantity)
 
   const isEvent = product.vendor === 'Evento' || product.title?.toLowerCase().includes('evento')
@@ -77,7 +79,28 @@ export function AddToCartButton({
       return
     }
 
-    void addProduct(variantToAdd.id, quantity)
+    try {
+      await addProduct(variantToAdd.id, quantity)
+
+      // Shopify Analytics: Track Add to Cart
+      trackAddToCart({
+        cartId: cart?.id ?? '',
+        products: [
+          {
+            brand: product.vendor,
+            name: product.title,
+            price: variantToAdd.price.amount,
+            productGid: product.id,
+            sku: variantToAdd.sku,
+            variantGid: variantToAdd.id,
+            variantName: variantToAdd.title,
+          },
+        ],
+        totalValue: parseFloat(variantToAdd.price.amount) * quantity,
+      })
+    } catch {
+      // Error already handled by addProduct
+    }
   }
 
   const incrementQuantity = () => {
