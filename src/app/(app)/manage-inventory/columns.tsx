@@ -1051,7 +1051,6 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'id'
-      const isAsc = currentSortOrder === 'asc'
 
       return (
         <div className='w-[120px]'>
@@ -1062,6 +1061,11 @@ export const columns: ColumnDef<Product>[] = [
           >
             ID
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
           </Button>
         </div>
       )
@@ -1101,7 +1105,6 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'title'
-      const isAsc = currentSortOrder === 'asc'
 
       return (
         <div className='min-w-[240px]'>
@@ -1112,6 +1115,11 @@ export const columns: ColumnDef<Product>[] = [
           >
             Título
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
           </Button>
         </div>
       )
@@ -1159,7 +1167,6 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'vendor'
-      const isAsc = currentSortOrder === 'asc'
 
       return (
         <div className='min-w-[200px]'>
@@ -1170,6 +1177,11 @@ export const columns: ColumnDef<Product>[] = [
           >
             Artista
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
           </Button>
         </div>
       )
@@ -1210,7 +1222,6 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'productType'
-      const isAsc = currentSortOrder === 'asc'
 
       return (
         <div className='min-w-[192px]'>
@@ -1221,6 +1232,11 @@ export const columns: ColumnDef<Product>[] = [
           >
             Tipo de obra
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
           </Button>
         </div>
       )
@@ -1263,7 +1279,6 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'medium'
-      const isAsc = currentSortOrder === 'asc'
 
       return (
         <div className='min-w-[192px]'>
@@ -1274,6 +1289,11 @@ export const columns: ColumnDef<Product>[] = [
           >
             Técnica
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
           </Button>
         </div>
       )
@@ -1316,7 +1336,6 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'year'
-      const isAsc = currentSortOrder === 'asc'
 
       return (
         <div className='min-w-[136px]'>
@@ -1327,6 +1346,11 @@ export const columns: ColumnDef<Product>[] = [
           >
             Año
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
           </Button>
         </div>
       )
@@ -1383,7 +1407,6 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'dimensions'
-      const isAsc = currentSortOrder === 'asc'
 
       return (
         <div className='min-w-[224px]'>
@@ -1394,6 +1417,11 @@ export const columns: ColumnDef<Product>[] = [
           >
             Medidas (cm)
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
           </Button>
         </div>
       )
@@ -1437,7 +1465,6 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'serie'
-      const isAsc = currentSortOrder === 'asc'
 
       return (
         <div className='min-w-[192px]'>
@@ -1448,6 +1475,11 @@ export const columns: ColumnDef<Product>[] = [
           >
             Serie
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
           </Button>
         </div>
       )
@@ -1490,7 +1522,6 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'location'
-      const isAsc = currentSortOrder === 'asc'
 
       return (
         <div className='min-w-[200px]'>
@@ -1501,6 +1532,11 @@ export const columns: ColumnDef<Product>[] = [
           >
             Localización
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
           </Button>
         </div>
       )
@@ -1541,7 +1577,6 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'price'
-      const isAsc = currentSortOrder === 'asc'
 
       return (
         <div className='min-w-[168px]'>
@@ -1553,6 +1588,11 @@ export const columns: ColumnDef<Product>[] = [
           >
             Precio
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
           </Button>
         </div>
       )
@@ -1602,7 +1642,6 @@ export const columns: ColumnDef<Product>[] = [
     header: ({ column, table }) => {
       const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
       const isSorted = currentSortBy === 'inventory'
-      const isAsc = currentSortOrder === 'asc'
 
       return (
         <div className='min-w-[168px]'>
@@ -1613,6 +1652,11 @@ export const columns: ColumnDef<Product>[] = [
           >
             Inventario
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
           </Button>
         </div>
       )

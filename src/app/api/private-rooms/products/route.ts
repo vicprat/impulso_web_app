@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
+import { Product } from '@/models/Product'
 import { requirePermission } from '@/modules/auth/server/server'
+import { getPrimaryLocationId } from '@/services/product/service'
 import { PERMISSIONS } from '@/src/config/Permissions'
 
 const GET_PRODUCTS_BY_IDS_QUERY = `
@@ -16,8 +18,6 @@ const GET_PRODUCTS_BY_IDS_QUERY = `
         productType
         status
         tags
-        createdAt
-        updatedAt
         images(first: 10) {
           edges {
             node {
@@ -29,30 +29,54 @@ const GET_PRODUCTS_BY_IDS_QUERY = `
             }
           }
         }
+        media(first: 10) {
+          nodes {
+            id
+            mediaContentType
+            status
+            ... on MediaImage {
+              image {
+                id
+                url
+                altText
+                width
+                height
+              }
+            }
+          }
+        }
         variants(first: 100) {
           edges {
             node {
               id
               title
+              availableForSale
               price
-              compareAtPrice
               sku
               inventoryQuantity
-              selectedOptions {
-                name
-                value
+              inventoryPolicy
+              inventoryItem {
+                tracked
               }
             }
           }
         }
-        priceRange {
-          minVariantPrice {
-            amount
-            currencyCode
+        metafields(first: 20) {
+          edges {
+            node {
+              namespace
+              key
+              value
+            }
           }
-          maxVariantPrice {
-            amount
-            currencyCode
+        }
+        collections(first: 50) {
+          edges {
+            node {
+              id
+              title
+              handle
+            }
           }
         }
       }
@@ -77,59 +101,12 @@ export async function POST(req: Request) {
       ids: formattedIds,
     })
 
+    const locationId = await getPrimaryLocationId()
+
     const products = response.nodes
       .filter((node) => node !== null)
-      .map((product: any) => ({
-        availableForSale: product.status === 'ACTIVE',
-        createdAt: product.createdAt ?? new Date().toISOString(),
-        description: product.descriptionHtml ?? '',
-        descriptionHtml: product.descriptionHtml ?? '',
-        handle: product.handle ?? '',
-        id: product.id,
-        images:
-          product.images?.edges?.map((edge: any) => ({
-            altText: edge.node.altText,
-            height: edge.node.height,
-            id: edge.node.id,
-            url: edge.node.url,
-            width: edge.node.width,
-          })) ?? [],
-        priceRange: {
-          maxVariantPrice: {
-            amount: product.priceRange?.maxVariantPrice?.amount ?? '0',
-            currencyCode: product.priceRange?.maxVariantPrice?.currencyCode ?? 'MXN',
-          },
-          minVariantPrice: {
-            amount: product.priceRange?.minVariantPrice?.amount ?? '0',
-            currencyCode: product.priceRange?.minVariantPrice?.currencyCode ?? 'MXN',
-          },
-        },
-        productType: product.productType ?? '',
-        status: product.status,
-        tags: product.tags ?? [],
-        title: product.title,
-        updatedAt: product.updatedAt ?? new Date().toISOString(),
-        variants:
-          product.variants?.edges?.map((edge: any) => ({
-            availableForSale: edge.node.inventoryQuantity > 0 && product.status === 'ACTIVE',
-            compareAtPrice: edge.node.compareAtPrice
-              ? {
-                  amount: edge.node.compareAtPrice,
-                  currencyCode: product.priceRange?.minVariantPrice?.currencyCode ?? 'MXN',
-                }
-              : null,
-            id: edge.node.id,
-            inventoryQuantity: edge.node.inventoryQuantity ?? 0,
-            price: {
-              amount: edge.node.price ?? '0',
-              currencyCode: product.priceRange?.minVariantPrice?.currencyCode ?? 'MXN',
-            },
-            selectedOptions: edge.node.selectedOptions ?? [],
-            sku: edge.node.sku,
-            title: edge.node.title,
-          })) ?? [],
-        vendor: product.vendor ?? '',
-      }))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((productData: any) => new Product(productData, locationId))
 
     return NextResponse.json({ products })
   } catch (error) {

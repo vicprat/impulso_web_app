@@ -7,6 +7,13 @@ import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
+import { AddProductsModal } from './AddProductsModal'
+import { AddUsersModal } from './AddUsersModal'
+import { EditRoomModal } from './EditRoomModal'
+import { PrivateRoomProductsTable } from './PrivateRoomProductsTable'
+
+import type { Product } from '@/models/Product'
+
 import { Confirm } from '@/components/Dialog/Confirm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,13 +25,6 @@ import {
   useUpdatePrivateRoom,
 } from '@/modules/rooms/hooks'
 import { ROUTES } from '@/src/config/routes'
-
-import { AddProductsModal } from './AddProductsModal'
-import { AddUsersModal } from './AddUsersModal'
-import { EditRoomModal } from './EditRoomModal'
-import { PrivateRoomProductsTable } from './PrivateRoomProductsTable'
-
-import type { Product } from '@/models/Product'
 
 interface PrivateRoomDetailProps {
   roomId: string
@@ -41,6 +41,10 @@ export function PrivateRoomDetail({ roomId }: PrivateRoomDetailProps) {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set())
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
+  const [sortConfig, setSortConfig] = useState<{
+    key: string
+    direction: 'asc' | 'desc'
+  } | null>(null)
   const queryClient = useQueryClient()
   const router = useRouter()
 
@@ -53,6 +57,105 @@ export function PrivateRoomDetail({ roomId }: PrivateRoomDetailProps) {
 
   const updateRoomMutation = useUpdatePrivateRoom()
   const deleteRoomMutation = useDeletePrivateRoom()
+
+  const handleSort = (key: string) => {
+    setSortConfig((current) => {
+      if (current?.key === key) {
+        return {
+          direction: current.direction === 'asc' ? 'desc' : 'asc',
+          key,
+        }
+      }
+      return {
+        direction: 'asc',
+        key,
+      }
+    })
+  }
+
+  // Calculate dimensions value for sorting
+  const getDimensionValue = (p: Product) => {
+    const h = parseFloat(p.artworkDetails.height || '0')
+    const w = parseFloat(p.artworkDetails.width || '0')
+    const d = parseFloat(p.artworkDetails.depth || '0')
+    return h * w * (d || 1)
+  }
+
+  const sortedProducts = useMemo(() => {
+    if (!sortConfig) return products
+
+    return [...products].sort((a, b) => {
+      let valueA: any = ''
+      let valueB: any = ''
+
+      switch (sortConfig.key) {
+        case 'title':
+          valueA = a.title.toLowerCase()
+          valueB = b.title.toLowerCase()
+          break
+        case 'vendor':
+          valueA = a.vendor.toLowerCase()
+          valueB = b.vendor.toLowerCase()
+          break
+        case 'productType':
+          valueA = a.productType.toLowerCase()
+          valueB = b.productType.toLowerCase()
+          break
+        case 'artworkDetails.medium':
+          valueA = (a.artworkDetails.medium || '').toLowerCase()
+          valueB = (b.artworkDetails.medium || '').toLowerCase()
+          break
+        case 'artworkDetails.year':
+          valueA = parseInt(a.artworkDetails.year || '0')
+          valueB = parseInt(b.artworkDetails.year || '0')
+          break
+        case 'dimensions':
+          valueA = getDimensionValue(a)
+          valueB = getDimensionValue(b)
+          break
+        case 'artworkDetails.location':
+          valueA = (a.artworkDetails.location || '').toLowerCase()
+          valueB = (b.artworkDetails.location || '').toLowerCase()
+          break
+        case 'collections':
+          valueA = (a.collections?.[0]?.title || '').toLowerCase()
+          valueB = (b.collections?.[0]?.title || '').toLowerCase()
+          break
+        case 'price':
+          valueA = parseFloat(a.variants[0]?.price.amount || '0')
+          valueB = parseFloat(b.variants[0]?.price.amount || '0')
+          break
+        case 'status':
+          valueA = a.status
+          valueB = b.status
+          break
+        default:
+          return 0
+      }
+
+      if (valueA < valueB) {
+        return sortConfig.direction === 'asc' ? -1 : 1
+      }
+      if (valueA > valueB) {
+        return sortConfig.direction === 'asc' ? 1 : -1
+      }
+      return 0
+    })
+  }, [products, sortConfig])
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    return sortedProducts.slice(startIndex, endIndex)
+  }, [sortedProducts, currentPage, pageSize])
+
+  const existingProductIds = useMemo(() => {
+    return new Set(productIds)
+  }, [productIds])
+
+  const existingUserIds = useMemo(() => {
+    return new Set(room?.users?.map((u) => u.userId) ?? [])
+  }, [room])
 
   const handleRemoveProducts = async () => {
     if (!room || selectedProducts.size === 0) return
@@ -135,20 +238,6 @@ export function PrivateRoomDetail({ roomId }: PrivateRoomDetailProps) {
     setCurrentPage(1)
     setSelectedProducts(new Set())
   }
-
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize
-    const endIndex = startIndex + pageSize
-    return products.slice(startIndex, endIndex)
-  }, [products, currentPage, pageSize])
-
-  const existingProductIds = useMemo(() => {
-    return new Set(productIds)
-  }, [productIds])
-
-  const existingUserIds = useMemo(() => {
-    return new Set(room?.users?.map((u) => u.userId) ?? [])
-  }, [room])
 
   if (isLoadingRoom) {
     return (
@@ -367,6 +456,8 @@ export function PrivateRoomDetail({ roomId }: PrivateRoomDetailProps) {
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
               selectedProducts={selectedProducts}
+              sortConfig={sortConfig}
+              onSort={handleSort}
               onProductSelect={(productId, selected) => {
                 setSelectedProducts((prev) => {
                   const newSet = new Set(prev)

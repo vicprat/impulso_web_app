@@ -5,12 +5,13 @@ import { ArrowUpDown, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo } from 'react'
 
+import type { Product } from '@/models/Product'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { formatDimensionsWithUnit } from '@/helpers/dimensions'
 import { Table } from '@/src/components/Table'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
-
-import type { Product } from '@/models/Product'
 
 interface PrivateRoomProductsTableProps {
   products: Product[]
@@ -23,9 +24,43 @@ interface PrivateRoomProductsTableProps {
   selectedProducts?: Set<string>
   onProductSelect?: (productId: string, selected: boolean) => void
   onSelectAll?: (selected: boolean) => void
+  sortConfig?: { key: string; direction: 'asc' | 'desc' } | null
+  onSort?: (key: string) => void
 }
 
-const columns: ColumnDef<Product>[] = [
+const SortableHeader = ({
+  column,
+  label,
+  onSort,
+  sortConfig,
+}: {
+  column: string
+  label: string
+  sortConfig?: { key: string; direction: 'asc' | 'desc' } | null
+  onSort?: (key: string) => void
+}) => {
+  const isSorted = sortConfig?.key === column
+  return (
+    <Button
+      variant='ghost'
+      className={`h-auto p-0 font-semibold ${isSorted ? 'text-primary' : ''}`}
+      onClick={() => onSort?.(column)}
+    >
+      {label}
+      <ArrowUpDown className='ml-2 size-4' />
+      {isSorted && (
+        <Badge variant='outline' className='ml-1 text-[10px]'>
+          {sortConfig?.direction === 'asc' ? 'ASC' : 'DESC'}
+        </Badge>
+      )}
+    </Button>
+  )
+}
+
+const getColumns = (
+  sortConfig?: { key: string; direction: 'asc' | 'desc' } | null,
+  onSort?: (key: string) => void
+): ColumnDef<Product>[] => [
   {
     cell: ({ row, table }) => {
       const product = row.original
@@ -106,14 +141,9 @@ const columns: ColumnDef<Product>[] = [
       const product = row.original
       return <span className='font-medium'>{product.title}</span>
     },
-    header: () => {
-      return (
-        <Button variant='ghost' className='h-auto p-0 font-semibold'>
-          Título
-          <ArrowUpDown className='ml-2 size-4' />
-        </Button>
-      )
-    },
+    header: () => (
+      <SortableHeader column='title' label='Título' sortConfig={sortConfig} onSort={onSort} />
+    ),
   },
   {
     accessorKey: 'vendor',
@@ -121,14 +151,9 @@ const columns: ColumnDef<Product>[] = [
       const product = row.original
       return <span className='text-sm'>{product.vendor}</span>
     },
-    header: () => {
-      return (
-        <Button variant='ghost' className='h-auto p-0 font-semibold'>
-          Artista
-          <ArrowUpDown className='ml-2 size-4' />
-        </Button>
-      )
-    },
+    header: () => (
+      <SortableHeader column='vendor' label='Artista' sortConfig={sortConfig} onSort={onSort} />
+    ),
   },
   {
     accessorKey: 'productType',
@@ -136,17 +161,113 @@ const columns: ColumnDef<Product>[] = [
       const product = row.original
       return <span className='text-sm'>{product.productType}</span>
     },
-    header: 'Tipo de obra',
+    header: () => (
+      <SortableHeader
+        column='productType'
+        label='Tipo de obra'
+        sortConfig={sortConfig}
+        onSort={onSort}
+      />
+    ),
+  },
+  {
+    accessorKey: 'artworkDetails.medium',
+    cell: ({ row }) => {
+      const product = row.original
+      return <span className='text-sm'>{product.artworkDetails.medium ?? '-'}</span>
+    },
+    header: () => (
+      <SortableHeader
+        column='artworkDetails.medium'
+        label='Técnica'
+        sortConfig={sortConfig}
+        onSort={onSort}
+      />
+    ),
+  },
+  {
+    accessorKey: 'artworkDetails.year',
+    cell: ({ row }) => {
+      const product = row.original
+      return <span className='text-sm'>{product.artworkDetails.year ?? '-'}</span>
+    },
+    header: () => (
+      <SortableHeader
+        column='artworkDetails.year'
+        label='Año'
+        sortConfig={sortConfig}
+        onSort={onSort}
+      />
+    ),
+  },
+  {
+    accessorKey: 'dimensions',
+    cell: ({ row }) => {
+      const product = row.original
+      const { depth, height, width } = product.artworkDetails
+      return (
+        <span className='text-sm'>{formatDimensionsWithUnit(height, width, depth) || '-'}</span>
+      )
+    },
+    header: () => (
+      <SortableHeader column='dimensions' label='Medidas' sortConfig={sortConfig} onSort={onSort} />
+    ),
+  },
+  {
+    accessorKey: 'artworkDetails.location',
+    cell: ({ row }) => {
+      const product = row.original
+      return <span className='text-sm'>{product.artworkDetails.location ?? '-'}</span>
+    },
+    header: () => (
+      <SortableHeader
+        column='artworkDetails.location'
+        label='Ubicación'
+        sortConfig={sortConfig}
+        onSort={onSort}
+      />
+    ),
+  },
+  {
+    accessorKey: 'collections',
+    cell: ({ row }) => {
+      const product = row.original
+      const collections = product.collections || []
+
+      if (collections.length === 0) {
+        return <span className='text-xs text-muted-foreground'>-</span>
+      }
+
+      return (
+        <div className='flex flex-wrap gap-1'>
+          {collections.map((collection) => (
+            <Badge key={collection.id} variant='outline' className='text-xs'>
+              {collection.title}
+            </Badge>
+          ))}
+        </div>
+      )
+    },
+    header: () => (
+      <SortableHeader
+        column='collections'
+        label='Colecciones'
+        sortConfig={sortConfig}
+        onSort={onSort}
+      />
+    ),
   },
   {
     accessorKey: 'price',
     cell: ({ row }) => {
       const product = row.original
       const variant = product.variants[0]
-      const currentPrice = variant.price.amount
+      const currentPrice = variant?.price.amount ?? '0'
       return <span className='font-semibold'>${parseFloat(currentPrice).toLocaleString()}</span>
     },
-    header: 'Precio',
+    header: () => (
+      <SortableHeader column='price' label='Precio' sortConfig={sortConfig} onSort={onSort} />
+    ),
     id: 'price',
   },
   {
@@ -159,7 +280,9 @@ const columns: ColumnDef<Product>[] = [
         </Badge>
       )
     },
-    header: 'Estado',
+    header: () => (
+      <SortableHeader column='status' label='Estado' sortConfig={sortConfig} onSort={onSort} />
+    ),
   },
   {
     cell: ({ row }) => {
@@ -188,11 +311,14 @@ export function PrivateRoomProductsTable({
   onPageSizeChange,
   onProductSelect,
   onSelectAll,
+  onSort,
   pageSize,
   products,
   selectedProducts,
+  sortConfig,
   totalProducts,
 }: PrivateRoomProductsTableProps) {
+  const columns = useMemo(() => getColumns(sortConfig, onSort), [sortConfig, onSort])
   const table = useReactTable({
     columns,
     data: products,
@@ -201,6 +327,7 @@ export function PrivateRoomProductsTable({
       onProductSelect,
       onSelectAll,
       selectedProducts,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
   })
 
@@ -234,4 +361,3 @@ export function PrivateRoomProductsTable({
     </>
   )
 }
-
