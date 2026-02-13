@@ -136,11 +136,34 @@ export class CacheManager {
         // Eliminamos descriptionHtml y media que son pesados y no se usan en búsqueda/listados
         const lightProducts = allProducts.map((p: any) => ({
           ...p,
-          descriptionHtml: '', // Vaciar para ahorrar espacio (~50-80% del tamaño)
-          media: [], // Vaciar arrays pesados no usados en cards
-          // Mantener images porque se usan en las cards
-          // Mantener variants porque se usan para precio/inventario
-          // Mantener artworkDetails, tags, vendor, etc. para filtros
+          autoTags: [],
+
+          // Remove collections (not used in search/filtering)
+          collections: [],
+
+          descriptionHtml: '',
+
+          // Vaciar arrays pesados no usados en cards
+          // Keep only the first image to reduce size significantly
+          images: p.images && p.images.length > 0 ? [p.images[0]] : [],
+
+          // Remove redundant tag arrays (keep 'tags' as master list)
+          manualTags: [],
+
+          // Vaciar para ahorrar espacio (~50-80% del tamaño)
+          media: [],
+          // Simplify variants to essential fields for pricing/availability
+          variants: p.variants.map((v: any) => ({
+            availableForSale: v.availableForSale,
+            compareAtPrice: v.compareAtPrice,
+            id: v.id,
+            inventoryQuantity: v.inventoryQuantity,
+            price: v.price,
+            selectedOptions: v.selectedOptions,
+            sku: v.sku,
+            title: v.title,
+            // Stripped: inventoryPolicy, inventoryManagement, inventoryItem
+          })),
         }))
 
         console.info(`✅ Cached ${lightProducts.length} products in full catalog (optimized)`)
