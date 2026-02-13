@@ -17,6 +17,8 @@ export const PRODUCT_FRAGMENT = `
     productType
     status
     tags
+    createdAt
+    updatedAt
     images(first: 10) {
       edges {
         node {

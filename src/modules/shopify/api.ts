@@ -1,6 +1,3 @@
-import { handleGraphQLErrors } from '@/lib/graphql'
-import { storeClient } from '@/lib/shopify'
-
 import { transformCollectionData, transformProductData } from './helpers'
 import {
   COLLECTIONS_QUERY,
@@ -25,6 +22,9 @@ import {
   type RawProduct,
 } from './types'
 
+import { handleGraphQLErrors } from '@/lib/graphql'
+import { storeClient } from '@/lib/shopify'
+
 // Tipo para la respuesta de getProductByHandle que devuelve ShopifyProductData
 export interface ShopifyProductDataResponse {
   data: {
@@ -36,6 +36,7 @@ export interface ShopifyProductDataResponse {
     productType: string
     status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED'
     tags: string[]
+    createdAt: string
     updatedAt: string
     images: {
       edges: { node: any }[]
@@ -56,10 +57,14 @@ export interface ShopifyProductDataResponse {
 // Función para convertir datos del API público al formato ShopifyProductData
 function convertToShopifyProductData(rawProduct: RawProduct) {
   return {
-    descriptionHtml: rawProduct.descriptionHtml,
-    handle: rawProduct.handle,
-    id: rawProduct.id,
     // Los productos públicos no tienen tags personalizados
+    createdAt: rawProduct.createdAt,
+
+    descriptionHtml: rawProduct.descriptionHtml,
+
+    handle: rawProduct.handle,
+
+    id: rawProduct.id,
     images: {
       edges: rawProduct.images?.edges || [],
     },

@@ -1,14 +1,3 @@
-import {
-  calculateDimensionValue,
-  categorizeDimensions,
-  formatDimensions,
-} from '@/helpers/dimensions'
-import { buildProductSearchQuery, normalizeText } from '@/helpers/search'
-import { prisma } from '@/lib/prisma'
-import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
-import { Product } from '@/models/Product'
-import { type AuthSession } from '@/modules/auth/service'
-
 import { locationTrackingService } from './location-tracking'
 import {
   CREATE_PRODUCT_MUTATION,
@@ -40,6 +29,14 @@ import {
   type UpdateProductPayload,
 } from './types'
 
+import { calculateDimensionValue, categorizeDimensions } from '@/helpers/dimensions'
+import { buildProductSearchQuery, matchesSearch } from '@/helpers/search'
+import { CacheManager } from '@/lib/cache'
+import { prisma } from '@/lib/prisma'
+import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
+import { Product } from '@/models/Product'
+import { type AuthSession } from '@/modules/auth/service'
+
 type ValidatedSession = NonNullable<AuthSession>
 
 interface ProductVariantsBulkUpdateResponse {
@@ -55,43 +52,6 @@ function validateSession(session: AuthSession): asserts session is ValidatedSess
   if (!session.user.id) {
     throw new Error('Sesión no válida o usuario no autenticado.')
   }
-}
-
-function filterProductsByExactSearch(products: Product[], searchTerm: string): Product[] {
-  if (!searchTerm?.trim()) return products
-
-  const normalizedSearch = normalizeText(searchTerm)
-  const searchWords = normalizedSearch.split(/\s+/).filter((word) => word.length >= 1)
-
-  if (searchWords.length === 0) {
-    return products
-  }
-
-  return products.filter((product) => {
-    const productId = product.id.split('/').pop() ?? product.id
-    const searchableText = normalizeText(
-      [
-        productId,
-        product.title,
-        product.vendor,
-        product.productType,
-        product.artworkDetails.medium,
-        product.artworkDetails.location,
-        product.artworkDetails.serie,
-        ...product.tags,
-      ]
-        .filter(Boolean)
-        .join(' ')
-    )
-
-    // Para búsquedas de una palabra, buscar si contiene la palabra
-    // Para búsquedas de múltiples palabras, todas deben estar presentes
-    if (searchWords.length === 1) {
-      return searchableText.includes(searchWords[0])
-    } else {
-      return searchWords.every((word) => searchableText.includes(word))
-    }
-  })
 }
 
 export async function getPrimaryLocationId(): Promise<string> {
@@ -151,7 +111,10 @@ async function getProducts(
   }
 
   const hasMetafieldFilters =
-    params.technique?.trim() ?? params.dimensions?.trim() ?? params.year?.trim()
+    params.search?.trim() ||
+    params.technique?.trim() ||
+    params.dimensions?.trim() ||
+    params.year?.trim()
 
   let sortKey = 'TITLE' // Default sort key
   let reverse = false // Default sort order
@@ -216,11 +179,7 @@ async function getProducts(
       variables
     )
     const locationId = await getPrimaryLocationId()
-    let products = response.products.edges.map((edge) => new Product(edge.node, locationId))
-
-    if (params.search?.trim()) {
-      products = filterProductsByExactSearch(products, params.search)
-    }
+    const products = response.products.edges.map((edge) => new Product(edge.node, locationId))
 
     return { pageInfo: response.products.pageInfo, products }
   }
@@ -228,168 +187,174 @@ async function getProducts(
 
 async function getProductsWithManualSorting(
   params: GetProductsParams,
-  shopifyQuery: string,
+  baseQuery: string,
   limit: number,
   reverse: boolean,
-  sortField: string
+  manualSortField: string
 ): Promise<PaginatedProductsResponse> {
-  const allProducts: Product[] = []
-  let hasNextPage = true
-  let cursor: string | undefined = undefined
-  let pageCount = 0
-  const maxPages = 50
+  // 1. Obtener TODOS los productos desde el caché (full catalog)
+  // Esto es mucho más rápido que paginar contra Shopify API cada vez
+  let allProducts = await CacheManager.getFullCatalog()
 
-  while (hasNextPage && pageCount < maxPages) {
-    const variables: {
-      after?: string
-      first: number
-      query: string
-      reverse: boolean
-      sortKey: 'TITLE'
-    } = {
-      after: cursor,
-      first: 250,
-      query: shopifyQuery,
-      reverse: false,
-      sortKey: 'TITLE',
+  // Transformar a instancias de Product si vienen del caché como objetos planos
+  const locationId = await getPrimaryLocationId()
+  allProducts = allProducts.map((p: any) => {
+    if (p instanceof Product) return p
+
+    // Si ya tiene la estructura de Product (ej: images es array), lo hidratamos como instancia sin usar el constructor que espera estructura de Shopify
+    if (Array.isArray(p.images) && !p.images.edges) {
+      const instance = Object.create(Product.prototype)
+      return Object.assign(instance, p)
     }
 
-    const response = await makeAdminApiRequest<GetProductsApiResponse>(
-      GET_PRODUCTS_QUERY,
-      variables
-    )
-    const locationId = await getPrimaryLocationId()
-    const products = response.products.edges.map(
-      (edge: { node: ShopifyProductData; cursor: string }) => new Product(edge.node, locationId)
-    )
+    return new Product(p, locationId)
+  })
 
-    allProducts.push(...products)
-
-    hasNextPage = response.products.pageInfo.hasNextPage
-    cursor = response.products.pageInfo.endCursor || undefined
-    pageCount++
+  // 2. Aplicar filtros base (los que Shopify haría nativamente) en memoria
+  // Esto es necesario porque getFullCatalog devuelve TODO, sin filtrar por status/vendor/etc
+  if (params.status) {
+    allProducts = allProducts.filter((p) => p.status === params.status)
+  }
+  if (params.vendor) {
+    allProducts = allProducts.filter((p) => p.vendor === params.vendor)
+  }
+  if (params.artworkType) {
+    allProducts = allProducts.filter((p) => p.productType === params.artworkType)
   }
 
-  let filteredProducts = allProducts
-
-  if (params.technique?.trim()) {
-    const techniqueFilters = params.technique.split(',').map((t) => t.trim().toLowerCase())
-    filteredProducts = filteredProducts.filter((p) => {
-      const productTechnique = p.artworkDetails.medium?.toLowerCase() ?? ''
-      return techniqueFilters.some((filter) => productTechnique.includes(filter))
-    })
-  }
-
-  if (params.dimensions?.trim()) {
-    const dimensionFilters = params.dimensions.split(',').map((f) => f.trim())
-    const categoryFilters = ['chico', 'mediano', 'grande', 'extra-grande']
-    const isCategoryFilter = dimensionFilters.some((f) => categoryFilters.includes(f))
-
-    filteredProducts = filteredProducts.filter((p) => {
-      const height = p.artworkDetails.height
-      const width = p.artworkDetails.width
-      const depth = p.artworkDetails.depth
-
-      if (!height || !width) return false
-
-      if (isCategoryFilter) {
-        const category = categorizeDimensions(height, width, depth)
-        return category && dimensionFilters.includes(category)
-      } else {
-        const dimensionText = formatDimensions(height, width, depth)
-        return dimensionFilters.some((filter) => {
-          const normalizedFilter = filter.replace(/\s*cm\s*/gi, '').trim()
-          const normalizedDimension = dimensionText.replace(/\s*cm\s*/gi, '').trim()
-          return normalizedDimension === normalizedFilter || dimensionText.includes(filter)
-        })
-      }
-    })
-  }
-
-  if (params.year?.trim()) {
-    const yearFilters = params.year.split(',').filter(Boolean)
-    filteredProducts = filteredProducts.filter((p) => {
-      const productYear = p.artworkDetails.year?.trim()
-      if (!productYear) return false
-      return yearFilters.some((filter) => productYear === filter.trim())
-    })
-  }
-
+  // 3. Aplicar Búsqueda de Texto (si existe) usando matchesSearch
   if (params.search?.trim()) {
-    filteredProducts = filterProductsByExactSearch(filteredProducts, params.search)
+    allProducts = allProducts.filter((p) => matchesSearch(p, params.search!))
   }
 
-  if (sortField) {
-    filteredProducts.sort((a, b) => {
-      let valueA: string | number = ''
-      let valueB: string | number = ''
-
-      switch (sortField) {
-        case 'id': {
-          const idA = a.id.split('/').pop() ?? a.id
-          const idB = b.id.split('/').pop() ?? b.id
-          valueA = parseInt(idA.replace(/\D/g, '')) || 0
-          valueB = parseInt(idB.replace(/\D/g, '')) || 0
-          break
-        }
-        case 'price':
-          valueA = parseFloat(a.variants[0]?.price?.amount ?? '0')
-          valueB = parseFloat(b.variants[0]?.price?.amount ?? '0')
-          break
-        case 'medium':
-          valueA = a.artworkDetails.medium ?? ''
-          valueB = b.artworkDetails.medium ?? ''
-          break
-        case 'year':
-          valueA = parseInt(a.artworkDetails.year ?? '0')
-          valueB = parseInt(b.artworkDetails.year ?? '0')
-          break
-        case 'serie':
-          valueA = a.artworkDetails.serie ?? ''
-          valueB = b.artworkDetails.serie ?? ''
-          break
-        case 'location':
-          valueA = a.artworkDetails.location ?? ''
-          valueB = b.artworkDetails.location ?? ''
-          break
-        case 'dimensions': {
-          valueA = calculateDimensionValue(
-            a.artworkDetails.height,
-            a.artworkDetails.width,
-            a.artworkDetails.depth
-          )
-          valueB = calculateDimensionValue(
-            b.artworkDetails.height,
-            b.artworkDetails.width,
-            b.artworkDetails.depth
-          )
-          break
-        }
-        default:
-          valueA = ''
-          valueB = ''
-      }
-
-      if (typeof valueA === 'number' && typeof valueB === 'number') {
-        return reverse ? valueB - valueA : valueA - valueB
-      } else {
-        const comparison = String(valueA).localeCompare(String(valueB))
-        return reverse ? -comparison : comparison
-      }
+  // 4. Aplicar filtros de Metafields
+  if (params.technique?.trim()) {
+    allProducts = allProducts.filter((p) =>
+      p.artworkDetails.medium?.toLowerCase().includes(params.technique!.toLowerCase())
+    )
+  }
+  if (params.year?.trim()) {
+    allProducts = allProducts.filter((p) => p.artworkDetails.year === params.year)
+  }
+  if (params.dimensions?.trim()) {
+    allProducts = allProducts.filter((product) => {
+      if (!product.artworkDetails.height || !product.artworkDetails.width) return false
+      const category = categorizeDimensions(
+        product.artworkDetails.height,
+        product.artworkDetails.width
+      )
+      return category === params.dimensions
     })
   }
 
-  const startIndex = params.cursor ? parseInt(params.cursor, 10) : 0
-  const endIndex = startIndex + limit
-  const paginatedProducts = filteredProducts.slice(startIndex, endIndex)
+  // 5. Aplicar filtros de Precio
+  if (params.priceMin !== undefined) {
+    allProducts = allProducts.filter((p) => {
+      const price = parseFloat(p.variants[0]?.price.amount ?? '0')
+      return price >= params.priceMin!
+    })
+  }
+  if (params.priceMax !== undefined) {
+    allProducts = allProducts.filter((p) => {
+      const price = parseFloat(p.variants[0]?.price.amount ?? '0')
+      return price <= params.priceMax!
+    })
+  }
 
-  const hasNextPageResult = endIndex < filteredProducts.length
-  const endCursor = hasNextPageResult ? endIndex.toString() : null
+  // 6. Ordenamiento Manual
+  allProducts.sort((a: Product, b: Product) => {
+    let valA: any = ''
+    let valB: any = ''
+
+    // Usar sortBy si manualSortField está vacío (fallback)
+    const effectiveSortField = manualSortField || params.sortBy || 'title'
+
+    switch (effectiveSortField) {
+      case 'id':
+        // Extraer número del ID
+        valA = parseInt(a.id.split('/').pop() || '0', 10)
+        valB = parseInt(b.id.split('/').pop() || '0', 10)
+        break
+      case 'price':
+        valA = parseFloat(a.variants[0]?.price.amount ?? '0')
+        valB = parseFloat(b.variants[0]?.price.amount ?? '0')
+        break
+      case 'medium':
+        valA = a.artworkDetails.medium?.toLowerCase() ?? ''
+        valB = b.artworkDetails.medium?.toLowerCase() ?? ''
+        break
+      case 'year':
+        valA = a.artworkDetails.year ?? ''
+        valB = b.artworkDetails.year ?? ''
+        break
+      case 'serie':
+        valA = a.artworkDetails.serie?.toLowerCase() ?? ''
+        valB = b.artworkDetails.serie?.toLowerCase() ?? ''
+        break
+      case 'location':
+        valA = a.artworkDetails.location?.toLowerCase() ?? ''
+        valB = b.artworkDetails.location?.toLowerCase() ?? ''
+        break
+      case 'dimensions':
+        valA = calculateDimensionValue(a.artworkDetails.height, a.artworkDetails.width)
+        valB = calculateDimensionValue(b.artworkDetails.height, b.artworkDetails.width)
+        break
+      case 'title':
+        valA = a.title.toLowerCase()
+        valB = b.title.toLowerCase()
+        break
+      case 'createdAt':
+        valA = new Date(a.createdAt).getTime()
+        valB = new Date(b.createdAt).getTime()
+        break
+      case 'updatedAt':
+        valA = new Date(a.updatedAt).getTime()
+        valB = new Date(b.updatedAt).getTime()
+        break
+      case 'inventoryQuantity':
+        // Sumar inventario de variantes
+        valA = a.variants.reduce((acc: number, v: any) => acc + (v.inventoryQuantity || 0), 0)
+        valB = b.variants.reduce((acc: number, v: any) => acc + (v.inventoryQuantity || 0), 0)
+        break
+      default:
+        valA = a.title.toLowerCase()
+        valB = b.title.toLowerCase()
+    }
+
+    if (valA < valB) return reverse ? 1 : -1
+    if (valA > valB) return reverse ? -1 : 1
+    return 0
+  })
+
+  // 7. Paginación en memoria
+  let startIndex = 0
+  if (params.cursor) {
+    try {
+      const decoded = Buffer.from(params.cursor, 'base64').toString('utf-8')
+      const cursorParts = decoded.split(':')
+      if (cursorParts.length === 2 && cursorParts[0] === 'cursor') {
+        startIndex = parseInt(cursorParts[1], 10) + 1
+      }
+    } catch (e) {
+      console.error('Error decoding cursor', e)
+    }
+  }
+
+  const paginatedProducts = allProducts.slice(startIndex, startIndex + limit)
+  const hasNextPage = startIndex + limit < allProducts.length
+
+  let endCursor = null
+  if (paginatedProducts.length > 0) {
+    const lastIndex = startIndex + paginatedProducts.length - 1
+    endCursor = Buffer.from(`cursor:${lastIndex}`).toString('base64')
+  }
 
   return {
     pageInfo: {
       endCursor,
-      hasNextPage: hasNextPageResult,
+      hasNextPage,
+      hasPreviousPage: startIndex > 0,
+      startCursor: params.cursor ?? null,
     },
     products: paginatedProducts,
   }
@@ -1270,7 +1235,12 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
   }
 
   const hasMetafieldFilters =
-    params.technique?.trim() ?? params.dimensions?.trim() ?? params.year?.trim()
+    params.search?.trim() ||
+    params.technique?.trim() ||
+    params.dimensions?.trim() ||
+    params.year?.trim() ||
+    params.priceMin !== undefined ||
+    params.priceMax !== undefined
 
   let sortKey = 'TITLE' // Default sort key
   let reverse = false // Default sort order
@@ -1320,6 +1290,8 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
   const limit = params.limit ? parseInt(String(params.limit), 10) : 10
 
   if (useManualSorting || hasMetafieldFilters) {
+    // Si hay búsqueda o filtros complejos, usamos el flujo optimizado con caché
+    // Pasamos shopifyQuery como baseQuery (puede contener vendor, type, status)
     return await getProductsWithManualSorting(params, shopifyQuery, limit, reverse, manualSortField)
   } else {
     const variables = {
@@ -1335,11 +1307,7 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
       variables
     )
     const locationId = await getPrimaryLocationId()
-    let products = response.products.edges.map((edge) => new Product(edge.node, locationId))
-
-    if (params.search?.trim()) {
-      products = filterProductsByExactSearch(products, params.search)
-    }
+    const products = response.products.edges.map((edge) => new Product(edge.node, locationId))
 
     return { pageInfo: response.products.pageInfo, products }
   }

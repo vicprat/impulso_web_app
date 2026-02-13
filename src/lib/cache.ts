@@ -1,4 +1,4 @@
-import { revalidateTag } from 'next/cache'
+import { revalidateTag, unstable_cache } from 'next/cache'
 
 export class CacheManager {
   // Tags para productos
@@ -89,9 +89,58 @@ export class CacheManager {
     this.revalidateInventory(product.id)
     this.revalidateCollections()
     this.revalidateHomepage()
+    this.revalidateFullCatalog()
 
     if (product.vendor) {
       this.revalidateArtists()
     }
+  }
+
+  // --- Full Catalog Cache for Search Optimization ---
+
+  static readonly FULL_CATALOG_TAG = 'full-catalog'
+
+  /**
+   * Obtiene el catálogo completo de productos cacheado.
+   * Se usa para búsquedas rápidas sin golpear la API de Shopify constantemente.
+   */
+  static async getFullCatalog() {
+    return await unstable_cache(
+      async () => {
+        console.log('🔄 Cache MISS: Fetching full catalog from Shopify...')
+        // Importación dinámica para evitar ciclos de dependencias si fuera necesario
+        const { productService } = await import('@/services/product/service')
+
+        // Obtener TODOS los productos (paginando internamente hasta terminar)
+        // Usamos un límite alto por página para reducir requests
+        let allProducts: any[] = []
+        let hasNextPage = true
+        let cursor = undefined
+
+        while (hasNextPage) {
+          const params = { cursor, limit: 250 }
+          // Usamos getProductsPublic que ya retorna objetos Product serializables
+          const response = await productService.getProductsPublic(params)
+
+          allProducts = [...allProducts, ...response.products]
+
+          hasNextPage = response.pageInfo.hasNextPage
+          cursor = response.pageInfo.endCursor ?? undefined
+        }
+
+        console.log(`✅ Cached ${allProducts.length} products in fill catalog`)
+        return allProducts
+      },
+      ['full-catalog-data'],
+      {
+        revalidate: 3600,
+        tags: [this.FULL_CATALOG_TAG], // Revalidar al menos cada hora por seguridad
+      }
+    )()
+  }
+
+  static revalidateFullCatalog() {
+    revalidateTag(this.FULL_CATALOG_TAG, 'max')
+    console.log('🔄 Invalidated full catalog cache')
   }
 }

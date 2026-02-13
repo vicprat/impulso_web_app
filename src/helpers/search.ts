@@ -1,4 +1,5 @@
-export function normalizeText(text: string): string {
+export function normalizeText(text: string | null | undefined): string {
+  if (!text) return ''
   return text
     .toLowerCase()
     .normalize('NFD')
@@ -6,43 +7,13 @@ export function normalizeText(text: string): string {
     .trim()
 }
 
-export function buildFlexibleSearchQuery(searchTerm: string): string {
-  if (!searchTerm?.trim()) return ''
-
-  const normalized = normalizeText(searchTerm)
-  const words = normalized.split(/\s+/).filter((word) => word.length > 0)
-
-  if (words.length === 0) return ''
-
-  const searchFields = ['title', 'product_type', 'tag', 'vendor']
-  const queryParts: string[] = []
-
-  if (words.length === 1) {
-    const word = words[0]
-    const fieldQueries = searchFields.map((field) => `${field}:*${word}*`)
-    queryParts.push(`(${fieldQueries.join(' OR ')})`)
-  } else {
-    words.forEach((word) => {
-      if (word.length >= 2) {
-        const fieldQueries = searchFields.map((field) => `${field}:*${word}*`)
-        queryParts.push(`(${fieldQueries.join(' OR ')})`)
-      }
-    })
-  }
-
-  return queryParts.join(' OR ')
-}
-
 export function buildProductSearchQuery(
   searchTerm: string,
   options?: {
     includeId?: boolean
-    includePrice?: boolean
     includeProductType?: boolean
     includeTags?: boolean
-    includeTechnique?: boolean
     includeVendor?: boolean
-    includeYear?: boolean
     minWordLength?: number
   }
 ): string {
@@ -50,22 +21,14 @@ export function buildProductSearchQuery(
 
   const {
     includeId = true,
-    includePrice = true,
     includeProductType = true,
     includeTags = true,
-    includeTechnique = true,
     includeVendor = true,
-    includeYear = true,
     minWordLength = 2,
   } = options ?? {}
 
-  // Usar tanto el término original como el normalizado para búsqueda flexible
-  const originalTerm = searchTerm.trim()
-  const lowerTerm = originalTerm.toLowerCase()
-  const normalizedTerm = normalizeText(searchTerm)
-
-  const words = normalizedTerm.split(/\s+/).filter((word) => word.length >= minWordLength)
-  const originalWords = lowerTerm.split(/\s+/).filter((word) => word.length >= minWordLength)
+  const normalized = normalizeText(searchTerm)
+  const words = normalized.split(/\s+/).filter((word) => word.length >= minWordLength)
 
   if (words.length === 0) return ''
 
@@ -76,119 +39,89 @@ export function buildProductSearchQuery(
 
   const queryParts: string[] = []
 
-  if (words.length === 1) {
-    const word = words[0]
-    const originalWord = originalWords[0]
-
-    // Crear queries tanto con el término original como normalizado
+  words.forEach((word) => {
+    // Para cada palabra, construimos una sub-query que busca esa palabra en CUALQUIERA de los campos
     const fieldQueries: string[] = []
 
     searchFields.forEach((field) => {
-      // Para títulos, usar búsqueda más flexible
+      // Para títulos, usar búsqueda más flexible con wildcards
+      // Shopify es case-insensitive por defecto
       if (field === 'title') {
-        // Búsqueda case-insensitive con wildcards (Shopify es case-insensitive por defecto)
-        fieldQueries.push(`${field}:*${originalWord}*`)
-        // También buscar con el término normalizado (sin acentos)
-        if (originalWord !== word) {
-          fieldQueries.push(`${field}:*${word}*`)
-        }
+        fieldQueries.push(`${field}:*${word}*`)
       } else {
-        fieldQueries.push(`${field}:*${originalWord}*`)
-        if (originalWord !== word) {
-          fieldQueries.push(`${field}:*${word}*`)
-        }
+        fieldQueries.push(`${field}:*${word}*`)
       }
     })
 
-    // Agregar búsqueda por ID si está habilitada
+    // Agregar búsqueda por ID si está habilitada y la palabra parece un número
     if (includeId) {
-      // Buscar por ID numérico (extraer solo números del término de búsqueda)
-      const numericId = originalWord.replace(/\D/g, '')
+      const numericId = word.replace(/\D/g, '')
       if (numericId.length > 0) {
         fieldQueries.push(`id:${numericId}`)
       }
     }
 
-    // Agregar búsqueda en metafields de técnica (medium)
-    if (includeTechnique) {
-      fieldQueries.push(`metafields.art_details.medium:*${originalWord}*`)
-      if (originalWord !== word) {
-        fieldQueries.push(`metafields.art_details.medium:*${word}*`)
-      }
-    }
+    // Nota: Eliminamos búsquedas en metafields y variants.price aquí porque Shopify
+    // no soporta wildcards consistentemente en esos campos via API search string.
+    // El filtrado fino de esos campos se hace en memoria via matchesSearch().
 
-    // Agregar búsqueda en metafields de año
-    if (includeYear) {
-      fieldQueries.push(`metafields.art_details.year:*${originalWord}*`)
-      if (originalWord !== word) {
-        fieldQueries.push(`metafields.art_details.year:*${word}*`)
-      }
-    }
-
-    // Agregar búsqueda en precio (variants)
-    if (includePrice) {
-      fieldQueries.push(`variants.price:*${originalWord}*`)
-      if (originalWord !== word) {
-        fieldQueries.push(`variants.price:*${word}*`)
-      }
-    }
-
+    // Unimos los campos con OR: (title:*word* OR vendor:*word* OR ...)
     queryParts.push(`(${fieldQueries.join(' OR ')})`)
-  } else {
-    words.forEach((word, index) => {
-      const originalWord = originalWords[index]
-      const fieldQueries: string[] = []
+  })
 
-      searchFields.forEach((field) => {
-        // Para títulos, usar búsqueda más flexible
-        if (field === 'title') {
-          fieldQueries.push(`${field}:*${originalWord}*`)
-          if (originalWord !== word) {
-            fieldQueries.push(`${field}:*${word}*`)
-          }
-        } else {
-          fieldQueries.push(`${field}:*${originalWord}*`)
-          if (originalWord !== word) {
-            fieldQueries.push(`${field}:*${word}*`)
-          }
-        }
-      })
-
-      // Agregar búsqueda por ID si está habilitada
-      if (includeId) {
-        const numericId = originalWord.replace(/\D/g, '')
-        if (numericId.length > 0) {
-          fieldQueries.push(`id:${numericId}`)
-        }
-      }
-
-      // Agregar búsqueda en metafields de técnica (medium)
-      if (includeTechnique) {
-        fieldQueries.push(`metafields.art_details.medium:*${originalWord}*`)
-        if (originalWord !== word) {
-          fieldQueries.push(`metafields.art_details.medium:*${word}*`)
-        }
-      }
-
-      // Agregar búsqueda en metafields de año
-      if (includeYear) {
-        fieldQueries.push(`metafields.art_details.year:*${originalWord}*`)
-        if (originalWord !== word) {
-          fieldQueries.push(`metafields.art_details.year:*${word}*`)
-        }
-      }
-
-      // Agregar búsqueda en precio (variants)
-      if (includePrice) {
-        fieldQueries.push(`variants.price:*${originalWord}*`)
-        if (originalWord !== word) {
-          fieldQueries.push(`variants.price:*${word}*`)
-        }
-      }
-
-      queryParts.push(`(${fieldQueries.join(' OR ')})`)
-    })
+  // Unimos las palabras con AND: (palabra1 en campos) AND (palabra2 en campos)
+  // Esto asegura que el resultado contenga TODAS las palabras buscadas.
+  if (queryParts.length > 1) {
+    return queryParts.join(' AND ')
   }
 
-  return queryParts.join(' OR ')
+  return queryParts[0] ?? ''
+}
+
+/**
+ * Verifica si un producto coincide con los términos de búsqueda en memoria.
+ * Esta función es crucial para filtrar campos que Shopify no soporta bien en su query string
+ * (como metafields con wildcards) y para asegurar coincidencia exacta de todas las palabras.
+ */
+export function matchesSearch(
+  product: {
+    id: string
+    title: string
+    vendor: string
+    productType: string
+    tags: string[]
+    artworkDetails: {
+      medium?: string | null
+      year?: string | null
+      serie?: string | null
+      location?: string | null
+    }
+  },
+  searchTerm: string
+): boolean {
+  if (!searchTerm?.trim()) return true
+
+  const searchWords = normalizeText(searchTerm)
+    .split(/\s+/)
+    .filter((w) => w.length >= 1)
+
+  if (searchWords.length === 0) return true
+
+  // Cada palabra de la búsqueda debe estar presente en AL MENOS UN campo del producto
+  return searchWords.every((word) => {
+    const fields = [
+      product.id.split('/').pop() ?? product.id,
+      product.title,
+      product.vendor,
+      product.productType,
+      product.artworkDetails.medium,
+      product.artworkDetails.year,
+      product.artworkDetails.serie,
+      product.artworkDetails.location,
+      ...product.tags,
+    ]
+
+    // Buscamos la palabra en cualquiera de los campos normalizados
+    return fields.some((field) => (field ? normalizeText(field).includes(word) : false))
+  })
 }

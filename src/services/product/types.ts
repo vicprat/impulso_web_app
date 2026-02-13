@@ -42,7 +42,9 @@ export interface PaginatedProductsResponse {
   products: Product[]
   pageInfo: {
     hasNextPage: boolean
+    hasPreviousPage?: boolean
     endCursor?: string | null
+    startCursor?: string | null
   }
 }
 
@@ -104,6 +106,8 @@ export interface ShopifyProductData {
   }
   variants: { edges: { node: VariantNode }[] }
   metafields: { edges: { node: ShopifyMetafieldNode }[] }
+  createdAt: string
+  updatedAt: string
 }
 
 export type ProductMutationResponse<T extends string> = Record<
@@ -129,7 +133,9 @@ export interface GetProductsApiResponse {
     }[]
     pageInfo: {
       hasNextPage: boolean
+      hasPreviousPage: boolean
       endCursor: string | null
+      startCursor: string | null
     }
   }
 }

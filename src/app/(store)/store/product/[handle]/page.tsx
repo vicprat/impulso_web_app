@@ -1,14 +1,14 @@
 import { notFound } from 'next/navigation'
 
+import { Client } from './Client'
+
+import type { Metadata } from 'next'
+
 import { generateProductMetadata } from '@/lib/metadata'
 import { Product } from '@/models/Product'
 import { getServerSession } from '@/modules/auth/server/server'
 import { api as shopifyApi } from '@/modules/shopify/api'
 import { productService } from '@/services/product/service'
-
-import { Client } from './Client'
-
-import type { Metadata } from 'next'
 
 // Página dinámica - se actualiza en cada request
 export const dynamic = 'force-dynamic'
@@ -151,6 +151,7 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
             .map((p) => {
               // Convertir cada producto relacionado al formato correcto
               const shopifyData = {
+                createdAt: p.createdAt,
                 descriptionHtml: p.descriptionHtml,
                 handle: p.handle,
                 id: p.id,
@@ -167,6 +168,7 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
                 status: 'ACTIVE' as const,
                 tags: [],
                 title: p.title,
+                updatedAt: p.updatedAt,
                 variants: {
                   edges:
                     p.variants?.map((variant: any) => ({

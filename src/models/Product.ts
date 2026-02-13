@@ -1,3 +1,5 @@
+import { normalizeText } from '@/helpers/search'
+
 const ARTWORK_METAFIELD_NAMESPACE = 'art_details'
 
 export interface Money {
@@ -82,6 +84,8 @@ interface ShopifyProductData {
   metafields: {
     edges: { node: ShopifyMetafieldNode }[]
   }
+  createdAt: string
+  updatedAt: string
   collections?: {
     edges: {
       node: {
@@ -222,6 +226,8 @@ export class Product {
   productType: string
   vendor: string
   status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED'
+  createdAt: string
+  updatedAt: string
   images: Image[]
   media: MediaNode[]
   variants: Variant[]
@@ -240,6 +246,8 @@ export class Product {
     this.vendor = shopifyProductData.vendor
     this.productType = shopifyProductData.productType
     this.status = shopifyProductData.status
+    this.createdAt = shopifyProductData.createdAt
+    this.updatedAt = shopifyProductData.updatedAt
     this.tags = shopifyProductData.tags
     this.images = shopifyProductData.images.edges.map((edge) => edge.node)
     this.media = shopifyProductData.media.nodes
@@ -562,9 +570,7 @@ export class Product {
   }
 
   private _getMaterialTags(): string[] {
-    const fullText = normalizeString(
-      `${this.artworkDetails.medium ?? ''} ${this.productType || ''}`
-    )
+    const fullText = normalizeText(`${this.artworkDetails.medium ?? ''} ${this.productType || ''}`)
     return Object.entries(materialKeywords)
       .filter(([keyword]) => fullText.includes(keyword))
       .map(([, tag]) => tag)
@@ -718,15 +724,6 @@ export class Product {
   }
 }
 
-function normalizeString(str: string | null | undefined): string {
-  if (!str) return ''
-  return str
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-}
-
 const structuralTagPatterns = [
   /^locacion-/,
   /^Formato (Grande|Mediano|Pequeño|Miniatura)$/,
@@ -751,11 +748,11 @@ const materialKeywords: Record<string, string> = {
 
 function isAutoTag(tag: string, artists: string[], types: string[]): boolean {
   const trimmedTag = tag.trim()
-  const normalizedTag = normalizeString(trimmedTag)
-  const materialTags = Object.values(materialKeywords).map(normalizeString)
+  const normalizedTag = normalizeText(trimmedTag)
+  const materialTags = Object.values(materialKeywords).map(normalizeText)
   const valueBasedTagSet = new Set([
-    ...artists.map(normalizeString),
-    ...types.map(normalizeString),
+    ...artists.map(normalizeText),
+    ...types.map(normalizeText),
     ...materialTags,
   ])
 
