@@ -107,7 +107,7 @@ export class CacheManager {
   static async getFullCatalog() {
     return await unstable_cache(
       async () => {
-        console.log('🔄 Cache MISS: Fetching full catalog from Shopify...')
+        console.info('🔄 Cache MISS: Fetching full catalog from Shopify...')
         // Importación dinámica para evitar ciclos de dependencias si fuera necesario
         const { productService } = await import('@/services/product/service')
 
@@ -128,8 +128,23 @@ export class CacheManager {
           cursor = response.pageInfo.endCursor ?? undefined
         }
 
-        console.log(`✅ Cached ${allProducts.length} products in fill catalog`)
-        return allProducts
+        console.info(
+          `✅ Fetched ${allProducts.length} products. Converting to LightProduct for cache...`
+        )
+
+        // Optimización: Reducir tamaño del objeto para cache
+        // Eliminamos descriptionHtml y media que son pesados y no se usan en búsqueda/listados
+        const lightProducts = allProducts.map((p: any) => ({
+          ...p,
+          descriptionHtml: '', // Vaciar para ahorrar espacio (~50-80% del tamaño)
+          media: [], // Vaciar arrays pesados no usados en cards
+          // Mantener images porque se usan en las cards
+          // Mantener variants porque se usan para precio/inventario
+          // Mantener artworkDetails, tags, vendor, etc. para filtros
+        }))
+
+        console.info(`✅ Cached ${lightProducts.length} products in full catalog (optimized)`)
+        return lightProducts
       },
       ['full-catalog-data'],
       {
@@ -141,6 +156,6 @@ export class CacheManager {
 
   static revalidateFullCatalog() {
     revalidateTag(this.FULL_CATALOG_TAG, 'max')
-    console.log('🔄 Invalidated full catalog cache')
+    console.info('🔄 Invalidated full catalog cache')
   }
 }
