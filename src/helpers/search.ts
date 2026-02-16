@@ -89,13 +89,22 @@ export function matchesSearch(
     title: string
     vendor: string
     productType: string
+    status?: string
     tags: string[]
     artworkDetails: {
+      height?: number | string | null
       medium?: string | null
-      year?: string | null
       serie?: string | null
       location?: string | null
+      width?: number | string | null
+      year?: string | null
     }
+    collections?: { title: string }[] | string[]
+    variants?: {
+      inventoryQuantity?: number | null
+      price?: { amount?: string } | string
+      sku?: string | null
+    }[]
   },
   searchTerm: string
 ): boolean {
@@ -109,17 +118,48 @@ export function matchesSearch(
 
   // Cada palabra de la búsqueda debe estar presente en AL MENOS UN campo del producto
   return searchWords.every((word) => {
-    const fields = [
+    const fields: (string | null | undefined)[] = [
       product.id.split('/').pop() ?? product.id,
       product.title,
       product.vendor,
       product.productType,
+      product.status,
       product.artworkDetails.medium,
       product.artworkDetails.year,
       product.artworkDetails.serie,
       product.artworkDetails.location,
       ...product.tags,
     ]
+
+    // Agregar dimensiones como string buscable (ej: "50 x 70", "50x70")
+    if (product.artworkDetails.height && product.artworkDetails.width) {
+      fields.push(`${product.artworkDetails.height} x ${product.artworkDetails.width}`)
+      fields.push(`${product.artworkDetails.height}x${product.artworkDetails.width}`)
+    }
+
+    // Agregar colecciones
+    if (product.collections) {
+      product.collections.forEach((c) => {
+        if (typeof c === 'string') {
+          fields.push(c)
+        } else if (c && typeof c === 'object' && 'title' in c) {
+          fields.push(c.title)
+        }
+      })
+    }
+
+    // Agregar datos de variantes: precio, SKU, inventario
+    if (product.variants) {
+      product.variants.forEach((v) => {
+        // Precio como string para búsqueda (ej: buscar "1500" o "1,500")
+        if (v.price) {
+          const priceStr = typeof v.price === 'string' ? v.price : v.price.amount
+          if (priceStr) fields.push(priceStr)
+        }
+        if (v.sku) fields.push(v.sku)
+        if (v.inventoryQuantity !== undefined) fields.push(String(v.inventoryQuantity))
+      })
+    }
 
     // Buscamos la palabra en cualquiera de los campos normalizados
     return fields.some((field) => (field ? normalizeText(field).includes(word) : false))

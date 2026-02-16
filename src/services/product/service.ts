@@ -79,110 +79,12 @@ async function getProducts(
     validateSession(session)
   }
 
-  let shopifyQuery = ''
-
-  if (params.search?.trim()) {
-    shopifyQuery = buildProductSearchQuery(params.search)
-  }
-
-  // Usar el vendor del parámetro (ya establecido en getProductsFromRequest para artistas)
-  if (params.vendor?.trim()) {
-    if (shopifyQuery) {
-      shopifyQuery += ` AND vendor:"${params.vendor}"`
-    } else {
-      shopifyQuery = `vendor:"${params.vendor}"`
-    }
-  }
-
-  if (params.status?.trim()) {
-    if (shopifyQuery) {
-      shopifyQuery += ` AND status:${params.status}`
-    } else {
-      shopifyQuery = `status:${params.status}`
-    }
-  }
-
-  if (params.artworkType?.trim()) {
-    if (shopifyQuery) {
-      shopifyQuery += ` AND product_type:"${params.artworkType}"`
-    } else {
-      shopifyQuery = `product_type:"${params.artworkType}"`
-    }
-  }
-
-  const hasMetafieldFilters =
-    params.search?.trim() ||
-    params.technique?.trim() ||
-    params.dimensions?.trim() ||
-    params.year?.trim()
-
-  let sortKey = 'TITLE' // Default sort key
-  let reverse = false // Default sort order
-  let useManualSorting = false // Flag para usar sorting manual
-  let manualSortField = '' // Campo para sorting manual
-
-  if (params.sortBy) {
-    switch (params.sortBy) {
-      case 'title':
-        sortKey = 'TITLE'
-        break
-      case 'vendor':
-        sortKey = 'VENDOR'
-        break
-      case 'productType':
-        sortKey = 'PRODUCT_TYPE'
-        break
-      case 'createdAt':
-        sortKey = 'CREATED_AT'
-        break
-      case 'updatedAt':
-        sortKey = 'UPDATED_AT'
-        break
-      case 'inventoryQuantity':
-        sortKey = 'INVENTORY_TOTAL'
-        break
-      case 'id':
-      case 'price':
-      case 'medium':
-      case 'year':
-      case 'serie':
-      case 'location':
-      case 'dimensions':
-        useManualSorting = true
-        manualSortField = params.sortBy
-        sortKey = 'TITLE'
-        break
-      default:
-        sortKey = 'TITLE'
-    }
-  }
-
-  if (params.sortOrder === 'desc') {
-    reverse = true
-  }
-
+  // Admin siempre usa el cache completo para filtrar/ordenar sobre TODOS los productos
+  const reverse = params.sortOrder === 'desc'
+  const manualSortField = params.sortBy ?? 'title'
   const limit = params.limit ? parseInt(String(params.limit), 10) : 10
 
-  if (useManualSorting || hasMetafieldFilters) {
-    return await getProductsWithManualSorting(params, shopifyQuery, limit, reverse, manualSortField)
-  } else {
-    const variables = {
-      after: params.cursor,
-      first: limit,
-      query: shopifyQuery,
-      reverse,
-      sortKey,
-    }
-
-    const response = await makeAdminApiRequest<GetProductsApiResponse>(
-      GET_PRODUCTS_QUERY,
-      variables
-    )
-    const locationId = await getPrimaryLocationId()
-    const products = response.products.edges.map((edge) => new Product(edge.node, locationId))
-
-    return { pageInfo: response.products.pageInfo, products }
-  }
+  return await getProductsWithManualSorting(params, '', limit, reverse, manualSortField, 'admin')
 }
 
 async function getProductsWithManualSorting(
@@ -190,11 +92,12 @@ async function getProductsWithManualSorting(
   baseQuery: string,
   limit: number,
   reverse: boolean,
-  manualSortField: string
+  manualSortField: string,
+  scope: 'storefront' | 'admin' = 'storefront'
 ): Promise<PaginatedProductsResponse> {
   // 1. Obtener TODOS los productos desde el caché (full catalog)
   // Esto es mucho más rápido que paginar contra Shopify API cada vez
-  let allProducts = await CacheManager.getFullCatalog()
+  let allProducts = await CacheManager.getFullCatalog(scope)
 
   // Transformar a instancias de Product si vienen del caché como objetos planos
   const locationId = await getPrimaryLocationId()
@@ -279,6 +182,18 @@ async function getProductsWithManualSorting(
         valA = parseFloat(a.variants[0]?.price.amount ?? '0')
         valB = parseFloat(b.variants[0]?.price.amount ?? '0')
         break
+      case 'vendor':
+        valA = a.vendor?.toLowerCase() ?? ''
+        valB = b.vendor?.toLowerCase() ?? ''
+        break
+      case 'productType':
+        valA = a.productType?.toLowerCase() ?? ''
+        valB = b.productType?.toLowerCase() ?? ''
+        break
+      case 'status':
+        valA = a.status?.toLowerCase() ?? ''
+        valB = b.status?.toLowerCase() ?? ''
+        break
       case 'medium':
         valA = a.artworkDetails.medium?.toLowerCase() ?? ''
         valB = b.artworkDetails.medium?.toLowerCase() ?? ''
@@ -319,6 +234,12 @@ async function getProductsWithManualSorting(
       default:
         valA = a.title.toLowerCase()
         valB = b.title.toLowerCase()
+    }
+
+    // Usar localeCompare para strings (manejo correcto de acentos: Á junto a A, Ñ después de N)
+    if (typeof valA === 'string' && typeof valB === 'string') {
+      const cmp = valA.localeCompare(valB, 'es', { sensitivity: 'base' })
+      return reverse ? -cmp : cmp
     }
 
     if (valA < valB) return reverse ? 1 : -1
@@ -365,11 +286,19 @@ async function getProductStats(search?: string, session?: AuthSession) {
     throw new Error('Session is required')
   }
 
-  let shopifyQuery = ''
+  // Usar el cache completo en lugar de paginar contra Shopify cada vez
+  const allProducts = await CacheManager.getFullCatalog('admin')
 
-  if (search?.trim()) {
-    shopifyQuery = `(title:*${search}* OR product_type:*${search}* OR vendor:*${search}*)`
-  }
+  // Hidratar a instancias de Product
+  const locationId = await getPrimaryLocationId()
+  let products: Product[] = allProducts.map((p: any) => {
+    if (p instanceof Product) return p
+    if (Array.isArray(p.images) && !p.images.edges) {
+      const instance = Object.create(Product.prototype)
+      return Object.assign(instance, p)
+    }
+    return new Product(p, locationId)
+  })
 
   // Obtener información del usuario para verificar si es artista
   const user = await prisma.user.findUnique({
@@ -385,68 +314,26 @@ async function getProductStats(search?: string, session?: AuthSession) {
     where: { id: session.user.id },
   })
 
-  // Si el usuario es artista, establecer automáticamente su vendor
+  // Si el usuario es artista, filtrar solo sus productos
   const isArtist =
     user?.UserRole?.some((ur) => ur.role.name === 'artist') || user?.role?.name === 'artist'
 
   if (isArtist && user?.artist?.name) {
-    if (shopifyQuery) {
-      shopifyQuery += ` AND vendor:"${user.artist.name}"`
-    } else {
-      shopifyQuery = `vendor:"${user.artist.name}"`
-    }
+    products = products.filter((p) => p.vendor === user.artist!.name)
   }
 
-  const allProducts: any[] = []
-  let hasNextPage = true
-  let cursor: string | undefined = undefined
-  let pageCount = 0
-
-  // Obtener TODOS los productos usando paginación
-  while (hasNextPage) {
-    pageCount++
-
-    const variables: {
-      after?: string
-      first: number
-      query: string
-      reverse: boolean
-      sortKey: 'TITLE'
-    } = {
-      after: cursor,
-      first: 100, // Máximo permitido por Shopify
-      query: shopifyQuery,
-      reverse: false,
-      sortKey: 'TITLE',
-    }
-
-    const response = await makeAdminApiRequest<GetProductsApiResponse>(
-      GET_PRODUCTS_QUERY,
-      variables
-    )
-
-    const locationId = await getPrimaryLocationId()
-    const products = response.products.edges.map((edge: any) => new Product(edge.node, locationId))
-    allProducts.push(...products)
-
-    // Verificar si hay más páginas
-    hasNextPage = response.products.pageInfo.hasNextPage
-    cursor = response.products.pageInfo.endCursor ?? undefined
-
-    // Para inventarios muy grandes, limitamos a 5000 productos máximo
-    // Esto debería cubrir la mayoría de casos reales
-    if (allProducts.length >= 5000) {
-      break
-    }
+  // Aplicar filtro de búsqueda si existe
+  if (search?.trim()) {
+    products = products.filter((p) => matchesSearch(p, search))
   }
 
   const stats = {
-    active: allProducts.filter((p) => p.status === 'ACTIVE').length,
-    archived: allProducts.filter((p) => p.status === 'ARCHIVED').length,
-    draft: allProducts.filter((p) => p.status === 'DRAFT').length,
-    inStock: allProducts.filter((p) => p.isAvailable).length,
-    outOfStock: allProducts.filter((p) => !p.isAvailable).length,
-    total: allProducts.length,
+    active: products.filter((p) => p.status === 'ACTIVE').length,
+    archived: products.filter((p) => p.status === 'ARCHIVED').length,
+    draft: products.filter((p) => p.status === 'DRAFT').length,
+    inStock: products.filter((p) => p.isAvailable).length,
+    outOfStock: products.filter((p) => !p.isAvailable).length,
+    total: products.length,
   }
 
   return stats
@@ -1010,10 +897,14 @@ async function updateProduct(
     throw new Error(productUpdateResponse.productUpdate.userErrors.map((e) => e.message).join(', '))
   }
 
+  // Track si hubo cambios en variantes para decidir si re-fetchear el producto
+  let hadVariantChanges = false
+
   if (variants.length > 0) {
     const variant = variants[0]
 
     if (payload.price) {
+      hadVariantChanges = true
       const priceUpdatePayload = {
         productId: existingProduct.id,
         variants: [
@@ -1024,21 +915,28 @@ async function updateProduct(
         ],
       }
 
+      console.info(
+        `💰 Updating variant price for product ${existingProduct.id}: variant=${variant.id}, price=${variant.price}`
+      )
+
       const variantUpdateResponse = await makeAdminApiRequest<ProductVariantsBulkUpdateResponse>(
         PRODUCT_VARIANTS_BULK_UPDATE_MUTATION,
         priceUpdatePayload
       )
 
       if (variantUpdateResponse.productVariantsBulkUpdate.userErrors.length > 0) {
-        throw new Error(
-          variantUpdateResponse.productVariantsBulkUpdate.userErrors
-            .map((e) => e.message)
-            .join(', ')
-        )
+        const errMsg = variantUpdateResponse.productVariantsBulkUpdate.userErrors
+          .map((e) => e.message)
+          .join(', ')
+        console.error(`❌ Variant price update failed: ${errMsg}`)
+        throw new Error(errMsg)
       }
+
+      console.info(`✅ Variant price updated successfully for product ${existingProduct.id}`)
     }
 
     if (payload.inventoryQuantity !== undefined) {
+      hadVariantChanges = true
       try {
         // Primero, activar el tracking de inventario para la variante
         const variantUpdatePayload = {
@@ -1105,7 +1003,7 @@ async function updateProduct(
               },
               method: 'POST',
             })
-          } catch (revalidationError) {
+          } catch {
             // Silenciar errores de revalidación
           }
         }
@@ -1146,7 +1044,7 @@ async function updateProduct(
         const location = await prisma.location.findFirst({
           where: { name: payload.details.location },
         })
-        locationIdToTrack = location?.id || null
+        locationIdToTrack = location?.id ?? null
       }
 
       await locationTrackingService.createLocationHistory({
@@ -1161,6 +1059,16 @@ async function updateProduct(
     } catch (locationError) {
       console.error('Error tracking location change:', locationError)
     }
+  }
+
+  // Invalidar el full catalog cache después de cualquier cambio
+  CacheManager.revalidateFullCatalog()
+
+  // Si hubo cambios en variantes (precio, inventario), re-fetchear el producto
+  // para devolver datos actualizados (el productUpdate response no incluye esos cambios)
+  if (hadVariantChanges) {
+    const freshProduct = await getProductById(payload.id, session)
+    if (freshProduct) return freshProduct
   }
 
   return new Product(productUpdateResponse.productUpdate.product, locationId)
@@ -1292,7 +1200,14 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
   if (useManualSorting || hasMetafieldFilters) {
     // Si hay búsqueda o filtros complejos, usamos el flujo optimizado con caché
     // Pasamos shopifyQuery como baseQuery (puede contener vendor, type, status)
-    return await getProductsWithManualSorting(params, shopifyQuery, limit, reverse, manualSortField)
+    return await getProductsWithManualSorting(
+      params,
+      shopifyQuery,
+      limit,
+      reverse,
+      manualSortField,
+      'storefront'
+    )
   } else {
     const variables = {
       after: params.cursor,

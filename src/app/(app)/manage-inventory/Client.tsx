@@ -1260,7 +1260,7 @@ export function Client() {
       <div className='flex min-w-0 flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0'>
         <div className='relative flex max-w-sm flex-1'>
           <Input
-            placeholder='Buscar por título, artista, tipo, técnica, localización...'
+            placeholder='Buscar por título, artista, tipo, precio, SKU, colección...'
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {

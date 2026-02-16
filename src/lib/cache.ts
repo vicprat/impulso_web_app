@@ -1,4 +1,15 @@
-import { revalidateTag, unstable_cache } from 'next/cache'
+import { revalidateTag } from 'next/cache'
+
+// In-memory cache for the full product catalog
+// This is more reliable than unstable_cache + revalidateTag which can be flaky in dev mode
+interface CatalogCacheEntry {
+  data: any[]
+  fetchedAt: number
+  fetchPromise?: Promise<any[]>
+}
+
+const catalogCache = new Map<string, CatalogCacheEntry>()
+const CATALOG_CACHE_TTL = 3600 * 1000 // 1 hour in ms
 
 export class CacheManager {
   // Tags para productos
@@ -98,61 +109,89 @@ export class CacheManager {
 
   // --- Full Catalog Cache for Search Optimization ---
 
-  static readonly FULL_CATALOG_TAG = 'full-catalog'
-
   /**
-   * Obtiene el catálogo completo de productos cacheado.
+   * Obtiene el catálogo completo de productos cacheado en memoria.
    * Se usa para búsquedas rápidas sin golpear la API de Shopify constantemente.
+   * @param scope 'storefront' para versión super optimizada, 'admin' para versión con más datos
    */
-  static async getFullCatalog() {
-    return await unstable_cache(
-      async () => {
-        console.info('🔄 Cache MISS: Fetching full catalog from Shopify...')
-        // Importación dinámica para evitar ciclos de dependencias si fuera necesario
-        const { productService } = await import('@/services/product/service')
+  static async getFullCatalog(scope: 'storefront' | 'admin' = 'storefront'): Promise<any[]> {
+    const cacheKey = `full-catalog-${scope}`
+    const entry = catalogCache.get(cacheKey)
+    const now = Date.now()
 
-        // Obtener TODOS los productos (paginando internamente hasta terminar)
-        // Usamos un límite alto por página para reducir requests
-        let allProducts: any[] = []
-        let hasNextPage = true
-        let cursor = undefined
+    // Return cached data if valid
+    if (entry && now - entry.fetchedAt < CATALOG_CACHE_TTL) {
+      return entry.data
+    }
 
-        while (hasNextPage) {
-          const params = { cursor, limit: 250 }
-          // Usamos getProductsPublic que ya retorna objetos Product serializables
-          const response = await productService.getProductsPublic(params)
+    // If there's already a fetch in progress for this scope, reuse it
+    if (entry?.fetchPromise) {
+      return entry.fetchPromise
+    }
 
-          allProducts = [...allProducts, ...response.products]
+    // Fetch fresh data
+    const fetchPromise = this._fetchFullCatalog(scope)
 
-          hasNextPage = response.pageInfo.hasNextPage
-          cursor = response.pageInfo.endCursor ?? undefined
-        }
+    // Store the promise so concurrent requests reuse it
+    catalogCache.set(cacheKey, {
+      data: entry?.data ?? [],
+      fetchPromise,
+      fetchedAt: entry?.fetchedAt ?? 0,
+    })
 
-        console.info(
-          `✅ Fetched ${allProducts.length} products. Converting to LightProduct for cache...`
-        )
+    try {
+      const data = await fetchPromise
+      catalogCache.set(cacheKey, { data, fetchedAt: Date.now() })
+      return data
+    } catch (error) {
+      // On error, clear the promise so next request retries
+      if (entry) {
+        catalogCache.set(cacheKey, { data: entry.data, fetchedAt: entry.fetchedAt })
+      } else {
+        catalogCache.delete(cacheKey)
+      }
+      throw error
+    }
+  }
 
-        // Optimización: Reducir tamaño del objeto para cache
-        // Eliminamos descriptionHtml y media que son pesados y no se usan en búsqueda/listados
-        const lightProducts = allProducts.map((p: any) => ({
-          ...p,
+  private static async _fetchFullCatalog(scope: 'storefront' | 'admin'): Promise<any[]> {
+    console.info(`🔄 Cache MISS (${scope}): Fetching full catalog from Shopify...`)
+    const { productService } = await import('@/services/product/service')
+
+    let allProducts: any[] = []
+    let hasNextPage = true
+    let cursor = undefined
+
+    while (hasNextPage) {
+      const params = { cursor, limit: 250 }
+      const response = await productService.getProductsPublic(params)
+
+      allProducts = [...allProducts, ...response.products]
+
+      hasNextPage = response.pageInfo.hasNextPage
+      cursor = response.pageInfo.endCursor ?? undefined
+    }
+
+    console.info(
+      `✅ Fetched ${allProducts.length} products. Converting to LightProduct (${scope}) for cache...`
+    )
+
+    // Optimización: Reducir tamaño del objeto para cache
+    const lightProducts = allProducts.map((p: any) => {
+      // Base: siempre eliminamos lo más pesado
+      const base = {
+        ...p,
+        descriptionHtml: '', // Vaciar para ahorrar espacio (~50-80% del tamaño)
+        media: [], // Vaciar arrays pesados no usados en cards
+      }
+
+      if (scope === 'storefront') {
+        return {
+          ...base,
           autoTags: [],
-
-          // Remove collections (not used in search/filtering)
           collections: [],
-
-          descriptionHtml: '',
-
-          // Vaciar arrays pesados no usados en cards
-          // Keep only the first image to reduce size significantly
           images: p.images && p.images.length > 0 ? [p.images[0]] : [],
-
-          // Remove redundant tag arrays (keep 'tags' as master list)
           manualTags: [],
-
-          // Vaciar para ahorrar espacio (~50-80% del tamaño)
-          media: [],
-          // Simplify variants to essential fields for pricing/availability
           variants: p.variants.map((v: any) => ({
             availableForSale: v.availableForSale,
             compareAtPrice: v.compareAtPrice,
@@ -162,23 +201,29 @@ export class CacheManager {
             selectedOptions: v.selectedOptions,
             sku: v.sku,
             title: v.title,
-            // Stripped: inventoryPolicy, inventoryManagement, inventoryItem
           })),
-        }))
-
-        console.info(`✅ Cached ${lightProducts.length} products in full catalog (optimized)`)
-        return lightProducts
-      },
-      ['full-catalog-data'],
-      {
-        revalidate: 3600,
-        tags: [this.FULL_CATALOG_TAG], // Revalidar al menos cada hora por seguridad
+        }
+      } else {
+        return {
+          ...base,
+          collections: p.collections,
+          images: p.images,
+          variants: p.variants.map((v: any) => ({
+            ...v,
+            inventoryManagement: v.inventoryManagement,
+            inventoryPolicy: v.inventoryPolicy,
+          })),
+        }
       }
-    )()
+    })
+
+    console.info(`✅ Cached ${lightProducts.length} products in full catalog (${scope})`)
+    return lightProducts
   }
 
   static revalidateFullCatalog() {
-    revalidateTag(this.FULL_CATALOG_TAG, 'max')
-    console.info('🔄 Invalidated full catalog cache')
+    catalogCache.delete('full-catalog-storefront')
+    catalogCache.delete('full-catalog-admin')
+    console.info('🗑️ Cleared full catalog in-memory caches (storefront & admin)')
   }
 }
