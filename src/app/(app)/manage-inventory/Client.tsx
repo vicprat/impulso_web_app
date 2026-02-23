@@ -8,8 +8,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-import { columns } from './columns'
-
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -51,6 +49,8 @@ import { ProductAutomaticDiscountModal } from '@/src/components/Modals/ProductAu
 import { Table } from '@/src/components/Table'
 import { Skeleton } from '@/src/components/ui/skeleton'
 import { ROUTES } from '@/src/config/routes'
+
+import { columns } from './columns'
 
 export const dynamic = 'force-dynamic'
 
@@ -99,6 +99,7 @@ export function Client() {
   const pageSizeInUrl = parseInt(searchParams.get('pageSize') ?? defaultPageSize.toString(), 10)
   const searchInUrl = searchParams.get('search') ?? ''
   const statusFilterInUrl = searchParams.get('status') ?? 'all'
+  const locationFilterInUrl = searchParams.get('location') ?? 'all'
   const dimensionsFilterInUrl = searchParams.get('dimensions') ?? 'all'
   const techniqueFilterInUrl = searchParams.get('technique') ?? 'all'
   const artworkTypeFilterInUrl = searchParams.get('artworkType') ?? 'all'
@@ -349,6 +350,7 @@ export function Client() {
   }, [
     searchInUrl,
     statusFilterInUrl,
+    locationFilterInUrl,
     dimensionsFilterInUrl,
     techniqueFilterInUrl,
     artworkTypeFilterInUrl,
@@ -369,6 +371,7 @@ export function Client() {
     cursor: afterCursorInUrl || undefined,
     dimensions: dimensionsFilterInUrl !== 'all' ? dimensionsFilterInUrl : undefined,
     limit: pageSizeInUrl,
+    location: locationFilterInUrl !== 'all' ? locationFilterInUrl : undefined,
     search: searchInUrl,
     sortBy: sortByInUrl,
     sortOrder: sortOrderInUrl,
@@ -749,6 +752,21 @@ export function Client() {
         newUrlParams.delete('artworkType')
       } else {
         newUrlParams.set('artworkType', artworkType)
+      }
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
+
+  const handleLocationFilterChange = useCallback(
+    (location: string) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      if (location === 'all') {
+        newUrlParams.delete('location')
+      } else {
+        newUrlParams.set('location', location)
       }
       newUrlParams.set('page', '1')
       newUrlParams.delete('after')
@@ -1154,8 +1172,30 @@ export function Client() {
         </div>
       </div>
 
-      <div className='flex w-full items-center justify-start space-x-2 p-1'>
+      <div className='flex w-full flex-wrap items-center justify-start gap-2 p-1'>
         <span className='ml-2 text-sm font-medium'>Filtrar:</span>
+        <div className='flex items-center space-x-1'>
+          <Select value={locationFilterInUrl} onValueChange={handleLocationFilterChange}>
+            <SelectTrigger className='w-44'>
+              <Filter className='mr-2 size-4' />
+              <SelectValue placeholder='Filtrar por localización' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>Todas las localizaciones</SelectItem>
+              {locations && locations.length > 0 ? (
+                locations.map((loc: { id: string; name: string }) => (
+                  <SelectItem key={loc.id} value={loc.name}>
+                    {loc.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value='all' disabled>
+                  Cargando...
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
         <div className='flex items-center space-x-1'>
           <Select value={statusFilterInUrl} onValueChange={handleStatusFilterChange}>
             <SelectTrigger className='w-44'>
@@ -1749,6 +1789,7 @@ export function Client() {
       )}
 
       {(searchInUrl ||
+        locationFilterInUrl !== 'all' ||
         statusFilterInUrl !== 'all' ||
         dimensionsFilterInUrl !== 'all' ||
         techniqueFilterInUrl !== 'all' ||
@@ -1852,7 +1893,8 @@ export function Client() {
       {filteredProducts.length > 0 && (
         <div className='text-center text-sm text-muted-foreground'>
           Mostrando {filteredProducts.length} de {stats.total} productos
-          {(statusFilterInUrl !== 'all' ||
+          {(locationFilterInUrl !== 'all' ||
+            statusFilterInUrl !== 'all' ||
             dimensionsFilterInUrl !== 'all' ||
             techniqueFilterInUrl !== 'all' ||
             artworkTypeFilterInUrl !== 'all') &&
