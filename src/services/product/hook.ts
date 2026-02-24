@@ -27,6 +27,7 @@ export const useGetProductsPaginated = (params: GetProductsParams = {}) => {
       if (params.dimensions) searchParams.append('dimensions', params.dimensions)
       if (params.vendor) searchParams.append('vendor', params.vendor)
       if (params.location) searchParams.append('location', params.location)
+      if (params.arrendamiento) searchParams.append('arrendamiento', params.arrendamiento)
 
       const { data } = await axios.get(`/api/management/products?${searchParams.toString()}`)
       return data
@@ -318,6 +319,89 @@ export const useDeleteLocation = (options?: {
     onError: options?.onError,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['locations'] })
+      options?.onSuccess?.()
+    },
+  })
+}
+
+export const useGetArrendamientos = () => {
+  return useQuery({
+    queryFn: async () => {
+      const { data } = await axios.get('/api/options/arrendamientos')
+      return data
+    },
+    queryKey: ['arrendamientos'],
+    // 10 minutos
+    retry: 1,
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export const useGetArrendamiento = (id: string | null) => {
+  return useQuery({
+    enabled: !!id,
+    queryFn: async () => {
+      if (!id) throw new Error('Arrendamiento ID is required')
+      const { data } = await axios.get('/api/options/arrendamientos')
+      const arrendamiento = data.find((arr: any) => arr.id === id)
+      if (!arrendamiento) throw new Error('Arrendamiento not found')
+      return arrendamiento
+    },
+    queryKey: ['arrendamientos', id],
+    retry: 1,
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export const useCreateArrendamiento = (options?: {
+  onSuccess?: () => void
+  onError?: (error: any) => void
+}) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const { data } = await axios.post('/api/options/arrendamientos', { name })
+      return data
+    },
+    onError: options?.onError,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['arrendamientos'] })
+      options?.onSuccess?.()
+    },
+  })
+}
+
+export const useUpdateArrendamiento = (options?: {
+  onSuccess?: () => void
+  onError?: (error: any) => void
+}) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { data } = await axios.put(`/api/options/arrendamientos`, { id, name })
+      return data
+    },
+    onError: options?.onError,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['arrendamientos'] })
+      options?.onSuccess?.()
+    },
+  })
+}
+
+export const useDeleteArrendamiento = (options?: {
+  onSuccess?: () => void
+  onError?: (error: any) => void
+}) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await axios.delete(`/api/options/arrendamientos?id=${id}`)
+      return data
+    },
+    onError: options?.onError,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['arrendamientos'] })
       options?.onSuccess?.()
     },
   })

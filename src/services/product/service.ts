@@ -139,6 +139,9 @@ async function getProductsWithManualSorting(
   if (params.year?.trim()) {
     allProducts = allProducts.filter((p) => p.artworkDetails.year === params.year)
   }
+  if (params.arrendamiento?.trim()) {
+    allProducts = allProducts.filter((p) => p.artworkDetails.arrendamiento === params.arrendamiento)
+  }
   if (params.dimensions?.trim()) {
     allProducts = allProducts.filter((product) => {
       if (!product.artworkDetails.height || !product.artworkDetails.width) return false
@@ -209,6 +212,10 @@ async function getProductsWithManualSorting(
       case 'location':
         valA = a.artworkDetails.location?.toLowerCase() ?? ''
         valB = b.artworkDetails.location?.toLowerCase() ?? ''
+        break
+      case 'arrendamiento':
+        valA = a.artworkDetails.arrendamiento?.toLowerCase() ?? ''
+        valB = b.artworkDetails.arrendamiento?.toLowerCase() ?? ''
         break
       case 'dimensions':
         valA = calculateDimensionValue(a.artworkDetails.height, a.artworkDetails.width)
@@ -440,6 +447,7 @@ async function getProductsFromRequest(
     status: searchParams.get('status') ?? undefined,
     technique: searchParams.get('technique') ?? undefined,
     vendor: searchParams.get('vendor') ?? undefined,
+    arrendamiento: searchParams.get('arrendamiento') ?? undefined,
   }
 
   // Si el usuario es artista, establecer automáticamente su vendor

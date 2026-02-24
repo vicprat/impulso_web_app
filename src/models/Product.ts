@@ -143,6 +143,7 @@ export interface ArtworkDetails {
   depth: string | null
   serie: string | null
   location: string | null
+  arrendamiento: string | null
 }
 
 interface DescriptionField {
@@ -330,6 +331,7 @@ export class Product {
     }
 
     const finalDetails = {
+      arrendamiento: details.arrendamiento || null,
       artist: details.artist || null,
       depth: details.depth || null,
       height: details.height || null,

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 'use client'
 
 import Autoplay from 'embla-carousel-autoplay'
@@ -8,11 +9,12 @@ import {
   ChevronRight,
   FileText,
   Image as ImageIcon,
+  Info,
   Package,
   Palette,
   Ruler,
+  Tag,
   User,
-  Warehouse,
   ZoomIn,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -26,7 +28,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { type IProductForCart, type Variant } from '@/modules/shopify/types'
 import { useShopifyAnalytics } from '@/src/components/ShopifyAnalytics'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
-
+import { formatCurrency } from '@/src/helpers'
 // Tipo para producto plano (sin métodos de clase)
 interface ProductData {
   id: string
@@ -362,11 +364,14 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                   <div className='flex flex-col gap-1'>
                     <div className='flex items-center gap-2'>
                       <span className='text-2xl font-bold text-foreground sm:text-3xl lg:text-4xl'>
-                        ${currentPrice?.amount || '0'}
+                        {formatCurrency(
+                          currentPrice?.amount ?? '0',
+                          currentPrice?.currencyCode ?? 'MXN'
+                        )}
                       </span>
                       {comparePrice && comparePrice.amount !== currentPrice?.amount && (
                         <span className='text-lg text-muted-foreground line-through sm:text-xl'>
-                          ${comparePrice.amount}
+                          {formatCurrency(comparePrice.amount, comparePrice.currencyCode ?? 'MXN')}
                         </span>
                       )}
                     </div>
@@ -476,70 +481,73 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
               </form>
 
               {/* Detalles de la Obra */}
-              {product.artworkDetails && (
-                <Card className='border-border bg-card shadow-sm'>
-                  <CardHeader className='pb-4'>
-                    <CardTitle className='flex items-center gap-2 text-foreground'>
-                      <Palette className='size-5 text-primary' />
-                      Detalles de la Obra
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                    {product.artworkDetails.medium && (
-                      <div className='flex items-center gap-2'>
-                        <FileText className='size-4 text-muted-foreground' />
-                        <div>
-                          <p className='text-xs text-muted-foreground'>Técnica</p>
-                          <p className='text-sm font-medium'>{product.artworkDetails.medium}</p>
+              {product.artworkDetails &&
+                (product.artworkDetails.medium ||
+                  product.artworkDetails.year ||
+                  product.artworkDetails.width ||
+                  product.artworkDetails.height ||
+                  product.artworkDetails.depth ||
+                  product.artworkDetails.serie) && (
+                  <Card className='border-border bg-card shadow-sm'>
+                    <CardHeader className='pb-4'>
+                      <CardTitle className='flex items-center gap-2 text-foreground'>
+                        <Palette className='size-5 text-primary' />
+                        Detalles de la Obra
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                      {product.artworkDetails.medium && (
+                        <div className='flex items-start gap-3'>
+                          <FileText className='mt-0.5 size-4 shrink-0 text-muted-foreground' />
+                          <div className='min-w-0 flex-1 break-words'>
+                            <p className='text-xs text-muted-foreground'>Técnica</p>
+                            <p className='text-sm font-medium text-foreground'>
+                              {product.artworkDetails.medium}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {product.artworkDetails.year && (
-                      <div className='flex items-center gap-2'>
-                        <Calendar className='size-4 text-muted-foreground' />
-                        <div>
-                          <p className='text-xs text-muted-foreground'>Año</p>
-                          <p className='text-sm font-medium'>{product.artworkDetails.year}</p>
+                      )}
+                      {product.artworkDetails.year && (
+                        <div className='flex items-start gap-3'>
+                          <Calendar className='mt-0.5 size-4 shrink-0 text-muted-foreground' />
+                          <div className='min-w-0 flex-1 break-words'>
+                            <p className='text-xs text-muted-foreground'>Año</p>
+                            <p className='text-sm font-medium text-foreground'>
+                              {product.artworkDetails.year}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {(product.artworkDetails.width ||
-                      product.artworkDetails.height ||
-                      product.artworkDetails.depth) && (
-                      <div className='flex items-center gap-2'>
-                        <Ruler className='size-4 text-muted-foreground' />
-                        <div>
-                          <p className='text-xs text-muted-foreground'>Medidas (cm)</p>
-                          <p className='text-sm font-medium'>
-                            {product.artworkDetails.height} x {product.artworkDetails.width}{' '}
-                            {product.artworkDetails.depth
-                              ? `x ${product.artworkDetails.depth}`
-                              : ''}
-                          </p>
+                      )}
+                      {(product.artworkDetails.width ||
+                        product.artworkDetails.height ||
+                        product.artworkDetails.depth) && (
+                        <div className='flex items-start gap-3'>
+                          <Ruler className='mt-0.5 size-4 shrink-0 text-muted-foreground' />
+                          <div className='min-w-0 flex-1 break-words'>
+                            <p className='text-xs text-muted-foreground'>Medidas (cm)</p>
+                            <p className='text-sm font-medium text-foreground'>
+                              {product.artworkDetails.height} x {product.artworkDetails.width}{' '}
+                              {product.artworkDetails.depth
+                                ? `x ${product.artworkDetails.depth}`
+                                : ''}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {product.artworkDetails.serie && (
-                      <div className='flex items-center gap-2'>
-                        <ImageIcon className='size-4 text-muted-foreground' />
-                        <div>
-                          <p className='text-xs text-muted-foreground'>Serie</p>
-                          <p className='text-sm font-medium'>{product.artworkDetails.serie}</p>
+                      )}
+                      {product.artworkDetails.serie && (
+                        <div className='flex items-start gap-3'>
+                          <ImageIcon className='mt-0.5 size-4 shrink-0 text-muted-foreground' />
+                          <div className='min-w-0 flex-1 break-words'>
+                            <p className='text-xs text-muted-foreground'>Serie</p>
+                            <p className='text-sm font-medium text-foreground'>
+                              {product.artworkDetails.serie}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {product.artworkDetails.location && (
-                      <div className='flex items-center gap-2'>
-                        <Warehouse className='size-4 text-muted-foreground' />
-                        <div>
-                          <p className='text-xs text-muted-foreground'>Ubicación</p>
-                          <p className='text-sm font-medium'>{product.artworkDetails.location}</p>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
 
               {/* Detalles del Producto */}
               <Card className='border-border bg-card shadow-sm'>
@@ -550,41 +558,46 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                  <div className='space-y-3'>
-                    <div className='flex justify-between text-sm'>
-                      <span className='font-medium text-muted-foreground'>Tipo:</span>
-                      <span className='text-foreground'>{product.productType || 'N/A'}</span>
-                    </div>
-                    <div className='flex justify-between text-sm'>
-                      <span className='font-medium text-muted-foreground'>SKU:</span>
-                      <span className='font-mono text-foreground'>
-                        {state.variant?.sku ?? 'N/A'}
-                      </span>
+                  <div className='flex items-start gap-3'>
+                    <User className='mt-0.5 size-4 shrink-0 text-muted-foreground' />
+                    <div className='min-w-0 flex-1 break-words'>
+                      <p className='text-xs text-muted-foreground'>Artista</p>
+                      <p className='text-sm font-medium text-foreground'>
+                        {product.vendor || 'N/A'}
+                      </p>
                     </div>
                   </div>
-                  <div className='space-y-3'>
-                    <div className='flex justify-between text-sm'>
-                      <span className='font-medium text-muted-foreground'>Proveedor:</span>
-                      <span className='text-foreground'>{product.vendor || 'N/A'}</span>
-                    </div>
-                    <div className='flex justify-between text-sm'>
-                      <span className='font-medium text-muted-foreground'>Disponibilidad:</span>
-                      <span
-                        className={`font-medium ${
+
+                  <div className='flex items-start gap-3'>
+                    <Info className='mt-0.5 size-4 shrink-0 text-muted-foreground' />
+                    <div className='min-w-0 flex-1 break-words'>
+                      <p className='text-xs text-muted-foreground'>Disponibilidad</p>
+                      <p
+                        className={`text-sm font-medium ${
                           product.isAvailable
                             ? 'text-green-600 dark:text-green-400'
                             : 'text-red-600 dark:text-red-400'
                         }`}
                       >
                         {product.isAvailable ? 'En stock' : 'Agotado'}
-                      </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className='flex items-start gap-3'>
+                    <Tag className='mt-0.5 size-4 shrink-0 text-muted-foreground' />
+                    <div className='min-w-0 flex-1 break-words'>
+                      <p className='text-xs text-muted-foreground'>Tipo</p>
+                      <p className='text-sm font-medium text-foreground'>
+                        {product.productType || 'N/A'}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Descripción */}
-              {product.descriptionHtml && (
+              {/* {product.descriptionHtml && (
                 <Card className='border-border bg-card shadow-sm'>
                   <CardHeader className='pb-4'>
                     <CardTitle className='text-foreground'>Descripción</CardTitle>
@@ -598,7 +611,7 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                     />
                   </CardContent>
                 </Card>
-              )}
+              )} */}
             </div>
           </div>
         </div>

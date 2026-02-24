@@ -5,13 +5,14 @@ import { PERMISSIONS } from '@/src/config/Permissions'
 import { requirePermission } from '@/src/modules/auth/server/server'
 
 const TABLE_MAP: Record<string, string> = {
+  arrendamientos: 'Arrendamiento',
   artwork_types: 'ArtworkType',
   locations: 'Location',
   techniques: 'Technique',
 }
 
 // Define a type for model names only
-type ModelName = 'Technique' | 'ArtworkType' | 'Location'
+type ModelName = 'Technique' | 'ArtworkType' | 'Location' | 'Arrendamiento'
 
 export async function GET(req: Request, context: { params: Promise<{ name: string }> }) {
   try {

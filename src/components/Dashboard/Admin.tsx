@@ -31,13 +31,13 @@ import {
   YAxis,
 } from 'recharts'
 
-import { Badge } from '../ui/badge'
-
 import {
   useAdminDashboard,
   useAdvancedAnalytics,
   useProductMetrics,
 } from '@/src/modules/dashboard/hooks'
+
+import { Badge } from '../ui/badge'
 
 interface TopProduct {
   name: string

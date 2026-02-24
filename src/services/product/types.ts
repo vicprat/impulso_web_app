@@ -16,6 +16,7 @@ export interface GetProductsParams {
   priceMax?: number
   year?: string
   location?: string
+  arrendamiento?: string
 }
 
 export interface CreateProductPayload {

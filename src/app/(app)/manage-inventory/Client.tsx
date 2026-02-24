@@ -34,6 +34,7 @@ import {
   useRemoveProductsFromCollection,
 } from '@/services/collection/hooks'
 import {
+  useGetArrendamientos,
   useGetArtworkTypes,
   useGetLocations,
   useGetProductsPaginated,
@@ -100,6 +101,7 @@ export function Client() {
   const searchInUrl = searchParams.get('search') ?? ''
   const statusFilterInUrl = searchParams.get('status') ?? 'all'
   const locationFilterInUrl = searchParams.get('location') ?? 'all'
+  const arrendamientoFilterInUrl = searchParams.get('arrendamiento') ?? 'all'
   const dimensionsFilterInUrl = searchParams.get('dimensions') ?? 'all'
   const techniqueFilterInUrl = searchParams.get('technique') ?? 'all'
   const artworkTypeFilterInUrl = searchParams.get('artworkType') ?? 'all'
@@ -147,6 +149,7 @@ export function Client() {
   const { data: techniques = [], isLoading: techniquesLoading } = useGetTechniques()
   const { data: artworkTypes = [], isLoading: artworkTypesLoading } = useGetArtworkTypes()
   const { data: locations = [], isLoading: locationsLoading } = useGetLocations()
+  const { data: arrendamientos = [], isLoading: arrendamientosLoading } = useGetArrendamientos()
 
   // Obtener cupones para mostrar en la columna de descuentos
   const { data: coupons = [] } = useGetDiscounts()
@@ -351,6 +354,7 @@ export function Client() {
     searchInUrl,
     statusFilterInUrl,
     locationFilterInUrl,
+    arrendamientoFilterInUrl,
     dimensionsFilterInUrl,
     techniqueFilterInUrl,
     artworkTypeFilterInUrl,
@@ -372,6 +376,7 @@ export function Client() {
     dimensions: dimensionsFilterInUrl !== 'all' ? dimensionsFilterInUrl : undefined,
     limit: pageSizeInUrl,
     location: locationFilterInUrl !== 'all' ? locationFilterInUrl : undefined,
+    arrendamiento: arrendamientoFilterInUrl !== 'all' ? arrendamientoFilterInUrl : undefined,
     search: searchInUrl,
     sortBy: sortByInUrl,
     sortOrder: sortOrderInUrl,
@@ -767,6 +772,21 @@ export function Client() {
         newUrlParams.delete('location')
       } else {
         newUrlParams.set('location', location)
+      }
+      newUrlParams.set('page', '1')
+      newUrlParams.delete('after')
+      router.push(`/manage-inventory?${newUrlParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
+
+  const handleArrendamientoFilterChange = useCallback(
+    (arrendamiento: string) => {
+      const newUrlParams = new URLSearchParams(searchParams.toString())
+      if (arrendamiento === 'all') {
+        newUrlParams.delete('arrendamiento')
+      } else {
+        newUrlParams.set('arrendamiento', arrendamiento)
       }
       newUrlParams.set('page', '1')
       newUrlParams.delete('after')
@@ -1197,6 +1217,28 @@ export function Client() {
           </Select>
         </div>
         <div className='flex items-center space-x-1'>
+          <Select value={arrendamientoFilterInUrl} onValueChange={handleArrendamientoFilterChange}>
+            <SelectTrigger className='w-44'>
+              <Filter className='mr-2 size-4' />
+              <SelectValue placeholder='Filtrar por arrendamiento' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>Todos los arrendamientos</SelectItem>
+              {arrendamientos && arrendamientos.length > 0 ? (
+                arrendamientos.map((arr: { id: string; name: string }) => (
+                  <SelectItem key={arr.id} value={arr.name}>
+                    {arr.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value='all' disabled>
+                  Cargando...
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className='flex items-center space-x-1'>
           <Select value={statusFilterInUrl} onValueChange={handleStatusFilterChange}>
             <SelectTrigger className='w-44'>
               <Filter className='mr-2 size-4' />
@@ -1367,6 +1409,7 @@ export function Client() {
               <SelectItem value='year'>Año</SelectItem>
               <SelectItem value='serie'>Serie</SelectItem>
               <SelectItem value='location'>Localización</SelectItem>
+              <SelectItem value='arrendamiento'>Arrendamiento</SelectItem>
               <SelectItem value='price'>Precio</SelectItem>
               <SelectItem value='createdAt'>Fecha de creación</SelectItem>
               <SelectItem value='updatedAt'>Fecha de actualización</SelectItem>
@@ -1790,6 +1833,7 @@ export function Client() {
 
       {(searchInUrl ||
         locationFilterInUrl !== 'all' ||
+        arrendamientoFilterInUrl !== 'all' ||
         statusFilterInUrl !== 'all' ||
         dimensionsFilterInUrl !== 'all' ||
         techniqueFilterInUrl !== 'all' ||
@@ -1894,6 +1938,7 @@ export function Client() {
         <div className='text-center text-sm text-muted-foreground'>
           Mostrando {filteredProducts.length} de {stats.total} productos
           {(locationFilterInUrl !== 'all' ||
+            arrendamientoFilterInUrl !== 'all' ||
             statusFilterInUrl !== 'all' ||
             dimensionsFilterInUrl !== 'all' ||
             techniqueFilterInUrl !== 'all' ||

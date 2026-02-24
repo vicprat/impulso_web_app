@@ -257,6 +257,30 @@ export const ROUTES = {
   },
 
   INVENTORY: {
+    ARRENDAMIENTOS: {
+      CREATE: {
+        ICON: 'plus',
+        LABEL: 'Crear Arrendamiento',
+        PATH: '/manage-inventory/arrendamientos/create',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Editar Arrendamiento',
+        PATH: '/manage-inventory/arrendamientos/:id',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar Arrendamientos',
+        ICON: 'map-pin',
+        LABEL: 'Arrendamientos',
+        PATH: '/manage-inventory/arrendamientos',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+    },
     COLLECTIONS: {
       DETAIL: {
         ICON: 'edit',
@@ -664,6 +688,7 @@ export const getGroupedDashboardNavRoutes = (
     ROUTES.INVENTORY.COUPONS.MAIN,
     ROUTES.INVENTORY.COLLECTIONS.MAIN,
     ROUTES.INVENTORY.LOCATIONS.MAIN,
+    ROUTES.INVENTORY.ARRENDAMIENTOS.MAIN,
     ROUTES.INVENTORY.PRIVATE_ROOMS.MAIN,
   ].filter(
     (route) =>

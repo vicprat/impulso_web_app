@@ -27,6 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatDimensionsWithUnit } from '@/helpers/dimensions'
 import { type Product } from '@/models/Product'
 import {
+  useGetArrendamientos,
   useGetArtworkTypes,
   useGetLocations,
   useGetTechniques,
@@ -103,6 +104,7 @@ declare module '@tanstack/react-table' {
         year?: string
         serie?: string
         location?: string
+        arrendamiento?: string
         height?: string
         width?: string
         depth?: string
@@ -733,6 +735,55 @@ const EditableLocationSelect = ({
       </SelectTrigger>
       <SelectContent>
         {locationOptions.map((option: { value: string; label: string }) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
+
+const EditableArrendamientoSelect = ({
+  className = '',
+  fieldName = '',
+  isEditing,
+  onCancel,
+  onUpdate,
+  placeholder,
+  value,
+}: {
+  value: string | null
+  isEditing: boolean
+  onUpdate: (value: string) => void
+  onCancel: () => void
+  placeholder?: string
+  className?: string
+  fieldName?: string
+}) => {
+  const { data: arrendamientos, isLoading } = useGetArrendamientos()
+
+  if (!isEditing) {
+    return <span className={className}>{value || '-'}</span>
+  }
+
+  if (isLoading) {
+    return <Skeleton className='h-8 w-32' />
+  }
+
+  const arrendamientoOptions =
+    arrendamientos?.map((arrendamiento: { id: string; name: string }) => ({
+      label: arrendamiento.name,
+      value: arrendamiento.name,
+    })) || []
+
+  return (
+    <Select value={value || ''} onValueChange={onUpdate}>
+      <SelectTrigger className={`h-8 ${className}`}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {arrendamientoOptions.map((option: { value: string; label: string }) => (
           <SelectItem key={option.value} value={option.value}>
             {option.label}
           </SelectItem>
@@ -1531,6 +1582,63 @@ export const columns: ColumnDef<Product>[] = [
             className='h-auto p-0 font-semibold'
           >
             Localización
+            <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
+            {isSorted && (
+              <Badge variant='outline' className='ml-1 text-[10px]'>
+                {currentSortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </Badge>
+            )}
+          </Button>
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: 'artworkDetails.arrendamiento',
+    cell: ({ row, table }) => {
+      const product = row.original
+      const { editingChanges, editingRowId, setEditingRowId, updateEditingChanges } =
+        table.options.meta ?? {}
+      const isEditing = editingRowId === product.id
+
+      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
+      const currentValue =
+        isEditing && editingChanges?.artworkDetails?.arrendamiento !== undefined
+          ? editingChanges.artworkDetails.arrendamiento
+          : product.artworkDetails.arrendamiento
+
+      return (
+        <div className='min-w-[176px]'>
+          <EditableArrendamientoSelect
+            value={currentValue}
+            isEditing={isEditing}
+            onUpdate={(value) => {
+              updateEditingChanges?.({
+                artworkDetails: {
+                  arrendamiento: value || undefined,
+                },
+              })
+            }}
+            onCancel={() => setEditingRowId?.(null)}
+            placeholder='Arrendamiento'
+            className='text-sm'
+            fieldName='arrendamiento'
+          />
+        </div>
+      )
+    },
+    header: ({ column, table }) => {
+      const { currentSortBy, currentSortOrder, handleSorting } = table.options.meta ?? {}
+      const isSorted = currentSortBy === 'arrendamiento'
+
+      return (
+        <div className='min-w-[176px]'>
+          <Button
+            variant='ghost'
+            onClick={() => handleSorting?.('arrendamiento')}
+            className='h-auto p-0 font-semibold'
+          >
+            Arrendamiento
             <ArrowUpDown className={`ml-2 size-4 ${isSorted ? 'text-primary' : ''}`} />
             {isSorted && (
               <Badge variant='outline' className='ml-1 text-[10px]'>
