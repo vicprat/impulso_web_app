@@ -1,3 +1,11 @@
+import { calculateDimensionValue, categorizeDimensions } from '@/helpers/dimensions'
+import { buildProductSearchQuery, matchesSearch } from '@/helpers/search'
+import { CacheManager } from '@/lib/cache'
+import { prisma } from '@/lib/prisma'
+import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
+import { Product } from '@/models/Product'
+import { type AuthSession } from '@/modules/auth/service'
+
 import { locationTrackingService } from './location-tracking'
 import {
   CREATE_PRODUCT_MUTATION,
@@ -28,14 +36,6 @@ import {
   type ShopifyUserError,
   type UpdateProductPayload,
 } from './types'
-
-import { calculateDimensionValue, categorizeDimensions } from '@/helpers/dimensions'
-import { buildProductSearchQuery, matchesSearch } from '@/helpers/search'
-import { CacheManager } from '@/lib/cache'
-import { prisma } from '@/lib/prisma'
-import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
-import { Product } from '@/models/Product'
-import { type AuthSession } from '@/modules/auth/service'
 
 type ValidatedSession = NonNullable<AuthSession>
 
@@ -436,6 +436,7 @@ async function getProductsFromRequest(
   })
 
   const params: GetProductsParams = {
+    arrendamiento: searchParams.get('arrendamiento') ?? undefined,
     artworkType: searchParams.get('artworkType') ?? undefined,
     cursor: searchParams.get('cursor') ?? undefined,
     dimensions: searchParams.get('dimensions') ?? undefined,
@@ -447,7 +448,6 @@ async function getProductsFromRequest(
     status: searchParams.get('status') ?? undefined,
     technique: searchParams.get('technique') ?? undefined,
     vendor: searchParams.get('vendor') ?? undefined,
-    arrendamiento: searchParams.get('arrendamiento') ?? undefined,
   }
 
   // Si el usuario es artista, establecer automáticamente su vendor
@@ -654,6 +654,28 @@ async function createProduct(
     console.error('Error al publicar el producto:', publishError)
   }
 
+  if (payload.collectionId && payload.collectionId !== 'none') {
+    try {
+      const formattedCollectionId = payload.collectionId.startsWith('gid://shopify/Collection/')
+        ? payload.collectionId
+        : `gid://shopify/Collection/${payload.collectionId}`
+
+      const COLLECTION_ADD_MUTATION = `
+        mutation collectionAddProducts($id: ID!, $productIds: [ID!]!) {
+          collectionAddProducts(id: $id, productIds: $productIds) {
+            userErrors { message }
+          }
+        }
+      `
+      await makeAdminApiRequest<any>(COLLECTION_ADD_MUTATION, {
+        id: formattedCollectionId,
+        productIds: [newProductData.id],
+      })
+    } catch (e) {
+      console.error('Error adding collection in createProduct:', e)
+    }
+  }
+
   const finalProduct = await getProductById(newProductData.id, session)
   if (!finalProduct) {
     throw new Error('Error al obtener el producto creado')
@@ -682,6 +704,8 @@ async function createProduct(
       console.error('Error tracking initial location:', locationError)
     }
   }
+  // Invalidar el full catalog cache para que el nuevo producto aparezca inmediatamente
+  CacheManager.revalidateFullCatalog()
 
   return finalProduct
 }
@@ -864,6 +888,7 @@ async function createProductFromRequest(request: Request, session: AuthSession):
   }
 
   const payload: CreateProductPayload = {
+    collectionId: body.collectionId ?? undefined,
     description: body.description?.trim() ?? '',
     details: body.details ?? {},
     images: Array.isArray(body.images) ? body.images : undefined,
@@ -1071,6 +1096,39 @@ async function updateProduct(
 
   // Invalidar el full catalog cache después de cualquier cambio
   CacheManager.revalidateFullCatalog()
+
+  if (payload.collectionId) {
+    try {
+      const currentCollectionId = existingProduct.collections?.[0]?.id
+      if (payload.collectionId !== currentCollectionId && payload.collectionId !== 'none') {
+        const formattedCollectionId = payload.collectionId.startsWith('gid://shopify/Collection/')
+          ? payload.collectionId
+          : `gid://shopify/Collection/${payload.collectionId}`
+
+        const COLLECTION_ADD_MUTATION = `
+          mutation collectionAddProducts($id: ID!, $productIds: [ID!]!) {
+            collectionAddProducts(id: $id, productIds: $productIds) {
+              userErrors { message }
+            }
+          }
+        `
+        const collectionUpdateResponse = await makeAdminApiRequest<any>(COLLECTION_ADD_MUTATION, {
+          id: formattedCollectionId,
+          productIds: [existingProduct.id],
+        })
+        if (collectionUpdateResponse.collectionAddProducts?.userErrors?.length > 0) {
+          console.error(
+            'Error adding to collection from updateProduct:',
+            collectionUpdateResponse.collectionAddProducts.userErrors
+          )
+        } else {
+          hadVariantChanges = true // force refetch to include new collection format
+        }
+      }
+    } catch (e) {
+      console.error('Error grouping collection in updateProduct:', e)
+    }
+  }
 
   // Si hubo cambios en variantes (precio, inventario), re-fetchear el producto
   // para devolver datos actualizados (el productUpdate response no incluye esos cambios)

@@ -45,6 +45,7 @@ interface NewProduct {
   description?: string
   tags?: string[]
   imageUrl?: string | null
+  collectionId?: string
 }
 
 interface ProductFormDialogProps {
@@ -62,10 +63,13 @@ interface ProductFormDialogProps {
   locationsLoading: boolean
   isArtist?: boolean
   defaultVendor?: string
+  collections: any[]
+  collectionsLoading: boolean
 }
 
 const emptyProduct: Omit<NewProduct, 'id'> = {
   artworkDetails: {},
+  collectionId: 'none',
   description: '',
   imageUrl: null,
   inventoryQuantity: 1,
@@ -80,6 +84,8 @@ const emptyProduct: Omit<NewProduct, 'id'> = {
 export function ProductFormDialog({
   artworkTypes,
   artworkTypesLoading,
+  collections,
+  collectionsLoading,
   defaultVendor,
   isArtist = false,
   isOpen,
@@ -403,6 +409,30 @@ export function ProductFormDialog({
                   {locations.map((location) => (
                     <SelectItem key={location.id} value={location.name}>
                       {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='collection'>Colección</Label>
+            {collectionsLoading ? (
+              <Skeleton className='h-10 w-full' />
+            ) : (
+              <Select
+                value={formData.collectionId || 'none'}
+                onValueChange={(value) => setFormData((prev) => ({ ...prev, collectionId: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Seleccionar colección' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='none'>Ninguna</SelectItem>
+                  {collections.map((collection) => (
+                    <SelectItem key={collection.id} value={collection.id}>
+                      {collection.title}
                     </SelectItem>
                   ))}
                 </SelectContent>

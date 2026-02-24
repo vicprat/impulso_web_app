@@ -29,6 +29,7 @@ export interface CreateProductPayload {
   price: string
   inventoryQuantity?: number
   details?: Partial<ArtworkDetails>
+  collectionId?: string
   images?: {
     mediaContentType: 'IMAGE'
     originalSource: string
@@ -38,6 +39,7 @@ export interface CreateProductPayload {
 export interface UpdateProductPayload extends Partial<CreateProductPayload> {
   id: string
   imagesToDelete?: string[] // IDs de las imágenes a eliminar
+  collectionId?: string
 }
 
 export interface PaginatedProductsResponse {

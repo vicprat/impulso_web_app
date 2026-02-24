@@ -57,6 +57,7 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { type Product } from '@/models/Product'
 import { useAuth } from '@/modules/auth/context/useAuth'
+import { useCollections } from '@/services/collection/hooks'
 import {
   useGetArtworkTypes,
   useGetLocations,
@@ -270,6 +271,7 @@ const VendorCombobox = ({
 // Función para crear el esquema de validación dinámicamente
 const createProductFormSchema = (isArtist: boolean) =>
   z.object({
+    collectionId: z.string().optional(),
     depth: z.string().optional(),
     description: z.string().optional(),
     handle: z.string().min(3, 'El handle debe tener al menos 3 caracteres').optional(),
@@ -382,6 +384,13 @@ export function ProductForm({
   const { data: artworkTypes = [], isLoading: isLoadingArtworkTypes } = useGetArtworkTypes()
   const { data: locations = [], isLoading: isLoadingLocations } = useGetLocations()
 
+  // Obtener todas las colecciones (solo manuales)
+  const { data: collectionsData, isLoading: isLoadingCollections } = useCollections({ limit: 250 })
+  const allCollections = collectionsData?.collections ?? []
+  const collectionsList = allCollections.filter(
+    (collection: any) => !collection.ruleSet || collection.ruleSet.rules?.length === 0
+  )
+
   // Función para agregar nuevas opciones
   const handleAddNewOption = useCallback(
     async (optionType: string, name: string) => {
@@ -422,6 +431,7 @@ export function ProductForm({
 
   const form = useForm<ProductFormData>({
     defaultValues: {
+      collectionId: product?.collections?.[0]?.id ?? 'none',
       depth: product?.artworkDetails.depth ?? '',
       description: extractDescription(product?.descriptionHtml),
       handle: product?.handle ?? '',
@@ -487,6 +497,7 @@ export function ProductForm({
         }))
 
       const updatePayload: UpdateProductPayload = {
+        collectionId: data.collectionId === 'none' ? undefined : data.collectionId,
         description: data.description,
         details: {
           artist: data.vendor ?? null,
@@ -498,7 +509,9 @@ export function ProductForm({
           width: data.width ?? null,
           year: data.year ?? null,
         },
+
         id: product.id,
+
         // Solo enviar nuevas imágenes si hay nuevas imágenes para agregar
         images: newImages.length > 0 ? newImages : undefined,
 
@@ -534,6 +547,7 @@ export function ProductForm({
       const vendorValue = isArtist && user?.artist?.name ? user.artist.name : data.vendor
 
       const createPayload: CreateProductPayload = {
+        collectionId: data.collectionId === 'none' ? undefined : data.collectionId,
         description: data.description ?? '',
         details: {
           artist: vendorValue ?? null,
@@ -767,6 +781,39 @@ export function ProductForm({
                                 </div>
                               </SelectItem>
                             )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='collectionId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className='flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant'>
+                          <Tag className='size-3' />
+                          Colección
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || 'none'}
+                          disabled={isLoadingCollections}
+                        >
+                          <FormControl>
+                            <SelectTrigger className='bg-surface-container-low hover:bg-surface-container'>
+                              <SelectValue placeholder='Selecciona una colección' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value='none'>Ninguna</SelectItem>
+                            {collectionsList.map((collection: any) => (
+                              <SelectItem key={collection.id} value={collection.id}>
+                                {collection.title}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />

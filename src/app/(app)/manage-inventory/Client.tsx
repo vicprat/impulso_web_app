@@ -625,12 +625,26 @@ export function Client() {
     [updateMutation]
   )
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
+    toast.info('Limpiando caché y actualizando datos...')
+
+    try {
+      await fetch('/api/management/cache', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: 'all' }),
+      })
+    } catch (error) {
+      console.error('Error revalidating cache:', error)
+    }
+
     void queryClient.invalidateQueries({ queryKey: ['managementProducts'] })
     void queryClient.invalidateQueries({ queryKey: ['productStats'] })
+    void queryClient.invalidateQueries({ queryKey: ['collections'] })
     setEditingRowId(null)
     void refetch()
-    toast.info('Actualizando datos...')
   }, [refetch, queryClient])
 
   const handleSorting = useCallback(

@@ -46,6 +46,7 @@ import {
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAddProductsToCollection } from '@/services/collection/hooks'
 import {
   useDeleteProduct,
   useGetArtworkTypes,
@@ -172,6 +173,7 @@ export default function ProductDetailPage() {
 
   const updateMutation = useUpdateProduct()
   const deleteMutation = useDeleteProduct()
+  const addProductsToCollectionMutation = useAddProductsToCollection()
 
   const handleEdit = () => {
     setIsEditing(true)
@@ -184,6 +186,7 @@ export default function ProductDetailPage() {
   const handleSave = async (updatePayload: UpdateProductPayload) => {
     try {
       await updateMutation.mutateAsync(updatePayload)
+
       toast.success('Producto actualizado exitosamente')
       setIsEditing(false)
       void refetch()

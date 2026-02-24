@@ -26,6 +26,7 @@ interface NewProduct {
   description?: string
   tags?: string[]
   imageUrl?: string | null
+  collectionId?: string
 }
 
 interface BulkCreateTableMeta {
@@ -43,6 +44,8 @@ interface BulkCreateTableMeta {
   techniquesLoading?: boolean
   artworkTypesLoading?: boolean
   locationsLoading?: boolean
+  collections?: any[]
+  collectionsLoading?: boolean
 }
 
 export const columns: ColumnDef<NewProduct>[] = [
@@ -168,6 +171,25 @@ export const columns: ColumnDef<NewProduct>[] = [
       )
     },
     header: 'Estado',
+  },
+  {
+    accessorKey: 'collectionId',
+    cell: ({ row, table }) => {
+      const product = row.original
+      const { collections = [] } = (table.options.meta ?? {}) as BulkCreateTableMeta
+      const collection = collections.find((c) => c.id === product.collectionId)
+
+      return (
+        <span>
+          {collection
+            ? collection.title
+            : product.collectionId === 'none'
+              ? '-'
+              : product.collectionId || '-'}
+        </span>
+      )
+    },
+    header: 'Colección',
   },
   {
     cell: ({ row, table }) => {

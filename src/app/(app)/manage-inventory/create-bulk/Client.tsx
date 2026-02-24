@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useBulkUpdateQueue } from '@/hooks/useBulkUpdateQueue'
 import { useAuth } from '@/modules/auth/context/useAuth'
+import { useCollections } from '@/services/collection/hooks'
 import {
   useGetArtworkTypes,
   useGetLocations,
@@ -47,6 +48,7 @@ interface NewProduct {
   description?: string
   tags?: string[]
   imageUrl?: string | null
+  collectionId?: string
 }
 
 interface BulkCreateTableMeta {
@@ -67,6 +69,8 @@ interface BulkCreateTableMeta {
   techniquesLoading: boolean
   artworkTypesLoading: boolean
   locationsLoading: boolean
+  collections: any[]
+  collectionsLoading: boolean
 }
 
 export function Client() {
@@ -87,6 +91,13 @@ export function Client() {
   const { data: techniques = [], isLoading: techniquesLoading } = useGetTechniques()
   const { data: artworkTypes = [], isLoading: artworkTypesLoading } = useGetArtworkTypes()
   const { data: locations = [], isLoading: locationsLoading } = useGetLocations()
+
+  // Obtener colecciones
+  const { data: collectionsData, isLoading: collectionsLoading } = useCollections({ limit: 250 })
+  const allCollections = collectionsData?.collections ?? []
+  const collections = allCollections.filter(
+    (collection: any) => !collection.ruleSet || collection.ruleSet.rules?.length === 0
+  )
 
   const bulkCreateQueue = useBulkUpdateQueue(
     async (payload: CreateProductPayload & { id: string }) => {
@@ -229,9 +240,11 @@ export function Client() {
         errors.push(`Fila ${index + 1}: ${validationError}`)
       } else {
         const payload: CreateProductPayload & { id: string } = {
+          collectionId: product.collectionId === 'none' ? undefined : product.collectionId,
           description: product.description || '',
           details: product.artworkDetails,
-          id: product.id, // Usar el ID del producto original
+          id: product.id,
+          // Usar el ID del producto original
           inventoryQuantity: product.inventoryQuantity,
           price: product.price,
           productType: product.productType,
@@ -289,6 +302,8 @@ export function Client() {
     meta: {
       artworkTypes,
       artworkTypesLoading,
+      collections,
+      collectionsLoading,
       deleteProduct: handleDeleteProduct,
       editProduct: handleEditProduct,
       editingRowId,
@@ -480,6 +495,8 @@ export function Client() {
         techniquesLoading={techniquesLoading}
         artworkTypesLoading={artworkTypesLoading}
         locationsLoading={locationsLoading}
+        collections={collections}
+        collectionsLoading={collectionsLoading}
         isArtist={isArtist}
         defaultVendor={isArtist && user?.artist?.name ? user.artist.name : ''}
       />

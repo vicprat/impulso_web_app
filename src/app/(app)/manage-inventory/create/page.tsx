@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 
 import { Form } from '@/components/Forms'
 import { Button } from '@/components/ui/button'
+import { useAddProductsToCollection } from '@/services/collection/hooks'
 import { useCreateProduct } from '@/services/product/hook'
 import { type CreateProductPayload } from '@/services/product/types'
 import { ROUTES } from '@/src/config/routes'
@@ -14,6 +15,7 @@ import { ROUTES } from '@/src/config/routes'
 export default function CreateProductPage() {
   const router = useRouter()
   const createMutation = useCreateProduct()
+  const addProductsToCollectionMutation = useAddProductsToCollection()
 
   const handleSave = async (payload: CreateProductPayload) => {
     try {
