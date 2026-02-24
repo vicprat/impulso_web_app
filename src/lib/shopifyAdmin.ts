@@ -3,6 +3,9 @@ import { createAdminApiClient } from '@shopify/admin-api-client'
 const adminClient = createAdminApiClient({
   accessToken: process.env.SHOPIFY_ADMIN_ACCESS_TOKEN!,
   apiVersion: process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION!,
+  customFetchApi: (url, init) => {
+    return fetch(url, { ...init, cache: 'no-store' })
+  },
   storeDomain: process.env.NEXT_PUBLIC_SHOPIFY_STORE!,
 })
 

@@ -13,6 +13,9 @@ if (storeDomain.startsWith('https://')) {
 
 export const storeClient = createStorefrontApiClient({
   apiVersion,
+  customFetchApi: (url, init) => {
+    return fetch(url, { ...init, cache: 'no-store' })
+  },
   publicAccessToken,
   storeDomain,
 })
