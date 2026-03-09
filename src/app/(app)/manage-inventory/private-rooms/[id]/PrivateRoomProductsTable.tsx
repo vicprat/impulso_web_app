@@ -1,17 +1,18 @@
 'use client'
 
 import { getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown, ExternalLink } from 'lucide-react'
+import { ArrowUpDown, ExternalLink, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react'
 import Link from 'next/link'
-import { useMemo } from 'react'
-
-import type { Product } from '@/models/Product'
+import { useMemo, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { formatDimensionsWithUnit } from '@/helpers/dimensions'
 import { Table } from '@/src/components/Table'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
+
+import type { Product } from '@/models/Product'
 
 interface PrivateRoomProductsTableProps {
   products: Product[]
@@ -54,6 +55,123 @@ const SortableHeader = ({
         </Badge>
       )}
     </Button>
+  )
+}
+
+const ImageCell = ({ imageUrl, product }: { product: Product; imageUrl: string | null }) => {
+  const [scale, setScale] = useState(1)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+
+  const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.5, 5))
+  const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.5, 0.5))
+
+  const handleResetZoom = () => {
+    setScale(1)
+    setPosition({ x: 0, y: 0 })
+  }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (scale <= 1) return
+    setIsDragging(true)
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    })
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || scale <= 1) return
+    setPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    })
+  }
+
+  const handleMouseUpOrLeave = () => {
+    setIsDragging(false)
+  }
+
+  return (
+    <Dialog
+      onOpenChange={(open) => {
+        if (!open) handleResetZoom()
+      }}
+    >
+      <DialogTrigger asChild>
+        <div className='relative size-16 shrink-0 cursor-pointer overflow-hidden rounded-md bg-muted transition-opacity hover:opacity-80'>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={product.images?.[0]?.altText ?? product.title}
+              className='size-full object-cover'
+            />
+          ) : (
+            <div className='flex size-full items-center justify-center bg-muted'>
+              <span className='text-xs text-muted-foreground'>Sin imagen</span>
+            </div>
+          )}
+        </div>
+      </DialogTrigger>
+      {imageUrl && (
+        <DialogContent className='max-w-4xl border-none bg-transparent p-0 shadow-none'>
+          <div className='relative flex h-[80vh] w-full flex-col items-center justify-center'>
+            {/* Controles de Zoom */}
+            <div className='absolute right-4 top-4 z-10 flex space-x-2 rounded-md bg-black/50 p-2 backdrop-blur-sm'>
+              <Button
+                variant='secondary'
+                size='icon'
+                onClick={handleResetZoom}
+                disabled={scale === 1}
+                title='Restablecer zoom'
+              >
+                <RotateCcw className='size-4' />
+              </Button>
+
+              <Button
+                variant='secondary'
+                size='icon'
+                onClick={handleZoomOut}
+                disabled={scale <= 0.5}
+                title='Alejar'
+              >
+                <ZoomOut className='size-4' />
+              </Button>
+
+              <Button
+                variant='secondary'
+                size='icon'
+                onClick={handleZoomIn}
+                disabled={scale >= 5}
+                title='Acercar'
+              >
+                <ZoomIn className='size-4' />
+              </Button>
+            </div>
+
+            {/* Contenedor draggable para imágenes con zoom grande */}
+            <div
+              className={`flex size-full items-center justify-center overflow-hidden ${scale > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUpOrLeave}
+              onMouseLeave={handleMouseUpOrLeave}
+            >
+              <img
+                src={imageUrl}
+                alt={product.images?.[0]?.altText ?? product.title}
+                className={`max-h-full max-w-full origin-center object-contain ${!isDragging ? 'transition-transform duration-200' : ''}`}
+                style={{
+                  pointerEvents: 'none',
+                  transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`, // Evita que el propio tag <img> capture el drag predeterminado del navegador
+                }}
+              />
+            </div>
+          </div>
+        </DialogContent>
+      )}
+    </Dialog>
   )
 }
 
@@ -117,21 +235,7 @@ const getColumns = (
       const product = row.original
       const imageUrl = product.images && product.images.length > 0 ? product.images[0].url : null
 
-      return (
-        <div className='relative size-16 shrink-0 overflow-hidden rounded-md bg-muted'>
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={product.images?.[0]?.altText ?? product.title}
-              className='size-full object-cover'
-            />
-          ) : (
-            <div className='flex size-full items-center justify-center bg-muted'>
-              <span className='text-xs text-muted-foreground'>Sin imagen</span>
-            </div>
-          )}
-        </div>
-      )
+      return <ImageCell product={product} imageUrl={imageUrl} />
     },
     header: 'Imagen',
   },

@@ -54,6 +54,7 @@ function OrdersContentComponent({
         onSearchChange={setSearchInput}
         placeholder='Buscar por número de orden, cliente, email...'
         onSubmit={handleSearchSubmit}
+        isLoading={activeQuery.isFetching}
       >
         <Button variant='outline' onClick={handleRefresh} disabled={activeQuery.isFetching}>
           <RefreshCw className={`mr-2 size-4 ${activeQuery.isFetching ? 'animate-spin' : ''}`} />
@@ -141,6 +142,7 @@ export default function OrdersPage() {
   const customerOrdersQuery = useCustomerOrders({
     after: afterCursorInUrl ?? undefined,
     first: pageSizeInUrl,
+    query: searchInUrl,
   })
 
   const activeQuery = activeTab === 'all-orders' ? allOrdersQuery : customerOrdersQuery
@@ -326,18 +328,16 @@ export default function OrdersPage() {
   )
 
   const handleSearchSubmit = useCallback(() => {
-    if (!activeQuery.isFetching) {
-      const currentSearchParams = new URLSearchParams(window.location.search)
-      currentSearchParams.set('page', '1')
-      currentSearchParams.delete('after')
-      if (searchInput) {
-        currentSearchParams.set('search', searchInput)
-      } else {
-        currentSearchParams.delete('search')
-      }
-      router.push(`/orders?${currentSearchParams.toString()}`, { scroll: false })
+    const currentSearchParams = new URLSearchParams(window.location.search)
+    currentSearchParams.set('page', '1')
+    currentSearchParams.delete('after')
+    if (searchInput) {
+      currentSearchParams.set('search', searchInput)
+    } else {
+      currentSearchParams.delete('search')
     }
-  }, [activeQuery.isFetching, searchInput, router])
+    router.push(`/orders?${currentSearchParams.toString()}`, { scroll: false })
+  }, [searchInput, router])
 
   const handleTabChange = useCallback(
     (tab: string) => {

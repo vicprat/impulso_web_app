@@ -4,6 +4,7 @@ import { Plus, Search as SearchIcon, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
+import { SearchInput } from '@/components/input/search'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/use-debounce'
@@ -147,17 +147,15 @@ export function AddProductsModal({
 
         <div className='flex flex-1 flex-col space-y-4 overflow-hidden'>
           <div className='flex items-center justify-between space-x-4'>
-            <div className='relative flex-1'>
+            <div className='flex-1'>
               <Label htmlFor='search' className='sr-only'>
                 Buscar productos
               </Label>
-              <SearchIcon className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
-              <Input
-                id='search'
+              <SearchInput
                 placeholder='Buscar por título, artista...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className='pl-10'
+                initialValue={searchTerm}
+                onChange={(val) => setSearchTerm(val)}
+                onSearch={(val) => setSearchTerm(val)}
               />
             </div>
             {availableProducts.length > 0 && (

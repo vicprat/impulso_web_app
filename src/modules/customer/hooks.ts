@@ -20,7 +20,7 @@ export const customerKeys = {
   all: ['customer'] as const,
   basicInfo: () => [...customerKeys.all, 'basicInfo'] as const,
   order: (id: string) => [...customerKeys.all, 'order', id] as const,
-  orders: (params?: { first?: number; after?: string }) =>
+  orders: (params?: { first?: number; after?: string; query?: string }) =>
     [...customerKeys.all, 'orders', params] as const,
   profile: () => [...customerKeys.all, 'profile'] as const,
 }
@@ -155,7 +155,7 @@ export function useSetDefaultAddress() {
 
 // Fixed: Remove the extra { data: } wrapper to match the actual usage in the component
 export function useCustomerOrders(
-  params?: { first?: number; after?: string },
+  params?: { first?: number; after?: string; query?: string },
   options?: Omit<UseQueryOptions<CustomerOrdersResult, Error>, 'queryKey' | 'queryFn'>
 ) {
   const { isAuthenticated } = useAuth()

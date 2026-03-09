@@ -4,10 +4,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { ArrowLeft, PlusCircle, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
+import { useMemo, useState } from 'react'
 
+import { SearchInput } from '@/components/input/search'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { normalizeSearch } from '@/lib/utils'
 import { useGetArrendamientos } from '@/services/product/hook'
 import { Table } from '@/src/components/Table'
 import { ROUTES } from '@/src/config/routes'
@@ -15,6 +18,7 @@ import { ROUTES } from '@/src/config/routes'
 import { columns } from './columns'
 
 export function Client() {
+  const [searchTerm, setSearchTerm] = useState('')
   const queryClient = useQueryClient()
   const { data: arrendamientos = [], error, isFetching, isLoading } = useGetArrendamientos()
 
@@ -22,11 +26,16 @@ export function Client() {
     void queryClient.invalidateQueries({ queryKey: ['arrendamientos'] })
   }
 
-  const activeArrendamientos = arrendamientos.filter((arr: any) => arr.isActive !== false)
+  const filteredArrendamientos = useMemo(() => {
+    const normalizedSearch = normalizeSearch(searchTerm)
+    return arrendamientos.filter((arr: any) => normalizeSearch(arr.name).includes(normalizedSearch))
+  }, [arrendamientos, searchTerm])
+
+  const activeArrendamientos = filteredArrendamientos.filter((arr: any) => arr.isActive !== false)
 
   const table = useReactTable({
     columns,
-    data: arrendamientos,
+    data: filteredArrendamientos,
     getCoreRowModel: getCoreRowModel(),
     meta: {
       onRefresh: handleRefresh,
@@ -93,11 +102,22 @@ export function Client() {
         </div>
       </div>
 
+      <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-3 sm:space-y-0'>
+        <div className='flex max-w-sm flex-1'>
+          <SearchInput
+            placeholder='Buscar por nombre...'
+            initialValue={searchTerm}
+            onSearch={(val) => setSearchTerm(val)}
+            isLoading={isFetching}
+          />
+        </div>
+      </div>
+
       <div className='grid grid-cols-2 gap-2 sm:grid-cols-2'>
         <div className='rounded-lg border p-2'>
           <div className='flex items-center justify-between'>
             <p className='text-sm font-medium text-muted-foreground'>Total</p>
-            <Badge variant='outline'>{arrendamientos.length}</Badge>
+            <Badge variant='outline'>{filteredArrendamientos.length}</Badge>
           </div>
         </div>
         <div className='rounded-lg border p-2'>
@@ -120,9 +140,9 @@ export function Client() {
         </div>
       )}
 
-      {arrendamientos.length > 0 && (
+      {filteredArrendamientos.length > 0 && (
         <div className='text-center text-sm text-muted-foreground'>
-          Mostrando {arrendamientos.length} arrendamientos
+          Mostrando {filteredArrendamientos.length} arrendamientos
         </div>
       )}
     </div>

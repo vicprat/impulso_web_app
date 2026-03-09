@@ -50,13 +50,13 @@ export default function UserManagementPage() {
   const roleInUrl = searchParams.get('role') ?? ''
   const isActiveParam = searchParams.get('isActive')
   const isActiveInUrl = isActiveParam === null ? undefined : isActiveParam === 'true'
-  const sortByInUrl = (searchParams.get('sortBy') ?? 'createdAt') as UserFilters[ 'sortBy' ]
+  const sortByInUrl = (searchParams.get('sortBy') ?? 'createdAt') as UserFilters['sortBy']
   const sortOrderInUrl = (searchParams.get('sortOrder') ?? 'desc') as 'asc' | 'desc'
 
-  const [ sorting, setSorting ] = useState<SortingState>([])
-  const [ searchTerm, setSearchTerm ] = useState(searchInUrl)
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [searchTerm, setSearchTerm] = useState(searchInUrl)
 
-  const [ selectedUser, setSelectedUser ] = useState<UserProfile | null>(null)
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
   const roleDialog = useDialog()
   const createUserDialog = useDialog()
 
@@ -86,8 +86,8 @@ export default function UserManagementPage() {
   // Sin debounce: el usuario confirma la búsqueda con submit/botón
 
   useEffect(() => {
-    setSorting([ { desc: sortOrderInUrl === 'desc', id: String(sortByInUrl) } ])
-  }, [ sortByInUrl, sortOrderInUrl ])
+    setSorting([{ desc: sortOrderInUrl === 'desc', id: String(sortByInUrl) }])
+  }, [sortByInUrl, sortOrderInUrl])
 
   const handleManageRoles = (user: UserProfile) => {
     setSelectedUser(user)
@@ -147,7 +147,7 @@ export default function UserManagementPage() {
     try {
       await toggleUserPublicStatus.mutateAsync({ isPublic, userId })
       toast.success('Estado público del usuario actualizado')
-      void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
+      void queryClient.invalidateQueries({ queryKey: ['users'] })
     } catch (error) {
       console.error('Error toggling user public status:', error)
       toast.error('Error al cambiar el estado público del usuario')
@@ -175,7 +175,7 @@ export default function UserManagementPage() {
       setSorting(next)
       const params = new URLSearchParams(searchParams.toString())
       if (next.length > 0) {
-        const { desc, id } = next[ 0 ]
+        const { desc, id } = next[0]
         params.set('sortBy', String(id))
         params.set('sortOrder', desc ? 'desc' : 'asc')
       } else {
@@ -214,64 +214,70 @@ export default function UserManagementPage() {
           </div>
         </div>
 
-        <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
-          <div className='mb-6'>
-            <Table.Toolbar
-              searchTerm={searchTerm}
-              onSearchChange={(value) => setSearchTerm(value)}
-              onSubmit={() => {
-                const params = new URLSearchParams(searchParams.toString())
-                if (searchTerm) params.set('search', searchTerm)
-                else params.delete('search')
-                params.set('page', '1')
-                router.push(`/admin/users?${params.toString()}`, { scroll: false })
-              }}
-            >
-              <div className='flex items-center space-x-2'>
-                <select
-                  value={roleInUrl}
-                  onChange={(e) => {
-                    const params = new URLSearchParams(searchParams.toString())
-                    if (e.target.value) params.set('role', e.target.value)
-                    else params.delete('role')
-                    params.set('page', '1')
-                    router.push(`/admin/users?${params.toString()}`, { scroll: false })
-                  }}
-                  className='w-full rounded-lg border border-input p-2 text-sm focus:ring-2 focus:ring-ring'
-                >
-                  <option value=''>Todos los roles</option>
-                  {availableRoles.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
+        <div className='mb-6'>
+          <Table.Toolbar
+            searchTerm={searchTerm}
+            onSearchChange={(value) => setSearchTerm(value)}
+            onSubmit={() => {
+              const params = new URLSearchParams(searchParams.toString())
+              if (searchTerm) params.set('search', searchTerm)
+              else params.delete('search')
+              params.set('page', '1')
+              router.push(`/admin/users?${params.toString()}`, { scroll: false })
+            }}
+          >
+            <div className='flex items-center space-x-2'>
+              <select
+                value={roleInUrl}
+                onChange={(e) => {
+                  const params = new URLSearchParams(searchParams.toString())
+                  if (e.target.value) params.set('role', e.target.value)
+                  else params.delete('role')
+                  params.set('page', '1')
+                  router.push(`/admin/users?${params.toString()}`, { scroll: false })
+                }}
+                className='w-full rounded-lg border border-input p-2 text-sm focus:ring-2 focus:ring-ring'
+              >
+                <option value=''>Todos los roles</option>
+                {availableRoles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
 
-                <select
-                  value={isActiveInUrl === undefined ? '' : String(isActiveInUrl)}
-                  onChange={(e) => {
-                    const params = new URLSearchParams(searchParams.toString())
-                    if (e.target.value === '') params.delete('isActive')
-                    else params.set('isActive', e.target.value)
-                    params.set('page', '1')
-                    router.push(`/admin/users?${params.toString()}`, { scroll: false })
-                  }}
-                  className='w-full rounded-lg border border-input bg-background p-2 text-sm focus:ring-2 focus:ring-ring'
-                >
-                  <option value=''>Todos</option>
-                  <option value='true'>Activos</option>
-                  <option value='false'>Inactivos</option>
-                </select>
-
-                <Button type='submit' className='px-4'>Buscar</Button>
-              </div>
-            </Table.Toolbar>
-          </div>
+              <select
+                value={isActiveInUrl === undefined ? '' : String(isActiveInUrl)}
+                onChange={(e) => {
+                  const params = new URLSearchParams(searchParams.toString())
+                  if (e.target.value === '') params.delete('isActive')
+                  else params.set('isActive', e.target.value)
+                  params.set('page', '1')
+                  router.push(`/admin/users?${params.toString()}`, { scroll: false })
+                }}
+                className='w-full rounded-lg border border-input bg-background p-2 text-sm focus:ring-2 focus:ring-ring'
+              >
+                <option value=''>Todos</option>
+                <option value='true'>Activos</option>
+                <option value='false'>Inactivos</option>
+              </select>
+            </div>
+          </Table.Toolbar>
         </div>
 
-        {(searchInUrl !== '' || roleInUrl !== '' || isActiveInUrl !== undefined || sortByInUrl !== 'createdAt' || sortOrderInUrl !== 'desc' || pageInUrl !== 1 || limitInUrl !== 10) && (
+        {(searchInUrl !== '' ||
+          roleInUrl !== '' ||
+          isActiveInUrl !== undefined ||
+          sortByInUrl !== 'createdAt' ||
+          sortOrderInUrl !== 'desc' ||
+          pageInUrl !== 1 ||
+          limitInUrl !== 10) && (
           <div className='mb-4'>
-            <Button variant='container-destructive' size='sm' onClick={() => router.replace('/admin/users', { scroll: false })}>
+            <Button
+              variant='container-destructive'
+              size='sm'
+              onClick={() => router.replace('/admin/users', { scroll: false })}
+            >
               Limpiar filtros
             </Button>
           </div>
@@ -318,7 +324,7 @@ export default function UserManagementPage() {
             user={selectedUser}
             onSuccess={() => {
               roleDialog.closeDialog()
-              void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
+              void queryClient.invalidateQueries({ queryKey: ['users'] })
             }}
             onCancel={roleDialog.closeDialog}
           />
@@ -335,7 +341,7 @@ export default function UserManagementPage() {
           mode='create'
           onSuccess={() => {
             createUserDialog.closeDialog()
-            void queryClient.invalidateQueries({ queryKey: [ 'users' ] })
+            void queryClient.invalidateQueries({ queryKey: ['users'] })
           }}
           onCancel={createUserDialog.closeDialog}
         />

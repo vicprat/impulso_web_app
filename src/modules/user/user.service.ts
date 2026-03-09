@@ -84,14 +84,40 @@ export const getAllUsers = async (filters: UserFilters) => {
 
   const skip = (page - 1) * limit
 
+  // Normalizar la búsqueda eliminando acentos/diacríticos para el fallback
+  const searchNormalized = search ? search.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : ''
+
   const where: Prisma.UserWhereInput = {
-    ...(search && {
-      OR: [
-        { email: { contains: search, mode: 'insensitive' } },
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
-      ],
-    }),
+    ...(search
+      ? {
+          OR: [
+            { email: { contains: search, mode: 'insensitive' } },
+            { firstName: { contains: search, mode: 'insensitive' } },
+            { lastName: { contains: search, mode: 'insensitive' } },
+            { email: { contains: searchNormalized, mode: 'insensitive' } },
+            { firstName: { contains: searchNormalized, mode: 'insensitive' } },
+            { lastName: { contains: searchNormalized, mode: 'insensitive' } },
+            {
+              UserRole: {
+                some: {
+                  role: {
+                    name: { contains: search, mode: 'insensitive' },
+                  },
+                },
+              },
+            },
+            {
+              UserRole: {
+                some: {
+                  role: {
+                    name: { contains: searchNormalized, mode: 'insensitive' },
+                  },
+                },
+              },
+            },
+          ],
+        }
+      : {}),
     ...(typeof isActive === 'boolean' && { isActive }),
     ...(typeof isPublic === 'boolean' && { isPublic }),
     ...(role && {

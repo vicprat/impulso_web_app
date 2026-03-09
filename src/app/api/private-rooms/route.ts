@@ -18,6 +18,11 @@ export async function GET() {
               firstName: true,
               id: true,
               lastName: true,
+              role: {
+                select: {
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -58,6 +63,11 @@ export async function POST(req: Request) {
               firstName: true,
               id: true,
               lastName: true,
+              role: {
+                select: {
+                  name: true,
+                },
+              },
             },
           },
         },

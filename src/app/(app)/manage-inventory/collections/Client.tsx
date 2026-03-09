@@ -4,11 +4,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { ArrowLeft, PlusCircle, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
+import { SearchInput } from '@/components/input/search'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { normalizeSearch } from '@/lib/utils'
 import { useCollections } from '@/services/collection/hooks'
 import { CollectionModal } from '@/src/components/Modals/CollectionModal'
 import { Table } from '@/src/components/Table'
@@ -19,6 +21,7 @@ import { columns } from './columns'
 import type { Collection } from '@/services/collection/types'
 
 export function Client() {
+  const [searchTerm, setSearchTerm] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null)
   const queryClient = useQueryClient()
@@ -34,6 +37,13 @@ export function Client() {
 
   const collections = collectionsData?.collections ?? []
 
+  const filteredCollections = useMemo(() => {
+    const normalizedSearch = normalizeSearch(searchTerm)
+    return collections.filter((c: Collection) =>
+      normalizeSearch(c.title).includes(normalizedSearch)
+    )
+  }, [collections, searchTerm])
+
   const handleRefresh = () => {
     void queryClient.refetchQueries({ queryKey: ['collections', 'list'] })
   }
@@ -48,7 +58,7 @@ export function Client() {
 
   const table = useReactTable({
     columns,
-    data: collections,
+    data: filteredCollections,
     getCoreRowModel: getCoreRowModel(),
     meta: {
       onEdit: (collection: Collection) => setEditingCollection(collection),
@@ -113,18 +123,32 @@ export function Client() {
           </div>
         </div>
 
+        <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-3 sm:space-y-0'>
+          <div className='flex max-w-sm flex-1'>
+            <SearchInput
+              placeholder='Buscar por título...'
+              initialValue={searchTerm}
+              onSearch={(val) => setSearchTerm(val)}
+              isLoading={isFetching}
+            />
+          </div>
+        </div>
+
         <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
           <div className='rounded-lg border p-2'>
             <div className='flex items-center justify-between'>
               <p className='text-sm font-medium text-muted-foreground'>Total</p>
-              <Badge variant='outline'>{collections.length}</Badge>
+              <Badge variant='outline'>{filteredCollections.length}</Badge>
             </div>
           </div>
           <div className='rounded-lg border p-2'>
             <div className='flex items-center justify-between'>
               <p className='text-sm font-medium text-muted-foreground'>Publicadas</p>
               <Badge variant='default'>
-                {collections.filter((c: Collection) => c.publishedOnCurrentPublication).length}
+                {
+                  filteredCollections.filter((c: Collection) => c.publishedOnCurrentPublication)
+                    .length
+                }
               </Badge>
             </div>
           </div>
@@ -133,8 +157,9 @@ export function Client() {
               <p className='text-sm font-medium text-muted-foreground'>Inteligentes</p>
               <Badge variant='secondary'>
                 {
-                  collections.filter((c: Collection) => c.ruleSet && c.ruleSet.rules?.length > 0)
-                    .length
+                  filteredCollections.filter(
+                    (c: Collection) => c.ruleSet && c.ruleSet.rules?.length > 0
+                  ).length
                 }
               </Badge>
             </div>
@@ -153,9 +178,9 @@ export function Client() {
           </div>
         )}
 
-        {collections.length > 0 && (
+        {filteredCollections.length > 0 && (
           <div className='text-center text-sm text-muted-foreground'>
-            Mostrando {collections.length} colecciones
+            Mostrando {filteredCollections.length} colecciones
           </div>
         )}
       </div>

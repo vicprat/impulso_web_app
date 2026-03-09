@@ -21,15 +21,24 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     const privateRooms = await prisma.privateRoom.findMany({
-      include: { 
+      include: {
         products: true,
         users: {
           include: {
             user: {
               select: {
-                id: true,
+                UserRole: {
+                  include: {
+                    role: {
+                      select: {
+                        name: true,
+                      },
+                    },
+                  },
+                },
                 email: true,
                 firstName: true,
+                id: true,
                 lastName: true,
               },
             },

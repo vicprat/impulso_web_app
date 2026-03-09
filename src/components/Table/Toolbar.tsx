@@ -1,10 +1,8 @@
 'use client'
 
-import { Search } from 'lucide-react'
 import React, { type ReactNode } from 'react'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { SearchInput } from '@/components/input/search'
 
 interface Props {
   searchTerm: string
@@ -12,10 +10,12 @@ interface Props {
   placeholder?: string
   children?: ReactNode
   onSubmit?: () => void
+  isLoading?: boolean
 }
 
 export const Toolbar: React.FC<Props> = ({
   children,
+  isLoading,
   onSearchChange,
   onSubmit,
   placeholder = 'Buscar...',
@@ -29,24 +29,13 @@ export const Toolbar: React.FC<Props> = ({
         onSubmit?.()
       }}
     >
-      <div className='relative flex max-w-sm flex-1'>
-        <Input
-          placeholder={placeholder}
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              onSubmit?.()
-            }
-          }}
-          className='rounded-r-none bg-card pl-10 shadow-elevation-1'
-        />
-        <Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
-      </div>
-      <Button type='submit' className='rounded-l-none px-3' variant='default'>
-        <Search className='size-4' />
-      </Button>
+      <SearchInput
+        placeholder={placeholder}
+        initialValue={searchTerm}
+        onChange={onSearchChange}
+        onSearch={() => onSubmit?.()}
+        isLoading={isLoading}
+      />
       {children}
     </form>
   )

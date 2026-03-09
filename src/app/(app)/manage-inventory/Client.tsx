@@ -46,6 +46,7 @@ import {
 import { useGetDiscounts } from '@/services/product/queries'
 import { type UpdateProductPayload } from '@/services/product/types'
 import { BulkUpdateProgress } from '@/src/components/BulkUpdateProgress'
+import { SearchInput } from '@/src/components/input/search'
 import { ProductAutomaticDiscountModal } from '@/src/components/Modals/ProductAutomaticDiscountModal'
 import { Table } from '@/src/components/Table'
 import { Skeleton } from '@/src/components/ui/skeleton'
@@ -371,12 +372,12 @@ export function Client() {
     isLoading,
     refetch,
   } = useGetProductsPaginated({
+    arrendamiento: arrendamientoFilterInUrl !== 'all' ? arrendamientoFilterInUrl : undefined,
     artworkType: artworkTypeFilterInUrl !== 'all' ? artworkTypeFilterInUrl : undefined,
     cursor: afterCursorInUrl || undefined,
     dimensions: dimensionsFilterInUrl !== 'all' ? dimensionsFilterInUrl : undefined,
     limit: pageSizeInUrl,
     location: locationFilterInUrl !== 'all' ? locationFilterInUrl : undefined,
-    arrendamiento: arrendamientoFilterInUrl !== 'all' ? arrendamientoFilterInUrl : undefined,
     search: searchInUrl,
     sortBy: sortByInUrl,
     sortOrder: sortOrderInUrl,
@@ -630,11 +631,11 @@ export function Client() {
 
     try {
       await fetch('/api/management/cache', {
-        method: 'POST',
+        body: JSON.stringify({ type: 'all' }),
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ type: 'all' }),
+        method: 'POST',
       })
     } catch (error) {
       console.error('Error revalidating cache:', error)
@@ -1354,31 +1355,14 @@ export function Client() {
       </div>
 
       <div className='flex min-w-0 flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0'>
-        <div className='relative flex max-w-sm flex-1'>
-          <Input
+        <div className='flex w-full max-w-sm flex-1 items-center'>
+          <SearchInput
             placeholder='Buscar por título, artista, tipo, precio, SKU, colección...'
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearchSubmit()
-              }
-            }}
-            className='rounded-r-none'
-            disabled={isFetching}
+            initialValue={searchInUrl}
+            onChange={(val) => setSearchInput(val)}
+            onSearch={handleSearchSubmit}
+            isLoading={isFetching}
           />
-          <Button
-            onClick={handleSearchSubmit}
-            className='rounded-l-none px-3'
-            variant='default'
-            disabled={isFetching}
-          >
-            {isFetching ? (
-              <RefreshCw className='size-4 animate-spin' />
-            ) : (
-              <Search className='size-4' />
-            )}
-          </Button>
           {searchInUrl && (
             <Button
               onClick={handleClearSearch}

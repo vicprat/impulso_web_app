@@ -1,14 +1,13 @@
 'use client'
 
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
-import { Download, Filter, PlusCircle, RefreshCw, Search } from 'lucide-react'
+import { Filter, PlusCircle, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -17,9 +16,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useDebounce } from '@/hooks/use-debounce'
 import { useGetEventsPaginated, useUpdateEvent } from '@/services/event/hook'
 import { type UpdateEventPayload } from '@/services/event/types'
+import { SearchInput } from '@/src/components/input/search'
 import { Table } from '@/src/components/Table'
 import { TableSelectionToolbar } from '@/src/components/TableSelectionToolbar'
 import { ROUTES } from '@/src/config/routes'
@@ -49,8 +48,6 @@ export default function ManageEventsPage() {
 
   const [cursors, setCursors] = useState<Record<number, string | undefined>>({ 1: undefined })
 
-  const debouncedSearch = useDebounce(searchTerm, 500)
-
   const {
     data: paginatedData,
     error,
@@ -60,7 +57,7 @@ export default function ManageEventsPage() {
   } = useGetEventsPaginated({
     cursor: cursors[currentPage],
     limit: pageSize,
-    search: debouncedSearch,
+    search: searchTerm,
   })
 
   const updateMutation = useUpdateEvent()
@@ -97,11 +94,11 @@ export default function ManageEventsPage() {
   useEffect(() => {
     setCurrentPage(1)
     setCursors({ 1: undefined })
-  }, [debouncedSearch, pageSize])
+  }, [searchTerm, pageSize])
 
   useEffect(() => {
     setRowSelection({})
-  }, [currentPage, debouncedSearch, statusFilter])
+  }, [currentPage, searchTerm, statusFilter])
 
   const handleUpdateEvent = useCallback(
     (payload: Partial<UpdateEventPayload> & { id: string }) => {
@@ -226,13 +223,12 @@ export default function ManageEventsPage() {
       </div>
 
       <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-3 sm:space-y-0'>
-        <div className='relative max-w-sm flex-1'>
-          <Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400' />
-          <Input
+        <div className='flex max-w-sm flex-1'>
+          <SearchInput
             placeholder='Buscar por título, organizador...'
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className='pl-10'
+            initialValue={searchTerm}
+            onSearch={(val) => setSearchTerm(val)}
+            isLoading={isFetching}
           />
         </div>
 
@@ -248,11 +244,6 @@ export default function ManageEventsPage() {
             <SelectItem value='ARCHIVED'>Archivados</SelectItem>
           </SelectContent>
         </Select>
-
-        <Button variant='outline' size='sm'>
-          <Download className='mr-2 size-4' />
-          Exportar
-        </Button>
       </div>
 
       {isFetching && (
@@ -268,8 +259,8 @@ export default function ManageEventsPage() {
         <Table.Data
           table={table}
           emptyMessage={
-            debouncedSearch
-              ? `No se encontraron eventos que coincidan con "${debouncedSearch}"`
+            searchTerm
+              ? `No se encontraron eventos que coincidan con "${searchTerm}"`
               : statusFilter !== 'all'
                 ? `No hay eventos con estsado "${statusFilter}"`
                 : 'No se encontraron eventos.'

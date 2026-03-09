@@ -19,11 +19,7 @@ export default function PrivateRoomDetailPage() {
   const params = useParams()
   const roomId = params.id as string
 
-  const {
-    data: privateRoom,
-    error: roomError,
-    isLoading: isLoadingRoom,
-  } = usePrivateRoom(roomId)
+  const { data: privateRoom, error: roomError, isLoading: isLoadingRoom } = usePrivateRoom(roomId)
 
   const productIds = privateRoom?.products.map((p) => p.productId) ?? []
   const {
@@ -32,7 +28,43 @@ export default function PrivateRoomDetailPage() {
     isLoading: isLoadingProducts,
   } = usePrivateRoomProducts(productIds)
 
-  const products = productsData?.products ?? []
+  const rawProducts = productsData?.products ?? []
+  const products = rawProducts.map((p: any) => {
+    if (p.priceRange && p.availableForSale !== undefined) return p
+
+    let minPriceInfo = { amount: 0, currencyCode: 'MXN' }
+    let maxPriceInfo = { amount: 0, currencyCode: 'MXN' }
+    let hasAvailable = false
+
+    if (p.variants && p.variants.length > 0) {
+      const prices = p.variants.map((v: any) => parseFloat(v.price?.amount || '0'))
+      minPriceInfo = {
+        amount: Math.min(...prices),
+        currencyCode: p.variants[0].price?.currencyCode || 'MXN',
+      }
+      maxPriceInfo = {
+        amount: Math.max(...prices),
+        currencyCode: p.variants[0].price?.currencyCode || 'MXN',
+      }
+      hasAvailable = p.variants.some((v: any) => v.availableForSale)
+    }
+
+    return {
+      ...p,
+      availableForSale: hasAvailable,
+      priceRange: {
+        maxVariantPrice: {
+          amount: maxPriceInfo.amount.toString(),
+          currencyCode: maxPriceInfo.currencyCode,
+        },
+        minVariantPrice: {
+          amount: minPriceInfo.amount.toString(),
+          currencyCode: minPriceInfo.currencyCode,
+        },
+      },
+    }
+  }) as Product[]
+
   const isLoading = isLoadingRoom || isLoadingProducts
 
   if (isLoading) {
@@ -59,7 +91,7 @@ export default function PrivateRoomDetailPage() {
       <div className='container mx-auto max-w-4xl p-6'>
         <Alert variant='destructive'>
           <AlertDescription>
-            Error loading private room: {roomError?.message ?? productsError?.message}
+            Error al cargar la sala privada: {roomError?.message ?? productsError?.message}
           </AlertDescription>
         </Alert>
       </div>
@@ -74,13 +106,13 @@ export default function PrivateRoomDetailPage() {
             <Package className='size-12 text-muted-foreground' />
           </div>
           <div className='space-y-2'>
-            <h1 className='text-2xl font-bold'>Private Room Not Found</h1>
+            <h1 className='text-2xl font-bold'>Private Room No Encontrada</h1>
             <p className='text-muted-foreground'>
-              The private room you're looking for doesn't exist or you don't have access to it.
+              La sala privada que estás buscando no existe o no tienes acceso a ella.
             </p>
           </div>
           <Button asChild>
-            <Link href={ROUTES.ADMIN.PRIVATE_ROOMS.ACCESS.PATH}>Back to Private Rooms</Link>
+            <Link href={ROUTES.ADMIN.PRIVATE_ROOMS.ACCESS.PATH}>Volver a Salas Privadas</Link>
           </Button>
         </div>
       </div>
@@ -103,7 +135,7 @@ export default function PrivateRoomDetailPage() {
           <div className='mb-2 flex items-center justify-center gap-2'>
             <Sparkles className='size-6 text-primary' />
             <Badge variant='secondary' className='text-sm'>
-              VIP Experience
+              Colección Privada Exclusiva
             </Badge>
           </div>
           <h1 className='text-4xl font-bold tracking-tight'>{privateRoom.name}</h1>
@@ -190,4 +222,3 @@ export default function PrivateRoomDetailPage() {
     </div>
   )
 }
-

@@ -4,11 +4,14 @@ import { useQueryClient } from '@tanstack/react-query'
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { ArrowLeft, PlusCircle, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
+import { useMemo, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { normalizeSearch } from '@/lib/utils'
 import { useGetDiscounts } from '@/services/product/queries'
+import { SearchInput } from '@/src/components/input/search'
 import { Table } from '@/src/components/Table'
 import { ROUTES } from '@/src/config/routes'
 
@@ -18,9 +21,12 @@ interface Coupon {
   isActive: boolean
   startsAt: string
   endsAt?: string | null
+  code: string
+  title?: string
 }
 
 export function Client() {
+  const [searchTerm, setSearchTerm] = useState('')
   const queryClient = useQueryClient()
   const { data: coupons = [], error, isFetching, isLoading } = useGetDiscounts()
 
@@ -28,8 +34,17 @@ export function Client() {
     void queryClient.invalidateQueries({ queryKey: ['discounts'] })
   }
 
+  const filteredCoupons = useMemo(() => {
+    const normalizedSearch = normalizeSearch(searchTerm)
+    return coupons.filter(
+      (coupon: Coupon) =>
+        normalizeSearch(coupon.code).includes(normalizedSearch) ||
+        (coupon.title && normalizeSearch(coupon.title).includes(normalizedSearch))
+    )
+  }, [coupons, searchTerm])
+
   const now = new Date()
-  const activeCoupons = coupons.filter((coupon: Coupon) => {
+  const activeCoupons = filteredCoupons.filter((coupon: Coupon) => {
     if (!coupon.isActive) return false
     const startsAt = new Date(coupon.startsAt)
     const endsAt = coupon.endsAt ? new Date(coupon.endsAt) : null
@@ -38,7 +53,7 @@ export function Client() {
 
   const table = useReactTable({
     columns,
-    data: coupons,
+    data: filteredCoupons,
     getCoreRowModel: getCoreRowModel(),
     meta: {
       onRefresh: handleRefresh,
@@ -103,11 +118,22 @@ export function Client() {
         </div>
       </div>
 
+      <div className='flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-3 sm:space-y-0'>
+        <div className='flex max-w-sm flex-1'>
+          <SearchInput
+            placeholder='Buscar por código o título...'
+            initialValue={searchTerm}
+            onSearch={(val) => setSearchTerm(val)}
+            isLoading={isFetching}
+          />
+        </div>
+      </div>
+
       <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
         <div className='rounded-lg border p-2'>
           <div className='flex items-center justify-between'>
             <p className='text-sm font-medium text-muted-foreground'>Total</p>
-            <Badge variant='outline'>{coupons.length}</Badge>
+            <Badge variant='outline'>{filteredCoupons.length}</Badge>
           </div>
         </div>
         <div className='rounded-lg border p-2'>
@@ -119,7 +145,7 @@ export function Client() {
         <div className='rounded-lg border p-2'>
           <div className='flex items-center justify-between'>
             <p className='text-sm font-medium text-muted-foreground'>Inactivos</p>
-            <Badge variant='secondary'>{coupons.length - activeCoupons.length}</Badge>
+            <Badge variant='secondary'>{filteredCoupons.length - activeCoupons.length}</Badge>
           </div>
         </div>
       </div>
@@ -136,9 +162,9 @@ export function Client() {
         </div>
       )}
 
-      {coupons.length > 0 && (
+      {filteredCoupons.length > 0 && (
         <div className='text-center text-sm text-muted-foreground'>
-          Mostrando {coupons.length} cupones
+          Mostrando {filteredCoupons.length} cupones
         </div>
       )}
     </div>

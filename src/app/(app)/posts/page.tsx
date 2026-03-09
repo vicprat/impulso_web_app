@@ -28,7 +28,6 @@ import { columns } from './columns'
 
 import type { PostFilters, PostStatus, PostWithRelations } from '@/modules/blog/types'
 
-
 export default function BlogAdminPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -41,25 +40,39 @@ export default function BlogAdminPage() {
   const featuredInUrl = featuredParam === null ? undefined : featuredParam === 'true'
   const categoryIdInUrl = searchParams.get('categoryId') ?? undefined
   const tagIdInUrl = searchParams.get('tagId') ?? undefined
-  const sortByInUrl = (searchParams.get('sortBy') ?? 'publishedAt') as PostFilters[ 'sortBy' ]
+  const sortByInUrl = (searchParams.get('sortBy') ?? 'publishedAt') as PostFilters['sortBy']
   const sortOrderInUrl = (searchParams.get('sortOrder') ?? 'desc') as 'asc' | 'desc'
 
-  const [ sorting, setSorting ] = useState<SortingState>([])
-  const [ rowSelection, setRowSelection ] = useState<Record<string, boolean>>({})
-  const [ searchTerm, setSearchTerm ] = useState(qInUrl)
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
+  const [searchTerm, setSearchTerm] = useState(qInUrl)
 
-  const filtersMemo = useMemo(() => ({
-    authorId: undefined,
-    categoryId: categoryIdInUrl,
-    featured: featuredInUrl,
-    page: pageInUrl,
-    pageSize: pageSizeInUrl,
-    q: qInUrl,
-    sortBy: sortByInUrl,
-    sortOrder: sortOrderInUrl,
-    status: (statusInUrl || undefined) as PostFilters[ 'status' ],
-    tagId: tagIdInUrl,
-  } satisfies PostFilters), [ categoryIdInUrl, featuredInUrl, pageInUrl, pageSizeInUrl, qInUrl, sortByInUrl, sortOrderInUrl, statusInUrl, tagIdInUrl ])
+  const filtersMemo = useMemo(
+    () =>
+      ({
+        authorId: undefined,
+        categoryId: categoryIdInUrl,
+        featured: featuredInUrl,
+        page: pageInUrl,
+        pageSize: pageSizeInUrl,
+        q: qInUrl,
+        sortBy: sortByInUrl,
+        sortOrder: sortOrderInUrl,
+        status: (statusInUrl || undefined) as PostFilters['status'],
+        tagId: tagIdInUrl,
+      }) satisfies PostFilters,
+    [
+      categoryIdInUrl,
+      featuredInUrl,
+      pageInUrl,
+      pageSizeInUrl,
+      qInUrl,
+      sortByInUrl,
+      sortOrderInUrl,
+      statusInUrl,
+      tagIdInUrl,
+    ]
+  )
   const { data, isLoading } = useAdminPosts(filtersMemo)
   const { data: categories } = useCategories()
   const { data: tags } = useTags()
@@ -68,12 +81,11 @@ export default function BlogAdminPage() {
   // Sin debounce: el usuario debe confirmar con Enter o botón
 
   useEffect(() => {
-    setSorting([ { desc: sortOrderInUrl === 'desc', id: sortByInUrl } ])
+    setSorting([{ desc: sortOrderInUrl === 'desc', id: sortByInUrl }])
+  }, [sortByInUrl, sortOrderInUrl])
 
-  }, [ sortByInUrl, sortOrderInUrl ])
-
-  const [ showConfirm, setShowConfirm ] = useState(false)
-  const [ idsToDelete, setIdsToDelete ] = useState<string[]>([])
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [idsToDelete, setIdsToDelete] = useState<string[]>([])
 
   const tableMeta: {
     updateStatus: (id: string, status: PostStatus) => Promise<void>
@@ -123,7 +135,7 @@ export default function BlogAdminPage() {
       setSorting(next)
       const params = new URLSearchParams(searchParams.toString())
       if (next.length > 0) {
-        const { desc, id } = next[ 0 ]
+        const { desc, id } = next[0]
         params.set('sortBy', String(id))
         params.set('sortOrder', desc ? 'desc' : 'asc')
       } else {
@@ -155,125 +167,130 @@ export default function BlogAdminPage() {
         </Permission>
       </div>
 
-      <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
-        <div className='mb-6'>
-          <Table.Toolbar
-            onSearchChange={(val) => setSearchTerm(val)}
-            placeholder='Buscar por título o contenido...'
-            searchTerm={searchTerm}
-            onSubmit={() => {
+      <div className='mb-6'>
+        <Table.Toolbar
+          onSearchChange={(val) => setSearchTerm(val)}
+          placeholder='Buscar por título o contenido...'
+          searchTerm={searchTerm}
+          isLoading={isLoading}
+          onSubmit={() => {
+            const params = new URLSearchParams(searchParams.toString())
+            if (searchTerm) params.set('q', searchTerm)
+            else params.delete('q')
+            params.set('page', '1')
+            router.push(`/posts?${params.toString()}`, { scroll: false })
+          }}
+        >
+          <div className='flex items-center space-x-2'>
+            <select
+              value={statusInUrl}
+              onChange={(e) => {
+                const params = new URLSearchParams(searchParams.toString())
+                if (e.target.value) params.set('status', e.target.value)
+                else params.delete('status')
+                params.set('page', '1')
+                router.push(`/posts?${params.toString()}`, { scroll: false })
+              }}
+              className='w-full rounded-lg border border-input p-2 text-sm focus:ring-2 focus:ring-ring'
+            >
+              <option value=''>Todos los estados</option>
+              <option value='DRAFT'>Borradores</option>
+              <option value='PUBLISHED'>Publicados</option>
+              <option value='ARCHIVED'>Archivados</option>
+            </select>
+
+            <select
+              value={featuredInUrl === undefined ? '' : String(featuredInUrl)}
+              onChange={(e) => {
+                const params = new URLSearchParams(searchParams.toString())
+                if (e.target.value === '') params.delete('featured')
+                else params.set('featured', e.target.value)
+                params.set('page', '1')
+                router.push(`/posts?${params.toString()}`, { scroll: false })
+              }}
+              className='w-full rounded-lg border border-input bg-background p-2 text-sm focus:ring-2 focus:ring-ring'
+            >
+              <option value=''>Todos</option>
+              <option value='true'>Destacados</option>
+              <option value='false'>No destacados</option>
+            </select>
+          </div>
+        </Table.Toolbar>
+      </div>
+
+      <div className='mb-6'>
+        <div className='flex items-center space-x-2'>
+          <select
+            value={categoryIdInUrl ?? ''}
+            className='w-full rounded-lg border border-input p-2 text-sm focus:ring-2 focus:ring-ring'
+            onChange={(e) => {
               const params = new URLSearchParams(searchParams.toString())
-              if (searchTerm) params.set('q', searchTerm)
-              else params.delete('q')
+              if (e.target.value) params.set('categoryId', e.target.value)
+              else params.delete('categoryId')
               params.set('page', '1')
               router.push(`/posts?${params.toString()}`, { scroll: false })
             }}
           >
-            <div className='flex items-center space-x-2'>
-              <select
-                value={statusInUrl}
-                onChange={(e) => {
-                  const params = new URLSearchParams(searchParams.toString())
-                  if (e.target.value) params.set('status', e.target.value)
-                  else params.delete('status')
-                  params.set('page', '1')
-                  router.push(`/posts?${params.toString()}`, { scroll: false })
-                }}
-                className='w-full rounded-lg border border-input p-2 text-sm focus:ring-2 focus:ring-ring'
-              >
-                <option value=''>Todos los estados</option>
-                <option value='DRAFT'>Borradores</option>
-                <option value='PUBLISHED'>Publicados</option>
-                <option value='ARCHIVED'>Archivados</option>
-              </select>
+            <option value=''>Todas las categorías</option>
+            {(categories ?? []).map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
 
-              <select
-                value={featuredInUrl === undefined ? '' : String(featuredInUrl)}
-                onChange={(e) => {
-                  const params = new URLSearchParams(searchParams.toString())
-                  if (e.target.value === '') params.delete('featured')
-                  else params.set('featured', e.target.value)
-                  params.set('page', '1')
-                  router.push(`/posts?${params.toString()}`, { scroll: false })
-                }}
-                className='w-full rounded-lg border border-input bg-background p-2 text-sm focus:ring-2 focus:ring-ring'
-              >
-                <option value=''>Todos</option>
-                <option value='true'>Destacados</option>
-                <option value='false'>No destacados</option>
-              </select>
-
-              <Button type='submit' className='px-4'>Buscar</Button>
-            </div>
-          </Table.Toolbar>
+          <select
+            value={tagIdInUrl ?? ''}
+            className='w-full rounded-lg border border-input bg-background p-2 text-sm focus:ring-2 focus:ring-ring'
+            onChange={(e) => {
+              const params = new URLSearchParams(searchParams.toString())
+              if (e.target.value) params.set('tagId', e.target.value)
+              else params.delete('tagId')
+              params.set('page', '1')
+              router.push(`/posts?${params.toString()}`, { scroll: false })
+            }}
+          >
+            <option value=''>Todos los tags</option>
+            {(tags ?? []).map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
         </div>
-
-        <div className='mb-6'>
-          <div className='flex items-center space-x-2'>
-            <select
-              value={categoryIdInUrl ?? ''}
-              className='w-full rounded-lg border border-input p-2 text-sm focus:ring-2 focus:ring-ring'
-              onChange={(e) => {
-                const params = new URLSearchParams(searchParams.toString())
-                if (e.target.value) params.set('categoryId', e.target.value)
-                else params.delete('categoryId')
-                params.set('page', '1')
-                router.push(`/posts?${params.toString()}`, { scroll: false })
-              }}
-            >
-              <option value=''>Todas las categorías</option>
-              {(categories ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={tagIdInUrl ?? ''}
-              className='w-full rounded-lg border border-input bg-background p-2 text-sm focus:ring-2 focus:ring-ring'
-              onChange={(e) => {
-                const params = new URLSearchParams(searchParams.toString())
-                if (e.target.value) params.set('tagId', e.target.value)
-                else params.delete('tagId')
-                params.set('page', '1')
-                router.push(`/posts?${params.toString()}`, { scroll: false })
-              }}
-            >
-              <option value=''>Todos los tags</option>
-              {(tags ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {(qInUrl !== '' || statusInUrl !== '' || featuredInUrl !== undefined || (categoryIdInUrl ?? '') !== '' || (tagIdInUrl ?? '') !== '' || sortByInUrl !== 'publishedAt' || sortOrderInUrl !== 'desc' || pageInUrl !== 1 || pageSizeInUrl !== 20) && (
-          <div className='mb-6 flex items-center'>
-            <Button
-              variant='container-destructive'
-              size='sm'
-              onClick={() => router.replace('/posts', { scroll: false })}
-            >
-              Limpiar filtros
-            </Button>
-          </div>
-        )}
       </div>
+
+      {(qInUrl !== '' ||
+        statusInUrl !== '' ||
+        featuredInUrl !== undefined ||
+        (categoryIdInUrl ?? '') !== '' ||
+        (tagIdInUrl ?? '') !== '' ||
+        sortByInUrl !== 'publishedAt' ||
+        sortOrderInUrl !== 'desc' ||
+        pageInUrl !== 1 ||
+        pageSizeInUrl !== 20) && (
+        <div className='mb-6 flex items-center'>
+          <Button
+            variant='container-destructive'
+            size='sm'
+            onClick={() => router.replace('/posts', { scroll: false })}
+          >
+            Limpiar filtros
+          </Button>
+        </div>
+      )}
 
       {Object.keys(rowSelection).length > 0 && (
         <div className='mb-2 flex items-center justify-between rounded-md border bg-muted px-3 py-2 text-sm'>
-          <span>
-            {Object.values(rowSelection).filter(Boolean).length} seleccionados
-          </span>
+          <span>{Object.values(rowSelection).filter(Boolean).length} seleccionados</span>
           <div className='space-x-2'>
             <Button
               variant='destructive'
               size='sm'
               onClick={() => {
-                const selectedIds = table.getFilteredSelectedRowModel().rows.map((r) => r.original.id)
+                const selectedIds = table
+                  .getFilteredSelectedRowModel()
+                  .rows.map((r) => r.original.id)
                 setIdsToDelete(selectedIds)
                 setShowConfirm(true)
               }}
@@ -340,5 +357,3 @@ export default function BlogAdminPage() {
     </div>
   )
 }
-
-

@@ -7,13 +7,6 @@ import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
-import { AddProductsModal } from './AddProductsModal'
-import { AddUsersModal } from './AddUsersModal'
-import { EditRoomModal } from './EditRoomModal'
-import { PrivateRoomProductsTable } from './PrivateRoomProductsTable'
-
-import type { Product } from '@/models/Product'
-
 import { Confirm } from '@/components/Dialog/Confirm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -25,6 +18,13 @@ import {
   useUpdatePrivateRoom,
 } from '@/modules/rooms/hooks'
 import { ROUTES } from '@/src/config/routes'
+
+import { AddProductsModal } from './AddProductsModal'
+import { AddUsersModal } from './AddUsersModal'
+import { EditRoomModal } from './EditRoomModal'
+import { PrivateRoomProductsTable } from './PrivateRoomProductsTable'
+
+import type { Product } from '@/models/Product'
 
 interface PrivateRoomDetailProps {
   roomId: string
@@ -353,7 +353,8 @@ export function PrivateRoomDetail({ roomId }: PrivateRoomDetailProps) {
               <div className='space-y-2'>
                 {room.users.map((userAssignment) => {
                   const isSelected = selectedUsers.has(userAssignment.userId)
-                  const userRole = 'Sin rol'
+                  const userRoles = (userAssignment.user as any)?.UserRole ?? []
+                  const userRole = userRoles.length > 0 ? userRoles[0].role?.name : 'Sin rol'
 
                   return (
                     <div

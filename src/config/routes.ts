@@ -150,7 +150,7 @@ export const ROUTES = {
     PRIVATE_ROOMS: {
       ACCESS: {
         ICON: 'lock',
-        LABEL: 'Acceder a Sala Privada',
+        LABEL: 'Salas Privadas',
         PATH: '/private-room',
         PERMISSIONS: [PERMISSIONS.VIEW_PRIVATE_ROOMS],
         ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.VIP_CUSTOMER.NAME],
@@ -375,7 +375,6 @@ export const ROUTES = {
         ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
-
     MAIN: {
       ICON: 'archive',
       LABEL: 'Inventario',

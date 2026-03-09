@@ -16,6 +16,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
           include: {
             user: {
               select: {
+                UserRole: {
+                  include: {
+                    role: {
+                      select: {
+                        name: true,
+                      },
+                    },
+                  },
+                },
                 email: true,
                 firstName: true,
                 id: true,
@@ -47,11 +56,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { description, name, productIds, userIds } = await req.json()
 
     const updatedPrivateRoom = await prisma.$transaction(async (tx) => {
-      await tx.privateRoomProduct.deleteMany({
-        where: { privateRoomId: id },
-      })
+      if (productIds !== undefined) {
+        await tx.privateRoomProduct.deleteMany({
+          where: { privateRoomId: id },
+        })
+      }
 
-      if (userIds && Array.isArray(userIds)) {
+      if (userIds !== undefined && Array.isArray(userIds)) {
         await tx.privateRoomUser.deleteMany({
           where: { privateRoomId: id },
         })
@@ -90,6 +101,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             include: {
               user: {
                 select: {
+                  UserRole: {
+                    include: {
+                      role: {
+                        select: {
+                          name: true,
+                        },
+                      },
+                    },
+                  },
                   email: true,
                   firstName: true,
                   id: true,
@@ -188,6 +208,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
               include: {
                 user: {
                   select: {
+                    UserRole: {
+                      include: {
+                        role: {
+                          select: {
+                            name: true,
+                          },
+                        },
+                      },
+                    },
                     email: true,
                     firstName: true,
                     id: true,
@@ -209,6 +238,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             include: {
               user: {
                 select: {
+                  UserRole: {
+                    include: {
+                      role: {
+                        select: {
+                          name: true,
+                        },
+                      },
+                    },
+                  },
                   email: true,
                   firstName: true,
                   id: true,
