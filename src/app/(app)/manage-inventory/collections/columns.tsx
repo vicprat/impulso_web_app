@@ -1,7 +1,16 @@
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
-import { Edit, ExternalLink, EyeOff, Globe, MoreVertical, QrCode, Trash2 } from 'lucide-react'
+import {
+  ArrowUpDown,
+  Edit,
+  ExternalLink,
+  EyeOff,
+  Globe,
+  MoreVertical,
+  QrCode,
+  Trash2,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -219,7 +228,12 @@ export const columns: ColumnDef<Collection>[] = [
         </Link>
       )
     },
-    header: 'Título',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Título
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'description',
@@ -229,7 +243,12 @@ export const columns: ColumnDef<Collection>[] = [
         <span className='line-clamp-2 text-sm text-muted-foreground'>{description || '-'}</span>
       )
     },
-    header: 'Descripción',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Descripción
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'productsCount',
@@ -240,10 +259,19 @@ export const columns: ColumnDef<Collection>[] = [
         </Badge>
       )
     },
-    header: 'Productos',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Productos
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'type',
+    accessorFn: (row) => {
+      const isSmartCollection = row.ruleSet && row.ruleSet.rules?.length > 0
+      return isSmartCollection ? 'Inteligente' : 'Manual'
+    },
     cell: ({ row }) => {
       const isSmartCollection = row.original.ruleSet && row.original.ruleSet.rules?.length > 0
       return isSmartCollection ? (
@@ -256,10 +284,16 @@ export const columns: ColumnDef<Collection>[] = [
         </Badge>
       )
     },
-    header: 'Tipo',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Tipo
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'status',
+    accessorFn: (row) => (row.publishedOnCurrentPublication ? 'Publicada' : 'Borrador'),
     cell: ({ row }) => {
       const isPublished = row.original.publishedOnCurrentPublication
       return isPublished ? (
@@ -272,7 +306,12 @@ export const columns: ColumnDef<Collection>[] = [
         </Badge>
       )
     },
-    header: 'Estado',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Estado
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'handle',

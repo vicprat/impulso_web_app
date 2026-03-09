@@ -1,7 +1,8 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import type { SortingState } from '@tanstack/react-table'
+import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import { ArrowLeft, PlusCircle, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
@@ -19,6 +20,7 @@ import { columns } from './columns'
 
 export function Client() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [sorting, setSorting] = useState<SortingState>([])
   const queryClient = useQueryClient()
   const { data: arrendamientos = [], error, isFetching, isLoading } = useGetArrendamientos()
 
@@ -37,8 +39,13 @@ export function Client() {
     columns,
     data: filteredArrendamientos,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     meta: {
       onRefresh: handleRefresh,
+    },
+    onSortingChange: setSorting,
+    state: {
+      sorting,
     },
   })
 

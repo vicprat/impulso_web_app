@@ -1,7 +1,7 @@
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
-import { Edit, Trash2 } from 'lucide-react'
+import { ArrowUpDown, Edit, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -142,7 +142,12 @@ export const columns: ColumnDef<Discount>[] = [
         </Link>
       )
     },
-    header: 'Código',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Código
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'title',
@@ -150,10 +155,16 @@ export const columns: ColumnDef<Discount>[] = [
       const title = row.original.title
       return <span className='text-sm'>{title || '-'}</span>
     },
-    header: 'Título',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Título
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'discount',
+    accessorFn: (row) => row.value,
     cell: ({ row }) => {
       return (
         <Badge variant='destructive' className='text-sm'>
@@ -161,23 +172,39 @@ export const columns: ColumnDef<Discount>[] = [
         </Badge>
       )
     },
-    header: 'Descuento',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Descuento
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'appliesTo',
+    accessorFn: (row) => getAppliesToLabel(row),
     cell: ({ row }) => {
       return (
         <span className='text-sm text-muted-foreground'>{getAppliesToLabel(row.original)}</span>
       )
     },
-    header: 'Aplicable a',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Aplicable a
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'startsAt',
     cell: ({ row }) => {
       return <span className='text-sm'>{formatDate(row.original.startsAt)}</span>
     },
-    header: 'Inicio',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Inicio
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'endsAt',
@@ -185,14 +212,34 @@ export const columns: ColumnDef<Discount>[] = [
       const endsAt = row.original.endsAt
       return <span className='text-sm'>{endsAt ? formatDate(endsAt) : 'Sin fecha'}</span>
     },
-    header: 'Fin',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Fin
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'status',
+    accessorFn: (row) => {
+      const now = new Date()
+      const startsAt = new Date(row.startsAt)
+      const endsAt = row.endsAt ? new Date(row.endsAt) : null
+
+      if (!row.isActive) return 0 // Inactivo
+      if (endsAt && now > endsAt) return 1 // Expirado
+      if (now < startsAt) return 2 // Pendiente
+      return 3 // Activo
+    },
     cell: ({ row }) => {
       return getStatusBadge(row.original)
     },
-    header: 'Estado',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Estado
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     cell: ({ row, table }) => {

@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Label } from '@radix-ui/react-label'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
@@ -8,7 +9,9 @@ import {
   CheckCircle,
   DollarSign,
   Edit,
+  Package,
   Percent,
+  Search as SearchIcon,
   Tag,
   Trash2,
   X,
@@ -22,10 +25,12 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { Confirm } from '@/components/Dialog/Confirm'
+import { ProductSelectorModal } from '@/components/Modals/ProductSelectorModal'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -53,6 +58,7 @@ import { ROUTES } from '@/src/config/routes'
 
 const couponSchema = z.object({
   appliesOncePerCustomer: z.boolean().default(false),
+  appliesTo: z.enum(['ALL_PRODUCTS', 'SPECIFIC_PRODUCTS', 'COLLECTIONS']).optional(),
   endsAt: z.date().optional(),
   startsAt: z.date({
     required_error: 'La fecha de inicio es requerida',
@@ -80,6 +86,9 @@ export function CouponDetail({ couponId }: CouponDetailProps) {
   const [isEditMode, setIsEditMode] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [valueInputState, setValueInputState] = useState<string>('')
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
+  const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false)
+
   const router = useRouter()
   const queryClient = useQueryClient()
   const lastInitializedCouponId = useRef<string | null>(null)
@@ -111,6 +120,7 @@ export function CouponDetail({ couponId }: CouponDetailProps) {
   const form = useForm<CouponFormData>({
     defaultValues: {
       appliesOncePerCustomer: false,
+      appliesTo: 'ALL_PRODUCTS',
       endsAt: undefined,
       startsAt: new Date(),
       title: '',
@@ -125,6 +135,7 @@ export function CouponDetail({ couponId }: CouponDetailProps) {
     if (coupon && lastInitializedCouponId.current !== coupon.id) {
       const newValues = {
         appliesOncePerCustomer: coupon.appliesOncePerCustomer ?? false,
+        appliesTo: coupon.appliesTo ?? 'ALL_PRODUCTS',
         endsAt: coupon.endsAt ? new Date(coupon.endsAt) : undefined,
         startsAt: coupon.startsAt ? new Date(coupon.startsAt) : new Date(),
         title: coupon.title ?? '',
@@ -135,6 +146,7 @@ export function CouponDetail({ couponId }: CouponDetailProps) {
 
       form.reset(newValues)
       setValueInputState(coupon.value ? coupon.value.toString() : '')
+      setSelectedProductIds(coupon.productIds ?? [])
       lastInitializedCouponId.current = coupon.id
     }
   }, [coupon, form])
@@ -148,6 +160,11 @@ export function CouponDetail({ couponId }: CouponDetailProps) {
         return
       }
 
+      if (data.appliesTo === 'SPECIFIC_PRODUCTS' && selectedProductIds.length === 0) {
+        toast.error('Debes seleccionar al menos un producto')
+        return
+      }
+
       const updateData: UpdateDiscountInput = {
         appliesOncePerCustomer: data.appliesOncePerCustomer,
         endsAt: data.endsAt?.toISOString(),
@@ -156,6 +173,11 @@ export function CouponDetail({ couponId }: CouponDetailProps) {
         usageLimit: data.usageLimit,
         ...(data.type !== coupon.type && { type: data.type }),
         ...(data.value !== coupon.value && { value: data.value }),
+        ...(data.appliesTo && { appliesTo: data.appliesTo }),
+      }
+
+      if (data.appliesTo === 'SPECIFIC_PRODUCTS') {
+        updateData.productIds = selectedProductIds
       }
 
       await updateDiscountMutation.mutateAsync(updateData)
@@ -173,6 +195,7 @@ export function CouponDetail({ couponId }: CouponDetailProps) {
     if (coupon) {
       const resetValues = {
         appliesOncePerCustomer: coupon.appliesOncePerCustomer ?? false,
+        appliesTo: coupon.appliesTo ?? 'ALL_PRODUCTS',
         endsAt: coupon.endsAt ? new Date(coupon.endsAt) : undefined,
         startsAt: coupon.startsAt ? new Date(coupon.startsAt) : new Date(),
         title: coupon.title ?? '',
@@ -182,6 +205,7 @@ export function CouponDetail({ couponId }: CouponDetailProps) {
       }
       form.reset(resetValues)
       setValueInputState(coupon.value ? coupon.value.toString() : '')
+      setSelectedProductIds(coupon.productIds ?? [])
     }
     setIsEditMode(false)
   }
@@ -496,6 +520,70 @@ export function CouponDetail({ couponId }: CouponDetailProps) {
                   />
                 </div>
 
+                <div>
+                  <FormField
+                    control={form.control}
+                    name='appliesTo'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Aplicar a:</FormLabel>
+                        <div className='mt-2 space-y-2'>
+                          <div className='flex items-center space-x-2'>
+                            <Checkbox
+                              id='all-products'
+                              checked={field.value === 'ALL_PRODUCTS'}
+                              onCheckedChange={() => field.onChange('ALL_PRODUCTS')}
+                            />
+                            <Label htmlFor='all-products' className='flex items-center gap-2'>
+                              <Package className='size-4' />
+                              Todos los productos
+                            </Label>
+                          </div>
+                          <div className='flex items-center space-x-2'>
+                            <Checkbox
+                              id='specific-products'
+                              checked={field.value === 'SPECIFIC_PRODUCTS'}
+                              onCheckedChange={() => {
+                                field.onChange('SPECIFIC_PRODUCTS')
+                                if (selectedProductIds.length === 0) {
+                                  setIsProductSelectorOpen(true)
+                                }
+                              }}
+                            />
+                            <Label htmlFor='specific-products' className='flex items-center gap-2'>
+                              <Tag className='size-4' />
+                              Productos específicos
+                            </Label>
+                          </div>
+                        </div>
+
+                        {field.value === 'SPECIFIC_PRODUCTS' && (
+                          <div className='mt-4 rounded-md border p-4'>
+                            <div className='flex items-center justify-between'>
+                              <div>
+                                <p className='text-sm font-medium'>Productos seleccionados</p>
+                                <p className='text-sm text-muted-foreground'>
+                                  {selectedProductIds.length} producto(s) seleccionado(s)
+                                </p>
+                              </div>
+                              <Button
+                                type='button'
+                                variant='outline'
+                                size='sm'
+                                onClick={() => setIsProductSelectorOpen(true)}
+                              >
+                                <SearchIcon className='mr-2 size-4' />
+                                Seleccionar Productos
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className='grid grid-cols-2 gap-4'>
                   <FormField
                     control={form.control}
@@ -642,6 +730,15 @@ export function CouponDetail({ couponId }: CouponDetailProps) {
         cancelButtonText='Cancelar'
         variant='destructive'
         isLoading={deleteDiscountMutation.isPending}
+      />
+
+      <ProductSelectorModal
+        isOpen={isProductSelectorOpen}
+        onClose={() => setIsProductSelectorOpen(false)}
+        initialSelectedIds={selectedProductIds}
+        onConfirm={setSelectedProductIds}
+        title='Seleccionar Productos para el Cupón'
+        description='Busca y selecciona los productos a los que se aplicará este cupón.'
       />
     </div>
   )

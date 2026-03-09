@@ -1,7 +1,7 @@
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
-import { BarChart3, Edit, Ticket, Trash2 } from 'lucide-react'
+import { ArrowUpDown, BarChart3, Edit, Ticket, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -16,7 +16,7 @@ import { useDeleteEvent } from '@/src/services/event/hook'
 const ActionsCell = ({ event }: { event: Event }) => {
   const router = useRouter()
   const deleteEventMutation = useDeleteEvent()
-  const [ showDeleteDialog, setShowDeleteDialog ] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const { data: financialEvents, isLoading: isLoadingFinancialEvents } = useGetFinancialEvents()
 
@@ -47,7 +47,6 @@ const ActionsCell = ({ event }: { event: Event }) => {
   const handleDeleteConfirm = async () => {
     await deleteEventMutation.mutateAsync(event.id)
   }
-
 
   const handleDeleteCancel = () => {
     setShowDeleteDialog(false)
@@ -141,7 +140,12 @@ export const columns: ColumnDef<Event>[] = [
   },
   {
     accessorKey: 'title',
-    header: 'Título',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Título
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'status',
@@ -149,23 +153,43 @@ export const columns: ColumnDef<Event>[] = [
       const status = row.getValue('status') as string
       return <Badge variant={status === 'ACTIVE' ? 'default' : 'secondary'}>{status}</Badge>
     },
-    header: 'Estado',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Estado
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'eventDetails.date',
-    header: 'Fecha',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Fecha
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'eventDetails.location',
-    header: 'Ubicación',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Ubicación
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
-    cell: ({ row }) => {
-      const event = row.original
-      const inventoryQuantity = event.variants[ 0 ]?.inventoryQuantity ?? 0
+    accessorFn: (row) => row.variants?.[0]?.inventoryQuantity ?? 0,
+    cell: ({ getValue }) => {
+      const inventoryQuantity = getValue() as number
       return <span>{inventoryQuantity}</span>
     },
-    header: 'Boletos Disponibles',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Boletos Disponibles
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
     id: 'inventoryQuantity',
   },
   {

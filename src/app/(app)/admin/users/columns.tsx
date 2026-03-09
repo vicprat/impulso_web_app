@@ -118,7 +118,17 @@ export const columns: ColumnDef<UserProfile>[] = [
         </Badge>
       )
     },
-    header: 'Estado',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Estado
+          <ArrowUpDown className='ml-2 size-4' />
+        </Button>
+      )
+    },
   },
 
   {
@@ -146,7 +156,17 @@ export const columns: ColumnDef<UserProfile>[] = [
         />
       )
     },
-    header: 'Público',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Público
+          <ArrowUpDown className='ml-2 size-4' />
+        </Button>
+      )
+    },
   },
   {
     accessorKey: 'lastLoginAt',

@@ -142,6 +142,8 @@ export const PostSortFieldEnum = z.enum([
   'title',
   'author',
   'categoriesCount',
+  'status',
+  'featured',
 ])
 export type PostSortField = z.infer<typeof PostSortFieldEnum>
 

@@ -28,7 +28,9 @@ export const columns: ColumnDef<PostWithRelations>[] = [
     enableSorting: false,
     header: ({ table }) => (
       <Checkbox
-        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+        checked={
+          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')
+        }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label='Seleccionar todos'
       />
@@ -41,12 +43,8 @@ export const columns: ColumnDef<PostWithRelations>[] = [
       const post = row.original
       return (
         <div className='flex flex-col gap-2'>
-
-          <span className='font-bold'>
-            {post.title}
-          </span>
+          <span className='font-bold'>{post.title}</span>
           <span className='text-xs text-muted-foreground'>ID: {post.id}</span>
-
         </div>
       )
     },
@@ -85,7 +83,8 @@ export const columns: ColumnDef<PostWithRelations>[] = [
   },
   {
     accessorKey: 'publishedAt',
-    cell: ({ row }) => (row.original.publishedAt ? new Date(row.original.publishedAt).toLocaleString() : '—'),
+    cell: ({ row }) =>
+      row.original.publishedAt ? new Date(row.original.publishedAt).toLocaleString() : '—',
     header: ({ column }) => (
       <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
         Publicado
@@ -93,7 +92,6 @@ export const columns: ColumnDef<PostWithRelations>[] = [
       </Button>
     ),
   },
-
 
   {
     accessorKey: 'updatedAt',
@@ -115,14 +113,23 @@ export const columns: ColumnDef<PostWithRelations>[] = [
         await meta?.updateStatus?.(post.id, next)
       }
       return (
-        <select defaultValue={post.status} onChange={onChange} className='rounded border px-2 py-1 text-sm'>
+        <select
+          defaultValue={post.status}
+          onChange={onChange}
+          className='rounded border px-2 py-1 text-sm'
+        >
           <option value='DRAFT'>Borrador</option>
           <option value='PUBLISHED'>Publicado</option>
           <option value='ARCHIVED'>Archivado</option>
         </select>
       )
     },
-    header: 'Estado',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Estado
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     accessorKey: 'featured',
@@ -137,7 +144,12 @@ export const columns: ColumnDef<PostWithRelations>[] = [
         />
       )
     },
-    header: 'Destacado',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Destacado
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
   {
     cell: ({ row, table }) => {
@@ -147,12 +159,15 @@ export const columns: ColumnDef<PostWithRelations>[] = [
       return (
         <div className='flex gap-2'>
           <Link href={href}>
-            <Button variant='ghost' title='Editar'> <Edit className='size-4' /></Button>
+            <Button variant='ghost' title='Editar'>
+              {' '}
+              <Edit className='size-4' />
+            </Button>
           </Link>
           <Button
             variant='ghost-destructive'
             title='Eliminar'
-            onClick={() => meta?.openDeleteConfirm?.([ post.id ])}
+            onClick={() => meta?.openDeleteConfirm?.([post.id])}
           >
             <Trash2 className='size-4' />
           </Button>
@@ -163,5 +178,3 @@ export const columns: ColumnDef<PostWithRelations>[] = [
     id: 'actions',
   },
 ]
-
-

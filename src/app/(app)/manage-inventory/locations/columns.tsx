@@ -1,7 +1,7 @@
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
-import { Edit, MapPin, Trash2 } from 'lucide-react'
+import { ArrowUpDown, Edit, MapPin, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -95,7 +95,12 @@ export const columns: ColumnDef<Location>[] = [
         </Link>
       )
     },
-    header: 'Nombre',
+    header: ({ column }) => (
+      <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        Nombre
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    ),
   },
 
   {

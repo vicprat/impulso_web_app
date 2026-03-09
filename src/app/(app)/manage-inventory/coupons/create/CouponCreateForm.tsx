@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CalendarIcon, DollarSign, Package, Percent, Tag } from 'lucide-react'
+import { CalendarIcon, DollarSign, Package, Percent, SearchIcon, Tag } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
+import { ProductSelectorModal } from '@/components/Modals/ProductSelectorModal'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -69,6 +70,8 @@ type CouponFormData = z.infer<typeof couponSchema>
 export function CouponCreateForm() {
   const router = useRouter()
   const [valueInputState, setValueInputState] = useState<string>('')
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
+  const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false)
 
   const createDiscountMutation = useCreateDiscount()
 
@@ -103,12 +106,17 @@ export function CouponCreateForm() {
         return
       }
 
+      if (data.appliesTo === 'SPECIFIC_PRODUCTS' && selectedProductIds.length === 0) {
+        toast.error('Debes seleccionar al menos un producto')
+        return
+      }
+
       const couponData: CreateDiscountInput = {
         appliesOncePerCustomer: data.appliesOncePerCustomer,
         appliesTo: data.appliesTo,
         code: data.code,
         endsAt: data.endsAt?.toISOString(),
-        productIds: data.appliesTo === 'SPECIFIC_PRODUCTS' ? [] : undefined,
+        productIds: data.appliesTo === 'SPECIFIC_PRODUCTS' ? selectedProductIds : undefined,
         startsAt: data.startsAt.toISOString(),
         title: data.title,
         type: data.type,
@@ -117,8 +125,10 @@ export function CouponCreateForm() {
       }
 
       await createDiscountMutation.mutateAsync(couponData)
+      toast.success('Cupón creado exitosamente')
+      router.push(ROUTES.INVENTORY.COUPONS.MAIN.PATH)
     } catch (error) {
-      console.error('Error al crear cupón:', error)
+      toast.error('Error al crear cupón')
     }
   }
 
@@ -401,15 +411,42 @@ export function CouponCreateForm() {
                           <Checkbox
                             id='specific-products'
                             checked={field.value === 'SPECIFIC_PRODUCTS'}
-                            onCheckedChange={() => field.onChange('SPECIFIC_PRODUCTS')}
-                            disabled={true}
+                            onCheckedChange={() => {
+                              field.onChange('SPECIFIC_PRODUCTS')
+                              if (selectedProductIds.length === 0) {
+                                setIsProductSelectorOpen(true)
+                              }
+                            }}
                           />
                           <Label htmlFor='specific-products' className='flex items-center gap-2'>
                             <Tag className='size-4' />
-                            Productos específicos (funcionalidad próximamente)
+                            Productos específicos
                           </Label>
                         </div>
                       </div>
+
+                      {field.value === 'SPECIFIC_PRODUCTS' && (
+                        <div className='mt-4 rounded-md border p-4'>
+                          <div className='flex items-center justify-between'>
+                            <div>
+                              <p className='text-sm font-medium'>Productos seleccionados</p>
+                              <p className='text-sm text-muted-foreground'>
+                                {selectedProductIds.length} producto(s) seleccionado(s)
+                              </p>
+                            </div>
+                            <Button
+                              type='button'
+                              variant='outline'
+                              size='sm'
+                              onClick={() => setIsProductSelectorOpen(true)}
+                            >
+                              <SearchIcon className='mr-2 size-4' />
+                              Seleccionar Productos
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
                       <FormMessage />
                     </FormItem>
                   )}
@@ -480,7 +517,11 @@ export function CouponCreateForm() {
                     </div>
                     <div className='flex justify-between'>
                       <span>Productos:</span>
-                      <span>{watchedAppliesTo === 'ALL_PRODUCTS' ? 'Todos' : 'Específicos'}</span>
+                      <span>
+                        {watchedAppliesTo === 'ALL_PRODUCTS'
+                          ? 'Todos'
+                          : `${selectedProductIds.length} producto(s)`}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -500,6 +541,15 @@ export function CouponCreateForm() {
           </Form>
         </CardContent>
       </Card>
+
+      <ProductSelectorModal
+        isOpen={isProductSelectorOpen}
+        onClose={() => setIsProductSelectorOpen(false)}
+        initialSelectedIds={selectedProductIds}
+        onConfirm={setSelectedProductIds}
+        title='Seleccionar Productos para el Cupón'
+        description='Busca y selecciona los productos a los que se aplicará este cupón.'
+      />
     </div>
   )
 }

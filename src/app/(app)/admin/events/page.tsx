@@ -25,6 +25,8 @@ import { ROUTES } from '@/src/config/routes'
 
 import { columns } from './columns'
 
+import type { SortingState } from '@tanstack/react-table'
+
 interface EventTableMeta {
   editingRowId: string | null
   setEditingRowId: (id: string | null) => void
@@ -45,6 +47,7 @@ export default function ManageEventsPage() {
   const [pageSize, setPageSize] = useState(10)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [rowSelection, setRowSelection] = useState({})
+  const [sorting, setSorting] = useState<SortingState>([])
 
   const [cursors, setCursors] = useState<Record<number, string | undefined>>({ 1: undefined })
 
@@ -136,12 +139,14 @@ export default function ManageEventsPage() {
       updateEvent: handleUpdateEvent,
     } as EventTableMeta,
     onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
     state: {
       pagination: {
         pageIndex: currentPage - 1,
         pageSize,
       },
       rowSelection,
+      sorting,
     },
   })
 
