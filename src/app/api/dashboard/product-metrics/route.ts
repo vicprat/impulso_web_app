@@ -1,8 +1,20 @@
 import { NextResponse } from 'next/server'
 
 import { PERMISSIONS } from '@/src/config/Permissions'
+import { registerGlobalCache } from '@/lib/cache'
 import { makeAdminApiRequest } from '@/src/lib/shopifyAdmin'
 import { requirePermission } from '@/src/modules/auth/server/server'
+
+// Cache simple para product-metrics
+interface CacheEntry {
+  data: unknown
+  fetchedAt: number
+}
+const cache = new Map<string, CacheEntry>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
+
+// Registrar cache para invalidación centralizada
+registerGlobalCache('dashboard-product-metrics', cache)
 
 let primaryLocationId: string | null = null
 
@@ -26,6 +38,14 @@ async function getPrimaryLocationId(): Promise<string> {
 export async function GET() {
   try {
     const session = await requirePermission(PERMISSIONS.VIEW_ANALYTICS)
+
+    // Verificar cache
+    const cacheKey = 'product-metrics'
+    const cached = cache.get(cacheKey)
+    const now = Date.now()
+    if (cached && now - cached.fetchedAt < CACHE_TTL) {
+      return NextResponse.json(cached.data)
+    }
 
     // Obtener TODOS los productos usando paginación como en getProductStats
     const allProducts: any[] = []
@@ -323,6 +343,9 @@ export async function GET() {
 
       totalProducts: products.length,
     }
+
+    // Guardar en cache
+    cache.set(cacheKey, { data, fetchedAt: now })
 
     return NextResponse.json({ data })
   } catch (error) {

@@ -45,3 +45,6 @@ next-env.d.ts
 # docs
 /docs
 .env*.local
+
+# catalog cache version (cross-worker consistency in dev)
+.catalog-cache-version

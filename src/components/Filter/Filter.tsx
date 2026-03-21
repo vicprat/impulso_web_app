@@ -5,9 +5,11 @@ import {
   ChevronDown,
   DollarSign,
   Filter as FilterIcon,
+  MapPin,
   Package,
   Palette,
   Square,
+  Tag,
   User,
   X,
 } from 'lucide-react'
@@ -113,7 +115,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
   ) => {
     const currentValues = filters[key]
     const newValues = currentValues.includes(value)
-      ? currentValues.filter((v) => v !== value)
+      ? currentValues.filter((v: string) => v !== value)
       : [...currentValues, value]
     setFilters((prev) => ({ ...prev, [key]: newValues }))
   }
@@ -122,10 +124,11 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     key: 'productTypes' | 'vendors' | 'tags' | 'techniques' | 'formats' | 'years' | 'dimensions',
     value: string
   ) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: prev[key].filter((v) => v !== value),
-    }))
+    const currentValues = filters[key]
+    const newValues = currentValues.includes(value)
+      ? currentValues.filter((v) => v !== value)
+      : [...currentValues, value]
+    setFilters((prev) => ({ ...prev, [key]: newValues }))
   }
 
   const handleFilterChange = <K extends keyof State>(key: K, value: State[K]) => {
@@ -190,12 +193,17 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     () =>
       filterOptions?.artists
         .filter((vendor) => vendor.label !== 'Evento' && vendor.input !== 'Evento')
-        .map((v) => ({ label: v.label, value: v.input })) ?? [],
+        .filter((vendor) => vendor.count > 0)
+        .map((v) => ({ label: `${v.label} (${v.count})`, value: v.input, count: v.count })) ?? [],
     [filterOptions]
   )
 
   const productTypeOptions = useMemo(
-    () => filterOptions?.productTypes.map((pt) => ({ label: pt.label, value: pt.input })) ?? [],
+    () =>
+      filterOptions?.productTypes
+        .filter((pt) => pt.count > 0)
+        .map((pt) => ({ label: `${pt.label} (${pt.count})`, value: pt.input, count: pt.count })) ??
+      [],
     [filterOptions]
   )
 

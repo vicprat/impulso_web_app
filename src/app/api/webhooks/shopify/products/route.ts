@@ -61,7 +61,8 @@ export async function POST(request: Request) {
       vendor: product.vendor,
     })
 
-    // Revalidación ya manejada por CacheManager arriba
+    // Invalidar todos los caches en memoria (dashboard, stats, etc.)
+    CacheManager.clearAllCaches()
 
     // Revalidar rutas específicas según el tipo
     if (isEvent) {

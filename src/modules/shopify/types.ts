@@ -239,14 +239,16 @@ export interface FilterValue {
 
 export interface EnrichedFilterOptions {
   artists: FilterValue[]
-  productTypes: FilterValue[]
-  price: { min: number; max: number }
-  techniques: FilterValue[]
-  formats: FilterValue[]
+  arrendamientos: FilterValue[]
   dimensions: FilterValue[]
-  years: FilterValue[]
-  series: FilterValue[]
+  formats: FilterValue[]
+  locations: FilterValue[]
   otherTags: FilterValue[]
+  price: { min: number; max: number }
+  productTypes: FilterValue[]
+  series: FilterValue[]
+  techniques: FilterValue[]
+  years: FilterValue[]
 }
 
 export interface PriceFilter {

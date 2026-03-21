@@ -1,7 +1,19 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { requireAuth } from '@/modules/auth/server/server'
+import { registerGlobalCache } from '@/lib/cache'
 import { makeAdminApiRequest } from '@/src/lib/shopifyAdmin'
+
+// Cache simple para artist dashboard (por artista)
+interface CacheEntry {
+  data: unknown
+  fetchedAt: number
+}
+const cache = new Map<string, CacheEntry>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
+
+// Registrar cache para invalidación centralizada
+registerGlobalCache('dashboard-artist', cache)
 
 interface ShopifyResponse {
   products: {
@@ -29,6 +41,14 @@ export async function GET(request: NextRequest) {
         { error: 'El usuario no tiene un artista/vendor asignado' },
         { status: 400 }
       )
+    }
+
+    // Verificar cache (por artista)
+    const cacheKey = `artist-dashboard-${currentArtist}`
+    const cached = cache.get(cacheKey)
+    const now = Date.now()
+    if (cached && now - cached.fetchedAt < CACHE_TTL) {
+      return NextResponse.json(cached.data)
     }
 
     // Obtener productos del artista específico usando el vendor como filtro
@@ -204,7 +224,7 @@ export async function GET(request: NextRequest) {
       {} as Record<string, number>
     )
 
-    return NextResponse.json({
+    const data = {
       artistEvents,
       artistMetrics: metrics,
       artistProducts: enrichedProducts,
@@ -223,7 +243,12 @@ export async function GET(request: NextRequest) {
         roles: userData.user.roles,
         shopifyCustomerId: userData.user.shopifyCustomerId,
       },
-    })
+    }
+
+    // Guardar en cache
+    cache.set(cacheKey, { data, fetchedAt: now })
+
+    return NextResponse.json(data)
   } catch (error) {
     console.error('Error fetching artist dashboard data:', error)
     return NextResponse.json(

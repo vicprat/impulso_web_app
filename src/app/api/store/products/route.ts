@@ -56,10 +56,12 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
 
     const params: GetProductsParams = {
+      arrendamiento: searchParams.get('arrendamiento') ?? undefined,
       artworkType: searchParams.get('artworkType') ?? undefined,
       cursor: searchParams.get('cursor') ?? undefined,
       dimensions: searchParams.get('dimensions') ?? undefined,
       limit: parseInt(searchParams.get('limit') ?? '20', 10),
+      location: searchParams.get('location') ?? undefined,
       priceMax: searchParams.get('priceMax')
         ? parseFloat(searchParams.get('priceMax')!)
         : undefined,

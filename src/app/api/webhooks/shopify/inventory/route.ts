@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
     // Verificar autenticidad del webhook
     const isValid = verifyShopifyWebhook(body, signature)
-    
+
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       storeDomain = storeDomain.replace('https://', '').replace('http://', '')
       const apiVersion = process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION
       const accessToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN
-      
+
       const inventoryResponse = await fetch(
         `https://${storeDomain}/admin/api/${apiVersion}/inventory_items/${inventoryItemId}.json`,
         {
@@ -95,6 +95,9 @@ export async function POST(request: Request) {
     CacheManager.revalidateCollections()
     CacheManager.revalidateHomepage()
 
+    // Invalidar todos los caches en memoria (dashboard, stats, etc.)
+    CacheManager.clearAllCaches()
+
     // Revalidar rutas que muestran productos y eventos
     revalidatePath('/store', 'page')
     revalidatePath('/store/product/[handle]', 'page')
@@ -112,15 +115,9 @@ export async function POST(request: Request) {
         '/store/product/[handle]',
         '/store/event/[handle]',
         '/store/events',
-        '/'
+        '/',
       ],
-      revalidatedTags: [
-        'products',
-        `product-${productId}`,
-        'inventory',
-        'collections',
-        'homepage'
-      ],
+      revalidatedTags: ['products', `product-${productId}`, 'inventory', 'collections', 'homepage'],
       success: true,
     })
   } catch (error) {
@@ -145,4 +142,4 @@ export async function GET() {
     supportedTypes: ['inventory_levels'],
     timestamp: new Date().toISOString(),
   })
-} 
+}

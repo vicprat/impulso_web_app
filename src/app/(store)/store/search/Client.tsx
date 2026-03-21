@@ -106,7 +106,7 @@ export const Client = () => {
   const storeParams = {
     artworkType: searchFilters.productType?.[0],
     cursor: cursor ?? undefined,
-    dimensions: dimensions[0],
+    dimensions: dimensions.length > 0 ? dimensions.join(',') : undefined,
     limit: 24,
     priceMax: searchFilters.price?.max,
     priceMin: searchFilters.price?.min,
@@ -121,8 +121,11 @@ export const Client = () => {
             : undefined,
     sortOrder: currentOrder === 'desc' ? ('desc' as const) : ('asc' as const),
     technique: techniques.length > 0 ? techniques.join(',') : undefined,
-    vendor: searchFilters.vendor?.[0],
-    year: years[0],
+    vendor:
+      searchFilters.vendor && searchFilters.vendor.length > 0
+        ? searchFilters.vendor.join(',')
+        : undefined,
+    year: years.length > 0 ? years.join(',') : undefined,
   }
 
   const { data: productsData, error, isLoading } = useStoreProducts(storeParams)
@@ -140,8 +143,8 @@ export const Client = () => {
           newHistory[newPage] = nextCursor
           return newHistory
         })
-        newParams.set('page', newPage.toString())
       }
+      newParams.set('page', newPage.toString())
     } else if (newPage < currentPage) {
       newParams.set('page', newPage.toString())
     } else {
@@ -202,6 +205,35 @@ export const Client = () => {
     if (searchFilters.vendor)
       filters.push({ key: 'vendor', label: 'Artistas', value: searchFilters.vendor.join(', ') })
 
+    // Técnicas (desde URL params)
+    if (techniques.length > 0 && filterOptions) {
+      const techniqueLabels = techniques
+        .map((techValue) => {
+          const option = filterOptions.techniques.find((opt) => opt.input === techValue)
+          return option ? option.label : techValue
+        })
+        .join(', ')
+      if (techniqueLabels)
+        filters.push({ key: 'techniques', label: 'Técnicas', value: techniqueLabels })
+    }
+
+    // Dimensiones/Medidas (desde URL params)
+    if (dimensions.length > 0 && filterOptions) {
+      const dimensionLabels = dimensions
+        .map((dimValue) => {
+          const option = filterOptions.dimensions.find((opt) => opt.input === dimValue)
+          return option ? option.label : dimValue
+        })
+        .join(', ')
+      if (dimensionLabels)
+        filters.push({ key: 'dimensions', label: 'Medidas', value: dimensionLabels })
+    }
+
+    // Años (desde URL params)
+    if (years.length > 0) {
+      filters.push({ key: 'years', label: 'Años', value: years.join(', ') })
+    }
+
     if (searchFilters.tags && filterOptions) {
       const allTagOptions = [
         ...filterOptions.techniques,
@@ -260,7 +292,9 @@ export const Client = () => {
     const order = searchParams.get('order')
     if (sort) newParams.set('sort', sort)
     if (order) newParams.set('order', order)
-    const path = newParams.toString() ? `/store/search?${newParams.toString()}` : '/store'
+    newParams.delete('page')
+    setPageHistory([null])
+    const path = '/store'
     router.push(path)
   }
 

@@ -12,11 +12,8 @@ const ALL_DIMENSION_CATEGORIES: DimensionCategory[] = ['chico', 'mediano', 'gran
 
 export async function GET() {
   try {
-    // Usar el mismo caché que el store para consistencia
-    const allProducts = await CacheManager.getFullCatalog('storefront')
-
-    // Filtrar solo productos activos para los contadores
-    const products = allProducts.filter((p) => p.status === 'ACTIVE')
+    // Usar caché de admin que incluye todos los productos (ACTIVE, DRAFT, ARCHIVED)
+    const allProducts = await CacheManager.getFullCatalog('admin')
 
     // Contadores para cada filtro
     const vendorCounts = new Map<string, number>()
@@ -27,10 +24,11 @@ export async function GET() {
     const techniqueCounts = new Map<string, number>()
     const yearCounts = new Map<string, number>()
     const seriesCounts = new Map<string, number>()
+    const statusCounts = new Map<string, number>()
     let minPrice = Infinity
     let maxPrice = 0
 
-    products.forEach((product) => {
+    allProducts.forEach((product) => {
       const price = parseFloat(product.variants?.[0]?.price?.amount ?? '0')
       if (price < minPrice) minPrice = price
       if (price > maxPrice) maxPrice = price
@@ -46,6 +44,11 @@ export async function GET() {
           product.productType,
           (productTypeCounts.get(product.productType) ?? 0) + 1
         )
+      }
+
+      // Contar status
+      if (product.status) {
+        statusCounts.set(product.status, (statusCounts.get(product.status) ?? 0) + 1)
       }
 
       // Extraer artworkDetails
@@ -107,7 +110,7 @@ export async function GET() {
         count: dimensionCounts.get(cat) ?? 0,
         input: cat,
         label: getDimensionCategoryLabel(cat),
-      })).sort((a, b) => a.label.localeCompare(b.label)),
+      })),
       formats: [],
       locations: Array.from(locationCounts.entries())
         .map(([l, count]) => ({ count, input: l, label: l }))
@@ -135,9 +138,15 @@ export async function GET() {
         .sort((a, b) => a.label.localeCompare(b.label)),
     }
 
-    return NextResponse.json(structuredFilters)
+    return NextResponse.json({
+      filters: structuredFilters,
+      stats: {
+        byStatus: Object.fromEntries(statusCounts),
+        total: allProducts.length,
+      },
+    })
   } catch (error) {
-    console.error('Error in /api/filters route:', error)
+    console.error('Error in /api/admin/filters route:', error)
     return NextResponse.json(
       { error: (error as Error).message, message: 'Error al construir los filtros.' },
       { status: 500 }

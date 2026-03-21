@@ -1,8 +1,20 @@
 import { NextResponse } from 'next/server'
 
 import { PERMISSIONS } from '@/src/config/Permissions'
+import { registerGlobalCache } from '@/lib/cache'
 import { makeAdminApiRequest } from '@/src/lib/shopifyAdmin'
 import { requirePermission } from '@/src/modules/auth/server/server'
+
+// Cache simple para advanced-analytics
+interface CacheEntry {
+  data: unknown
+  fetchedAt: number
+}
+const cache = new Map<string, CacheEntry>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
+
+// Registrar cache para invalidación centralizada
+registerGlobalCache('dashboard-advanced-analytics', cache)
 
 interface ShopifyMoneyV2 {
   amount: string
@@ -47,6 +59,14 @@ interface ShopifyOrdersResponse {
 export async function GET() {
   try {
     const session = await requirePermission(PERMISSIONS.VIEW_ANALYTICS)
+
+    // Verificar cache
+    const cacheKey = 'advanced-analytics'
+    const cached = cache.get(cacheKey)
+    const now = Date.now()
+    if (cached && now - cached.fetchedAt < CACHE_TTL) {
+      return NextResponse.json(cached.data)
+    }
 
     // Obtener TODAS las órdenes usando paginación
     const allOrders: ShopifyOrderEdge[] = []
@@ -155,17 +175,17 @@ export async function GET() {
         averageOrderValue:
           orders.length > 0
             ? orders.reduce(
-              (sum: number, order: ShopifyOrderEdge) =>
-                sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
-              0
-            ) / orders.length
+                (sum: number, order: ShopifyOrderEdge) =>
+                  sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
+                0
+              ) / orders.length
             : 0,
         ordersByHour,
         ordersThisMonth: last30Days.length,
         ordersThisWeek: last7Days.length,
         peakHour: ordersByHour.reduce(
           (max, current) => (current.orders > max.orders ? current : max),
-          ordersByHour[ 0 ]
+          ordersByHour[0]
         ),
         totalOrders: orders.length,
       },
@@ -177,6 +197,9 @@ export async function GET() {
         weeklyGrowth: 0, // Calcular vs mes anterior si tienes datos
       },
     }
+
+    // Guardar en cache
+    cache.set(cacheKey, { data, fetchedAt: now })
 
     return NextResponse.json({ data })
   } catch (error) {

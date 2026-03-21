@@ -1,9 +1,21 @@
 import { NextResponse } from 'next/server'
 
 import { PERMISSIONS } from '@/src/config/Permissions'
+import { CacheManager, registerGlobalCache } from '@/lib/cache'
 import { makeAdminApiRequest } from '@/src/lib/shopifyAdmin'
 import { requirePermission } from '@/src/modules/auth/server/server'
 import { getAllUsers } from '@/src/modules/user/user.service'
+
+// Cache simple para el dashboard (evita múltiples llamadas a Shopify)
+interface DashboardCacheEntry {
+  data: unknown
+  fetchedAt: number
+}
+const dashboardCache = new Map<string, DashboardCacheEntry>()
+const DASHBOARD_CACHE_TTL = 5 * 60 * 1000 // 5 minutos
+
+// Registrar cache para invalidación centralizada
+registerGlobalCache('dashboard-admin', dashboardCache)
 
 // Helper para crear fechas locales sin problemas de zona horaria
 const createLocalDate = (dateString: string): Date => {
@@ -73,6 +85,15 @@ async function getPrimaryLocationId(): Promise<string> {
 export async function GET() {
   try {
     const session = await requirePermission(PERMISSIONS.VIEW_ANALYTICS)
+
+    // Verificar cache antes de hacer llamadas a Shopify
+    const cacheKey = 'admin-dashboard'
+    const cached = dashboardCache.get(cacheKey)
+    const now = Date.now()
+    if (cached && now - cached.fetchedAt < DASHBOARD_CACHE_TTL) {
+      return NextResponse.json(cached.data)
+    }
+
     const locationId = await getPrimaryLocationId()
 
     const today = new Date()
@@ -926,6 +947,9 @@ export async function GET() {
       salesData: salesByMonth,
       topProducts,
     }
+
+    // Guardar en cache
+    dashboardCache.set(cacheKey, { data, fetchedAt: now })
 
     return NextResponse.json({ data })
   } catch (error) {

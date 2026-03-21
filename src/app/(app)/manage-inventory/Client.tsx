@@ -851,7 +851,7 @@ export function Client() {
     setEditingRowId(null)
     setEditingChanges({})
     setHistoryCursors({})
-
+    setSearchInput('')
     router.replace('/manage-inventory', { scroll: false })
   }, [router])
 
@@ -1210,44 +1210,64 @@ export function Client() {
       <div className='flex w-full flex-wrap items-center justify-start gap-2 p-1'>
         <span className='ml-2 text-sm font-medium'>Filtrar:</span>
         <div className='flex items-center space-x-1'>
-          <Select value={locationFilterInUrl} onValueChange={handleLocationFilterChange}>
+          <Select
+            value={
+              Array.isArray(locations) &&
+              locations.some(
+                (loc: { id: string; name: string }) => loc.name === locationFilterInUrl
+              )
+                ? locationFilterInUrl
+                : 'all'
+            }
+            onValueChange={handleLocationFilterChange}
+          >
             <SelectTrigger className='w-44'>
               <Filter className='mr-2 size-4' />
               <SelectValue placeholder='Filtrar por localización' />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='all'>Todas las localizaciones</SelectItem>
-              {locations && locations.length > 0 ? (
+              {Array.isArray(locations) && locations.length > 0 ? (
                 locations.map((loc: { id: string; name: string }) => (
                   <SelectItem key={loc.id} value={loc.name}>
                     {loc.name}
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value='all' disabled>
-                  Cargando...
+                <SelectItem value='__loading_loc__' disabled>
+                  Sin opciones disponibles
                 </SelectItem>
               )}
             </SelectContent>
           </Select>
         </div>
         <div className='flex items-center space-x-1'>
-          <Select value={arrendamientoFilterInUrl} onValueChange={handleArrendamientoFilterChange}>
+          <Select
+            value={
+              Array.isArray(arrendamientos) &&
+              arrendamientos.some(
+                (arr: { id: string; name: string }) => arr.name === arrendamientoFilterInUrl
+              )
+                ? arrendamientoFilterInUrl
+                : 'all'
+            }
+            onValueChange={handleArrendamientoFilterChange}
+          >
             <SelectTrigger className='w-44'>
               <Filter className='mr-2 size-4' />
               <SelectValue placeholder='Filtrar por arrendamiento' />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='all'>Todos los arrendamientos</SelectItem>
-              {arrendamientos && arrendamientos.length > 0 ? (
+              {Array.isArray(arrendamientos) && arrendamientos.length > 0 ? (
                 arrendamientos.map((arr: { id: string; name: string }) => (
                   <SelectItem key={arr.id} value={arr.name}>
                     {arr.name}
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value='all' disabled>
-                  Cargando...
+                <SelectItem value='__loading__' disabled>
+                  Sin opciones disponibles
                 </SelectItem>
               )}
             </SelectContent>
@@ -1269,22 +1289,25 @@ export function Client() {
         </div>
 
         <div className='flex items-center space-x-1'>
-          <Select value={vendorFilterInUrl} onValueChange={handleVendorFilterChange}>
+          <Select
+            value={vendors.includes(vendorFilterInUrl) ? vendorFilterInUrl : 'all'}
+            onValueChange={handleVendorFilterChange}
+          >
             <SelectTrigger className='w-44'>
               <Filter className='mr-2 size-4' />
               <SelectValue placeholder='Filtrar por artista' />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='all'>Todos los artistas</SelectItem>
-              {vendors && vendors.length > 0 ? (
+              {Array.isArray(vendors) && vendors.length > 0 ? (
                 vendors.map((vendor: string) => (
                   <SelectItem key={vendor} value={vendor}>
                     {vendor}
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value='all' disabled>
-                  Cargando...
+                <SelectItem value='__loading_vendor__' disabled>
+                  Sin opciones disponibles
                 </SelectItem>
               )}
             </SelectContent>
@@ -1292,14 +1315,23 @@ export function Client() {
         </div>
 
         <div className='flex items-center space-x-1'>
-          <Select value={artworkTypeFilterInUrl} onValueChange={handleArtworkTypeFilterChange}>
+          <Select
+            value={
+              artworkTypes.some(
+                (t: { id: string; name: string }) => t.name === artworkTypeFilterInUrl
+              )
+                ? artworkTypeFilterInUrl
+                : 'all'
+            }
+            onValueChange={handleArtworkTypeFilterChange}
+          >
             <SelectTrigger className='w-44'>
               <Filter className='mr-2 size-4' />
               <SelectValue placeholder='Filtrar por tipo' />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='all'>Todos los tipos</SelectItem>
-              {artworkTypes && artworkTypes.length > 0 ? (
+              {Array.isArray(artworkTypes) && artworkTypes.length > 0 ? (
                 artworkTypes.map((type: { id: string; name: string }) => (
                   <SelectItem key={type.id} value={type.name}>
                     {type.name}
@@ -1315,22 +1347,29 @@ export function Client() {
         </div>
 
         <div className='flex items-center space-x-1'>
-          <Select value={techniqueFilterInUrl} onValueChange={handleTechniqueFilterChange}>
+          <Select
+            value={
+              techniques.some((t: { id: string; name: string }) => t.name === techniqueFilterInUrl)
+                ? techniqueFilterInUrl
+                : 'all'
+            }
+            onValueChange={handleTechniqueFilterChange}
+          >
             <SelectTrigger className='w-44'>
               <Filter className='mr-2 size-4' />
               <SelectValue placeholder='Filtrar por técnica' />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='all'>Todas las técnicas</SelectItem>
-              {techniques && techniques.length > 0 ? (
+              {Array.isArray(techniques) && techniques.length > 0 ? (
                 techniques.map((technique: { id: string; name: string }) => (
                   <SelectItem key={technique.id} value={technique.name}>
                     {technique.name}
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value='all' disabled>
-                  Cargando...
+                <SelectItem value='__loading_tech__' disabled>
+                  Sin opciones disponibles
                 </SelectItem>
               )}
             </SelectContent>
@@ -1836,6 +1875,7 @@ export function Client() {
         dimensionsFilterInUrl !== 'all' ||
         techniqueFilterInUrl !== 'all' ||
         artworkTypeFilterInUrl !== 'all' ||
+        vendorFilterInUrl !== 'all' ||
         sortByInUrl !== 'title' ||
         sortOrderInUrl !== 'asc') && (
         <div className='flex justify-end'>
@@ -1940,7 +1980,8 @@ export function Client() {
             statusFilterInUrl !== 'all' ||
             dimensionsFilterInUrl !== 'all' ||
             techniqueFilterInUrl !== 'all' ||
-            artworkTypeFilterInUrl !== 'all') &&
+            artworkTypeFilterInUrl !== 'all' ||
+            vendorFilterInUrl !== 'all') &&
             ' (con filtros aplicados)'}
         </div>
       )}

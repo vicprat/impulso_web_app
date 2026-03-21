@@ -118,11 +118,13 @@ async function getProductsWithManualSorting(
   if (params.status) {
     allProducts = allProducts.filter((p) => p.status === params.status)
   }
-  if (params.vendor) {
-    allProducts = allProducts.filter((p) => p.vendor === params.vendor)
+  if (params.vendor?.trim()) {
+    const vendors = params.vendor.split(',').map((v) => v.trim())
+    allProducts = allProducts.filter((p) => vendors.includes(p.vendor))
   }
-  if (params.artworkType) {
-    allProducts = allProducts.filter((p) => p.productType === params.artworkType)
+  if (params.artworkType?.trim()) {
+    const artworkTypes = params.artworkType.split(',').map((t) => t.trim())
+    allProducts = allProducts.filter((p) => artworkTypes.includes(p.productType))
   }
 
   // 3. Aplicar Búsqueda de Texto (si existe) usando matchesSearch
@@ -132,24 +134,36 @@ async function getProductsWithManualSorting(
 
   // 4. Aplicar filtros de Metafields
   if (params.technique?.trim()) {
+    const techniques = params.technique.split(',').map((t) => t.trim().toLowerCase())
     allProducts = allProducts.filter((p) =>
-      p.artworkDetails.medium?.toLowerCase().includes(params.technique!.toLowerCase())
+      techniques.some((tech) => p.artworkDetails.medium?.toLowerCase().includes(tech))
+    )
+  }
+  if (params.location?.trim()) {
+    const locations = params.location.split(',').map((l) => l.trim().toLowerCase())
+    allProducts = allProducts.filter((p) =>
+      locations.some((loc) => p.artworkDetails.location?.toLowerCase().includes(loc))
     )
   }
   if (params.year?.trim()) {
-    allProducts = allProducts.filter((p) => p.artworkDetails.year === params.year)
+    const years = params.year.split(',').map((y) => y.trim())
+    allProducts = allProducts.filter((p) => years.includes(p.artworkDetails.year ?? ''))
   }
   if (params.arrendamiento?.trim()) {
-    allProducts = allProducts.filter((p) => p.artworkDetails.arrendamiento === params.arrendamiento)
+    const arrendamientos = params.arrendamiento.split(',').map((a) => a.trim())
+    allProducts = allProducts.filter((p) =>
+      arrendamientos.includes(p.artworkDetails.arrendamiento ?? '')
+    )
   }
   if (params.dimensions?.trim()) {
+    const dimensions = params.dimensions.split(',').map((d) => d.trim())
     allProducts = allProducts.filter((product) => {
       if (!product.artworkDetails.height || !product.artworkDetails.width) return false
       const category = categorizeDimensions(
         product.artworkDetails.height,
         product.artworkDetails.width
       )
-      return category === params.dimensions
+      return dimensions.includes(category ?? '')
     })
   }
 
@@ -441,6 +455,7 @@ async function getProductsFromRequest(
     cursor: searchParams.get('cursor') ?? undefined,
     dimensions: searchParams.get('dimensions') ?? undefined,
     limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
+    location: searchParams.get('location') ?? undefined,
     page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : undefined,
     search: searchParams.get('search') ?? undefined,
     sortBy: searchParams.get('sortBy') ?? undefined,
@@ -1095,6 +1110,7 @@ async function updateProduct(
   }
 
   // Invalidar el full catalog cache después de cualquier cambio
+  console.info(`📦 updateProduct: Invalidating cache for product ${payload.id}`)
   CacheManager.revalidateFullCatalog()
 
   if (payload.collectionId) {
@@ -1263,9 +1279,15 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
 
   const limit = params.limit ? parseInt(String(params.limit), 10) : 10
 
-  if (useManualSorting || hasMetafieldFilters) {
-    // Si hay búsqueda o filtros complejos, usamos el flujo optimizado con caché
-    // Pasamos shopifyQuery como baseQuery (puede contener vendor, type, status)
+  // Siempre usar el flujo de caché para mantener consistencia con los filtros
+  // El caché garantiza que los conteos y resultados sean idénticos
+  if (
+    useManualSorting ||
+    hasMetafieldFilters ||
+    params.vendor ||
+    params.artworkType ||
+    params.status
+  ) {
     return await getProductsWithManualSorting(
       params,
       shopifyQuery,
