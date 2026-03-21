@@ -3,10 +3,10 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Sparkles } from 'lucide-react'
 
-import { iconMap } from '@/lib/icon-map'
-
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { iconMap } from '@/lib/icon-map'
+import { getWhatsAppLink } from '@/lib/utils'
 
 interface ServiceType {
   id: string
@@ -18,6 +18,7 @@ interface ServiceType {
   price?: string
   popular?: boolean
   size?: 'normal' | 'large'
+  action?: string
 }
 
 interface Props {
@@ -29,14 +30,24 @@ export const Service: React.FC<Props> = ({ index, service }) => {
   const IconComponent = iconMap[service.iconName as keyof typeof iconMap] || iconMap.Settings
   const isLarge = service.size === 'large'
 
+  const handleWhatsAppClick = () => {
+    if (service.action) {
+      const whatsappUrl = getWhatsAppLink(service.action, service.title)
+      window.open(whatsappUrl, '_blank')
+    }
+  }
+
   return (
-    <motion.a
+    <motion.div
       initial='initial'
       whileInView='animate'
       viewport={{ amount: 0.3, once: true }}
       transition={{ delay: index * 0.1 }}
       className={`group relative ${isLarge ? 'md:col-span-2 lg:col-span-1' : ''} pointer-events-auto`}
-      href='mailto:impulsogaleria@gmail.com'
+      onClick={(e) => {
+        e.stopPropagation()
+        handleWhatsAppClick()
+      }}
     >
       <Card className='bg-card/80 h-full overflow-hidden border-0 shadow-elevation-2 backdrop-blur-sm transition-all duration-500 hover:-translate-y-3 hover:rotate-1 hover:shadow-elevation-5'>
         <motion.div className='pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100' />
@@ -164,7 +175,14 @@ export const Service: React.FC<Props> = ({ index, service }) => {
           </div>
 
           <motion.div className='mt-auto' whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button variant='container-success' className='w-full'>
+            <Button
+              variant='container-success'
+              className='w-full'
+              onClick={(e) => {
+                e.stopPropagation()
+                handleWhatsAppClick()
+              }}
+            >
               <span>Solicitar Información</span>
               <ArrowRight className='size-4 transition-transform group-hover:translate-x-1' />
             </Button>
@@ -173,6 +191,6 @@ export const Service: React.FC<Props> = ({ index, service }) => {
           <motion.div className='bg-primary/5 pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100' />
         </CardContent>
       </Card>
-    </motion.a>
+    </motion.div>
   )
 }

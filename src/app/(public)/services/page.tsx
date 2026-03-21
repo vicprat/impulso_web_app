@@ -1,11 +1,11 @@
+import { getPageContent, getServices } from '@/lib/landing-data'
+import { routeMetadata } from '@/lib/metadata'
+import { Card } from '@/src/components/Card'
+
 import { CTA } from './components/CTA'
 import { Hero } from './components/Hero'
 
 import type { Metadata } from 'next'
-
-import { getPageContent, getServices } from '@/lib/landing-data'
-import { routeMetadata } from '@/lib/metadata'
-import { Card } from '@/src/components/Card'
 
 export const metadata: Metadata = routeMetadata['/services']
 
@@ -18,11 +18,12 @@ export default async function Page() {
   ])
 
   const services = notionServices.map((s) => ({
+    action: s.action,
     description: s.description.es,
     features: s.features,
     iconName: s.iconName,
     id: s.id,
-    imageUrl: s.imageUrl || '',
+    imageUrl: s.imageUrl ?? '',
     popular: s.popular,
     price: s.price?.es,
     size: s.size,

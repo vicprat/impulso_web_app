@@ -1,9 +1,12 @@
+'use client'
+
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { iconMap } from '@/lib/icon-map'
 import { ROUTES } from '@/src/config/routes'
+import { getWhatsAppLink } from '@/lib/utils'
 
 interface Props {
   data: any[] // Simplified for now as we'll pass processed Notion data
@@ -13,10 +16,26 @@ interface Props {
 const ServiceCard = ({ service }: { service: any; _index: number }) => {
   const IconComponent = iconMap[service.iconName as keyof typeof iconMap] || iconMap.Settings
 
+  const handleCardClick = () => {
+    if (service.action) {
+      const whatsappUrl = getWhatsAppLink(service.action, service.title)
+      window.open(whatsappUrl, '_blank')
+    }
+  }
+
   return (
     <div className='group h-full'>
       <Card
-        className={`border-primary/30 relative h-full overflow-hidden bg-card shadow-elevation-3 transition-all duration-300 hover:-translate-y-2 hover:shadow-elevation-4`}
+        className={`border-primary/30 relative h-full cursor-pointer overflow-hidden bg-card shadow-elevation-3 transition-all duration-300 hover:-translate-y-2 hover:shadow-elevation-4`}
+        onClick={handleCardClick}
+        role='button'
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleCardClick()
+          }
+        }}
       >
         <div className='pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent' />
 

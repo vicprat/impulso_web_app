@@ -1,5 +1,3 @@
-import type { Metadata } from 'next'
-
 import { RegistrationBanner } from '@/components/Banner/RegistrationBanner'
 import { RegistrationDialog } from '@/components/Dialog/RegistrationDialog'
 import { Footer } from '@/components/Footer'
@@ -7,6 +5,8 @@ import { Header } from '@/components/Header'
 import { WhatsAppButton } from '@/components/WhatsAppButton'
 import { getBannerContent, getContactContent } from '@/lib/landing-data'
 import { baseMetadata } from '@/lib/metadata'
+
+import type { Metadata } from 'next'
 
 export const metadata: Metadata = baseMetadata
 
@@ -37,7 +37,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
         subtitle={tw('whatsapp.subtitle', 'Descubre nuestra galeria, eventos y experiencias')}
         buttonLabel={tw('whatsapp.buttonLabel', 'Contactar por WhatsApp')}
         buttonTitle={tw('whatsapp.buttonTitle', '¡Escríbenos por WhatsApp!')}
-        whatsappUrl={tw('whatsapp.url', '')}
+        whatsappNumber={tw('whatsapp.url', '')}
       />
 
       <RegistrationDialog />

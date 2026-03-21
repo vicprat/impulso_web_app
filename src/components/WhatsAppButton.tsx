@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { FaTimes, FaWhatsapp } from 'react-icons/fa'
 
 import { CONTACT } from '@/config/constants'
+import { getWhatsAppLink } from '@/lib/utils'
 
 import { Button } from './ui/button'
 
@@ -14,7 +15,7 @@ interface WhatsAppButtonProps {
   closeLabel?: string
   greeting?: string
   subtitle?: string
-  whatsappUrl?: string
+  whatsappNumber?: string
 }
 
 export const WhatsAppButton = ({
@@ -23,14 +24,15 @@ export const WhatsAppButton = ({
   closeLabel = 'Cerrar mensaje',
   greeting = '¡Hola! 👋 ¿Necesitas ayuda?',
   subtitle = 'Descubre nuestra galeria, eventos y experiencias',
-  whatsappUrl,
+  whatsappNumber,
 }: WhatsAppButtonProps) => {
   const [showBanner, setShowBanner] = useState(true)
 
-  const resolvedUrl = whatsappUrl ?? CONTACT.WHATSAPP.URL
+  const resolvedNumber = whatsappNumber ?? CONTACT.WHATSAPP.PHONE
 
   const handleWhatsAppClick = () => {
-    window.open(resolvedUrl, '_blank')
+    const whatsappUrl = getWhatsAppLink(resolvedNumber)
+    window.open(whatsappUrl, '_blank')
   }
 
   const handleCloseBanner = () => {

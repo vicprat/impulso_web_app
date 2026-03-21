@@ -1,8 +1,5 @@
 import { Suspense } from 'react'
 
-import type { Locale } from '@/types/notion-content.types'
-import type { Metadata } from 'next'
-
 import { Landing } from '@/components/Landing'
 import { HomeStructuredData } from '@/components/StructuredData'
 import {
@@ -23,6 +20,9 @@ import { routeMetadata } from '@/lib/metadata'
 import { type PublicEvent } from '@/modules/shopify/service'
 import { Membership } from '@/src/components/Landing/Membership/Membership'
 import { ROUTES } from '@/src/config/routes'
+
+import type { Locale } from '@/types/notion-content.types'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = routeMetadata['/']
@@ -73,6 +73,7 @@ export default async function Page() {
   }))
 
   const services = notionServices.map((s) => ({
+    action: s.action,
     description: s.description.es,
     features: s.features,
     iconName: s.iconName,
@@ -130,6 +131,8 @@ export default async function Page() {
     }))
 
   const combinedEvents = [...shopifyEvents, ...eventPostsAsEvents]
+
+  console.log('services', services)
 
   return (
     <main className='overflow-hidden bg-surface'>

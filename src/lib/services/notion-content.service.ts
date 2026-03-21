@@ -1,3 +1,5 @@
+import { getChildDatabases, getFileUrl, getRichTextPlain, PAGES, queryDatabase } from '@/lib/notion'
+
 import type {
   Benefit,
   CarouselSlide,
@@ -8,8 +10,6 @@ import type {
   SocialLink,
   TermsSection,
 } from '@/types/notion-content.types'
-
-import { getChildDatabases, getFileUrl, getRichTextPlain, PAGES, queryDatabase } from '@/lib/notion'
 
 // --- Helper: query a simple Key/Value EN/Value ES table and return content dict ---
 async function querySimpleContentTable(
@@ -124,6 +124,7 @@ export async function getServices(full = false): Promise<Service[]> {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return results.map((page: any) => ({
+      action: getRichTextPlain(page.properties.Action?.rich_text ?? []),
       description: {
         en: getRichTextPlain(
           page.properties['Description EN']?.rich_text ??

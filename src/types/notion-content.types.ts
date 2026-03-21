@@ -13,6 +13,7 @@ export interface CarouselSlide {
 }
 
 export interface Service {
+  action: string
   id: string
   title: Record<Locale, string>
   description: Record<Locale, string>
