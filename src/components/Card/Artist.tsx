@@ -34,15 +34,10 @@ const generateColorFromString = (str: string) => {
   return `hsl(${hue}, 70%, 50%)`
 }
 
-const getInitials = (firstName?: string, lastName?: string, email?: string) => {
-  if (firstName && lastName) {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  }
-  if (firstName) {
-    return firstName.slice(0, 2).toUpperCase()
-  }
-  if (lastName) {
-    return lastName.slice(0, 2).toUpperCase()
+const getInitials = (firstName?: string | null, lastName?: string | null, email?: string) => {
+  if (firstName || lastName) {
+    const initials = [firstName?.[0], lastName?.[0]].filter(Boolean).join('')
+    return initials.toUpperCase() || 'U'
   }
   if (email) {
     return email.slice(0, 2).toUpperCase()
@@ -55,10 +50,7 @@ export const Artist: React.FC<ArtistProps> = ({
   avatarFallback = 'initials',
   backgroundFallback = 'dynamic',
 }) => {
-  const artistName =
-    artist.firstName || artist.lastName
-      ? `${artist.firstName} ${artist.lastName}`.trim()
-      : artist.email
+  const artistName = [artist.firstName, artist.lastName].filter(Boolean).join(' ') || artist.email
 
   const initials = getInitials(artist.firstName, artist.lastName, artist.email)
   const userColor = generateColorFromString(artist.id || artist.email)

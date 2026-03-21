@@ -88,7 +88,7 @@ export default async function Page({
                 <div className='flex items-center gap-2'>
                   <User className='size-4' />
                   <span>
-                    {post.author.firstName} {post.author.lastName}
+                    {[post.author.firstName, post.author.lastName].filter(Boolean).join(' ')}
                   </span>
                 </div>
 

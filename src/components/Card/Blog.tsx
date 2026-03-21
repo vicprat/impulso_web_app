@@ -52,7 +52,7 @@ interface Props {
 
 export const BlogCard: React.FC<Props> = ({ post }) => {
   const readingTime = getReadingTime(post.content)
-  const authorName = `${post.author.firstName} ${post.author.lastName}`.trim()
+  const authorName = [post.author.firstName, post.author.lastName].filter(Boolean).join(' ')
 
   return (
     <Card

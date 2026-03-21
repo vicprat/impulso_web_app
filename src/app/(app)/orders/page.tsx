@@ -201,8 +201,8 @@ export default function OrdersPage() {
 
         switch (sortByInUrl) {
           case 'customerName':
-            aVal = `${a.customer?.firstName ?? ''} ${a.customer?.lastName ?? ''}`.trim()
-            bVal = `${b.customer?.firstName ?? ''} ${b.customer?.lastName ?? ''}`.trim()
+            aVal = [a.customer?.firstName, a.customer?.lastName].filter(Boolean).join(' ')
+            bVal = [b.customer?.firstName, b.customer?.lastName].filter(Boolean).join(' ')
             break
           case 'customerEmail':
             aVal = a.customer?.email ?? ''

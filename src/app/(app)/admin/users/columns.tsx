@@ -46,7 +46,7 @@ export const columns: ColumnDef<UserProfile>[] = [
           </div>
           <div className='ml-4'>
             <div className='text-sm font-medium '>
-              {user.firstName} {user.lastName}
+              {[user.firstName, user.lastName].filter(Boolean).join(' ')}
             </div>
             <div className='text-sm text-gray-500'>ID: {user.id.slice(0, 8)}...</div>
             {isArtist && user.artist?.name && (

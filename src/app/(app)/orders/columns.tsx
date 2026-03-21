@@ -74,7 +74,7 @@ export const columns: ColumnDef<Order>[] = [
       if (!customer) {
         return <span className='text-muted-foreground'>-</span>
       }
-      const fullName = `${customer.firstName ?? ''} ${customer.lastName ?? ''}`.trim()
+      const fullName = [customer.firstName, customer.lastName].filter(Boolean).join(' ')
       return fullName || <span className='text-muted-foreground'>-</span>
     },
     header: ({ table }) => {

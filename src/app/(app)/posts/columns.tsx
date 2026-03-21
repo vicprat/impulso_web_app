@@ -59,7 +59,7 @@ export const columns: ColumnDef<PostWithRelations>[] = [
     accessorKey: 'author',
     cell: ({ row }) => {
       const a = row.original.author
-      const name = `${a.firstName ?? ''} ${a.lastName ?? ''}`.trim()
+      const name = [a.firstName, a.lastName].filter(Boolean).join(' ')
       return name || a.email
     },
     header: ({ column }) => (

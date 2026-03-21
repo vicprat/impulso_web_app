@@ -22,9 +22,7 @@ export function UserProfile() {
       <div className='space-y-3'>
         <div>
           <span className='font-medium text-gray-600'>Nombre:</span>
-          <span className='ml-2'>
-            {user.firstName} {user.lastName}
-          </span>
+          <span className='ml-2'>{[user.firstName, user.lastName].filter(Boolean).join(' ')}</span>
         </div>
 
         <div>

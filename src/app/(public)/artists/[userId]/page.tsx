@@ -49,8 +49,12 @@ export default async function Page({ params }: Props) {
   }
 
   const hasProducts = userProfile.products && userProfile.products.length > 0
-  const fullName = `${userProfile.firstName ?? ''} ${userProfile.lastName ?? ''}`.trim()
-  const initials = `${userProfile.firstName?.charAt(0).toUpperCase() ?? ''}${userProfile.lastName?.charAt(0).toUpperCase() ?? ''}`
+  const fullName = [userProfile.firstName, userProfile.lastName].filter(Boolean).join(' ')
+  const initials =
+    [userProfile.firstName?.[0], userProfile.lastName?.[0]]
+      .filter(Boolean)
+      .join('')
+      .toUpperCase() || 'A'
   const hasBioOrDescription = userProfile.profile?.bio ?? userProfile.profile?.description
   const hasLinks = userProfile.links && userProfile.links.length > 0
 

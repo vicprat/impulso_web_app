@@ -316,7 +316,7 @@ export default function UserManagementPage() {
       <Dialog.Form
         open={roleDialog.open}
         onOpenChange={roleDialog.onOpenChange}
-        title={`Cambiar Rol - ${selectedUser?.firstName} ${selectedUser?.lastName}`}
+        title={`Cambiar Rol - ${[selectedUser?.firstName, selectedUser?.lastName].filter(Boolean).join(' ')}`}
         description='Selecciona un nuevo rol para el usuario.'
       >
         {selectedUser && (

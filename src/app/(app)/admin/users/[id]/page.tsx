@@ -102,11 +102,11 @@ export default function UserDetailPage() {
     )
   }
 
-  const getInitials = (firstName?: string, lastName?: string) => {
-    return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase()
+  const getInitials = (firstName?: string | null, lastName?: string | null) => {
+    return [firstName?.[0], lastName?.[0]].filter(Boolean).join('').toUpperCase() || 'U'
   }
 
-  const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Sin nombre'
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Sin nombre'
 
   // Componentes específicos por rol
   const renderRoleSpecificContent = () => {
