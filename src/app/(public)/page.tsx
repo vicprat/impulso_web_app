@@ -12,7 +12,7 @@ import {
   getHeroContent,
   getPublicArtists,
   getPublicEvents,
-  getPublicProducts,
+  getPublicProductsWithDetails,
   getSectionContent,
   getServices,
 } from '@/lib/landing-data'
@@ -48,7 +48,7 @@ export default async function Page() {
     getEventPosts(),
     getBlogPosts(),
     getPublicArtists(),
-    getPublicProducts(),
+    getPublicProductsWithDetails(),
     getCarouselSlides('es'),
     getServices(false),
     getBenefits('landing'),

@@ -152,23 +152,42 @@ export const Product: React.FC<Props> = ({ product }) => {
           {/* Artwork Details - always show for consistency */}
           {'artworkDetails' in product && product.artworkDetails && (
             <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground'>
-              {'medium' in product.artworkDetails && product.artworkDetails.medium && (
-                <span className='truncate'>{product.artworkDetails.medium}</span>
-              )}
-              {'year' in product.artworkDetails && product.artworkDetails.year && (
-                <>
-                  <span>•</span>
-                  <span>{product.artworkDetails.year}</span>
-                </>
-              )}
-              {product.artworkDetails.height && product.artworkDetails.width && (
-                <>
-                  <span>•</span>
-                  <span>
-                    {product.artworkDetails.height} x {product.artworkDetails.width} cm
-                  </span>
-                </>
-              )}
+              {(() => {
+                const parts: React.ReactNode[] = []
+                if (product.artworkDetails.medium) {
+                  parts.push(
+                    <span key='medium' className='truncate'>
+                      {product.artworkDetails.medium}
+                    </span>
+                  )
+                }
+                if (product.artworkDetails.year) {
+                  parts.push(<span key='year'>{product.artworkDetails.year}</span>)
+                }
+                if (product.artworkDetails.height && product.artworkDetails.width) {
+                  parts.push(
+                    <span key='dimensions'>
+                      {product.artworkDetails.height} x {product.artworkDetails.width} cm
+                    </span>
+                  )
+                }
+                if (product.artworkDetails.serie) {
+                  parts.push(
+                    <span key='serie' className='truncate italic'>
+                      {product.artworkDetails.serie}
+                    </span>
+                  )
+                }
+                return parts.length > 0
+                  ? parts.reduce((acc, part, index) => (
+                      <>
+                        {acc}
+                        {index > 0 && <span>•</span>}
+                        {part}
+                      </>
+                    ))
+                  : null
+              })()}
             </div>
           )}
         </div>

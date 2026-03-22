@@ -1284,39 +1284,15 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
 
   // Siempre usar el flujo de caché para mantener consistencia con los filtros
   // El caché garantiza que los conteos y resultados sean idénticos
-  if (
-    useManualSorting ||
-    hasMetafieldFilters ||
-    params.vendor ||
-    params.artworkType ||
-    params.status
-  ) {
-    return await getProductsWithManualSorting(
-      params,
-      shopifyQuery,
-      limit,
-      reverse,
-      manualSortField,
-      'storefront'
-    )
-  } else {
-    const variables = {
-      after: params.cursor,
-      first: limit,
-      query: shopifyQuery,
-      reverse,
-      sortKey,
-    }
-
-    const response = await makeAdminApiRequest<GetProductsApiResponse>(
-      GET_PRODUCTS_QUERY,
-      variables
-    )
-    const locationId = await getPrimaryLocationId()
-    const products = response.products.edges.map((edge) => new Product(edge.node, locationId))
-
-    return { pageInfo: response.products.pageInfo, products }
-  }
+  // Paginar en memoria es más eficiente que usar cursores de Shopify
+  return await getProductsWithManualSorting(
+    params,
+    shopifyQuery,
+    limit,
+    reverse,
+    manualSortField,
+    'storefront'
+  )
 }
 
 export const productService = {

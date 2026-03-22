@@ -13,8 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useProducts } from '@/modules/shopify/hooks'
-import { type ProductSearchParams } from '@/modules/shopify/types'
+import { useStoreProducts } from '@/modules/shopify/hooks'
 
 import { Error } from './Error'
 
@@ -32,73 +31,14 @@ export const Client = () => {
   const [historyCursors, setHistoryCursors] = useState<Record<number, string | null>>({})
   const [previousLimit, setPreviousLimit] = useState(limitInUrl)
 
-  const buildSearchParamsInternal = useCallback((): ProductSearchParams => {
-    const params: ProductSearchParams = {
-      after: afterCursorInUrl,
-      first: limitInUrl,
+  const buildSearchParamsInternal = useCallback(() => {
+    return {
+      cursor: afterCursorInUrl ?? undefined,
+      limit: limitInUrl,
     }
-    const collections = searchParams.get('collections')
-    if (collections) {
-      const collectionHandles = collections.split(',')
-      params.query = collectionHandles.map((handle) => `collection:${handle}`).join(' OR ')
-    }
-    const priceMin = searchParams.get('price_min')
-    const priceMax = searchParams.get('price_max')
-    if (priceMin || priceMax) {
-      let priceQuery = ''
-      if (priceMin && priceMin !== '0') priceQuery += `price:>=${priceMin}`
-      if (priceMax) {
-        if (priceQuery) priceQuery += ' AND '
-        priceQuery += `price:<=${priceMax}`
-      }
-      params.query = params.query ? `${params.query} AND (${priceQuery})` : priceQuery
-    }
-    const availability = searchParams.get('availability')
-    if (availability) {
-      const availQuery =
-        availability === 'available' ? 'available_for_sale:true' : 'available_for_sale:false'
-      params.query = params.query ? `${params.query} AND ${availQuery}` : availQuery
-    }
+  }, [afterCursorInUrl, limitInUrl])
 
-    // Mapear valores de sort a valores válidos de Shopify
-    const sort = searchParams.get('sort')
-    const order = searchParams.get('order')
-
-    if (sort) {
-      // Validar y mapear el valor de sort
-      const validSortKeys: Record<string, ProductSearchParams['sortKey']> = {
-        BEST_SELLING: 'BEST_SELLING',
-        CREATED_AT: 'CREATED_AT',
-        PRICE: 'PRICE',
-        PRODUCT_TYPE: 'PRODUCT_TYPE',
-        RELEVANCE: 'RELEVANCE',
-        TITLE: 'TITLE',
-        VENDOR: 'VENDOR',
-
-        created_at: 'CREATED_AT',
-
-        price: 'PRICE',
-
-        product_type: 'PRODUCT_TYPE',
-        // Mapear valores legacy si existen
-        title: 'TITLE',
-        vendor: 'VENDOR',
-      }
-
-      const validSortKey = validSortKeys[sort]
-      if (validSortKey) {
-        params.sortKey = validSortKey
-      } else {
-        // Valor por defecto si no es válido
-        params.sortKey = 'TITLE'
-      }
-    }
-
-    if (order === 'desc') params.reverse = true
-    return params
-  }, [afterCursorInUrl, limitInUrl, searchParams])
-
-  const { data: productsData, error, isLoading } = useProducts(buildSearchParamsInternal())
+  const { data: productsData, error, isLoading } = useStoreProducts(buildSearchParamsInternal())
 
   const handlePageChange = (newPage: number) => {
     const newUrlParams = new URLSearchParams(searchParams.toString())
@@ -240,7 +180,7 @@ export const Client = () => {
         {productsData?.products && productsData.products.length > 0 ? (
           <>
             <Card.Container>
-              {productsData.products.map((product) => (
+              {productsData.products.map((product: any) => (
                 <Card.Product key={product.id} product={product} />
               ))}
             </Card.Container>

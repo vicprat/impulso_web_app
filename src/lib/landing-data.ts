@@ -10,6 +10,7 @@ import {
 import { api as shopifyApi } from '@/modules/shopify/api'
 import { shopifyService, type PublicEvent } from '@/modules/shopify/service'
 import { type Product } from '@/modules/shopify/types'
+import { productService } from '@/services/product/service'
 import { type PublicArtist } from '@/modules/user/types'
 
 export async function getPublicArtists(
@@ -128,6 +129,57 @@ export async function getPublicProducts(): Promise<Product[]> {
     return response.data.products
   } catch (error) {
     console.error('Error fetching public products:', error)
+    return []
+  }
+}
+
+export async function getPublicProductsWithDetails(): Promise<Product[]> {
+  try {
+    const result = await productService.getProductsPublic({
+      limit: 8,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+    })
+    return result.products.map((p) => ({
+      artworkDetails: {
+        artist: p.artworkDetails.artist ?? undefined,
+        depth: p.artworkDetails.depth ?? undefined,
+        height: p.artworkDetails.height ?? undefined,
+        location: p.artworkDetails.location ?? undefined,
+        medium: p.artworkDetails.medium ?? undefined,
+        serie: p.artworkDetails.serie ?? undefined,
+        width: p.artworkDetails.width ?? undefined,
+        year: p.artworkDetails.year ?? undefined,
+      },
+      availableForSale: p.isAvailable,
+      createdAt: '',
+      description: p.descriptionHtml.replace(/<[^>]*>/g, ''),
+      descriptionHtml: p.descriptionHtml,
+      handle: p.handle,
+      id: p.id,
+      images: p.images,
+      priceRange: {
+        maxVariantPrice: p.variants[0]?.price ?? { amount: '0', currencyCode: 'MXN' },
+        minVariantPrice: p.variants[0]?.price ?? { amount: '0', currencyCode: 'MXN' },
+      },
+      productType: p.productType,
+      status: p.status,
+      tags: p.tags,
+      title: p.title,
+      updatedAt: '',
+      variants: p.variants.map((v) => ({
+        availableForSale: v.availableForSale,
+        compareAtPrice: v.compareAtPrice,
+        id: v.id,
+        price: v.price,
+        selectedOptions: v.selectedOptions,
+        sku: v.sku,
+        title: v.title,
+      })),
+      vendor: p.vendor,
+    }))
+  } catch (error) {
+    console.error('Error fetching public products with details:', error)
     return []
   }
 }
