@@ -361,8 +361,10 @@ export function CreatePrivateRoom() {
         onSuccess={() => {
           // No-op: en modo creación manejamos la selección con onProductsSelected
         }}
-        onProductsSelected={(products) => {
-          handleAddProducts(products)
+        onProductsSelected={(productIds, selectedProducts) => {
+          if (selectedProducts) {
+            handleAddProducts(selectedProducts)
+          }
           setIsAddProductsModalOpen(false)
         }}
       />

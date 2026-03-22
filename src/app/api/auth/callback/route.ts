@@ -51,7 +51,9 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const response = NextResponse.redirect(`${process.env.NEXTAUTH_URL}/dashboard`)
+      const response = NextResponse.redirect(
+        `${process.env.NEXTAUTH_URL}/auth/login?authenticated=true`
+      )
 
       const tokenExpiresInSeconds = Math.floor(
         (session.tokens.expiresAt.getTime() - Date.now()) / 1000

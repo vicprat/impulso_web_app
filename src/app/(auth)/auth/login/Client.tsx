@@ -6,17 +6,31 @@ import { useEffect } from 'react'
 import { Login } from '@/components/Auth/Login'
 import { useAuth } from '@/modules/auth/context/useAuth'
 
+const ADMIN_ROLES = ['admin', 'manager', 'artist', 'super_admin']
+
 export const Client = () => {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') ?? '/dashboard'
+  const redirectParam = searchParams.get('redirect')
+  const justAuthenticated = searchParams.get('authenticated') === 'true'
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
+      let redirect = '/orders'
+
+      if (redirectParam) {
+        redirect = redirectParam
+      } else if (user?.roles) {
+        const hasAdminAccess = user.roles.some((role) => ADMIN_ROLES.includes(role))
+        if (hasAdminAccess) {
+          redirect = '/manage-inventory'
+        }
+      }
+
       router.push(redirect)
     }
-  }, [isAuthenticated, isLoading, router, redirect])
+  }, [isAuthenticated, isLoading, router, redirectParam, user, justAuthenticated])
 
   if (isAuthenticated) {
     return null
