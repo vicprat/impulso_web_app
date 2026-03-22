@@ -1,17 +1,18 @@
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown, Edit, MapPin, Trash2 } from 'lucide-react'
+import { ArrowUpDown, Edit, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Confirm } from '@/components/Dialog/Confirm'
 import { Button } from '@/components/ui/button'
-import { useDeleteArrendamiento } from '@/services/product/hook'
+import { useDeleteOption } from '@/hooks/use-options'
+import { type OptionConfig } from '@/src/config/options'
 import { ROUTES, replaceRouteParams } from '@/src/config/routes'
 
-interface Arrendamiento {
+interface Option {
   id: string
   name: string
   isActive?: boolean
@@ -19,41 +20,47 @@ interface Arrendamiento {
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData> {
+    optionName?: string
     onRefresh?: () => void
+    config?: OptionConfig
   }
 }
 
-const ActionsCell = ({
-  arrendamiento,
-  onRefresh,
-}: {
-  arrendamiento: Arrendamiento
+interface ActionsCellProps {
+  option: Option
+  optionName: string
+  config?: OptionConfig
   onRefresh?: () => void
-}) => {
+}
+
+const ActionsCell = ({ config, onRefresh, option, optionName }: ActionsCellProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
-  const deleteArrendamientoMutation = useDeleteArrendamiento({
-    onError: (error: any) => {
-      toast.error(`Error al eliminar arrendamiento: ${error.message}`)
+  const deleteOptionMutation = useDeleteOption(optionName, {
+    onError: (error: Error) => {
+      toast.error(
+        `Error al eliminar ${config?.singularLabel.toLowerCase() ?? 'opción'}: ${error.message}`
+      )
       setIsDeleteDialogOpen(false)
     },
     onSuccess: () => {
-      toast.success('Arrendamiento eliminado exitosamente')
+      toast.success(`${config?.singularLabel ?? 'Opción'} eliminada exitosamente`)
       setIsDeleteDialogOpen(false)
       onRefresh?.()
     },
   })
 
   const handleDeleteConfirm = async () => {
-    await deleteArrendamientoMutation.mutateAsync(arrendamiento.id)
+    await deleteOptionMutation.mutateAsync(option.id)
   }
 
   return (
     <>
       <div className='flex items-center space-x-2'>
         <Link
-          href={replaceRouteParams(ROUTES.INVENTORY.ARRENDAMIENTOS.DETAIL.PATH, {
-            id: arrendamiento.id,
+          href={replaceRouteParams(ROUTES.INVENTORY.OPTIONS.DETAIL.PATH, {
+            id: option.id,
+            name: optionName,
           })}
         >
           <Button variant='ghost' size='sm'>
@@ -75,29 +82,32 @@ const ActionsCell = ({
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDeleteConfirm}
         title='Confirmar Eliminación'
-        message={`¿Estás seguro de que quieres eliminar el arrendamiento "${arrendamiento.name}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de que quieres eliminar "${option.name}"? Esta acción no se puede deshacer.`}
         confirmButtonText='Eliminar'
         variant='destructive'
-        isLoading={deleteArrendamientoMutation.isPending}
+        isLoading={deleteOptionMutation.isPending}
       />
     </>
   )
 }
 
-export const columns: ColumnDef<Arrendamiento>[] = [
+export const columns = (optionName: string, config?: OptionConfig): ColumnDef<Option>[] => [
   {
     accessorKey: 'name',
     cell: ({ row }) => {
-      const arrendamiento = row.original
+      const option = row.original
+      const Icon = config?.icon
+
       return (
         <Link
-          href={replaceRouteParams(ROUTES.INVENTORY.ARRENDAMIENTOS.DETAIL.PATH, {
-            id: arrendamiento.id,
+          href={replaceRouteParams(ROUTES.INVENTORY.OPTIONS.DETAIL.PATH, {
+            id: option.id,
+            name: optionName,
           })}
           className='flex items-center gap-2 font-medium hover:underline'
         >
-          <MapPin className='size-4 text-blue-500' />
-          {arrendamiento.name}
+          {Icon && <Icon className='size-4 text-blue-500' />}
+          {option.name}
         </Link>
       )
     },
@@ -111,9 +121,16 @@ export const columns: ColumnDef<Arrendamiento>[] = [
 
   {
     cell: ({ row, table }) => {
-      const arrendamiento = row.original
-      const { onRefresh } = table.options.meta ?? {}
-      return <ActionsCell arrendamiento={arrendamiento} onRefresh={onRefresh} />
+      const option = row.original
+      const { config: tableConfig, onRefresh } = table.options.meta ?? {}
+      return (
+        <ActionsCell
+          option={option}
+          optionName={optionName}
+          config={tableConfig ?? config}
+          onRefresh={onRefresh}
+        />
+      )
     },
     header: 'Acciones',
     id: 'actions',

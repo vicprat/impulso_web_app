@@ -215,6 +215,32 @@ export const useGetVendors = () => {
   })
 }
 
+export const useUpdateVendor = (options?: {
+  onSuccess?: () => void
+  onError?: (error: Error) => void
+}) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ newVendor, oldVendor }: { oldVendor: string; newVendor: string }) => {
+      const response = await fetch('/api/vendors', {
+        body: JSON.stringify({ newVendor, oldVendor }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PUT',
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al actualizar vendor')
+      }
+      return response.json()
+    },
+    onError: options?.onError,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['vendors'] })
+      options?.onSuccess?.()
+    },
+  })
+}
+
 export const useGetTechniques = () => {
   return useQuery({
     queryFn: async () => {

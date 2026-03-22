@@ -7,6 +7,7 @@ import {
   Headphones,
   Home,
   LayoutDashboard,
+  Layers,
   MapPin,
   MessageSquare,
   Package,
@@ -35,6 +36,8 @@ const iconMap: Record<string, FC<IconProps>> = {
 
   'layout-dashboard': LayoutDashboard,
 
+  layers: Layers,
+
   'map-pin': MapPin,
 
   'message-square': MessageSquare,
@@ -45,20 +48,17 @@ const iconMap: Record<string, FC<IconProps>> = {
 
   shield: Shield,
 
-  // Asegúrate de añadir todos los que necesites
   'shopping-cart': ShoppingCart,
 
   star: Star,
 
   'trending-up': TrendingUp,
-  // Ejemplo de tu routes.ts
   user: User,
   users: Users,
-  // ... añade todos los iconos que definiste en tu `routes.ts`
 }
 
 export const getIconComponent = (iconName?: string): FC<IconProps> => {
   if (!iconName) return () => null
-   
+
   return iconMap[iconName] || Package
 }

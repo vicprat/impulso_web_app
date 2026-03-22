@@ -6,13 +6,16 @@ import { requirePermission } from '@/src/modules/auth/server/server'
 
 const TABLE_MAP: Record<string, string> = {
   arrendamientos: 'Arrendamiento',
+  artists: 'Artist',
   artwork_types: 'ArtworkType',
   locations: 'Location',
   techniques: 'Technique',
 }
 
+const MODELS_WITH_IS_ACTIVE = ['Arrendamiento', 'ArtworkType', 'Location', 'Technique']
+
 // Define a type for model names only
-type ModelName = 'Technique' | 'ArtworkType' | 'Location' | 'Arrendamiento'
+type ModelName = 'Technique' | 'ArtworkType' | 'Location' | 'Arrendamiento' | 'Artist'
 
 export async function GET(req: Request, context: { params: Promise<{ name: string }> }) {
   try {
@@ -42,11 +45,14 @@ export async function GET(req: Request, context: { params: Promise<{ name: strin
       return NextResponse.json({ error: 'Error interno: modelo no disponible' }, { status: 500 })
     }
 
+    // Construir el where clause condicionalmente
+    const whereClause = MODELS_WITH_IS_ACTIVE.includes(tableName) ? { isActive: true } : {}
+
     // Type assertion to specific model names
     const data = await (prisma as any)[tableName as ModelName].findMany({
       orderBy: { name: 'asc' },
       select: { id: true, name: true },
-      where: { isActive: true },
+      where: whereClause,
     })
 
     return NextResponse.json(data)
@@ -303,10 +309,16 @@ export async function DELETE(req: Request, context: { params: Promise<{ name: st
       return NextResponse.json({ error: 'El parámetro "id" es requerido' }, { status: 400 })
     }
 
-    await (prisma as any)[tableName as ModelName].update({
-      data: { isActive: false },
-      where: { id },
-    })
+    if (MODELS_WITH_IS_ACTIVE.includes(tableName)) {
+      await (prisma as any)[tableName as ModelName].update({
+        data: { isActive: false },
+        where: { id },
+      })
+    } else {
+      await (prisma as any)[tableName as ModelName].delete({
+        where: { id },
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

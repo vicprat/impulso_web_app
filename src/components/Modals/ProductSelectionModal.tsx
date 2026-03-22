@@ -155,14 +155,6 @@ export function ProductSelectionModal({
   const [selectedProducts, setSelectedProducts] = useState<Map<string, Product>>(new Map())
   const [showSelectedAccordion, setShowSelectedAccordion] = useState(false)
 
-  // DEBUG: Log selectedProducts changes
-  useEffect(() => {
-    console.log(
-      'selectedProducts Map updated:',
-      Array.from(selectedProducts.values()).map((p) => p.title)
-    )
-  }, [selectedProducts])
-
   const isInitializedRef = useRef(false)
   const tableContainerRef = useRef<HTMLDivElement>(null)
 
@@ -294,8 +286,6 @@ export function ProductSelectionModal({
   }, [])
 
   const handleProductToggle = useCallback((productId: string, product?: Product) => {
-    console.log('handleProductToggle called:', { product, productId })
-
     setSelectedProductIds((prev) => {
       const newSet = new Set(prev)
       if (newSet.has(productId)) {
@@ -307,17 +297,12 @@ export function ProductSelectionModal({
     })
 
     setSelectedProducts((prev) => {
-      console.log('setSelectedProducts prev:', Array.from(prev.keys()))
       const newMap = new Map(prev)
       if (newMap.has(productId)) {
         newMap.delete(productId)
       } else if (product) {
-        console.log('Adding product to selectedProducts:', product.title)
         newMap.set(productId, product)
-      } else {
-        console.log('Product is undefined, not adding to selectedProducts')
       }
-      console.log('setSelectedProducts new:', Array.from(newMap.keys()))
       return newMap
     })
   }, [])
@@ -832,7 +817,6 @@ export function ProductSelectionModal({
             </div>
           )}
 
-          {/* DEBUG: {`selectedProductIds.size=${selectedProductIds.size}, selectedProducts.size=${selectedProducts.size}`} */}
           {selectedProductIds.size > 0 && (
             <Accordion
               type='single'

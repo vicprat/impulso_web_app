@@ -257,30 +257,6 @@ export const ROUTES = {
   },
 
   INVENTORY: {
-    ARRENDAMIENTOS: {
-      CREATE: {
-        ICON: 'plus',
-        LABEL: 'Crear Arrendamiento',
-        PATH: '/manage-inventory/arrendamientos/create',
-        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-      DETAIL: {
-        ICON: 'edit',
-        LABEL: 'Editar Arrendamiento',
-        PATH: '/manage-inventory/arrendamientos/:id',
-        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-      MAIN: {
-        DESCRIPTION: 'Gestionar Arrendamientos',
-        ICON: 'map-pin',
-        LABEL: 'Arrendamientos',
-        PATH: '/manage-inventory/arrendamientos',
-        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-    },
     COLLECTIONS: {
       DETAIL: {
         ICON: 'edit',
@@ -351,36 +327,43 @@ export const ROUTES = {
       PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
     },
-    LOCATIONS: {
-      CREATE: {
-        ICON: 'plus',
-        LABEL: 'Crear Localización',
-        PATH: '/manage-inventory/locations/create',
-        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-      DETAIL: {
-        ICON: 'edit',
-        LABEL: 'Editar Localización',
-        PATH: '/manage-inventory/locations/:id',
-        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-      MAIN: {
-        DESCRIPTION: 'Gestionar Localizaciones',
-        ICON: 'map-pin',
-        LABEL: 'Localizaciones',
-        PATH: '/manage-inventory/locations',
-        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
-        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-      },
-    },
     MAIN: {
       ICON: 'archive',
       LABEL: 'Inventario',
       PATH: '/manage-inventory',
       PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.ARTIST.NAME],
+    },
+    OPTIONS: {
+      CREATE: {
+        ICON: 'plus',
+        LABEL: 'Crear',
+        PATH: '/manage-inventory/options/:name/create',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      DETAIL: {
+        ICON: 'edit',
+        LABEL: 'Editar',
+        PATH: '/manage-inventory/options/:name/:id',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      LIST: {
+        ICON: 'layers',
+        LABEL: 'Gestionar',
+        PATH: '/manage-inventory/options/:name',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
+      MAIN: {
+        DESCRIPTION: 'Gestionar Catálogos',
+        ICON: 'layout-dashboard',
+        LABEL: 'Catálogos',
+        PATH: '/manage-inventory/options',
+        PERMISSIONS: [PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS],
+        ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
+      },
     },
     PRIVATE_ROOMS: {
       CREATE: {
@@ -686,8 +669,7 @@ export const getGroupedDashboardNavRoutes = (
     ROUTES.INVENTORY.MAIN,
     ROUTES.INVENTORY.COUPONS.MAIN,
     ROUTES.INVENTORY.COLLECTIONS.MAIN,
-    ROUTES.INVENTORY.LOCATIONS.MAIN,
-    ROUTES.INVENTORY.ARRENDAMIENTOS.MAIN,
+    ROUTES.INVENTORY.OPTIONS.MAIN,
     ROUTES.INVENTORY.PRIVATE_ROOMS.MAIN,
   ].filter(
     (route) =>
