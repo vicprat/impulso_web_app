@@ -363,6 +363,20 @@ export const PRODUCT_BY_HANDLE_QUERY = `
           }
         }
       }
+      metafields(identifiers: [
+        { namespace: "art_details", key: "medium" }
+        { namespace: "art_details", key: "year" }
+        { namespace: "art_details", key: "height" }
+        { namespace: "art_details", key: "width" }
+        { namespace: "art_details", key: "depth" }
+        { namespace: "art_details", key: "serie" }
+        { namespace: "art_details", key: "location" }
+        { namespace: "art_details", key: "artist" }
+      ]) {
+        key
+        namespace
+        value
+      }
     }
   }
 `

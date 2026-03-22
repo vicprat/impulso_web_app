@@ -120,6 +120,13 @@ export interface RawProduct {
       node: Variant
     }[]
   }
+  metafields?:
+    | {
+        key: string
+        namespace: string
+        value: string
+      }[]
+    | null
 }
 
 export interface RawCollection {

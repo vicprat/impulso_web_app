@@ -56,6 +56,19 @@ export interface ShopifyProductDataResponse {
 
 // Función para convertir datos del API público al formato ShopifyProductData
 function convertToShopifyProductData(rawProduct: RawProduct) {
+  // Convertir metafields al formato esperado por el modelo Product
+  // Filtrar metafields null y convertir al formato de aristas
+  const metafieldEdges =
+    rawProduct.metafields
+      ?.filter((mf): mf is NonNullable<typeof mf> => mf !== null)
+      .map((mf) => ({
+        node: {
+          key: mf.key,
+          namespace: mf.namespace,
+          value: mf.value,
+        },
+      })) ?? []
+
   return {
     // Los productos públicos no tienen tags personalizados
     createdAt: rawProduct.createdAt,
@@ -74,7 +87,7 @@ function convertToShopifyProductData(rawProduct: RawProduct) {
     },
 
     metafields: {
-      edges: [], // Los productos públicos no tienen metafields personalizados
+      edges: metafieldEdges,
     },
 
     productType: rawProduct.productType,

@@ -132,8 +132,6 @@ export default async function Page() {
 
   const combinedEvents = [...shopifyEvents, ...eventPostsAsEvents]
 
-  console.log('services', services)
-
   return (
     <main className='overflow-hidden bg-surface'>
       <HomeStructuredData />

@@ -148,6 +148,29 @@ export const Product: React.FC<Props> = ({ product }) => {
               {product.description.replace(/(<([^>]+)>)/gi, '')}
             </p>
           )}
+
+          {/* Artwork Details - always show for consistency */}
+          {'artworkDetails' in product && product.artworkDetails && (
+            <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground'>
+              {'medium' in product.artworkDetails && product.artworkDetails.medium && (
+                <span className='truncate'>{product.artworkDetails.medium}</span>
+              )}
+              {'year' in product.artworkDetails && product.artworkDetails.year && (
+                <>
+                  <span>•</span>
+                  <span>{product.artworkDetails.year}</span>
+                </>
+              )}
+              {product.artworkDetails.height && product.artworkDetails.width && (
+                <>
+                  <span>•</span>
+                  <span>
+                    {product.artworkDetails.height} x {product.artworkDetails.width} cm
+                  </span>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <div className='space-y-1'>
           <div className='flex flex-wrap items-baseline gap-2'>

@@ -106,8 +106,11 @@ async function getProductsWithManualSorting(
 
     // Si ya tiene la estructura de Product (ej: images es array), lo hidratamos como instancia sin usar el constructor que espera estructura de Shopify
     if (Array.isArray(p.images) && !p.images.edges) {
-      const instance = Object.create(Product.prototype)
-      return Object.assign(instance, p)
+      // Si tiene artworkDetails directo del cache, usarlo; si no, crear Product normalmente
+      if (p.artworkDetails) {
+        const instance = Object.create(Product.prototype)
+        return Object.assign(instance, p)
+      }
     }
 
     return new Product(p, locationId)

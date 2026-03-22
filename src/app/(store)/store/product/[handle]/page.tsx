@@ -4,6 +4,7 @@ import { Client } from './Client'
 
 import type { Metadata } from 'next'
 
+import { CacheManager } from '@/lib/cache'
 import { generateProductMetadata } from '@/lib/metadata'
 import { Product } from '@/models/Product'
 import { getServerSession } from '@/modules/auth/server/server'
@@ -21,6 +22,20 @@ export async function generateMetadata({
   const { handle } = await params
 
   try {
+    // Intentar obtener el producto del cache primero (incluye metafields)
+    const catalog = await CacheManager.getFullCatalog('storefront')
+    const cachedProduct = catalog.find((p) => p.handle === handle)
+
+    if (cachedProduct) {
+      return generateProductMetadata({
+        artist: cachedProduct.vendor,
+        description: cachedProduct.descriptionHtml || '',
+        images: cachedProduct.images?.map((img: any) => img.url) || [],
+        title: cachedProduct.title,
+      })
+    }
+
+    // Fallback al API público
     const response = await shopifyApi.getProductByHandle(handle)
 
     if (response.data) {
@@ -49,31 +64,55 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
     const session = await getServerSession()
 
     let product: Product | null = null
+    let cachedProduct: any = null // Guardar datos del cache directamente
 
     try {
       // Si hay sesión, usar nuestro servicio personalizado para obtener el producto enriquecido
       if (session) {
         product = await productService.getProductByHandle(handle, session)
       } else {
-        // Si no hay sesión, usar el API público de Shopify que ya devuelve el formato correcto
+        // Si no hay sesión, usar el cache del storefront que ya tiene metafields
         try {
-          const response = await shopifyApi.getProductByHandle(handle)
+          const catalog = await CacheManager.getFullCatalog('storefront')
+          cachedProduct = catalog.find((p) => p.handle === handle)
 
-          if (response.data) {
-            // El API ya devuelve el formato correcto para el modelo Product
-            product = new Product(response.data, '') // locationId será vacío para productos públicos
-          }
-        } catch (apiError) {
-          // Si falla el API público, intentar con el servicio autenticado si hay sesión
-          if (session) {
-            try {
-              product = await productService.getProductByHandle(handle, session)
-            } catch (_fallbackError) {
-              throw apiError // Lanzar el error original
-            }
+          if (cachedProduct) {
+            // Convertir del cache al formato del modelo Product
+            product = new Product(
+              {
+                createdAt: cachedProduct.createdAt || '',
+                descriptionHtml: cachedProduct.descriptionHtml || '',
+                handle: cachedProduct.handle,
+                id: cachedProduct.id,
+                images: {
+                  edges: (cachedProduct.images || []).map((img: any) => ({ node: img })),
+                },
+                media: { nodes: [] },
+                metafields: { edges: [] }, // Sin metafields - usaremos artworkDetails directamente
+                productType: cachedProduct.productType || '',
+                status: cachedProduct.status || 'ACTIVE',
+                tags: cachedProduct.tags || [],
+                title: cachedProduct.title,
+                updatedAt: cachedProduct.updatedAt || '',
+                variants: {
+                  edges: (cachedProduct.variants || []).map((v: any) => ({ node: v })),
+                },
+                vendor: cachedProduct.vendor,
+              },
+              cachedProduct.primaryLocationId || ''
+            )
           } else {
-            // Si no hay sesión y el API público falla, mostrar 404
-            notFound()
+            // Si no está en cache, fallback al API público (sin metafields)
+            const response = await shopifyApi.getProductByHandle(handle)
+            if (response.data) {
+              product = new Product(response.data, '')
+            }
+          }
+        } catch (_cacheError) {
+          // Si falla el cache, usar el API público como fallback
+          const response = await shopifyApi.getProductByHandle(handle)
+          if (response.data) {
+            product = new Product(response.data, '')
           }
         }
       }
@@ -88,34 +127,37 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
     // TypeScript assertion: product is guaranteed to be non-null here
     const confirmedProduct = product as Product
 
+    // Usar artworkDetails del cache directamente si está disponible, de lo contrario del Product
+    const artworkDetails = cachedProduct?.artworkDetails || confirmedProduct.artworkDetails
+
     // Convertir el modelo Product a un objeto plano para evitar problemas de serialización
     const productData = {
-      artworkDetails: product.artworkDetails,
-      autoTags: product.autoTags,
-      descriptionHtml: product.descriptionHtml,
-      formattedPrice: product.formattedPrice,
-      handle: product.handle,
-      id: product.id,
-      images: product.images,
-      isAvailable: product.isAvailable,
-      manualTags: product.manualTags,
-      media: product.media,
+      artworkDetails: artworkDetails,
+      autoTags: confirmedProduct.autoTags,
+      descriptionHtml: confirmedProduct.descriptionHtml,
+      formattedPrice: confirmedProduct.formattedPrice,
+      handle: confirmedProduct.handle,
+      id: confirmedProduct.id,
+      images: confirmedProduct.images,
+      isAvailable: confirmedProduct.isAvailable,
+      manualTags: confirmedProduct.manualTags,
+      media: confirmedProduct.media,
       // Getters
-      primaryImage: product.primaryImage,
+      primaryImage: confirmedProduct.primaryImage,
 
-      primaryVariant: product.primaryVariant,
+      primaryVariant: confirmedProduct.primaryVariant,
 
-      productType: product.productType,
+      productType: confirmedProduct.productType,
 
-      status: product.status,
+      status: confirmedProduct.status,
 
-      statusLabel: product.statusLabel,
+      statusLabel: confirmedProduct.statusLabel,
 
-      tags: product.tags,
+      tags: confirmedProduct.tags,
 
-      title: product.title,
-      variants: product.variants,
-      vendor: product.vendor,
+      title: confirmedProduct.title,
+      variants: confirmedProduct.variants,
+      vendor: confirmedProduct.vendor,
     }
 
     let relatedProducts: Product[] = []
