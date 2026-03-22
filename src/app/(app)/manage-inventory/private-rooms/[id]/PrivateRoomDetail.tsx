@@ -22,6 +22,7 @@ import { ROUTES } from '@/src/config/routes'
 import { AddProductsModal } from './AddProductsModal'
 import { AddUsersModal } from './AddUsersModal'
 import { EditRoomModal } from './EditRoomModal'
+import { InvitationsSection } from './InvitationsSection'
 import { PrivateRoomProductsTable } from './PrivateRoomProductsTable'
 
 import type { Product } from '@/models/Product'
@@ -418,6 +419,8 @@ export function PrivateRoomDetail({ roomId }: PrivateRoomDetailProps) {
             )}
           </div>
         </div>
+
+        <InvitationsSection roomId={roomId} isLoading={isLoadingRoom} />
 
         <div className='rounded-lg border bg-card'>
           <div className='border-b p-4'>

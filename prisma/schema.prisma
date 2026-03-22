@@ -188,11 +188,12 @@ model PrivateRoom {
   name        String
   description String?
   userId      String?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   products    PrivateRoomProduct[]
   users       PrivateRoomUser[]
-  user        User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invites     PrivateRoomInvite[]
+  user        User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("private_rooms")
 }
@@ -217,6 +218,23 @@ model PrivateRoomUser {
 
   @@unique([privateRoomId, userId])
   @@map("private_room_users")
+}
+
+model PrivateRoomInvite {
+  id            String      @id @default(cuid())
+  token         String      @unique
+  privateRoomId String
+  email         String?
+  expiresAt     DateTime?
+  usedAt        DateTime?
+  createdAt     DateTime    @default(now())
+  createdBy     String?
+  privateRoom   PrivateRoom @relation(fields: [privateRoomId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([privateRoomId])
+  @@index([email])
+  @@map("private_room_invites")
 }
 
 model Ticket {
