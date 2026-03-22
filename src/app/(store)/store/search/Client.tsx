@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowUp, RefreshCw, Search, X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import { Card } from '@/components/Card'
 import { Pagination } from '@/components/Pagination'
@@ -24,11 +24,11 @@ import {
 } from '@/modules/shopify/types'
 
 const sortOptions = [
-  { label: 'Relevancia', supportsOrder: false, value: 'RELEVANCE' },
-  { label: 'Más vendidos', supportsOrder: false, value: 'BEST_SELLING' },
+  { label: 'Título', supportsOrder: true, value: 'TITLE' },
   { label: 'Precio', supportsOrder: true, value: 'PRICE' },
-  { label: 'Nombre', supportsOrder: true, value: 'TITLE' },
-  { label: 'Fecha de creación', supportsOrder: true, value: 'CREATED' },
+  { label: 'Fecha de creación', supportsOrder: true, value: 'CREATED_AT' },
+  { label: 'Fecha de actualización', supportsOrder: true, value: 'UPDATED_AT' },
+  { label: 'Artista', supportsOrder: true, value: 'VENDOR' },
 ] as const
 
 export const Client = () => {
@@ -36,13 +36,12 @@ export const Client = () => {
   const searchParams = useSearchParams()
 
   // Gestión de la paginación con cursores
-  const [pageHistory, setPageHistory] = useState<(string | null)[]>([null])
   const currentPage = useMemo(() => {
     const page = searchParams.get('page')
     return page ? parseInt(page, 10) : 1
   }, [searchParams])
 
-  const cursor = useMemo(() => pageHistory[currentPage - 1], [pageHistory, currentPage])
+  const cursor = searchParams.get('after') ?? undefined
 
   const searchFilters: ProductSearchFilters = useMemo(() => {
     const filters: ProductSearchFilters = {}
@@ -72,30 +71,26 @@ export const Client = () => {
 
   const currentSort = (() => {
     const sort = searchParams.get('sort')
-    if (!sort) return 'RELEVANCE'
+    if (!sort) return 'TITLE'
 
     // Validar y mapear el valor de sort
     const validSortKeys: Record<string, ProductSearchParams['sortKey']> = {
-      BEST_SELLING: 'BEST_SELLING',
       CREATED_AT: 'CREATED_AT',
       PRICE: 'PRICE',
-      PRODUCT_TYPE: 'PRODUCT_TYPE',
-      RELEVANCE: 'RELEVANCE',
       TITLE: 'TITLE',
+      UPDATED_AT: 'UPDATED_AT',
       VENDOR: 'VENDOR',
 
+      createdAt: 'CREATED_AT',
       created_at: 'CREATED_AT',
-
       price: 'PRICE',
-
-      product_type: 'PRODUCT_TYPE',
-      // Mapear valores legacy si existen
       title: 'TITLE',
+      updatedAt: 'UPDATED_AT',
       vendor: 'VENDOR',
     }
 
     const validSortKey = validSortKeys[sort]
-    return validSortKey || 'RELEVANCE'
+    return validSortKey || 'TITLE'
   })()
   const currentOrder = searchParams.get('order')
 
@@ -118,7 +113,11 @@ export const Client = () => {
           ? 'title'
           : currentSort === 'CREATED_AT'
             ? 'createdAt'
-            : undefined,
+            : currentSort === 'UPDATED_AT'
+              ? 'updatedAt'
+              : currentSort === 'VENDOR'
+                ? 'vendor'
+                : undefined,
     sortOrder: currentOrder === 'desc' ? ('desc' as const) : ('asc' as const),
     technique: techniques.length > 0 ? techniques.join(',') : undefined,
     vendor:
@@ -135,21 +134,25 @@ export const Client = () => {
 
   const handlePageChange = (newPage: number) => {
     const newParams = new URLSearchParams(searchParams.toString())
-    if (newPage > currentPage) {
-      const nextCursor = productsData?.pageInfo.endCursor
-      if (nextCursor) {
-        setPageHistory((prev) => {
-          const newHistory = [...prev]
-          newHistory[newPage] = nextCursor
-          return newHistory
-        })
-      }
-      newParams.set('page', newPage.toString())
-    } else if (newPage < currentPage) {
-      newParams.set('page', newPage.toString())
+    let targetCursor: string | null = null
+
+    if (newPage === 1) {
+      targetCursor = null
+    } else if (newPage > currentPage) {
+      // Forward navigation: use the cursor from the current response
+      targetCursor = productsData?.pageInfo.endCursor ?? null
     } else {
-      newParams.set('page', newPage.toString())
+      // Backward navigation: need to recalculate
+      targetCursor = null
     }
+
+    newParams.set('page', newPage.toString())
+    if (targetCursor) {
+      newParams.set('after', targetCursor)
+    } else {
+      newParams.delete('after')
+    }
+
     router.push(`/store/search?${newParams.toString()}`)
   }
 
@@ -287,13 +290,6 @@ export const Client = () => {
   }
 
   const clearAllFilters = () => {
-    const newParams = new URLSearchParams()
-    const sort = searchParams.get('sort')
-    const order = searchParams.get('order')
-    if (sort) newParams.set('sort', sort)
-    if (order) newParams.set('order', order)
-    newParams.delete('page')
-    setPageHistory([null])
     const path = '/store'
     router.push(path)
   }

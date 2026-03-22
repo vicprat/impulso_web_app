@@ -5,11 +5,9 @@ import {
   ChevronDown,
   DollarSign,
   Filter as FilterIcon,
-  MapPin,
   Package,
   Palette,
   Square,
-  Tag,
   User,
   X,
 } from 'lucide-react'
@@ -194,7 +192,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       filterOptions?.artists
         .filter((vendor) => vendor.label !== 'Evento' && vendor.input !== 'Evento')
         .filter((vendor) => vendor.count > 0)
-        .map((v) => ({ label: `${v.label} (${v.count})`, value: v.input, count: v.count })) ?? [],
+        .map((v) => ({ count: v.count, label: `${v.label} (${v.count})`, value: v.input })) ?? [],
     [filterOptions]
   )
 
@@ -202,7 +200,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     () =>
       filterOptions?.productTypes
         .filter((pt) => pt.count > 0)
-        .map((pt) => ({ label: `${pt.label} (${pt.count})`, value: pt.input, count: pt.count })) ??
+        .map((pt) => ({ count: pt.count, label: `${pt.label} (${pt.count})`, value: pt.input })) ??
       [],
     [filterOptions]
   )
@@ -270,17 +268,8 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
 
   const clearFilters = () => {
     setFilters(defaultFilters)
-    const currentSort = searchParams.get('sort')
-    const currentOrder = searchParams.get('order')
-
-    let newPath = '/store'
-    if (currentSort || currentOrder) {
-      const sortParams = new URLSearchParams()
-      if (currentSort) sortParams.set('sort', currentSort)
-      if (currentOrder) sortParams.set('order', currentOrder)
-      newPath = `/store/search?${sortParams.toString()}`
-    }
-
+    // Ir a /store sin parámetros de filtro, solo con paginación si existe
+    const newPath = '/store'
     router.push(newPath)
     onClose()
   }
