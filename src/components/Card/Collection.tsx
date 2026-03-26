@@ -40,7 +40,7 @@ export const CollectionCard: React.FC<Props> = ({ collection }) => {
         className='block focus:outline-none'
         aria-label={`Ver colección: ${collection.title}`}
       >
-        <div className='relative aspect-[4/3] overflow-hidden bg-muted'>
+        <div className='relative aspect-[4/5] overflow-hidden bg-muted sm:aspect-[4/3]'>
           {displayImage ? (
             <>
               <img
@@ -71,7 +71,7 @@ export const CollectionCard: React.FC<Props> = ({ collection }) => {
         </div>
       </Link>
 
-      <CardContent className='space-y-3 bg-card p-4'>
+      <CardContent className='space-y-3 bg-card p-3 sm:p-4'>
         <div className='space-y-2'>
           <Link
             href={replaceRouteParams(ROUTES.COLLECTIONS.DETAIL.PATH, {
@@ -79,7 +79,7 @@ export const CollectionCard: React.FC<Props> = ({ collection }) => {
             })}
             className='block'
           >
-            <h3 className='line-clamp-2 text-lg font-semibold leading-tight text-foreground transition-colors duration-200 hover:text-primary focus:text-primary focus:outline-none'>
+            <h3 className='line-clamp-2 text-sm font-semibold leading-tight text-foreground transition-colors duration-200 hover:text-primary focus:text-primary focus:outline-none sm:text-lg'>
               {collection.title}
             </h3>
           </Link>
@@ -88,7 +88,8 @@ export const CollectionCard: React.FC<Props> = ({ collection }) => {
         <div className='flex items-center justify-between border-t border-border pt-3'>
           <div className='flex items-center gap-1.5 text-xs text-muted-foreground'>
             <Layers className='size-3.5' />
-            <span>{formatProductCount(collection.productsCount)}</span>
+            <span className='sm:hidden'>{collection.productsCount}</span>
+            <span className='hidden sm:inline'>{formatProductCount(collection.productsCount)}</span>
           </div>
 
           <Link

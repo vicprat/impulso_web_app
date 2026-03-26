@@ -222,7 +222,10 @@ export default function Page() {
   }
 
   const collections = collectionsData?.collections ?? []
-  const sortedCollections = sortCollections(collections, sortInUrl)
+  const publishedCollections = collections.filter(
+    (c: Collection) => c.publishedOnCurrentPublication
+  )
+  const sortedCollections = sortCollections(publishedCollections, sortInUrl)
   const totalPages = collectionsData?.pageInfo?.hasNextPage ? pageInUrl + 1 : pageInUrl
 
   return (
@@ -342,7 +345,7 @@ export default function Page() {
             <p className='mb-4 text-on-surface-variant'>
               {queryInUrl
                 ? 'No se encontraron colecciones que coincidan con tu búsqueda.'
-                : 'No hay colecciones disponibles en este momento.'}
+                : 'No hay colecciones publicadas disponibles en este momento.'}
             </p>
             {queryInUrl && (
               <button
