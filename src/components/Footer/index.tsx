@@ -1,6 +1,6 @@
-import { FooterClient } from './Footer'
-
 import { getContactContent, getNavigationLinks, getSocialLinks } from '@/lib/landing-data'
+
+import { FooterClient } from './Footer'
 
 export async function Footer() {
   const [contactContent, footerContent, socialLinks, navigationLinks] = await Promise.all([

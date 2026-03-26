@@ -4,8 +4,6 @@ import { Facebook, Instagram, Mail, MapPin, Phone, Youtube } from 'lucide-react'
 import Link from 'next/link'
 import { FaTiktok } from 'react-icons/fa'
 
-import type { NavigationLink, SocialLink } from '@/types/notion-content.types'
-
 import {
   AnimatedSpheres,
   FloatingParticles,
@@ -13,6 +11,8 @@ import {
   GridOverlay,
 } from '@/components/Animations'
 import { ROUTES } from '@/src/config/routes'
+
+import type { NavigationLink, SocialLink } from '@/types/notion-content.types'
 
 // Icon mapping for social link names
 const SOCIAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {

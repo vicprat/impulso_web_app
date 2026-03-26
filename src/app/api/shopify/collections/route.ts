@@ -47,6 +47,25 @@ export async function GET(request: NextRequest) {
                   condition
                 }
               }
+              products(first: 1) {
+                edges {
+                  node {
+                    id
+                    title
+                    images(first: 1) {
+                      edges {
+                        node {
+                          id
+                          url
+                          altText
+                          width
+                          height
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
             cursor
           }
@@ -62,19 +81,32 @@ export async function GET(request: NextRequest) {
 
     const response = (await makeAdminApiRequest(QUERY, variables)) as any
 
-    const collections = response.collections.edges.map((edge: any) => ({
-      description: edge.node.description,
-      descriptionHtml: edge.node.descriptionHtml,
-      handle: edge.node.handle,
-      id: edge.node.id,
-      image: edge.node.image,
-      productsCount: edge.node.productsCount?.count ?? 0,
-      publicationCount: edge.node.publicationCount ?? 0,
-      publishedOnCurrentPublication: (edge.node.publicationCount ?? 0) > 0,
-      ruleSet: edge.node.ruleSet,
-      title: edge.node.title,
-      updatedAt: edge.node.updatedAt,
-    }))
+    const collections = response.collections.edges.map((edge: any) => {
+      const productImage = edge.node.products?.edges?.[0]?.node?.images?.edges?.[0]?.node
+
+      return {
+        description: edge.node.description,
+        descriptionHtml: edge.node.descriptionHtml,
+        handle: edge.node.handle,
+        id: edge.node.id,
+        image: edge.node.image,
+        productImage: productImage
+          ? {
+              altText: productImage.altText,
+              height: productImage.height,
+              id: productImage.id,
+              url: productImage.url,
+              width: productImage.width,
+            }
+          : undefined,
+        productsCount: edge.node.productsCount?.count ?? 0,
+        publicationCount: edge.node.publicationCount ?? 0,
+        publishedOnCurrentPublication: (edge.node.publicationCount ?? 0) > 0,
+        ruleSet: edge.node.ruleSet,
+        title: edge.node.title,
+        updatedAt: edge.node.updatedAt,
+      }
+    })
 
     return NextResponse.json({
       data: {

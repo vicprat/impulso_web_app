@@ -11,6 +11,13 @@ export interface Collection {
     width?: number
     height?: number
   }
+  productImage?: {
+    id: string
+    url: string
+    altText?: string
+    width?: number
+    height?: number
+  }
   updatedAt: string
   productsCount: number
   publicationCount: number

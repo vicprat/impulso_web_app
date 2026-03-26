@@ -1,9 +1,7 @@
 'use client'
 
-import Link from 'next/link'
-
+import { Card } from '@/components/Card'
 import { useCollections } from '@/services/collection/hooks'
-import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 
 import type { Collection } from '@/services/collection/types'
 
@@ -19,7 +17,7 @@ export default function Page() {
   if (isLoading) {
     return (
       <div className='flex h-64 items-center justify-center'>
-        <div className='size-12 animate-spin rounded-full border-y-2 border-blue-600'></div>
+        <div className='size-12 animate-spin rounded-full border-y-2 border-primary'></div>
       </div>
     )
   }
@@ -27,10 +25,10 @@ export default function Page() {
   if (error) {
     return (
       <div className='py-12 text-center'>
-        <p className='text-lg text-red-600'>Error al cargar las colecciones</p>
+        <p className='text-lg text-error'>Error al cargar las colecciones</p>
         <button
           onClick={() => window.location.reload()}
-          className='mt-4 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
+          className='hover:bg-primary/90 mt-4 rounded bg-primary px-4 py-2 text-white'
         >
           Reintentar
         </button>
@@ -43,44 +41,14 @@ export default function Page() {
   return (
     <div>
       {collections.length > 0 ? (
-        <div className='mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+        <Card.Container>
           {collections.map((collection: Collection) => (
-            <Link
-              key={collection.id}
-              href={replaceRouteParams(ROUTES.COLLECTIONS.DETAIL.PATH, {
-                collection: collection.handle,
-              })}
-              className='group'
-            >
-              <div className='overflow-hidden rounded-lg bg-white shadow-md transition-shadow hover:shadow-lg dark:bg-surface'>
-                {collection.image && (
-                  <div className='aspect-video overflow-hidden'>
-                    <img
-                      src={collection.image.url}
-                      alt={collection.image.altText ?? collection.title}
-                      className='size-full object-cover transition-transform group-hover:scale-105'
-                    />
-                  </div>
-                )}
-                <div className='p-6'>
-                  <h3 className='mb-2 text-xl font-semibold transition-colors group-hover:text-blue-600'>
-                    {collection.title}
-                  </h3>
-                  <p className='line-clamp-3 text-gray-600'>{collection.description}</p>
-                  <div className='mt-4 flex items-center justify-between'>
-                    <span className='font-medium text-blue-600'>Explorar colección →</span>
-                    <span className='text-sm text-gray-500'>
-                      {collection.productsCount} productos
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Link>
+            <Card.Collection key={collection.id} collection={collection} />
           ))}
-        </div>
+        </Card.Container>
       ) : (
         <div className='py-12 text-center'>
-          <p className='text-lg text-gray-600'>No se encontraron colecciones</p>
+          <p className='text-lg text-muted-foreground'>No se encontraron colecciones</p>
         </div>
       )}
     </div>
