@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const limit = searchParams.get('limit') ?? '50'
     const cursor = searchParams.get('cursor')
-    const _query = searchParams.get('query') ?? ''
+    const queryParam = searchParams.get('query') ?? ''
 
     const variables: Record<string, unknown> = {
       first: parseInt(limit),
@@ -15,6 +15,10 @@ export async function GET(request: NextRequest) {
 
     if (cursor) {
       variables.after = cursor
+    }
+
+    if (queryParam) {
+      variables.query = queryParam
     }
 
     const QUERY = `

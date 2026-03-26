@@ -27,8 +27,8 @@ export const CollectionCard: React.FC<Props> = ({ collection }) => {
   return (
     <Card className='focus-within:ring-primary/20 group relative overflow-hidden border bg-card shadow-elevation-1 transition-all duration-300 focus-within:shadow-elevation-4 focus-within:ring-2 hover:shadow-elevation-3'>
       <div className='absolute inset-x-3 top-3 z-20 flex items-start justify-between'>
-        <div className='inline-flex items-center gap-1.5 rounded-full bg-primary-container px-2.5 py-0.5 text-xs font-medium text-on-primary shadow-elevation-2 backdrop-blur-sm'>
-          <FolderOpen className='size-3' />
+        <div className='inline-flex items-center gap-1.5 rounded-full bg-primary-container px-2.5 py-0.5 text-xs font-medium text-on-primary shadow-elevation-2 backdrop-blur-sm dark:text-white'>
+          <FolderOpen className='size-3 dark:text-white' />
           <span>Colección</span>
         </div>
       </div>
@@ -83,16 +83,6 @@ export const CollectionCard: React.FC<Props> = ({ collection }) => {
               {collection.title}
             </h3>
           </Link>
-
-          {collection.description ? (
-            <p className='line-clamp-2 text-sm leading-relaxed text-muted-foreground'>
-              {collection.description.replace(/(<([^>]+)>)/gi, '')}
-            </p>
-          ) : (
-            <p className='line-clamp-2 text-sm italic leading-relaxed text-muted-foreground'>
-              Sin descripción
-            </p>
-          )}
         </div>
 
         <div className='flex items-center justify-between border-t border-border pt-3'>
@@ -105,7 +95,7 @@ export const CollectionCard: React.FC<Props> = ({ collection }) => {
             href={replaceRouteParams(ROUTES.COLLECTIONS.DETAIL.PATH, {
               collection: collection.handle,
             })}
-            className='text-xs font-medium text-primary transition-colors hover:text-primary/80'
+            className='hover:text-primary/80 text-xs font-medium text-primary transition-colors'
           >
             Explorar →
           </Link>
