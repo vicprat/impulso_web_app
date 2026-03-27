@@ -723,7 +723,7 @@ async function createProduct(
     }
   }
   // Invalidar el full catalog cache para que el nuevo producto aparezca inmediatamente
-  CacheManager.revalidateFullCatalog()
+  await CacheManager.revalidateFullCatalog()
 
   return finalProduct
 }
@@ -1114,7 +1114,7 @@ async function updateProduct(
 
   // Invalidar el full catalog cache después de cualquier cambio
   console.info(`📦 updateProduct: Invalidating cache for product ${payload.id}`)
-  CacheManager.revalidateFullCatalog()
+  await CacheManager.revalidateFullCatalog()
 
   if (payload.collectionId) {
     try {

@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     const { type } = await request.json()
 
     if (type === 'all') {
-      CacheManager.revalidateFullCatalog()
+      await CacheManager.revalidateFullCatalog()
     } else if (type === 'products') {
       CacheManager.revalidateProducts()
     } else if (type === 'inventory') {

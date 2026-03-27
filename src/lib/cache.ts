@@ -18,59 +18,62 @@ const REQUEST_DELAY_MS = 200 // Delay entre llamadas a Shopify
 const MAX_RETRY_ATTEMPTS = 3
 const RETRY_DELAY_BASE_MS = 1000
 
-// Archivo para persistir la versión del cache (para consistencia cross-worker en dev)
-const CACHE_VERSION_FILE = '.catalog-cache-version'
-const CACHE_DATA_FILE = path.join(process.cwd(), '.cache', 'catalog-cache.json')
+// Directorio de caché: usar /tmp en producción (Vercel/AWS Lambda), .cache local en dev
+// Detectamos producción por VERCEL_ENV o si process.cwd() no es escribible
+const isProduction =
+  process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production'
+const CACHE_DIR = isProduction ? '/tmp/cache' : path.join(process.cwd(), '.cache')
+const CACHE_DATA_FILE = path.join(CACHE_DIR, 'catalog-cache.json')
 
 // Asegurar que existe el directorio de cache
 async function ensureCacheDir() {
-  const cacheDir = path.dirname(CACHE_DATA_FILE)
-  if (!existsSync(cacheDir)) {
-    await fs.mkdir(cacheDir, { recursive: true })
+  try {
+    if (!existsSync(CACHE_DIR)) {
+      await fs.mkdir(CACHE_DIR, { recursive: true })
+    }
+  } catch (error) {
+    console.warn('⚠️ Could not create cache directory, using memory-only cache:', error)
   }
 }
 
-// Guardar catálogo en archivo
+// Guardar catálogo en archivo (separado por scope)
 async function saveCatalogToFile(scope: string, data: any[], version: number) {
   try {
     await ensureCacheDir()
+    const scopeFile = CACHE_DATA_FILE.replace('.json', `-${scope}.json`)
     const cacheData = {
       data,
       fetchedAt: Date.now(),
       scope,
       version,
     }
-    await fs.writeFile(CACHE_DATA_FILE, JSON.stringify(cacheData), 'utf8')
-    console.info(`💾 Saved catalog to file: ${data.length} products`)
+    await fs.writeFile(scopeFile, JSON.stringify(cacheData), 'utf8')
+    console.info(`💾 Saved ${scope} catalog to file: ${data.length} products`)
   } catch (error) {
     console.error('Error saving catalog to file:', error)
   }
 }
 
-// Cargar catálogo desde archivo
+// Cargar catálogo desde archivo (por scope)
 async function loadCatalogFromFile(
   scope: string
 ): Promise<{ data: any[]; version: number } | null> {
   try {
-    if (!existsSync(CACHE_DATA_FILE)) {
+    const scopeFile = CACHE_DATA_FILE.replace('.json', `-${scope}.json`)
+    if (!existsSync(scopeFile)) {
       return null
     }
 
-    const content = await fs.readFile(CACHE_DATA_FILE, 'utf8')
+    const content = await fs.readFile(scopeFile, 'utf8')
     const cacheData = JSON.parse(content)
-
-    // Verificar que el cache es del scope correcto y no ha expirado
-    if (cacheData.scope !== scope) {
-      return null
-    }
 
     const age = Date.now() - cacheData.fetchedAt
     if (age > CATALOG_CACHE_TTL) {
-      console.info(`📄 File cache expired (${Math.round(age / 1000)}s old)`)
+      console.info(`📄 ${scope} file cache expired (${Math.round(age / 1000)}s old)`)
       return null
     }
 
-    console.info(`📄 Loaded catalog from file: ${cacheData.data.length} products`)
+    console.info(`📄 Loaded ${scope} catalog from file: ${cacheData.data.length} products`)
     return { data: cacheData.data, version: cacheData.version }
   } catch (error) {
     console.error('Error loading catalog from file:', error)
@@ -78,24 +81,22 @@ async function loadCatalogFromFile(
   }
 }
 
-function getCacheVersion(): number {
+// Cada scope tiene su propia versión, leída desde su archivo de caché
+async function getCacheVersion(scope: string): Promise<number> {
   try {
-    const { existsSync, readFileSync } = require('fs')
-    if (existsSync(CACHE_VERSION_FILE)) {
-      return parseInt(readFileSync(CACHE_VERSION_FILE, 'utf8').trim(), 10) || 0
-    }
+    const cache = await loadCatalogFromFile(scope)
+    return cache?.version ?? 0
   } catch {
-    // Ignorar errores
+    return 0
   }
-  return 0
 }
 
-function setCacheVersion(version: number): void {
+async function setCacheVersion(scope: string, version: number): Promise<void> {
   try {
-    const { writeFileSync } = require('fs')
-    writeFileSync(CACHE_VERSION_FILE, version.toString(), 'utf8')
+    const scopeFile = path.join(CACHE_DIR, `catalog-cache-version-${scope}.json`)
+    await fs.writeFile(scopeFile, version.toString(), 'utf8')
   } catch {
-    // Ignorar errores
+    // Ignorar errores de escritura (serverless sin permisos)
   }
 }
 
@@ -230,7 +231,7 @@ export class CacheManager {
     const cacheKey = `full-catalog-${scope}`
     const entry = catalogCache.get(cacheKey)
     const now = Date.now()
-    const currentVersion = getCacheVersion()
+    const currentVersion = await getCacheVersion(scope)
 
     // Return cached data if valid AND version matches (cache busting)
     if (entry && now - entry.fetchedAt < CATALOG_CACHE_TTL && entry.version === currentVersion) {
@@ -246,12 +247,13 @@ export class CacheManager {
       return entry.fetchPromise
     }
 
-    // Intentar cargar desde archivo si no hay en memoria o está desactualizado
-    if (entry?.version !== currentVersion) {
+    // CRÍTICO: En serverless (Vercel), el caché en memoria se pierde entre requests
+    // Intentar cargar desde archivo PRIMERO si no hay en memoria
+    if (!entry || entry.version !== currentVersion) {
       const fileCache = await loadCatalogFromFile(scope)
-      if (fileCache?.version === currentVersion) {
+      if (fileCache && fileCache.version === currentVersion) {
         console.info(
-          `✅ File Cache HIT (${scope}): Loaded ${fileCache.data.length} products from file`
+          `✅ File Cache HIT (${scope}): Loaded ${fileCache.data.length} products from file (serverless recovery)`
         )
         catalogCache.set(cacheKey, {
           data: fileCache.data,
@@ -583,20 +585,33 @@ export class CacheManager {
     console.info(`✅ Cached ${lightProducts.length} products in full catalog (${scope})`)
 
     // Guardar en archivo para persistencia
-    const currentVersion = getCacheVersion()
+    const currentVersion = await getCacheVersion(scope)
     await saveCatalogToFile(scope, lightProducts, currentVersion)
 
     return lightProducts
   }
 
-  static revalidateFullCatalog() {
-    const newVersion = getCacheVersion() + 1
-    setCacheVersion(newVersion)
-    console.info(`🔖 Revalidate catalog cache: Incremented version to ${newVersion}`)
+  static async revalidateFullCatalog(scope?: 'storefront' | 'admin') {
+    if (scope) {
+      // Invalidar solo un scope específico
+      const currentVersion = await getCacheVersion(scope)
+      const newVersion = currentVersion + 1
+      await setCacheVersion(scope, newVersion)
+      console.info(`🔖 Revalidate ${scope} catalog cache: Incremented version to ${newVersion}`)
+    } else {
+      // Invalidar todos los scopes
+      const scopes: ('storefront' | 'admin')[] = ['storefront', 'admin']
+      for (const s of scopes) {
+        const currentVersion = await getCacheVersion(s)
+        const newVersion = currentVersion + 1
+        await setCacheVersion(s, newVersion)
+        console.info(`🔖 Revalidate ${s} catalog cache: Incremented version to ${newVersion}`)
+      }
+    }
   }
 
-  static clearAllCaches() {
-    this.revalidateFullCatalog()
+  static async clearAllCaches() {
+    await this.revalidateFullCatalog()
     clearAllGlobalCaches()
     console.info('🗑️ Cleared ALL in-memory caches')
   }

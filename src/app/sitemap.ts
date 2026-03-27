@@ -1,9 +1,46 @@
 import { getAllPublicRoutes } from '@/config/routes'
 import { getPublicArtists } from '@/lib/landing-data'
 import { blogService } from '@/modules/blog/service'
-import { shopifyService } from '@/modules/shopify/service'
+import { PRODUCTS_QUERY } from '@/modules/shopify/queries'
 
 import type { MetadataRoute } from 'next'
+
+const apiVersion = process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION ?? '2024-10'
+const publicAccessToken = process.env.NEXT_PUBLIC_API_SHOPIFY_STOREFRONT ?? ''
+let storeDomain = process.env.NEXT_PUBLIC_SHOPIFY_STORE ?? ''
+
+// Limpiar el storeDomain removiendo el protocolo si está presente
+if (storeDomain.startsWith('https://')) {
+  storeDomain = storeDomain.replace('https://', '')
+} else if (storeDomain.startsWith('http://')) {
+  storeDomain = storeDomain.replace('http://', '')
+}
+
+// Función para hacer requests a Shopify con revalidate para static generation
+async function fetchShopifyForSitemap(query: string, variables?: Record<string, unknown>) {
+  const response = await fetch(`https://${storeDomain}/api/${apiVersion}/graphql.json`, {
+    body: JSON.stringify({ query, variables }),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': publicAccessToken,
+    },
+    method: 'POST',
+    next: { revalidate: 3600 }, // Revalidar cada 1 hora para el sitemap
+  })
+
+  if (!response.ok) {
+    throw new Error(`Shopify API error: ${response.status} ${response.statusText}`)
+  }
+
+  const json = await response.json()
+
+  if (json.errors) {
+    console.error('GraphQL errors:', json.errors)
+    throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`)
+  }
+
+  return json.data
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXTAUTH_URL ?? 'https://impulsogaleria.com'
@@ -107,8 +144,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Agregar páginas dinámicas de productos de la tienda
   let productPages: MetadataRoute.Sitemap = []
   try {
-    const productsResponse = await shopifyService.getPublicProducts({ first: 100 })
-    const products = 'data' in productsResponse ? productsResponse.data : productsResponse
+    const data = await fetchShopifyForSitemap(PRODUCTS_QUERY, {
+      after: null,
+      first: 100,
+      query: '',
+      reverse: false,
+    })
+
+    const products = data?.products?.edges?.map((edge: any) => edge.node) || []
 
     if (Array.isArray(products)) {
       productPages = products.map((product: { handle: string; updatedAt: string }) => ({
@@ -125,7 +168,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Agregar páginas dinámicas de eventos de la tienda
   let eventPages: MetadataRoute.Sitemap = []
   try {
-    const events = await shopifyService.getPublicEvents({ first: 50 })
+    const data = await fetchShopifyForSitemap(PRODUCTS_QUERY, {
+      after: null,
+      first: 50,
+      query: 'product_type:event',
+      reverse: false,
+      sortKey: 'BEST_SELLING',
+    })
+
+    const events = data?.products?.edges?.map((edge: any) => edge.node) || []
 
     if (Array.isArray(events)) {
       eventPages = events.map((event: { handle: string; updatedAt: string }) => ({

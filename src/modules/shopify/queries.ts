@@ -196,6 +196,7 @@ export const PRODUCTS_QUERY = `
           productType
           vendor
           createdAt
+          updatedAt
           priceRange {
             minVariantPrice {
               amount

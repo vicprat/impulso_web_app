@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     })
 
     // Invalidar todos los caches en memoria (dashboard, stats, etc.)
-    CacheManager.clearAllCaches()
+    await CacheManager.clearAllCaches()
 
     // Revalidar rutas específicas según el tipo
     if (isEvent) {

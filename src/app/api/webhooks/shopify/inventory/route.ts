@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     CacheManager.revalidateHomepage()
 
     // Invalidar todos los caches en memoria (dashboard, stats, etc.)
-    CacheManager.clearAllCaches()
+    await CacheManager.clearAllCaches()
 
     // Revalidar rutas que muestran productos y eventos
     revalidatePath('/store', 'page')
