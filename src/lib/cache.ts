@@ -1,3 +1,6 @@
+import { existsSync, promises as fs } from 'fs'
+import path from 'path'
+
 import { revalidateTag } from 'next/cache'
 
 // In-memory cache for the full product catalog
@@ -10,14 +13,74 @@ interface CatalogCacheEntry {
 }
 
 const catalogCache = new Map<string, CatalogCacheEntry>()
-const CATALOG_CACHE_TTL = 3600 * 1000 // 1 hour in ms
+const CATALOG_CACHE_TTL = 24 * 3600 * 1000 // 24 hours in ms
+const REQUEST_DELAY_MS = 200 // Delay entre llamadas a Shopify
+const MAX_RETRY_ATTEMPTS = 3
+const RETRY_DELAY_BASE_MS = 1000
 
 // Archivo para persistir la versión del cache (para consistencia cross-worker en dev)
 const CACHE_VERSION_FILE = '.catalog-cache-version'
+const CACHE_DATA_FILE = path.join(process.cwd(), '.cache', 'catalog-cache.json')
+
+// Asegurar que existe el directorio de cache
+async function ensureCacheDir() {
+  const cacheDir = path.dirname(CACHE_DATA_FILE)
+  if (!existsSync(cacheDir)) {
+    await fs.mkdir(cacheDir, { recursive: true })
+  }
+}
+
+// Guardar catálogo en archivo
+async function saveCatalogToFile(scope: string, data: any[], version: number) {
+  try {
+    await ensureCacheDir()
+    const cacheData = {
+      data,
+      fetchedAt: Date.now(),
+      scope,
+      version,
+    }
+    await fs.writeFile(CACHE_DATA_FILE, JSON.stringify(cacheData), 'utf8')
+    console.info(`💾 Saved catalog to file: ${data.length} products`)
+  } catch (error) {
+    console.error('Error saving catalog to file:', error)
+  }
+}
+
+// Cargar catálogo desde archivo
+async function loadCatalogFromFile(
+  scope: string
+): Promise<{ data: any[]; version: number } | null> {
+  try {
+    if (!existsSync(CACHE_DATA_FILE)) {
+      return null
+    }
+
+    const content = await fs.readFile(CACHE_DATA_FILE, 'utf8')
+    const cacheData = JSON.parse(content)
+
+    // Verificar que el cache es del scope correcto y no ha expirado
+    if (cacheData.scope !== scope) {
+      return null
+    }
+
+    const age = Date.now() - cacheData.fetchedAt
+    if (age > CATALOG_CACHE_TTL) {
+      console.info(`📄 File cache expired (${Math.round(age / 1000)}s old)`)
+      return null
+    }
+
+    console.info(`📄 Loaded catalog from file: ${cacheData.data.length} products`)
+    return { data: cacheData.data, version: cacheData.version }
+  } catch (error) {
+    console.error('Error loading catalog from file:', error)
+    return null
+  }
+}
 
 function getCacheVersion(): number {
   try {
-    const { readFileSync, existsSync } = require('fs')
+    const { existsSync, readFileSync } = require('fs')
     if (existsSync(CACHE_VERSION_FILE)) {
       return parseInt(readFileSync(CACHE_VERSION_FILE, 'utf8').trim(), 10) || 0
     }
@@ -35,6 +98,9 @@ function setCacheVersion(version: number): void {
     // Ignorar errores
   }
 }
+
+// Utility function for delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // Registro global de caches en memoria para invalidación centralizada
 interface SimpleCacheEntry {
@@ -164,11 +230,12 @@ export class CacheManager {
     const cacheKey = `full-catalog-${scope}`
     const entry = catalogCache.get(cacheKey)
     const now = Date.now()
+    const currentVersion = getCacheVersion()
 
     // Return cached data if valid AND version matches (cache busting)
-    if (entry && now - entry.fetchedAt < CATALOG_CACHE_TTL && entry.version === getCacheVersion()) {
+    if (entry && now - entry.fetchedAt < CATALOG_CACHE_TTL && entry.version === currentVersion) {
       console.info(
-        `✅ Cache HIT (${scope}): Returning cached data (${entry.data.length} products, version ${entry.version})`
+        `✅ Memory Cache HIT (${scope}): Returning cached data (${entry.data.length} products, version ${entry.version})`
       )
       return entry.data
     }
@@ -177,6 +244,22 @@ export class CacheManager {
     if (entry?.fetchPromise) {
       console.info(`⏳ Fetch in progress (${scope}): Reusing existing promise`)
       return entry.fetchPromise
+    }
+
+    // Intentar cargar desde archivo si no hay en memoria o está desactualizado
+    if (entry?.version !== currentVersion) {
+      const fileCache = await loadCatalogFromFile(scope)
+      if (fileCache?.version === currentVersion) {
+        console.info(
+          `✅ File Cache HIT (${scope}): Loaded ${fileCache.data.length} products from file`
+        )
+        catalogCache.set(cacheKey, {
+          data: fileCache.data,
+          fetchedAt: Date.now(),
+          version: currentVersion,
+        })
+        return fileCache.data
+      }
     }
 
     // Fetch fresh data
@@ -188,32 +271,37 @@ export class CacheManager {
       data: entry?.data ?? [],
       fetchPromise,
       fetchedAt: entry?.fetchedAt ?? 0,
-      version: getCacheVersion(),
+      version: currentVersion,
     })
 
     try {
       const data = await fetchPromise
-      catalogCache.set(cacheKey, { data, fetchedAt: Date.now(), version: getCacheVersion() })
+      catalogCache.set(cacheKey, { data, fetchedAt: Date.now(), version: currentVersion })
       console.info(`✅ Fetch complete (${scope}): Cached ${data.length} products`)
       return data
     } catch (error) {
       // On error, clear the promise so next request retries
       console.error(`❌ Fetch failed (${scope}):`, error)
-      if (entry) {
-        catalogCache.set(cacheKey, {
-          data: entry.data,
-          fetchedAt: entry.fetchedAt,
-          version: entry.version,
-        })
+      if (entry && entry.data.length > 0) {
+        // Si hay datos antiguos en cache, devolverlos como fallback
+        console.warn(`⚠️ Returning stale cache data (${entry.data.length} products)`)
+        return entry.data
       } else {
         catalogCache.delete(cacheKey)
+        throw error
       }
-      throw error
     }
   }
 
   private static async _fetchFullCatalog(scope: 'storefront' | 'admin'): Promise<any[]> {
     console.info(`🔄 Cache MISS (${scope}): Fetching full catalog from Shopify...`)
+
+    // Intentar cargar desde archivo primero
+    const fileCache = await loadCatalogFromFile(scope)
+    if (fileCache) {
+      console.info(`✅ Using file cache for ${scope}`)
+      return fileCache.data
+    }
 
     // Usar GraphQL directo para evitar dependencia circular con getProductsPublic
     const { makeAdminApiRequest } = await import('@/lib/shopifyAdmin')
@@ -279,123 +367,173 @@ export class CacheManager {
     const allProducts: any[] = []
     let hasNextPage = true
     let cursor: string | undefined = undefined
+    let consecutiveErrors = 0
+    let pageCount = 0
 
     // Storefront: solo productos activos | Admin: todos los productos
     const includeInactive = scope === 'admin'
 
     while (hasNextPage) {
+      pageCount++
       const variables: Record<string, unknown> = { after: cursor, first: 250 }
 
-      try {
-        const response: {
-          products: {
-            edges: {
+      // Rate limiting: delay entre llamadas (excepto la primera)
+      if (pageCount > 1) {
+        await delay(REQUEST_DELAY_MS)
+      }
+
+      let retryAttempt = 0
+      let success = false
+
+      while (!success && retryAttempt < MAX_RETRY_ATTEMPTS) {
+        try {
+          const response: {
+            products: {
+              edges: {
+                node: {
+                  id: string
+                  handle: string
+                  title: string
+                  vendor: string
+                  productType: string
+                  status: string
+                  tags: string[]
+                  images: { edges: { node: { id: string; url: string; altText: string | null } }[] }
+                  variants: {
+                    edges: {
+                      node: {
+                        id: string
+                        title: string
+                        availableForSale: boolean
+                        price: { amount: string; currencyCode: string }
+                        sku: string | null
+                        inventoryQuantity: number | null
+                        inventoryPolicy: string
+                        inventoryItem: { tracked: boolean }
+                      }
+                    }[]
+                  }
+                  metafields: {
+                    edges: { node: { namespace: string; key: string; value: string } }[]
+                  }
+                }
+              }[]
+              pageInfo: { hasNextPage: boolean; endCursor?: string }
+            }
+          } = await makeAdminApiRequest(GET_ALL_PRODUCTS_QUERY, variables)
+
+          for (const edge of response.products.edges) {
+            const node = edge.node
+
+            // Definir tipo para las variantes
+            interface VariantNode {
               node: {
                 id: string
-                handle: string
                 title: string
-                vendor: string
-                productType: string
-                status: string
-                tags: string[]
-                images: { edges: { node: { id: string; url: string; altText: string | null } }[] }
-                variants: {
-                  edges: {
-                    node: {
-                      id: string
-                      title: string
-                      availableForSale: boolean
-                      price: { amount: string; currencyCode: string }
-                      sku: string | null
-                      inventoryQuantity: number | null
-                      inventoryPolicy: string
-                      inventoryItem: { tracked: boolean }
-                    }
-                  }[]
-                }
-                metafields: { edges: { node: { namespace: string; key: string; value: string } }[] }
+                availableForSale: boolean
+                price: string
+                sku: string | null
+                inventoryQuantity: number | null
+                inventoryPolicy: string
+                inventoryItem: { tracked: boolean }
               }
-            }[]
-            pageInfo: { hasNextPage: boolean; endCursor?: string }
-          }
-        } = await makeAdminApiRequest(GET_ALL_PRODUCTS_QUERY, variables)
-
-        for (const edge of response.products.edges) {
-          const node = edge.node
-
-          // Definir tipo para las variantes
-          interface VariantNode {
-            node: {
-              id: string
-              title: string
-              availableForSale: boolean
-              price: string
-              sku: string | null
-              inventoryQuantity: number | null
-              inventoryPolicy: string
-              inventoryItem: { tracked: boolean }
             }
+
+            // Filtrar por status si es storefront
+            if (!includeInactive && node.status !== 'ACTIVE') {
+              continue
+            }
+
+            // Extraer metafields
+            const metafields: Record<string, string> = {}
+            for (const mf of node.metafields.edges) {
+              metafields[mf.node.key] = mf.node.value
+            }
+
+            // Transformar imágenes
+            const images = node.images.edges.map(
+              (imgEdge: { node: { id: string; url: string; altText: string | null } }) =>
+                imgEdge.node
+            )
+
+            // Transformar variantes
+            const variants = (node.variants.edges as unknown as VariantNode[]).map((vEdge) => ({
+              availableForSale: vEdge.node.availableForSale,
+              compareAtPrice: null,
+              id: vEdge.node.id,
+              inventoryManagement: vEdge.node.inventoryItem?.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
+              inventoryPolicy: vEdge.node.inventoryPolicy,
+              inventoryQuantity: vEdge.node.inventoryQuantity,
+              price: { amount: vEdge.node.price, currencyCode: 'MXN' },
+              sku: vEdge.node.sku,
+              title: vEdge.node.title,
+            }))
+
+            allProducts.push({
+              artworkDetails: {
+                artist: metafields.artist ?? node.vendor,
+                depth: metafields.depth,
+                height: metafields.height,
+                location: metafields.location,
+                medium: metafields.medium,
+                serie: metafields.serie,
+                width: metafields.width,
+                year: metafields.year,
+              },
+              handle: node.handle,
+              id: node.id,
+              images,
+              productType: node.productType,
+              status: node.status,
+              tags: node.tags,
+              title: node.title,
+              variants,
+              vendor: node.vendor,
+            })
           }
 
-          // Filtrar por status si es storefront
-          if (!includeInactive && node.status !== 'ACTIVE') {
-            continue
+          hasNextPage = response.products.pageInfo.hasNextPage
+          cursor = response.products.pageInfo.endCursor ?? undefined
+          consecutiveErrors = 0
+          success = true
+        } catch (error: any) {
+          consecutiveErrors++
+          retryAttempt++
+
+          // Detectar throttling de Shopify
+          const isThrottled =
+            error.message?.includes('Throttled') ||
+            error.message?.includes('Rate limit') ||
+            error.status === 429
+
+          if (isThrottled) {
+            const retryDelay = RETRY_DELAY_BASE_MS * Math.pow(2, retryAttempt)
+            console.warn(
+              `⚠️ Shopify throttling detected. Retrying in ${retryDelay}ms... (attempt ${retryAttempt}/${MAX_RETRY_ATTEMPTS})`
+            )
+            await delay(retryDelay)
+          } else if (retryAttempt < MAX_RETRY_ATTEMPTS) {
+            const retryDelay = RETRY_DELAY_BASE_MS * retryAttempt
+            console.warn(
+              `⚠️ Error fetching page ${pageCount}. Retrying in ${retryDelay}ms... (attempt ${retryAttempt}/${MAX_RETRY_ATTEMPTS})`
+            )
+            await delay(retryDelay)
+          } else {
+            console.error(
+              `❌ Failed to fetch page ${pageCount} after ${MAX_RETRY_ATTEMPTS} attempts`
+            )
+            throw error
           }
-
-          // Extraer metafields
-          const metafields: Record<string, string> = {}
-          for (const mf of node.metafields.edges) {
-            metafields[mf.node.key] = mf.node.value
-          }
-
-          // Transformar imágenes
-          const images = node.images.edges.map(
-            (imgEdge: { node: { id: string; url: string; altText: string | null } }) => imgEdge.node
-          )
-
-          // Transformar variantes
-          const variants = (node.variants.edges as unknown as VariantNode[]).map((vEdge) => ({
-            availableForSale: vEdge.node.availableForSale,
-            compareAtPrice: null,
-            id: vEdge.node.id,
-            inventoryManagement: vEdge.node.inventoryItem?.tracked ? 'SHOPIFY' : 'NOT_MANAGED',
-            inventoryPolicy: vEdge.node.inventoryPolicy,
-            inventoryQuantity: vEdge.node.inventoryQuantity,
-            price: { amount: vEdge.node.price, currencyCode: 'MXN' },
-            sku: vEdge.node.sku,
-            title: vEdge.node.title,
-          }))
-
-          allProducts.push({
-            artworkDetails: {
-              artist: metafields.artist ?? node.vendor,
-              depth: metafields.depth,
-              height: metafields.height,
-              location: metafields.location,
-              medium: metafields.medium,
-              serie: metafields.serie,
-              width: metafields.width,
-              year: metafields.year,
-            },
-            handle: node.handle,
-            id: node.id,
-            images,
-            productType: node.productType,
-            status: node.status,
-            tags: node.tags,
-            title: node.title,
-            variants,
-            vendor: node.vendor,
-          })
         }
+      }
 
-        hasNextPage = response.products.pageInfo.hasNextPage
-        cursor = response.products.pageInfo.endCursor ?? undefined
-      } catch (error) {
-        console.error(`Error fetching products:`, error)
-        throw error
+      // Log progreso cada 10 páginas
+      if (pageCount % 10 === 0) {
+        console.info(`📊 Progress: ${allProducts.length} products fetched (${pageCount} pages)`)
       }
     }
+
+    console.info(`✅ Fetched ${allProducts.length} products in ${pageCount} pages`)
 
     console.info(
       `✅ Fetched ${allProducts.length} products (scope: ${scope}). Converting to LightProduct for cache...`
@@ -443,6 +581,11 @@ export class CacheManager {
     })
 
     console.info(`✅ Cached ${lightProducts.length} products in full catalog (${scope})`)
+
+    // Guardar en archivo para persistencia
+    const currentVersion = getCacheVersion()
+    await saveCatalogToFile(scope, lightProducts, currentVersion)
+
     return lightProducts
   }
 

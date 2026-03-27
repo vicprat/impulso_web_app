@@ -13,8 +13,16 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>()
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
 
+// Rate limiting config
+const REQUEST_DELAY_MS = 200
+const MAX_RETRY_ATTEMPTS = 3
+const RETRY_DELAY_BASE_MS = 1000
+
 // Registrar cache para invalidación centralizada
 registerGlobalCache('dashboard-advanced-analytics', cache)
+
+// Utility function for delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 interface ShopifyMoneyV2 {
   amount: string
@@ -68,12 +76,20 @@ export async function GET() {
       return NextResponse.json(cached.data)
     }
 
-    // Obtener TODAS las órdenes usando paginación
+    // Obtener TODAS las órdenes usando paginación con rate limiting
     const allOrders: ShopifyOrderEdge[] = []
     let hasNextPage = true
     let cursor: string | undefined = undefined
+    let pageCount = 0
 
     while (hasNextPage) {
+      pageCount++
+
+      // Rate limiting: delay entre llamadas (excepto la primera)
+      if (pageCount > 1) {
+        await delay(REQUEST_DELAY_MS)
+      }
+
       const ordersQuery = `
         query($after: String, $first: Int!) {
           orders(first: $first, after: $after) {
@@ -104,12 +120,43 @@ export async function GET() {
         first: 250, // Máximo permitido por Shopify
       }
 
-      const response: any = await makeAdminApiRequest(ordersQuery, variables)
-      allOrders.push(...response.orders.edges)
+      let retryAttempt = 0
+      let success = false
 
-      // Verificar si hay más páginas
-      hasNextPage = response.orders.pageInfo.hasNextPage
-      cursor = response.orders.pageInfo.endCursor ?? undefined
+      while (!success && retryAttempt < MAX_RETRY_ATTEMPTS) {
+        try {
+          const response: any = await makeAdminApiRequest(ordersQuery, variables)
+          allOrders.push(...response.orders.edges)
+
+          // Verificar si hay más páginas
+          hasNextPage = response.orders.pageInfo.hasNextPage
+          cursor = response.orders.pageInfo.endCursor ?? undefined
+          success = true
+        } catch (error: any) {
+          retryAttempt++
+          const isThrottled =
+            error.message?.includes('Throttled') ||
+            error.message?.includes('Rate limit') ||
+            error.status === 429
+
+          if (isThrottled && retryAttempt < MAX_RETRY_ATTEMPTS) {
+            const retryDelay = RETRY_DELAY_BASE_MS * Math.pow(2, retryAttempt)
+            console.warn(
+              `⚠️ Orders throttling. Retrying in ${retryDelay}ms... (attempt ${retryAttempt}/${MAX_RETRY_ATTEMPTS})`
+            )
+            await delay(retryDelay)
+          } else if (retryAttempt < MAX_RETRY_ATTEMPTS) {
+            const retryDelay = RETRY_DELAY_BASE_MS * retryAttempt
+            console.warn(
+              `⚠️ Orders fetch error. Retrying in ${retryDelay}ms... (attempt ${retryAttempt}/${MAX_RETRY_ATTEMPTS})`
+            )
+            await delay(retryDelay)
+          } else {
+            console.error(`❌ Failed to fetch orders after ${MAX_RETRY_ATTEMPTS} attempts`)
+            throw error
+          }
+        }
+      }
 
       // Para órdenes muy grandes, limitamos a 5000 órdenes máximo
       if (allOrders.length >= 5000) {

@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
-import { requireAuth } from '@/modules/auth/server/server'
 import { registerGlobalCache } from '@/lib/cache'
+import { PERMISSIONS } from '@/src/config/Permissions'
 import { makeAdminApiRequest } from '@/src/lib/shopifyAdmin'
+import { requirePermission } from '@/src/modules/auth/server/server'
 
 // Cache simple para artist dashboard (por artista)
 interface CacheEntry {
@@ -27,8 +28,8 @@ interface ShopifyResponse {
 
 export async function GET(request: NextRequest) {
   try {
-    // Obtener datos del usuario actual (artista) sin hacer fetch interno
-    const session = await requireAuth()
+    // Verificar permisos de artista
+    const session = await requirePermission(PERMISSIONS.MANAGE_OWN_PRODUCTS)
     const userData = { user: session.user }
 
     if (!userData.user) {

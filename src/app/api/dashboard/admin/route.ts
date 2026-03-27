@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
-import { PERMISSIONS } from '@/src/config/Permissions'
 import { CacheManager, registerGlobalCache } from '@/lib/cache'
+import { PERMISSIONS } from '@/src/config/Permissions'
 import { makeAdminApiRequest } from '@/src/lib/shopifyAdmin'
 import { requirePermission } from '@/src/modules/auth/server/server'
 import { getAllUsers } from '@/src/modules/user/user.service'
@@ -14,8 +14,16 @@ interface DashboardCacheEntry {
 const dashboardCache = new Map<string, DashboardCacheEntry>()
 const DASHBOARD_CACHE_TTL = 5 * 60 * 1000 // 5 minutos
 
+// Rate limiting config
+const REQUEST_DELAY_MS = 200
+const MAX_RETRY_ATTEMPTS = 3
+const RETRY_DELAY_BASE_MS = 1000
+
 // Registrar cache para invalidación centralizada
 registerGlobalCache('dashboard-admin', dashboardCache)
+
+// Utility function for delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // Helper para crear fechas locales sin problemas de zona horaria
 const createLocalDate = (dateString: string): Date => {
@@ -86,8 +94,14 @@ export async function GET() {
   try {
     const session = await requirePermission(PERMISSIONS.VIEW_ANALYTICS)
 
+    // Verificar permisos específicos del usuario
+    const canManageUsers = session.user.permissions?.includes(PERMISSIONS.MANAGE_USERS) ?? false
+    const canManageInventory =
+      session.user.permissions?.includes(PERMISSIONS.MANAGE_INVENTORY) ?? false
+
     // Verificar cache antes de hacer llamadas a Shopify
-    const cacheKey = 'admin-dashboard'
+    // Usar cache diferente según permisos para evitar filtrar datos incorrectos
+    const cacheKey = `admin-dashboard-${session.user.id}-${canManageUsers}-${canManageInventory}`
     const cached = dashboardCache.get(cacheKey)
     const now = Date.now()
     if (cached && now - cached.fetchedAt < DASHBOARD_CACHE_TTL) {
@@ -165,440 +179,41 @@ export async function GET() {
 
     const shopifyResponse: ShopifyOrdersResponse = { orders: { edges: allOrders } }
 
-    // Obtener TODOS los productos usando el método de stats que implementa paginación
-    const allProducts: any[] = []
-    let productsHasNextPage = true
-    let productsCursor: string | undefined = undefined
+    // Usar CacheManager para obtener productos - evita llamadas duplicadas a Shopify
+    const managementProducts = await CacheManager.getFullCatalog('admin')
 
-    // Obtener todos los productos usando paginación como en getProductStats
-    while (productsHasNextPage) {
-      const productVariables: {
-        after?: string
-        first: number
-        query: string
-        reverse: boolean
-        sortKey: 'TITLE'
-      } = {
-        after: productsCursor,
-        first: 50, // Reducido para evitar throttling
-        query: '',
-        reverse: false,
-        sortKey: 'TITLE',
-      }
+    // Filtrar eventos directamente del catálogo cacheado
+    const managementEvents = managementProducts.filter((p: any) => p.productType === 'Evento')
 
-      try {
-        const productResponse: any = await makeAdminApiRequest(
-          `
-          query($after: String, $first: Int!, $query: String, $reverse: Boolean, $sortKey: ProductSortKeys) {
-            products(after: $after, first: $first, query: $query, reverse: $reverse, sortKey: $sortKey) {
-              edges {
-                node {
-                  id
-                  handle
-                  title
-                  descriptionHtml
-                  vendor
-                  productType
-                  status
-                  tags
-                  variants(first: 10) {
-                    edges {
-                      node {
-                        id
-                        title
-                        availableForSale
-                        price
-                        sku
-                        inventoryQuantity
-                        inventoryPolicy
-                        inventoryItem {
-                          tracked
-                        }
-                      }
-                    }
-                  }
-                  metafields(first: 50) {
-                    edges {
-                      node {
-                        namespace
-                        key
-                        value
-                      }
-                    }
-                  }
-                }
-              }
-              pageInfo {
-                hasNextPage
-                endCursor
-              }
-            }
-          }
-        `,
-          productVariables
-        )
+    // Obtener usuarios solo si tiene permiso MANAGE_USERS
+    let users: any[] = []
+    let totalUsers = 0
+    if (canManageUsers) {
+      const allUsers: any[] = []
+      let userPage = 1
+      let userHasMore = true
 
-        const products = productResponse.products.edges.map((edge: any) => {
-          // Crear un objeto Product simplificado para el dashboard
-          const productData = edge.node
-
-          return {
-            // Procesar artworkDetails desde metafields
-            get artworkDetails() {
-              const details: any = {}
-              for (const { node } of this.metafields) {
-                if (node.namespace === 'art_details') {
-                  const validKeys = [
-                    'medium',
-                    'year',
-                    'height',
-                    'width',
-                    'depth',
-                    'serie',
-                    'location',
-                    'artist',
-                  ]
-                  if (validKeys.includes(node.key)) {
-                    details[node.key] = node.value
-                  }
-                }
-              }
-              return {
-                artist: details.artist || null,
-                depth: details.depth || null,
-                height: details.height || null,
-                location: details.location || null,
-                medium: details.medium || null,
-                serie: details.serie || null,
-                width: details.width || null,
-                year: details.year || null,
-              }
-            },
-
-            get autoTags() {
-              return this.tags.filter((tag: string) => tag.startsWith('auto-'))
-            },
-
-            descriptionHtml: productData.descriptionHtml,
-
-            get formattedPrice() {
-              const variant = this.primaryVariant
-              return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
-            },
-
-            handle: productData.handle,
-
-            id: productData.id,
-
-            images: [],
-
-            get isAvailable() {
-              const variant = this.primaryVariant
-              if (!variant) return false
-
-              if (variant.inventoryQuantity === null) {
-                return variant.availableForSale
-              }
-
-              return variant.availableForSale && variant.inventoryQuantity > 0
-            },
-
-            // Procesar tags
-            get manualTags() {
-              return this.tags.filter((tag: string) => !tag.startsWith('auto-'))
-            },
-
-            // Array vacío para evitar errores
-            media: [],
-
-            metafields: productData.metafields.edges,
-
-            // Métodos del modelo Product
-            get primaryVariant() {
-              return this.variants[0] || null
-            },
-
-            productType: productData.productType,
-
-            status: productData.status,
-
-            tags: productData.tags,
-
-            title: productData.title,
-
-            // Array vacío para evitar errores
-            variants: productData.variants.edges.map((variantEdge: any) => ({
-              availableForSale: variantEdge.node.availableForSale,
-              id: variantEdge.node.id,
-              inventoryManagement: variantEdge.node.inventoryItem.tracked
-                ? 'SHOPIFY'
-                : 'NOT_MANAGED',
-              inventoryPolicy: variantEdge.node.inventoryPolicy,
-              inventoryQuantity: variantEdge.node.inventoryQuantity,
-              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
-              sku: variantEdge.node.sku,
-              title: variantEdge.node.title,
-            })),
-
-            vendor: productData.vendor,
-          }
+      while (userHasMore) {
+        const { total, users: userList } = await getAllUsers({
+          limit: 100,
+          page: userPage,
         })
-        allProducts.push(...products)
+
+        allUsers.push(...userList)
 
         // Verificar si hay más páginas
-        productsHasNextPage = productResponse.products.pageInfo.hasNextPage
-        productsCursor = productResponse.products.pageInfo.endCursor ?? undefined
+        userHasMore = allUsers.length < total && userPage * 100 < total
+        userPage++
 
-        // Para inventarios muy grandes, limitamos a 5000 productos máximo
-        if (allProducts.length >= 5000) {
+        // Para usuarios muy grandes, limitamos a 5000 usuarios máximo
+        if (allUsers.length >= 5000) {
           break
         }
-
-        // Delay para evitar throttling
-        await new Promise((resolve) => setTimeout(resolve, 200))
-      } catch (error: any) {
-        if (error.message?.includes('Throttled')) {
-          console.log('Throttled, esperando 2 segundos...')
-          await new Promise((resolve) => setTimeout(resolve, 2000))
-          continue
-        }
-        throw error
       }
+
+      users = allUsers
+      totalUsers = users.length
     }
-
-    const managementProducts = allProducts
-
-    // Obtener TODOS los eventos usando paginación
-    const allEvents: any[] = []
-    let eventsHasNextPage = true
-    let eventsCursor: string | undefined = undefined
-
-    while (eventsHasNextPage) {
-      const eventVariables: {
-        after?: string
-        first: number
-        query: string
-        reverse: boolean
-        sortKey: 'TITLE'
-      } = {
-        after: eventsCursor,
-        first: 50, // Reducido para evitar throttling
-        query: 'product_type:event', // Filtrar solo eventos
-        reverse: false,
-        sortKey: 'TITLE',
-      }
-
-      try {
-        const eventResponse: any = await makeAdminApiRequest(
-          `
-          query($after: String, $first: Int!, $query: String, $reverse: Boolean, $sortKey: ProductSortKeys) {
-            products(after: $after, first: $first, query: $query, reverse: $reverse, sortKey: $sortKey) {
-              edges {
-                node {
-                  id
-                  handle
-                  title
-                  descriptionHtml
-                  vendor
-                  productType
-                  status
-                  tags
-                  variants(first: 10) {
-                    edges {
-                      node {
-                        id
-                        title
-                        availableForSale
-                        price
-                        sku
-                        inventoryQuantity
-                        inventoryPolicy
-                        inventoryItem {
-                          tracked
-                        }
-                      }
-                    }
-                  }
-                  metafields(first: 50) {
-                    edges {
-                      node {
-                        namespace
-                        key
-                        value
-                      }
-                    }
-                  }
-                }
-              }
-              pageInfo {
-                hasNextPage
-                endCursor
-              }
-            }
-          }
-        `,
-          eventVariables
-        )
-
-        const events = eventResponse.products.edges.map((edge: any) => {
-          // Crear un objeto Event simplificado para el dashboard
-          const eventData = edge.node
-
-          return {
-            get availableForSale() {
-              const variant = this.primaryVariant
-              return variant ? variant.availableForSale : false
-            },
-            get daysUntilEvent() {
-              if (!this.eventDetails.date) return null
-              const eventDate = createLocalDate(this.eventDetails.date)
-              const today = new Date()
-              const diffTime = eventDate.getTime() - today.getTime()
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-              return diffDays
-            },
-
-            descriptionHtml: eventData.descriptionHtml,
-
-            // Procesar eventDetails desde metafields
-            get eventDetails() {
-              const details: any = {}
-              for (const { node } of this.metafields) {
-                if (node.namespace === 'event_details') {
-                  const validKeys = ['date', 'location', 'startTime', 'endTime', 'organizer']
-                  if (validKeys.includes(node.key)) {
-                    details[node.key] = node.value
-                  }
-                }
-              }
-              return {
-                date: details.date || null,
-                endTime: details.endTime || null,
-                location: details.location || null,
-                organizer: details.organizer || null,
-                startTime: details.startTime || null,
-              }
-            },
-
-            get formattedEventDetails() {
-              const details = this.eventDetails
-              const parts = []
-              if (details.date) parts.push(`Fecha: ${details.date}`)
-              if (details.location) parts.push(`Ubicación: ${details.location}`)
-              if (details.startTime) parts.push(`Hora: ${details.startTime}`)
-              if (details.organizer) parts.push(`Organizador: ${details.organizer}`)
-              return parts.join(' | ')
-            },
-
-            get formattedPrice() {
-              const variant = this.primaryVariant
-              return variant ? `$${parseFloat(variant.price.amount).toFixed(2)}` : '$0.00'
-            },
-
-            handle: eventData.handle,
-
-            id: eventData.id,
-
-            images: [],
-
-            get isAvailable() {
-              const variant = this.primaryVariant
-              if (!variant) return false
-
-              if (variant.inventoryQuantity === null) {
-                return variant.availableForSale
-              }
-
-              return variant.availableForSale && variant.inventoryQuantity > 0
-            },
-
-            get isPastEvent() {
-              if (!this.eventDetails.date) return false
-              const eventDate = createLocalDate(this.eventDetails.date)
-              return eventDate < new Date()
-            },
-
-            metafields: eventData.metafields.edges,
-
-            // Métodos del modelo Event
-            get primaryVariant() {
-              return this.variants[0] || null
-            },
-
-            productType: eventData.productType,
-
-            status: eventData.status,
-
-            tags: eventData.tags,
-
-            title: eventData.title,
-
-            // Array vacío para evitar errores
-            variants: eventData.variants.edges.map((variantEdge: any) => ({
-              availableForSale: variantEdge.node.availableForSale,
-              id: variantEdge.node.id,
-              inventoryManagement: variantEdge.node.inventoryItem.tracked
-                ? 'SHOPIFY'
-                : 'NOT_MANAGED',
-              inventoryPolicy: variantEdge.node.inventoryPolicy,
-              inventoryQuantity: variantEdge.node.inventoryQuantity,
-              price: { amount: variantEdge.node.price, currencyCode: 'MXN' },
-              sku: variantEdge.node.sku,
-              title: variantEdge.node.title,
-            })),
-
-            vendor: eventData.vendor,
-          }
-        })
-        allEvents.push(...events)
-
-        // Verificar si hay más páginas
-        eventsHasNextPage = eventResponse.products.pageInfo.hasNextPage
-        eventsCursor = eventResponse.products.pageInfo.endCursor ?? undefined
-
-        // Para eventos muy grandes, limitamos a 1000 eventos máximo
-        if (allEvents.length >= 1000) {
-          break
-        }
-
-        // Delay para evitar throttling
-        await new Promise((resolve) => setTimeout(resolve, 200))
-      } catch (error: any) {
-        if (error.message?.includes('Throttled')) {
-          console.log('Throttled, esperando 2 segundos...')
-          await new Promise((resolve) => setTimeout(resolve, 2000))
-          continue
-        }
-        throw error
-      }
-    }
-
-    const managementEvents = allEvents
-
-    // Obtener TODOS los usuarios usando paginación
-    const allUsers: any[] = []
-    let userPage = 1
-    let userHasMore = true
-
-    while (userHasMore) {
-      const { total, users } = await getAllUsers({
-        limit: 100,
-        page: userPage,
-      })
-
-      allUsers.push(...users)
-
-      // Verificar si hay más páginas
-      userHasMore = allUsers.length < total && userPage * 100 < total
-      userPage++
-
-      // Para usuarios muy grandes, limitamos a 5000 usuarios máximo
-      if (allUsers.length >= 5000) {
-        break
-      }
-    }
-
-    const users = allUsers
 
     const currentDate = new Date()
     const currentMonth = currentDate.getMonth()
@@ -868,7 +483,7 @@ export async function GET() {
           ) / orders.length
         : 0
 
-    const totalUsers = users?.length ?? 0
+    // totalUsers ya está definido arriba según permisos
 
     const salesCurrentMonth = orders
       .filter(
@@ -901,34 +516,16 @@ export async function GET() {
 
     const conversionRate = totalUsers > 0 ? (totalOrders / totalUsers) * 100 : 0
 
-    const data = {
-      activeProducts,
-      artistStats,
+    // Construir respuesta según permisos del usuario
+    const data: any = {
       averageOrderValue,
 
       events: {
         active: activeEvents,
-        details: eventDetails,
+        details: canManageInventory ? eventDetails : eventDetails.slice(0, 5),
         ticketsSold: pastEventsCount,
         totalTickets: totalEvents,
         upcoming: upcomingEventsCount,
-      },
-
-      financialSummary: {
-        expenses: totalExpenses,
-        pendingPayments,
-        profit: totalProfit,
-        revenue: totalRevenue,
-      },
-
-      inventory: {
-        lowStock,
-        outOfStock,
-        productsByLocation,
-        productsByMedium,
-        productsByYear,
-        productsWithArtworkDetails,
-        totalValue: totalInventoryValue,
       },
 
       overview: {
@@ -937,15 +534,57 @@ export async function GET() {
         totalOrders,
         totalProducts,
         totalSales: Math.round(totalSales),
-        totalUsers,
+        totalUsers: canManageUsers ? totalUsers : 0,
+      },
+
+      // Información sobre permisos disponibles
+      permissions: {
+        canManageInventory,
+        canManageUsers,
       },
 
       productCategories,
 
-      recentActivity,
-
       salesData: salesByMonth,
+
       topProducts,
+    }
+
+    // Solo incluir datos de usuarios si tiene permiso
+    if (canManageUsers) {
+      data.artistStats = artistStats
+      data.users = users
+      data.recentActivity = recentActivity
+    } else {
+      // Datos limitados para Manager sin permisos completos
+      data.recentActivity = recentActivity.filter((item: any) => item.type !== 'user')
+    }
+
+    // Solo incluir datos de inventario detallados si tiene permiso
+    if (canManageInventory) {
+      data.activeProducts = activeProducts
+      data.financialSummary = {
+        expenses: totalExpenses,
+        pendingPayments,
+        profit: totalProfit,
+        revenue: totalRevenue,
+      }
+      data.inventory = {
+        lowStock,
+        outOfStock,
+        productsByLocation,
+        productsByMedium,
+        productsByYear,
+        productsWithArtworkDetails,
+        totalValue: totalInventoryValue,
+      }
+    } else {
+      // Datos básicos de inventario para usuarios sin permiso MANAGE_INVENTORY
+      data.inventory = {
+        lowStock: 0,
+        outOfStock: 0,
+        totalValue: 0,
+      }
     }
 
     // Guardar en cache
