@@ -1,5 +1,3 @@
-// src/types/routes.ts
-
 import { type RouteConfig } from '@/config/routes'
 
 export type UserRole = 'customer' | 'vip_customer' | 'support' | 'manager' | 'admin'
@@ -29,14 +27,11 @@ export type RouteParams = Record<string, string | undefined>
 
 export type RouteQuery = Record<string, string | string[] | undefined>
 
-// Tipos para generación de rutas tipadas
 export type TypedRoute<T extends string = string> = T
 
-// Definir rutas tipadas
 export const ROUTES = {
   ADDRESSES: '/addresses' as TypedRoute<'/addresses'>,
 
-  // Admin
   ADMIN: '/admin' as TypedRoute<'/admin'>,
 
   ADMIN_ANALYTICS: '/admin/analytics' as TypedRoute<'/admin/analytics'>,
@@ -53,13 +48,10 @@ export const ROUTES = {
 
   COLLECTIONS: '/store/collections' as TypedRoute<'/store/collections'>,
 
-  // Dashboard
   DASHBOARD: '/dashboard' as TypedRoute<'/dashboard'>,
 
-  // Rutas públicas
   HOME: '/' as TypedRoute<'/'>,
 
-  // Auth
   LOGIN: '/auth/login' as TypedRoute<'/auth/login'>,
 
   LOGOUT: '/auth/logout' as TypedRoute<'/auth/logout'>,
@@ -67,23 +59,20 @@ export const ROUTES = {
   ORDERS: '/orders' as TypedRoute<'/orders'>,
 
   ORDER_DETAIL: (id: string) => `/orders/${id}` as TypedRoute,
-  // Rutas dinámicas
+
   PRODUCT: (handle: string) => `/store/product/${handle}` as TypedRoute,
   PROFILE: '/profile' as TypedRoute<'/profile'>,
   SEARCH: '/store/search' as TypedRoute<'/store/search'>,
   STORE: '/store' as TypedRoute<'/store'>,
 
-  // Support
   SUPPORT: '/support' as TypedRoute<'/support'>,
   SUPPORT_CUSTOMERS: '/support/customers' as TypedRoute<'/support/customers'>,
   SUPPORT_TICKETS: '/support/tickets' as TypedRoute<'/support/tickets'>,
 } as const
 
-// Helper para construir URLs con query params
 export const buildUrl = (route: string, params?: RouteParams, query?: RouteQuery): string => {
   let url = route
 
-  // Reemplazar parámetros
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -92,7 +81,6 @@ export const buildUrl = (route: string, params?: RouteParams, query?: RouteQuery
     })
   }
 
-  // Agregar query params
   if (query) {
     const searchParams = new URLSearchParams()
     Object.entries(query).forEach(([key, value]) => {
@@ -113,7 +101,6 @@ export const buildUrl = (route: string, params?: RouteParams, query?: RouteQuery
   return url
 }
 
-// Tipo para definir la estructura de navegación
 export interface NavigationSection {
   id: string
   title: string
@@ -123,7 +110,6 @@ export interface NavigationSection {
   requiredPermissions?: Permission[]
 }
 
-// Tipo para el contexto de navegación
 export interface NavigationContext {
   currentPath: string
   isActive: (path: string) => boolean
@@ -131,7 +117,6 @@ export interface NavigationContext {
   navigateTo: (path: string) => void
 }
 
-// Tipo para breadcrumb item
 export interface BreadcrumbItem {
   label: string
   path: string
@@ -139,7 +124,6 @@ export interface BreadcrumbItem {
   icon?: React.ComponentType<{ className?: string }>
 }
 
-// Tipo para meta tags de rutas
 export interface RouteMeta {
   title?: string
   description?: string
@@ -148,12 +132,10 @@ export interface RouteMeta {
   noIndex?: boolean
 }
 
-// Extensión de RouteConfig con meta
 export interface RouteConfigWithMeta extends RouteConfig {
   meta?: RouteMeta
 }
 
-// Hook types
 export interface UseRoutesReturn {
   storeNavRoutes: RouteConfig[]
   dashboardNavRoutes: RouteConfig[]

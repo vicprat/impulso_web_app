@@ -1,14 +1,12 @@
+import { getPageContent, getTermsSections } from '@/lib/landing-data'
+import { routeMetadata } from '@/lib/metadata'
+
 import { CTA } from './components/CTA'
 import { Hero } from './components/Hero'
 
 import type { Metadata } from 'next'
 
-import { getPageContent, getTermsSections } from '@/lib/landing-data'
-import { routeMetadata } from '@/lib/metadata'
-
 export const metadata: Metadata = routeMetadata['/terms']
-
-// Data fetched in the Page component
 
 export default async function Page() {
   const [notionTerms, pageContent] = await Promise.all([

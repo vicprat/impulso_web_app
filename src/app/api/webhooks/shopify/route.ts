@@ -69,7 +69,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
     }
 
-    // Verificar autenticidad del webhook
     if (!verifyShopifyWebhook(body, signature)) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }

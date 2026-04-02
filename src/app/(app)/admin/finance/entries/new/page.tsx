@@ -20,7 +20,6 @@ export default function NewFinancialEntryPage() {
   const createEntry = useCreateFinancialEntry()
   const { data: bankAccounts } = useBankAccounts()
 
-  // Obtener userId de los parámetros de la URL
   const userId = searchParams.get('userId')
 
   const [formData, setFormData] = useState({
@@ -36,12 +35,11 @@ export default function NewFinancialEntryPage() {
     relatedParty: '',
     status: 'PENDING',
     type: 'EXPENSE',
-    userId: '', // Agregar campo userId
+    userId: '',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Establecer userId cuando se carga la página
   useEffect(() => {
     if (userId) {
       setFormData((prev) => ({ ...prev, userId }))
@@ -107,14 +105,13 @@ export default function NewFinancialEntryPage() {
         relatedParty: formData.relatedParty.trim() || undefined,
         status: formData.status as 'PENDING' | 'PARTIALLY_PAID' | 'COMPLETED' | 'CANCELLED',
         type: formData.type as 'INCOME' | 'EXPENSE',
-        userId: formData.userId || undefined, // Incluir userId directamente
+        userId: formData.userId || undefined,
       }
 
       await createEntry.mutateAsync(entryData)
 
       toast.success('Movimiento financiero creado exitosamente')
 
-      // Redirigir de vuelta al usuario si se creó desde su página
       if (userId) {
         router.push(`${ROUTES.ADMIN.USERS.DETAIL.PATH.replace(':id', userId)}`)
       } else {
@@ -159,7 +156,6 @@ export default function NewFinancialEntryPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className='space-y-6'>
-            {/* Tipo y Montos */}
             <div className='grid gap-4 md:grid-cols-3'>
               <div className='space-y-2'>
                 <Label htmlFor='type'>Tipo de Movimiento *</Label>
@@ -203,7 +199,6 @@ export default function NewFinancialEntryPage() {
               </div>
             </div>
 
-            {/* Descripción y Fecha */}
             <div className='grid gap-4 md:grid-cols-2'>
               <div className='space-y-2'>
                 <Label htmlFor='description'>Descripción *</Label>
@@ -230,7 +225,6 @@ export default function NewFinancialEntryPage() {
               </div>
             </div>
 
-            {/* Categoría y Estado */}
             <div className='grid gap-4 md:grid-cols-2'>
               <div className='space-y-2'>
                 <Label htmlFor='category'>Categoría</Label>
@@ -258,7 +252,6 @@ export default function NewFinancialEntryPage() {
               </div>
             </div>
 
-            {/* Cuenta Bancaria y Método de Pago */}
             <div className='grid gap-4 md:grid-cols-2'>
               <div className='space-y-2'>
                 <Label htmlFor='bankAccountId'>Cuenta Bancaria</Label>
@@ -288,7 +281,6 @@ export default function NewFinancialEntryPage() {
               </div>
             </div>
 
-            {/* Parte Relacionada y Fecha de Vencimiento */}
             <div className='grid gap-4 md:grid-cols-2'>
               <div className='space-y-2'>
                 <Label htmlFor='relatedParty'>Parte Relacionada</Label>
@@ -313,7 +305,6 @@ export default function NewFinancialEntryPage() {
               </div>
             </div>
 
-            {/* Notas */}
             <div className='space-y-2'>
               <Label htmlFor='notes'>Notas</Label>
               <Textarea
@@ -325,7 +316,6 @@ export default function NewFinancialEntryPage() {
               />
             </div>
 
-            {/* Botones */}
             <div className='flex gap-4'>
               <Button type='submit' disabled={createEntry.isPending}>
                 {createEntry.isPending ? (

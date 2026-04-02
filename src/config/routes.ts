@@ -72,80 +72,14 @@ export const ROUTES = {
         ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
     },
-    // FINANCE: {
-    //   BANK_ACCOUNTS: {
-    //     CREATE: {
-    //       ICON: 'plus',
-    //       LABEL: 'Crear Cuenta Bancaria',
-    //       PATH: '/admin/finance/bank-accounts/new',
-    //       PERMISSIONS: [PERMISSIONS.MANAGE_BANK_ACCOUNTS],
-    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-    //     },
-    //     DETAIL: {
-    //       ICON: 'edit',
-    //       LABEL: 'Detalle de Cuenta Bancaria',
-    //       PATH: '/admin/finance/bank-accounts/:id',
-    //       PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
-    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-    //     },
-    //     EDIT: {
-    //       ICON: 'edit',
-    //       LABEL: 'Editar Cuenta Bancaria',
-    //       PATH: '/admin/finance/bank-accounts/:id/edit',
-    //       PERMISSIONS: [PERMISSIONS.MANAGE_BANK_ACCOUNTS],
-    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-    //     },
-    //     MAIN: {
-    //       DESCRIPTION: 'Gestionar Cuentas Bancarias',
-    //       ICON: 'credit-card',
-    //       LABEL: 'Cuentas Bancarias',
-    //       PATH: '/admin/finance/bank-accounts',
-    //       PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
-    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-    //     },
-    //   },
-    //   ENTRIES: {
-    //     CREATE: {
-    //       ICON: 'plus',
-    //       LABEL: 'Crear Movimiento',
-    //       PATH: '/admin/finance/entries/new',
-    //       PERMISSIONS: [PERMISSIONS.MANAGE_FINANCIAL_ENTRIES],
-    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-    //     },
-    //     DETAIL: {
-    //       ICON: 'edit',
-    //       LABEL: 'Detalle de Movimiento',
-    //       PATH: '/admin/finance/entries/:id',
-    //       PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES, PERMISSIONS.MANAGE_FINANCIAL_ENTRIES],
-    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-    //     },
-    //     MAIN: {
-    //       DESCRIPTION: 'Gestionar Movimientos Financieros',
-    //       ICON: 'trending-up',
-    //       LABEL: 'Movimientos',
-    //       PATH: '/admin/finance/entries',
-    //       PERMISSIONS: [PERMISSIONS.VIEW_FINANCIAL_ENTRIES],
-    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
-    //     },
-    //   },
-    //   REPORTS: {
-    //     MAIN: {
-    //       DESCRIPTION: 'Reportes Financieros',
-    //       ICON: 'bar-chart-3',
-    //       LABEL: 'Reportes',
-    //       PATH: '/admin/finance/reports',
-    //       PERMISSIONS: [PERMISSIONS.VIEW_FINANCE_REPORTS],
-    //       ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME, ROLES.PARTNER.NAME],
-    //     },
-    //   },
-    // },
+
     GROUP: {
       HIDE_IN_NAV: true,
       ICON: 'settings',
       LABEL: 'Administración',
       PATH: '/admin',
       PERMISSIONS: [PERMISSIONS.ACCESS_ADMIN],
-      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME], // Esta ruta no debe aparecer individualmente
+      ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
     },
     PRIVATE_ROOMS: {
       ACCESS: {
@@ -424,9 +358,8 @@ export const ROUTES = {
       LABEL: 'Inicio',
       PATH: '/',
     },
-    // Rutas dinámicas para posts por tipo
+
     POSTS: {
-      // Rutas dinámicas que manejan ambos tipos
       DYNAMIC: {
         DETAIL: {
           DESCRIPTION: 'Detalle de un post (blog o evento)',
@@ -615,23 +548,18 @@ export const getDashboardNavRoutes = (
   userPermissions: string[]
 ): RouteConfig[] => {
   const navigationRoutes = [
-    // Panel Principal
     ROUTES.CUSTOMER.DASHBOARD,
-    // Inventario
+
     ROUTES.INVENTORY.MAIN,
-    // Mis Pedidos
+
     ROUTES.ORDERS.MAIN,
-    // Blog
+
     ROUTES.ADMIN.BLOG.MAIN,
-    // Mi Perfil
+
     ROUTES.CUSTOMER.PROFILE,
-    // Rutas administrativas agrupadas
+
     ROUTES.ADMIN.EVENTS.MAIN,
-    // ROUTES.ADMIN.USERS.MAIN,
-    // ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN,
-    // ROUTES.ADMIN.FINANCE.ENTRIES.MAIN,
-    // ROUTES.ADMIN.FINANCE.REPORTS.MAIN,
-    // Rutas individuales que no están en ADMIN
+
     ROUTES.ADMIN.PRIVATE_ROOMS.ACCESS,
     ROUTES.TICKETS.MAIN,
   ]
@@ -651,20 +579,12 @@ export const getGroupedDashboardNavRoutes = (
 } => {
   const allRoutes = getDashboardNavRoutes(userRoles, userPermissions)
 
-  // Rutas que deben estar agrupadas bajo Administración
-  const adminGroupRoutes = [
-    ROUTES.ADMIN.EVENTS.MAIN,
-    ROUTES.ADMIN.USERS.MAIN,
-    //  ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN,
-    // ROUTES.ADMIN.FINANCE.ENTRIES.MAIN,
-    // ROUTES.ADMIN.FINANCE.REPORTS.MAIN,
-  ].filter(
+  const adminGroupRoutes = [ROUTES.ADMIN.EVENTS.MAIN, ROUTES.ADMIN.USERS.MAIN].filter(
     (route) =>
       filterRoutesByAccess([route], userRoles, userPermissions).length > 0 &&
       !('HIDE_IN_NAV' in route && route.HIDE_IN_NAV)
   )
 
-  // Rutas que deben estar agrupadas bajo Gestión de Inventario
   const inventoryGroupRoutes = [
     ROUTES.INVENTORY.MAIN,
     ROUTES.INVENTORY.COUPONS.MAIN,
@@ -677,7 +597,6 @@ export const getGroupedDashboardNavRoutes = (
       !('HIDE_IN_NAV' in route && route.HIDE_IN_NAV)
   )
 
-  // Rutas que deben estar individuales (incluyendo ACCESS que no está en el grupo)
   const individualRoutes = allRoutes.filter(
     (route) =>
       !adminGroupRoutes.some((adminRoute) => adminRoute.PATH === route.PATH) &&
@@ -701,7 +620,7 @@ export const getStoreNavRoutes = (): RouteConfig[] => {
       LABEL: 'Blog',
       PATH: '/blog',
     },
-    ROUTES.STORE.EVENTS, // Eventos del store
+    ROUTES.STORE.EVENTS,
     ROUTES.PUBLIC.ARTISTS,
   ]
 

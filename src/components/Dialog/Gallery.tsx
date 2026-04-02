@@ -163,7 +163,6 @@ export const Gallery: React.FC<Props> = ({
           className='absolute bottom-8 left-1/2 -translate-x-1/2'
         >
           <div className='flex flex-col items-center gap-6'>
-            {/* Título de la imagen actual */}
             <motion.h3
               key={selectedIndex}
               initial={{ opacity: 0, y: 10 }}

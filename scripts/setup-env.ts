@@ -6,7 +6,7 @@ import path from 'path'
 const ENV_TEMPLATE = `# Variables de entorno para Impulso Galería
 
 # URL de la aplicación
-NEXT_PUBLIC_APP_URL=https://tu-dominio.com
+NEXT_PUBLIC_APP_URL=https:
 
 # Shopify Store
 NEXT_PUBLIC_SHOPIFY_STORE=tu-tienda.myshopify.com
@@ -26,8 +26,7 @@ function setupEnv() {
   console.log('🔧 Configurando variables de entorno...\n')
 
   const envPath = path.join(process.cwd(), '.env.local')
-  
-  // Verificar si ya existe .env.local
+
   if (fs.existsSync(envPath)) {
     console.log('⚠️  El archivo .env.local ya existe')
     console.log('   Revisa que contenga las siguientes variables:\n')
@@ -68,4 +67,4 @@ function setupEnv() {
   console.log('')
 }
 
-setupEnv() 
+setupEnv()

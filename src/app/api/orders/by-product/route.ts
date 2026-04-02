@@ -127,16 +127,12 @@ export async function GET(request: NextRequest) {
       first = parsedFirst
     }
 
-    // Construir la query para filtrar por producto específico
-    const query = `product_id:${productId}`
-
     const data = (await makeAdminApiRequest(GET_ORDERS_BY_PRODUCT_QUERY, {
       after,
       first,
       query: `product_id:${productId}`,
     })) as GraphQLResponse
 
-    // Verificar si hay errores de GraphQL en la respuesta
     if (data.errors && data.errors.length > 0) {
       console.error('GraphQL errors:', data.errors)
       return NextResponse.json(
@@ -149,32 +145,26 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Enriquecer los datos con información local del usuario (solo para usuarios registrados)
     if (data.data?.orders?.edges) {
       const orders = data.data.orders.edges
 
-      // Extraer todos los shopifyCustomerIds únicos
       const shopifyCustomerIds = orders
         .map((order) => order.node.customer?.id)
         .filter((id): id is string => !!id)
         .map((id) => id.replace('gid://shopify/Customer/', ''))
-        .filter((id, index, array) => array.indexOf(id) === index) // Eliminar duplicados
+        .filter((id, index, array) => array.indexOf(id) === index)
 
       if (shopifyCustomerIds.length > 0) {
-        // Obtener información local de los usuarios
         const localUsers = await getUsersByShopifyCustomerIds(shopifyCustomerIds)
 
-        // Crear un mapa para acceso rápido
         const userMap = new Map(localUsers.map((user) => [user.shopifyCustomerId, user]))
 
-        // Enriquecer cada orden con la información local del usuario (solo si existe)
         orders.forEach((order) => {
           if (order.node.customer?.id) {
             const shopifyId = order.node.customer.id.replace('gid://shopify/Customer/', '')
             const localUser = userMap.get(shopifyId)
 
             if (localUser) {
-              // Agregar información local del usuario a la orden sin sobrescribir datos de Shopify
               order.node.customer = {
                 ...order.node.customer,
                 localUserId: localUser.id,

@@ -26,7 +26,6 @@ export const BLOG_KEYS = {
   tags: () => [...BLOG_KEYS.all, 'tags'] as const,
 }
 
-// ===== Queries =====
 export function usePosts(filters: Partial<PostFilters> = {}) {
   return useQuery<PaginatedResult<PostWithRelations>>({
     queryFn: () => blogApi.posts.list(filters),
@@ -71,7 +70,6 @@ export function useTags() {
   })
 }
 
-// ===== Mutations =====
 export function useCreatePost() {
   const qc = useQueryClient()
   return useMutation({

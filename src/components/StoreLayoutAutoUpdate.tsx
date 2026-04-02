@@ -10,13 +10,11 @@ interface StoreLayoutAutoUpdateProps {
 export function StoreLayoutAutoUpdate({ children }: StoreLayoutAutoUpdateProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const [ lastUpdate, setLastUpdate ] = useState(Date.now())
+  const [lastUpdate, setLastUpdate] = useState(Date.now())
 
   useEffect(() => {
-    // Función para verificar actualizaciones de la tienda
     const checkForUpdates = async () => {
       try {
-        // Verificar si hay actualizaciones de productos
         const response = await fetch('/api/store/check-update', {
           body: JSON.stringify({
             lastUpdate,
@@ -40,14 +38,15 @@ export function StoreLayoutAutoUpdate({ children }: StoreLayoutAutoUpdateProps) 
       }
     }
 
-    // Función para verificar actualizaciones de productos/eventos individuales
     const checkProductUpdates = async () => {
       try {
-        // Extraer el handle de la URL
         const pathParts = pathname.split('/')
-        const handle = pathParts[ pathParts.length - 1 ]
+        const handle = pathParts[pathParts.length - 1]
 
-        if (handle && (pathname.includes('/store/product/') || pathname.includes('/store/event/'))) {
+        if (
+          handle &&
+          (pathname.includes('/store/product/') || pathname.includes('/store/event/'))
+        ) {
           const response = await fetch(`/api/products/${handle}/check-update`, {
             body: JSON.stringify({
               lastUpdate,
@@ -72,19 +71,17 @@ export function StoreLayoutAutoUpdate({ children }: StoreLayoutAutoUpdateProps) 
       }
     }
 
-    // Verificar actualizaciones cada 5 minutos
-    const storeInterval = setInterval(checkForUpdates, 300000) // 5 minutos
-    const productInterval = setInterval(checkProductUpdates, 300000) // 5 minutos
+    const storeInterval = setInterval(checkForUpdates, 300000)
+    const productInterval = setInterval(checkProductUpdates, 300000)
 
-    // Verificar inmediatamente al cargar
-    checkForUpdates()
-    checkProductUpdates()
+    void checkForUpdates()
+    void checkProductUpdates()
 
     return () => {
       clearInterval(storeInterval)
       clearInterval(productInterval)
     }
-  }, [ lastUpdate, router, pathname ])
+  }, [lastUpdate, router, pathname])
 
   return <>{children}</>
-} 
+}

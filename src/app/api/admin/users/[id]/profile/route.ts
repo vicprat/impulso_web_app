@@ -31,7 +31,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
     }
 
-    // Retornar solo los datos del perfil necesarios para el formulario
     const profileData = {
       avatarUrl: user.profile?.avatarUrl,
       backgroundImageUrl: user.profile?.backgroundImageUrl,

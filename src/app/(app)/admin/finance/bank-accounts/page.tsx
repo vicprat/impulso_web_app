@@ -87,7 +87,6 @@ export default function BankAccountsPage() {
         </Link>
       </div>
 
-      {/* Filtros */}
       <Card>
         <CardContent className='p-4'>
           <div className='flex gap-4'>
@@ -120,7 +119,6 @@ export default function BankAccountsPage() {
         </CardContent>
       </Card>
 
-      {/* Lista de cuentas */}
       <div className='grid gap-4'>
         {filteredAccounts.length === 0 ? (
           <Card>
@@ -178,7 +176,6 @@ export default function BankAccountsPage() {
         )}
       </div>
 
-      {/* Resumen */}
       {bankAccounts && bankAccounts.length > 0 && (
         <Card>
           <CardContent className='p-4'>

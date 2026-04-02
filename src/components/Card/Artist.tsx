@@ -19,12 +19,11 @@ interface ArtistProps {
       backgroundImageUrl?: string
     }
   }
-  // Nuevas props para configurar fallbacks
+
   avatarFallback?: 'initials' | 'icon' | 'logo' | 'gradient'
   backgroundFallback?: 'dynamic' | 'minimal' | 'pattern' | 'solid'
 }
 
-// Utilidades
 const generateColorFromString = (str: string) => {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -55,7 +54,6 @@ export const Artist: React.FC<ArtistProps> = ({
   const initials = getInitials(artist.firstName, artist.lastName, artist.email)
   const userColor = generateColorFromString(artist.id || artist.email)
 
-  // Renderizar avatar fallback
   const renderAvatarFallback = () => {
     switch (avatarFallback) {
       case 'icon':
@@ -82,7 +80,7 @@ export const Artist: React.FC<ArtistProps> = ({
           </div>
         )
 
-      default: // 'initials'
+      default:
         return (
           <div
             className='flex size-full items-center justify-center text-lg font-semibold text-white'
@@ -94,7 +92,6 @@ export const Artist: React.FC<ArtistProps> = ({
     }
   }
 
-  // Renderizar background fallback
   const renderBackgroundFallback = () => {
     switch (backgroundFallback) {
       case 'minimal':
@@ -116,7 +113,7 @@ export const Artist: React.FC<ArtistProps> = ({
       case 'solid':
         return <div className='size-full' style={{ backgroundColor: `${userColor}15` }} />
 
-      default: // 'dynamic'
+      default:
         return (
           <div
             className='size-full bg-gradient-to-br opacity-60'
@@ -135,9 +132,7 @@ export const Artist: React.FC<ArtistProps> = ({
         className='block h-full focus:outline-none'
         aria-label={`Ver perfil de ${artistName}`}
       >
-        {/* Estructura flex para distribuir el contenido */}
         <div className='flex h-full flex-col'>
-          {/* Header con background - Altura fija */}
           <div className='relative h-28 shrink-0 overflow-hidden'>
             {artist.profile?.backgroundImageUrl ? (
               <>
@@ -154,7 +149,6 @@ export const Artist: React.FC<ArtistProps> = ({
             )}
           </div>
 
-          {/* Avatar flotante - Posición fija */}
           <div className='relative -mt-12 flex shrink-0 justify-center'>
             <div className='relative'>
               <div className='size-24 overflow-hidden rounded-full border-4 border-background bg-background shadow-xl transition-transform duration-300 group-hover:scale-110'>
@@ -173,17 +167,14 @@ export const Artist: React.FC<ArtistProps> = ({
             </div>
           </div>
 
-          {/* Contenido principal - Área flexible */}
           <CardContent className='flex flex-1 flex-col justify-center px-6 pb-6 pt-4 text-center'>
             <div className='mb-3'>
-              {/* Nombre con altura mínima para consistencia */}
               <div className='flex min-h-14 items-center justify-center'>
                 <h3 className='text-lg font-semibold leading-tight text-foreground transition-colors duration-200 group-hover:text-primary'>
                   {artistName}
                 </h3>
               </div>
 
-              {/* Ocupación con altura fija */}
               <div className='flex min-h-8 items-center justify-center'>
                 {artist.profile?.occupation && (
                   <p className='text-sm text-muted-foreground'>{artist.profile.occupation}</p>
@@ -193,7 +184,6 @@ export const Artist: React.FC<ArtistProps> = ({
           </CardContent>
         </div>
 
-        {/* Overlay de hover */}
         <div className='from-primary/5 pointer-events-none absolute inset-0 bg-gradient-to-t via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
       </Link>
     </Card>

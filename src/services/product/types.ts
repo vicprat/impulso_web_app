@@ -38,7 +38,7 @@ export interface CreateProductPayload {
 
 export interface UpdateProductPayload extends Partial<CreateProductPayload> {
   id: string
-  imagesToDelete?: string[] // IDs de las imágenes a eliminar
+  imagesToDelete?: string[]
   collectionId?: string
 }
 
@@ -185,7 +185,6 @@ export interface ProductCreateMediaResponse {
   }
 }
 
-// Re-exportar tipos de descuentos desde el módulo centralizado
 export type {
   CreateShopifyDiscountInput as CreateDiscountInput,
   ShopifyDiscount as Discount,

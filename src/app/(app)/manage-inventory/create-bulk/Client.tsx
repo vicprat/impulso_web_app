@@ -92,7 +92,6 @@ export function Client() {
   const { data: artworkTypes = [], isLoading: artworkTypesLoading } = useGetArtworkTypes()
   const { data: locations = [], isLoading: locationsLoading } = useGetLocations()
 
-  // Obtener colecciones
   const { data: collectionsData, isLoading: collectionsLoading } = useCollections({ limit: 250 })
   const allCollections = collectionsData?.collections ?? []
   const collections = allCollections.filter(
@@ -101,7 +100,7 @@ export function Client() {
 
   const bulkCreateQueue = useBulkUpdateQueue(
     async (payload: CreateProductPayload & { id: string }) => {
-      // Remover el ID temporal antes de enviar al servidor
+
       const { id, ...payloadWithoutId } = payload
 
       const response = await fetch('/api/management/products', {
@@ -244,7 +243,7 @@ export function Client() {
           description: product.description || '',
           details: product.artworkDetails,
           id: product.id,
-          // Usar el ID del producto original
+
           inventoryQuantity: product.inventoryQuantity,
           price: product.price,
           productType: product.productType,
@@ -278,7 +277,6 @@ export function Client() {
     bulkCreateQueue.addItems(validProducts)
     toast.success(`✅ ${validProducts.length} productos agregados a la cola de creación`)
 
-    // Procesar la cola inmediatamente después de agregar items
     setTimeout(() => {
       void bulkCreateQueue.processQueue()
     }, 100)

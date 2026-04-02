@@ -261,10 +261,8 @@ export class Product {
     this.artworkDetails = this._parseDetailsFromMetafields(shopifyProductData.metafields.edges)
     this._parseTags()
 
-    // Extraer información de los tags después de que se procesen
     this._extractInfoFromTags()
 
-    // Procesar colecciones
     if (shopifyProductData.collections?.edges) {
       this.collections = shopifyProductData.collections.edges.map((edge) => ({
         handle: edge.node.handle,
@@ -298,7 +296,6 @@ export class Product {
     const details: Partial<ArtworkDetails> = {}
 
     for (const { node } of metafieldEdges) {
-      // Procesar metafields con namespace art_details
       if (node.namespace === ARTWORK_METAFIELD_NAMESPACE) {
         const validKeys = [
           'medium',
@@ -317,14 +314,12 @@ export class Product {
         }
       }
 
-      // Procesar metafields con namespace global y clave description_tag
       if (node.namespace === 'global' && node.key === 'description_tag') {
         const parsedDetails = this._parseDescriptionTag(node.value)
         Object.assign(details, parsedDetails)
       }
     }
 
-    // Si no hay detalles de metafields, intentar extraer del descriptionHtml
     if (Object.keys(details).length === 0 && this.descriptionHtml) {
       const htmlDetails = this._parseDescriptionHtml()
       Object.assign(details, htmlDetails)
@@ -346,11 +341,9 @@ export class Product {
   }
 
   private _extractInfoFromTags(): void {
-    // Extraer localización de los tags automáticos si no está en artworkDetails
     if (!this.artworkDetails.location && this.autoTags) {
       const locationTag = this.autoTags.find((tag) => tag.startsWith('locacion-'))
       if (locationTag) {
-        // Convertir "locacion-impulso-galería" a "Impulso Galería"
         const locationName = locationTag
           .replace('locacion-', '')
           .split('-')
@@ -361,7 +354,6 @@ export class Product {
       }
     }
 
-    // Extraer año de los tags automáticos si no está en artworkDetails
     if (!this.artworkDetails.year && this.autoTags) {
       const yearTag = this.autoTags.find((tag) => /^\d{4}$/.test(tag))
       if (yearTag) {
@@ -373,7 +365,6 @@ export class Product {
   private _parseDescriptionTag(descriptionTag: string): Partial<ArtworkDetails> {
     const details: Partial<ArtworkDetails> = {}
 
-    // Buscar patrones en el texto - mejorados para capturar correctamente
     const patterns = {
       artist: /Artist:\s*([^M]+?)(?=Medium|Dimensions|Year|Location|Serie|$)/i,
       dimensions: /Dimensions:\s*([^Y]+?)(?=Year|Location|Serie|$)/i,
@@ -383,24 +374,20 @@ export class Product {
       year: /Year:\s*(\d{4})/i,
     }
 
-    // Extraer artist
     const artistMatch = descriptionTag.match(patterns.artist)
     if (artistMatch) {
       details.artist = artistMatch[1].trim()
     }
 
-    // Extraer medium
     const mediumMatch = descriptionTag.match(patterns.medium)
     if (mediumMatch) {
       details.medium = mediumMatch[1].trim()
     }
 
-    // Extraer dimensions
     const dimensionsMatch = descriptionTag.match(patterns.dimensions)
     if (dimensionsMatch) {
       const dimensionsText = dimensionsMatch[1].trim()
 
-      // Parsear dimensiones (ej: "46.0h x 61.0w")
       const dimensionPattern = /(\d+(?:\.\d+)?)(?:h|H)\s*x\s*(\d+(?:\.\d+)?)(?:w|W)/
       const dimensionMatch = dimensionsText.match(dimensionPattern)
 
@@ -410,19 +397,16 @@ export class Product {
       }
     }
 
-    // Extraer year
     const yearMatch = descriptionTag.match(patterns.year)
     if (yearMatch) {
       details.year = yearMatch[1]
     }
 
-    // Extraer location
     const locationMatch = descriptionTag.match(patterns.location)
     if (locationMatch) {
       details.location = locationMatch[1].trim()
     }
 
-    // Extraer serie
     const serieMatch = descriptionTag.match(patterns.serie)
     if (serieMatch) {
       details.serie = serieMatch[1].trim()
@@ -434,7 +418,6 @@ export class Product {
   private _parseDescriptionHtml(): Partial<ArtworkDetails> {
     const details: Partial<ArtworkDetails> = {}
 
-    // Buscar patrones en el HTML
     const patterns = {
       artist: /<strong>Artista:<\/strong>\s*([^<]+)/i,
       dimensions: /<strong>Medidas[^<]*:<\/strong>\s*([^<]+)/i,
@@ -444,24 +427,20 @@ export class Product {
       year: /<strong>Año:<\/strong>\s*(\d{4})/i,
     }
 
-    // Extraer artist
     const artistMatch = this.descriptionHtml.match(patterns.artist)
     if (artistMatch) {
       details.artist = artistMatch[1].trim()
     }
 
-    // Extraer medium
     const mediumMatch = this.descriptionHtml.match(patterns.medium)
     if (mediumMatch) {
       details.medium = mediumMatch[1].trim()
     }
 
-    // Extraer dimensions
     const dimensionsMatch = this.descriptionHtml.match(patterns.dimensions)
     if (dimensionsMatch) {
       const dimensionsText = dimensionsMatch[1].trim()
 
-      // Parsear dimensiones (ej: "46.0h x 61.0w" o "100 x 150")
       const dimensionPattern = /(\d+(?:\.\d+)?)(?:h|H)?\s*x\s*(\d+(?:\.\d+)?)(?:w|W)?/
       const dimensionMatch = dimensionsText.match(dimensionPattern)
 
@@ -471,19 +450,16 @@ export class Product {
       }
     }
 
-    // Extraer year
     const yearMatch = this.descriptionHtml.match(patterns.year)
     if (yearMatch) {
       details.year = yearMatch[1]
     }
 
-    // Extraer location
     const locationMatch = this.descriptionHtml.match(patterns.location)
     if (locationMatch) {
       details.location = locationMatch[1].trim()
     }
 
-    // Extraer serie
     const serieMatch = this.descriptionHtml.match(patterns.serie)
     if (serieMatch) {
       details.serie = serieMatch[1].trim()
@@ -493,7 +469,6 @@ export class Product {
   }
 
   private _parseTags(): void {
-    // Siempre inicializar arrays, incluso si no hay tags
     this.autoTags = []
     this.manualTags = []
 
@@ -648,7 +623,7 @@ export class Product {
       vendor: () => {
         if (updates.vendor) {
           this.vendor = updates.vendor
-          // También actualizar el artist en artworkDetails
+
           this.artworkDetails = { ...this.artworkDetails, artist: updates.vendor }
         }
       },

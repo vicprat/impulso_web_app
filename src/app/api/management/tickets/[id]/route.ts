@@ -18,7 +18,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       )
     }
 
-    // Enriquecer el ticket con la información del evento
     try {
       const event = await eventService.getEventById(ticket.eventId, session)
 
@@ -40,7 +39,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
       return NextResponse.json(enrichedTicket)
     } catch (error) {
-      // Si hay error al obtener el evento, devolver el ticket sin enriquecer
       console.warn('Error al obtener información del evento:', error)
       return NextResponse.json({
         ...ticket,

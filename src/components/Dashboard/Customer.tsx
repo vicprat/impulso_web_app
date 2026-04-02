@@ -13,7 +13,6 @@ import {
 import { useCustomerDashboard } from '@/src/modules/dashboard/hooks/useCustomerDashboard'
 import { useUserPrivateRooms } from '@/src/modules/rooms/hooks'
 
-// Reusing components from Admin.tsx for consistency
 const MetricCard = ({
   change,
   color = 'blue',
@@ -124,7 +123,6 @@ export const Customer: React.FC<CustomerDashboardProps> = ({ role, userId }) => 
     return sum + (isNaN(amount) ? 0 : amount)
   }, 0)
 
-  // Prepare data for monthly spending chart (example, you might need to aggregate from orders)
   const monthlySpendingData = customer.orders.edges.reduce(
     (acc, order) => {
       const date = new Date(order.node.processedAt)
@@ -144,7 +142,6 @@ export const Customer: React.FC<CustomerDashboardProps> = ({ role, userId }) => 
   )
 
   const sortedMonthlySpending = Object.values(monthlySpendingData).sort((a, b) => {
-    // Simple sorting by month-year, might need more robust date parsing for accurate sorting
     const dateA = new Date(a.month)
     const dateB = new Date(b.month)
     return dateA.getTime() - dateB.getTime()

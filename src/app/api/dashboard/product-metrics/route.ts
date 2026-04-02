@@ -1,25 +1,22 @@
 import { NextResponse } from 'next/server'
 
-import { PERMISSIONS } from '@/src/config/Permissions'
 import { CacheManager, registerGlobalCache } from '@/lib/cache'
+import { PERMISSIONS } from '@/src/config/Permissions'
 import { requirePermission } from '@/src/modules/auth/server/server'
 
-// Cache simple para product-metrics
 interface CacheEntry {
   data: unknown
   fetchedAt: number
 }
 const cache = new Map<string, CacheEntry>()
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
+const CACHE_TTL = 5 * 60 * 1000
 
-// Registrar cache para invalidación centralizada
 registerGlobalCache('dashboard-product-metrics', cache)
 
 export async function GET() {
   try {
-    const session = await requirePermission(PERMISSIONS.VIEW_ANALYTICS)
+    await requirePermission(PERMISSIONS.VIEW_ANALYTICS)
 
-    // Verificar cache
     const cacheKey = 'product-metrics'
     const cached = cache.get(cacheKey)
     const now = Date.now()
@@ -27,7 +24,6 @@ export async function GET() {
       return NextResponse.json(cached.data)
     }
 
-    // Usar CacheManager para obtener productos - evita llamadas duplicadas a Shopify
     const products = await CacheManager.getFullCatalog('admin')
 
     const data = {
@@ -94,7 +90,6 @@ export async function GET() {
         {} as Record<string, number>
       ),
 
-      // Información detallada de productos
       productsDetails: products.map((product) => ({
         artworkDetails: product.artworkDetails,
         autoTags: product.autoTags,
@@ -109,7 +104,6 @@ export async function GET() {
         vendor: product.vendor,
       })),
 
-      // Métricas enriquecidas con datos de artwork
       productsWithArtworkDetails: products.filter(
         (p) => p.artworkDetails && Object.values(p.artworkDetails).some((value) => value !== null)
       ).length,
@@ -123,7 +117,6 @@ export async function GET() {
       totalProducts: products.length,
     }
 
-    // Guardar en cache
     cache.set(cacheKey, { data, fetchedAt: now })
 
     return NextResponse.json({ data })

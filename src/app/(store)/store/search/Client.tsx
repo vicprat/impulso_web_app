@@ -35,7 +35,6 @@ export const Client = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Gestión de la paginación con cursores
   const currentPage = useMemo(() => {
     const page = searchParams.get('page')
     return page ? parseInt(page, 10) : 1
@@ -73,7 +72,6 @@ export const Client = () => {
     const sort = searchParams.get('sort')
     if (!sort) return 'TITLE'
 
-    // Validar y mapear el valor de sort
     const validSortKeys: Record<string, ProductSearchParams['sortKey']> = {
       CREATED_AT: 'CREATED_AT',
       PRICE: 'PRICE',
@@ -208,7 +206,6 @@ export const Client = () => {
     if (searchFilters.vendor)
       filters.push({ key: 'vendor', label: 'Artistas', value: searchFilters.vendor.join(', ') })
 
-    // Técnicas (desde URL params)
     if (techniques.length > 0 && filterOptions) {
       const techniqueLabels = techniques
         .map((techValue) => {
@@ -220,7 +217,6 @@ export const Client = () => {
         filters.push({ key: 'techniques', label: 'Técnicas', value: techniqueLabels })
     }
 
-    // Dimensiones/Medidas (desde URL params)
     if (dimensions.length > 0 && filterOptions) {
       const dimensionLabels = dimensions
         .map((dimValue) => {
@@ -232,7 +228,6 @@ export const Client = () => {
         filters.push({ key: 'dimensions', label: 'Medidas', value: dimensionLabels })
     }
 
-    // Años (desde URL params)
     if (years.length > 0) {
       filters.push({ key: 'years', label: 'Años', value: years.join(', ') })
     }

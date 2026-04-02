@@ -69,20 +69,7 @@ const defaultSpheres: SphereConfig[] = [
     size: 'w-72 h-72',
     transitionCurve: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
   },
-  // {
-  //   id: 'store-sphere-4',
-  //   size: 'w-64 h-64',
-  //   gradient: 'bg-gradient-to-tl from-indigo-300/45 to-blue-200/35 dark:from-indigo-600/22 dark:to-blue-700/15',
-  //   blur: 'blur-2xl',
-  //   opacity: '',
-  //   initialPosition: { x: 70, y: 85 },
-  //   animationDuration: 9000,
-  //   maxDistance: 15,
-  //   transitionCurve: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-  //   pulseAnimation: true,
-  //   pulseDuration: '3.5s',
-  //   pulseDelay: '0.5s'
-  // },
+
   {
     animationDuration: 11000,
     blur: 'blur-xl',

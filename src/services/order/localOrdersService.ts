@@ -53,10 +53,8 @@ export interface LocalOrdersParams {
 export async function getLocalOrders(params?: LocalOrdersParams): Promise<LocalOrdersResult> {
   const { after, first = 10, query } = params ?? {}
 
-  // Calcular offset basado en el cursor (simplificado para esta implementación)
   const offset = after ? parseInt(after) : 0
 
-  // Construir condiciones de búsqueda
   const whereConditions: Record<string, unknown> = {}
 
   if (query) {
@@ -68,7 +66,6 @@ export async function getLocalOrders(params?: LocalOrdersParams): Promise<LocalO
     ]
   }
 
-  // Obtener tickets con información del usuario y entradas financieras
   const tickets = await prisma.ticket.findMany({
     include: {
       user: {
@@ -83,10 +80,9 @@ export async function getLocalOrders(params?: LocalOrdersParams): Promise<LocalO
     orderBy: { createdAt: 'desc' },
     skip: offset,
     take: first + 1,
-    where: whereConditions, // +1 para determinar si hay más páginas
+    where: whereConditions,
   })
 
-  // Agrupar tickets por orderId
   const ordersMap = new Map<string, LocalOrder>()
 
   for (const ticket of tickets) {
@@ -177,7 +173,6 @@ export async function getLocalOrders(params?: LocalOrdersParams): Promise<LocalO
     })
   }
 
-  // Calcular lineItemsCount y ordenar órdenes
   const orders = Array.from(ordersMap.values())
     .map((order) => ({
       ...order,
@@ -185,14 +180,11 @@ export async function getLocalOrders(params?: LocalOrdersParams): Promise<LocalO
     }))
     .sort((a, b) => new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime())
 
-  // Determinar paginación
   const hasNextPage = tickets.length > first
   const hasPreviousPage = offset > 0
 
-  // Tomar solo los primeros 'first' elementos
   const paginatedOrders = orders.slice(0, first)
 
-  // Crear cursores para paginación
   const startCursor = paginatedOrders.length > 0 ? offset.toString() : null
   const endCursor = hasNextPage ? (offset + first).toString() : null
 
@@ -392,7 +384,6 @@ export interface LocalOrderDetail {
 }
 
 export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrderDetail | null> {
-  // Buscar todas las entradas financieras para esta orden
   const financialEntries = await prisma.financialEntry.findMany({
     orderBy: { createdAt: 'desc' },
     where: {
@@ -405,7 +396,6 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
 
   const firstEntry = financialEntries[0]
 
-  // Buscar tickets para obtener información del usuario (si existen)
   const tickets = await prisma.ticket.findMany({
     include: {
       user: {
@@ -421,7 +411,6 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
     where: { orderId },
   })
 
-  // Si hay tickets, usar el usuario del ticket; si no, buscar por el userId en financialEntry
   let user: {
     id: string
     email: string
@@ -441,7 +430,6 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
     })
   }
 
-  // Si no hay usuario ni en tickets ni en financialEntry, usar relatedParty como fallback
   if (!user) {
     const relatedParty = firstEntry.relatedParty ?? 'Cliente desconocido'
     const nameParts = relatedParty.split(' ')
@@ -533,10 +521,8 @@ export async function getLocalOrderDetailById(orderId: string): Promise<LocalOrd
     console.error('Error fetching Shopify order data:', error)
   }
 
-  // Calcular totales
   const totalAmount = financialEntries.reduce((sum, entry) => sum + Number(entry.amount), 0)
 
-  // Crear line items - usar datos de Shopify si están disponibles, si no usar financialEntries
   const lineItems = shopifyOrderData?.lineItems.edges.length
     ? shopifyOrderData.lineItems.edges.map((edge) => ({
         node: {

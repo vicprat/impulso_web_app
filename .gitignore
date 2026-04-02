@@ -48,3 +48,9 @@ next-env.d.ts
 
 # catalog cache version (cross-worker consistency in dev)
 .catalog-cache-version
+
+# AGENTS 
+AGENTS.md
+
+# CHACHE 
+/.cache

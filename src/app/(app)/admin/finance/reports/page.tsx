@@ -35,7 +35,6 @@ export default function FinancialReportsPage() {
   ] as const
 
   const handleExport = () => {
-    // TODO: Implementar exportación a PDF/Excel
     toast.info('Función de exportación próximamente disponible')
   }
 
@@ -47,7 +46,6 @@ export default function FinancialReportsPage() {
         const globalData = report as any
         return (
           <div className='space-y-6'>
-            {/* KPIs principales */}
             <div className='grid gap-4 md:grid-cols-4'>
               <Card>
                 <CardContent className='p-4'>
@@ -81,7 +79,6 @@ export default function FinancialReportsPage() {
               </Card>
             </div>
 
-            {/* Cuentas bancarias */}
             <Card>
               <CardHeader>
                 <CardTitle>Cuentas Bancarias</CardTitle>
@@ -117,7 +114,6 @@ export default function FinancialReportsPage() {
               </CardContent>
             </Card>
 
-            {/* Estadísticas */}
             <Card>
               <CardHeader>
                 <CardTitle>Estadísticas</CardTitle>
@@ -227,7 +223,6 @@ export default function FinancialReportsPage() {
         return (
           <div className='space-y-6'>
             <div className='grid gap-6 md:grid-cols-2'>
-              {/* Activos */}
               <Card>
                 <CardHeader>
                   <CardTitle>Activos</CardTitle>
@@ -264,7 +259,6 @@ export default function FinancialReportsPage() {
                 </CardContent>
               </Card>
 
-              {/* Pasivos y Patrimonio */}
               <Card>
                 <CardHeader>
                   <CardTitle>Pasivos y Patrimonio</CardTitle>
@@ -335,7 +329,6 @@ export default function FinancialReportsPage() {
         </Button>
       </div>
 
-      {/* Filtros */}
       <Card>
         <CardContent className='p-4'>
           <div className='mb-4 flex items-center gap-4'>
@@ -374,7 +367,6 @@ export default function FinancialReportsPage() {
         </CardContent>
       </Card>
 
-      {/* Selector de tipo de reporte */}
       <div className='grid gap-2 md:grid-cols-4'>
         {reportTypes.map((type) => {
           const Icon = type.icon
@@ -392,7 +384,6 @@ export default function FinancialReportsPage() {
         })}
       </div>
 
-      {/* Contenido del reporte */}
       <Card>
         <CardHeader>
           <CardTitle>{reportTypes.find((t) => t.id === reportType)?.label}</CardTitle>

@@ -166,7 +166,7 @@ export const EventForm: React.FC<Props> = ({ event, isLoading, mode, onCancel, o
             .filter(Boolean)
         : [],
       title: data.title,
-      vendor: 'Evento', // Agregar las imágenes al payload
+      vendor: 'Evento',
     }
 
     if (mode === 'edit' && event) {

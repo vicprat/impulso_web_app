@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 
-// Metadatos específicos para rutas dinámicas de posts
 export const postTypeMetadata: Record<string, Metadata> = {
   blog: {
     description:
@@ -103,7 +102,6 @@ export const postTypeMetadata: Record<string, Metadata> = {
   },
 }
 
-// Metadatos para rutas de posts individuales
 export const generatePostMetadata = (post: {
   title: string
   description?: string
@@ -173,7 +171,6 @@ export const generatePostMetadata = (post: {
   }
 }
 
-// Metadatos para rutas de productos individuales
 export const generateProductPageMetadata = (product: {
   title: string
   description?: string
@@ -240,7 +237,6 @@ export const generateProductPageMetadata = (product: {
   }
 }
 
-// Metadatos para búsquedas
 export const generateSearchMetadata = (query?: string): Metadata => {
   const title = query ? `Buscar "${query}" - Impulso Galería` : 'Buscar - Impulso Galería'
   const description = query
@@ -272,7 +268,6 @@ export const generateSearchMetadata = (query?: string): Metadata => {
       title,
     },
     robots: {
-      // Las páginas de búsqueda no deben ser indexadas
       follow: true,
       index: false,
     },

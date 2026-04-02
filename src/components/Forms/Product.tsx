@@ -69,7 +69,6 @@ import { type CreateProductPayload, type UpdateProductPayload } from '@/services
 import { Tiptap } from '../TipTap'
 import { MultiImageUploader } from './MultiImageUploader'
 
-// Componente para dropdown con opción de agregar nueva
 const AddOptionSelect = ({
   icon: Icon,
   isLoading,
@@ -99,8 +98,6 @@ const AddOptionSelect = ({
       setIsAdding(true)
       await onAddNew(newValue.trim())
       setNewValue('')
-      // No llamar onValueChange aquí para evitar el bucle infinito
-      // El usuario puede seleccionar manualmente la nueva opción
     } catch (error) {
       console.error('Error al agregar opción:', error)
     } finally {
@@ -188,7 +185,6 @@ const AddOptionSelect = ({
   )
 }
 
-// Componente para vendor con combobox (permite selección y escritura libre)
 const VendorCombobox = ({
   disabled = false,
   isLoading,
@@ -205,7 +201,6 @@ const VendorCombobox = ({
   const [open, setOpen] = useState(false)
   const [inputValue, setInputValue] = useState(value)
 
-  // Actualizar inputValue cuando cambie el value
   useEffect(() => {
     setInputValue(value)
   }, [value])
@@ -268,7 +263,6 @@ const VendorCombobox = ({
   )
 }
 
-// Función para crear el esquema de validación dinámicamente
 const createProductFormSchema = (isArtist: boolean) =>
   z.object({
     collectionId: z.string().optional(),
@@ -329,7 +323,7 @@ interface ImageData {
   filename?: string
   size?: number
   status?: 'uploading' | 'completed' | 'error'
-  mediaId?: string // MediaImage ID para eliminación
+  mediaId?: string
 }
 
 export function ProductForm({
@@ -348,14 +342,11 @@ export function ProductForm({
   const isEditing = mode === 'edit'
   const variant = product?.variants && product.variants.length > 0 ? product.variants[0] : undefined
 
-  // Determinar si el usuario puede cambiar el vendor
   const canChangeVendor = hasRole('admin') || hasRole('super_admin')
   const isArtist = hasRole('artist')
 
-  // Valor por defecto del vendor para artistas
   const defaultVendor = isArtist && user?.artist?.name ? user.artist.name : ''
 
-  // Inicializar imágenes existentes cuando el producto cambie
   useEffect(() => {
     if (product?.media) {
       const existingImages: ImageData[] = product.media
@@ -364,14 +355,13 @@ export function ProductForm({
           altText: node.image!.altText ?? undefined,
           id: node.image!.id,
 
-          // La primera imagen es la principal
           isNew: false,
 
           isPrimary: index === 0,
 
           mediaId: node.id,
-          // ProductImage ID (para compatibilidad)
-          url: node.image!.url, // MediaImage ID (para eliminación)
+
+          url: node.image!.url,
         }))
       setAllImages(existingImages)
     } else {
@@ -379,19 +369,16 @@ export function ProductForm({
     }
   }, [product?.media])
 
-  // Hooks para obtener las opciones
   const { data: techniques = [], isLoading: isLoadingTechniques } = useGetTechniques()
   const { data: artworkTypes = [], isLoading: isLoadingArtworkTypes } = useGetArtworkTypes()
   const { data: locations = [], isLoading: isLoadingLocations } = useGetLocations()
 
-  // Obtener todas las colecciones (solo manuales)
   const { data: collectionsData, isLoading: isLoadingCollections } = useCollections({ limit: 250 })
   const allCollections = collectionsData?.collections ?? []
   const collectionsList = allCollections.filter(
     (collection: any) => !collection.ruleSet || collection.ruleSet.rules?.length === 0
   )
 
-  // Función para agregar nuevas opciones
   const handleAddNewOption = useCallback(
     async (optionType: string, name: string) => {
       const response = await fetch(`/api/options/${optionType}`, {
@@ -407,7 +394,6 @@ export function ProductForm({
         throw new Error(errorData.error || 'Error al agregar la opción')
       }
 
-      // Invalidar las queries para refrescar las opciones
       await queryClient.invalidateQueries({ queryKey: ['techniques'] })
       await queryClient.invalidateQueries({ queryKey: ['artwork_types'] })
       await queryClient.invalidateQueries({ queryKey: ['locations'] })
@@ -458,37 +444,31 @@ export function ProductForm({
     }
   }, [product])
 
-  // Actualizar el vendor cuando el usuario se cargue completamente (especialmente para artistas)
   useEffect(() => {
     if (isArtist && user?.artist?.name && !isEditing) {
       form.setValue('vendor', user.artist.name)
     }
   }, [isArtist, user?.artist?.name, isEditing, form])
 
-  // Reinicializar el formulario cuando cambie el rol del usuario (para actualizar la validación)
   useEffect(() => {
     form.clearErrors()
   }, [isArtist, form])
 
   const onSubmit = async (data: ProductFormData) => {
     if (isEditing && product) {
-      // Obtener las imágenes originales del producto
       const originalImages = product.media || []
 
-      // Identificar imágenes que fueron eliminadas usando mediaId
       const remainingMediaIds = allImages
         .filter((img) => !img.isNew)
         .map((img) => img.mediaId)
-        .filter((id) => id?.startsWith('gid://')) // Solo IDs válidos de MediaImage
+        .filter((id) => id?.startsWith('gid://'))
 
-      // Solo eliminar imágenes que realmente existen en el producto actual
       const deletedMediaIds = originalImages
         .filter((node) => node.mediaContentType === 'IMAGE' && node.image?.url)
         .filter((node) => !remainingMediaIds.includes(node.id))
         .map((node) => node.id)
         .filter((id) => id)
 
-      // Convertir ImageData a NewImage para el payload
       const newImages: NewImage[] = allImages
         .filter((img) => img.isNew)
         .map((img) => ({
@@ -512,10 +492,8 @@ export function ProductForm({
 
         id: product.id,
 
-        // Solo enviar nuevas imágenes si hay nuevas imágenes para agregar
         images: newImages.length > 0 ? newImages : undefined,
 
-        // Solo enviar imágenes a eliminar si hay imágenes para eliminar
         imagesToDelete: deletedMediaIds.length > 0 ? deletedMediaIds : undefined,
 
         inventoryQuantity: data.inventoryQuantity ? parseInt(data.inventoryQuantity) : undefined,
@@ -537,13 +515,11 @@ export function ProductForm({
       }
       ;(onSave as (payload: UpdateProductPayload) => void)(updatePayload)
     } else {
-      // Convertir ImageData a NewImage para el payload
       const newImages: NewImage[] = allImages.map((img) => ({
         mediaContentType: 'IMAGE' as const,
         originalSource: img.url,
       }))
 
-      // Asegurar que el vendor se establezca para artistas
       const vendorValue = isArtist && user?.artist?.name ? user.artist.name : data.vendor
 
       const createPayload: CreateProductPayload = {
@@ -627,7 +603,6 @@ export function ProductForm({
       <div className='space-y-8'>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-            {/* Información Básica */}
             <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
               <CardHeader className='pb-4'>
                 <CardTitle className='flex items-center gap-2 text-on-surface'>
@@ -822,7 +797,6 @@ export function ProductForm({
                   />
                 </div>
 
-                {/* Precio e Inventario */}
                 <Card className='border-primary/20 bg-primary-container shadow-elevation-2'>
                   <CardHeader className='pb-4'>
                     <CardTitle className='flex items-center gap-2 text-on-primary-container'>
@@ -910,7 +884,6 @@ export function ProductForm({
 
                 <Separator className='bg-outline-variant' />
 
-                {/* Detalles de la Obra */}
                 <div>
                   <CardHeader className='pb-4'>
                     <CardTitle className='flex items-center gap-2 text-on-surface'>
@@ -1083,9 +1056,7 @@ export function ProductForm({
 
                 <Separator className='bg-outline-variant' />
 
-                {/* Descripción e Imágenes en Flexbox */}
                 <div className='flex flex-col gap-6 lg:flex-row'>
-                  {/* Descripción - Lado Izquierdo */}
                   <div className='flex-1'>
                     <FormField
                       control={form.control}
@@ -1109,7 +1080,6 @@ export function ProductForm({
                     />
                   </div>
 
-                  {/* Imágenes - Lado Derecho */}
                   <div className='w-full lg:w-1/3'>
                     <div className='space-y-4'>
                       <div className='flex items-center gap-2'>
@@ -1155,7 +1125,6 @@ export function ProductForm({
               </CardContent>
             </Card>
 
-            {/* Tags */}
             <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
               <CardHeader className='pb-4'>
                 <CardTitle className='flex items-center gap-2 text-on-surface'>
@@ -1218,7 +1187,6 @@ export function ProductForm({
               </CardContent>
             </Card>
 
-            {/* Nota de edición */}
             {isEditing && (
               <Card className='border-warning/20 bg-warning-container shadow-elevation-1'>
                 <CardContent className='p-6'>
@@ -1248,7 +1216,6 @@ export function ProductForm({
               </Card>
             )}
 
-            {/* Botones de acción */}
             <div>
               <CardContent className='p-6'>
                 <div className='flex justify-end space-x-4'>

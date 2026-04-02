@@ -76,7 +76,7 @@ export const useCustomerDashboard = () => {
     enabled: !!user,
     queryFn: fetchCustomerDashboard,
     queryKey: ['customerDashboard', user?.id],
-    refetchInterval: 10 * 60 * 1000, // 10 minutos
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchInterval: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   })
 }

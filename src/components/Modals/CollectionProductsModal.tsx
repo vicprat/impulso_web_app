@@ -51,7 +51,6 @@ export function CollectionProductsModal({
 
   const addProductsMutation = useAddProductsToCollection({
     onError: (error: Error & { details?: { message?: string }[] }) => {
-      // Verificar si es un error de smart collection
       if (
         error?.details?.some((detail) =>
           detail.message?.includes("Can't manually add products to a smart collection")
@@ -73,7 +72,6 @@ export function CollectionProductsModal({
 
   const removeProductsMutation = useRemoveProductsFromCollection({
     onError: (error: Error & { details?: { message?: string }[] }) => {
-      // Verificar si es un error de smart collection
       if (
         error?.details?.some((detail) =>
           detail.message?.includes("Can't manually add products to a smart collection")

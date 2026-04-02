@@ -12,10 +12,8 @@ const ALL_DIMENSION_CATEGORIES: DimensionCategory[] = ['chico', 'mediano', 'gran
 
 export async function GET() {
   try {
-    // Usar caché de admin que incluye todos los productos (ACTIVE, DRAFT, ARCHIVED)
     const allProducts = await CacheManager.getFullCatalog('admin')
 
-    // Contadores para cada filtro
     const vendorCounts = new Map<string, number>()
     const productTypeCounts = new Map<string, number>()
     const locationCounts = new Map<string, number>()
@@ -33,12 +31,10 @@ export async function GET() {
       if (price < minPrice) minPrice = price
       if (price > maxPrice) maxPrice = price
 
-      // Contar vendors
       if (product.vendor) {
         vendorCounts.set(product.vendor, (vendorCounts.get(product.vendor) ?? 0) + 1)
       }
 
-      // Contar productTypes
       if (product.productType) {
         productTypeCounts.set(
           product.productType,
@@ -46,15 +42,12 @@ export async function GET() {
         )
       }
 
-      // Contar status
       if (product.status) {
         statusCounts.set(product.status, (statusCounts.get(product.status) ?? 0) + 1)
       }
 
-      // Extraer artworkDetails
       const artwork = product.artworkDetails
       if (artwork) {
-        // Contar dimensiones
         if (artwork.height && artwork.width) {
           const category = categorizeDimensions(artwork.height, artwork.width, artwork.depth)
           if (category) {
@@ -62,28 +55,23 @@ export async function GET() {
           }
         }
 
-        // Contar locations (desde metafield)
         if (artwork.location) {
           locationCounts.set(artwork.location, (locationCounts.get(artwork.location) ?? 0) + 1)
         }
 
-        // Contar técnicas (desde metafield)
         if (artwork.medium) {
           techniqueCounts.set(artwork.medium, (techniqueCounts.get(artwork.medium) ?? 0) + 1)
         }
 
-        // Contar años
         if (artwork.year) {
           yearCounts.set(artwork.year, (yearCounts.get(artwork.year) ?? 0) + 1)
         }
 
-        // Contar series
         if (artwork.serie) {
           seriesCounts.set(artwork.serie, (seriesCounts.get(artwork.serie) ?? 0) + 1)
         }
       }
 
-      // Contar arrendamiento desde tags (formato: "Arrendamiento: Sí")
       if (product.tags) {
         for (const tag of product.tags) {
           if (tag.startsWith('Arrendamiento:')) {

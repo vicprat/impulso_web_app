@@ -55,29 +55,23 @@ export interface HybridOrdersParams {
   sortOrder?: 'asc' | 'desc'
 }
 
-/**
- * Combines Shopify orders with local database data to provide a complete view
- * This ensures consistency between Shopify and the local DB
- */
 export async function getHybridOrders(params?: HybridOrdersParams): Promise<HybridOrdersResult> {
   const { after, first = 10, query, sortBy, sortOrder } = params ?? {}
 
-  // Map our sortBy values to Shopify OrderSortKeys enum
   const sortKeyMap: Record<string, string> = {
+    createdAt: 'CREATED_AT',
+    id: 'ID',
     name: 'NUMBER',
     processedAt: 'PROCESSED_AT',
-    totalPrice: 'TOTAL_PRICE',
-    createdAt: 'CREATED_AT',
-    updatedAt: 'UPDATED_AT',
-    id: 'ID',
     relevance: 'RELEVANCE',
+    totalPrice: 'TOTAL_PRICE',
+    updatedAt: 'UPDATED_AT',
   }
 
   const shopifySortKey = sortBy ? sortKeyMap[sortBy] : 'PROCESSED_AT'
   const shopifyReverse = sortOrder === 'asc'
 
   try {
-    // Fetch orders from Shopify Admin API
     const shopifyOrdersResponse = await makeAdminApiRequest<{
       orders: {
         edges: {
@@ -123,14 +117,11 @@ export async function getHybridOrders(params?: HybridOrdersParams): Promise<Hybr
       sortKey: shopifySortKey,
     })
 
-    // Get all order IDs from Shopify
     const shopifyOrderIds = shopifyOrdersResponse.orders.edges.map((edge) => {
-      // Extract numeric order ID from Shopify GID
       const orderId = edge.node.id.replace('gid://shopify/Order/', '')
       return orderId
     })
 
-    // Fetch local data (tickets and financial entries) for these orders
     const localTickets = await prisma.ticket.findMany({
       include: {
         user: {
@@ -158,7 +149,6 @@ export async function getHybridOrders(params?: HybridOrdersParams): Promise<Hybr
       },
     })
 
-    // Create maps for quick lookup
     const ticketsByOrderId = new Map<string, typeof localTickets>()
     const financialEntriesByOrderId = new Map<string, typeof localFinancialEntries>()
 
@@ -178,7 +168,6 @@ export async function getHybridOrders(params?: HybridOrdersParams): Promise<Hybr
       financialEntriesByOrderId.get(entry.sourceId)!.push(entry)
     }
 
-    // Combine Shopify data with local data
     const hybridOrders: HybridOrder[] = shopifyOrdersResponse.orders.edges.map((edge) => {
       const shopifyOrder = edge.node
       const orderId = shopifyOrder.id.replace('gid://shopify/Order/', '')
@@ -186,7 +175,6 @@ export async function getHybridOrders(params?: HybridOrdersParams): Promise<Hybr
       const tickets = ticketsByOrderId.get(orderId) ?? []
       const financialEntries = financialEntriesByOrderId.get(orderId) ?? []
 
-      // Build customer info - prefer Shopify data but use local as fallback
       const customer = {
         email:
           shopifyOrder.customer?.email ?? tickets[0]?.user.email ?? 'no-disponible@example.com',
@@ -195,10 +183,8 @@ export async function getHybridOrders(params?: HybridOrdersParams): Promise<Hybr
         lastName: shopifyOrder.customer?.lastName ?? tickets[0]?.user.lastName ?? undefined,
       }
 
-      // Calculate local line items count if we have tickets
       const localLineItemsCount = tickets.reduce((sum, ticket) => sum + ticket.quantity, 0)
 
-      // Use Shopify line items count unless we have local tickets that give us more info
       const finalLineItemsCount = shopifyOrder.lineItemsCount ?? localLineItemsCount ?? 0
 
       return {
@@ -239,10 +225,8 @@ export async function getHybridOrders(params?: HybridOrdersParams): Promise<Hybr
   } catch (error) {
     console.error('Error in hybrid orders service:', error)
 
-    // If Shopify API fails, fall back to local orders only
     console.info('Falling back to local orders...')
 
-    // Fetch orders from local database
     const offset = after ? parseInt(after) : 0
     const whereConditions: Record<string, unknown> = {}
     if (query) {

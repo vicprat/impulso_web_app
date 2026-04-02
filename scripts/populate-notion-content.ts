@@ -12,8 +12,6 @@ export const PAGES = {
   TERMS: process.env.NEXT_PUBLIC_NOTION_PAGE_ID_TERMS as string,
 }
 
-// --- DATA ---
-
 const slides = [
   {
     actionText: 'Explorar la Galería',
@@ -46,7 +44,7 @@ const slides = [
   {
     actionText: 'Conocer Servicios',
     actionTextEn: 'Learn about Services',
-    actionUrl: '/services', // ROUTES.STORE.SERVICES.PATH
+    actionUrl: '/services',
     alt: 'Detalle de una obra de arte',
     imageUrl:
       'https://xhsidbbijujrdjjymhbs.supabase.co/storage/v1/object/public/images/general/IMG_3321-scaled-16-9-rectangle.webp',
@@ -342,12 +340,8 @@ const termsSections = [
   },
 ]
 
-// =============================================
-// HOME PAGE — Separate tables per component
-// =============================================
-
 const heroData = [
-  // Landing
+
   {
     key: 'landing.hero.title',
     page: 'landing',
@@ -403,7 +397,6 @@ const heroData = [
       'https://xhsidbbijujrdjjymhbs.supabase.co/storage/v1/object/public/images/general/impulso.webp',
   },
 
-  // Membership
   {
     key: 'membership.hero.badge',
     page: 'membership',
@@ -436,7 +429,6 @@ const heroData = [
     valueEs: 'Únete a nuestra comunidad de artistas exitosos',
   },
 
-  // Services
   {
     key: 'services.hero.title',
     page: 'services',
@@ -458,7 +450,6 @@ const heroData = [
       'Desde la venta de obra original hasta servicios técnicos de vanguardia, creamos experiencias artísticas que trascienden lo convencional',
   },
 
-  // Terms
   {
     key: 'terms.hero.badge',
     page: 'terms',
@@ -494,7 +485,7 @@ const heroData = [
 ]
 
 const ctaData = [
-  // Landing
+
   {
     key: 'landing.services.cta.title',
     page: 'landing',
@@ -521,7 +512,6 @@ const ctaData = [
     valueEs: 'más',
   },
 
-  // Membership
   {
     key: 'membership.cta.title',
     page: 'membership',
@@ -541,7 +531,6 @@ const ctaData = [
     valueEs: 'Obtener Membresía',
   },
 
-  // Services
   {
     key: 'services.cta.title',
     page: 'services',
@@ -561,7 +550,6 @@ const ctaData = [
     valueEs: 'Consultoría Personalizada',
   },
 
-  // Terms
   {
     key: 'terms.cta.title',
     page: 'terms',
@@ -584,7 +572,7 @@ const ctaData = [
 ]
 
 const sectionData = [
-  // Landing sections
+
   {
     key: 'landing.section.obras.title',
     page: 'landing',
@@ -714,7 +702,6 @@ const sectionData = [
     valueEs: 'Evento',
   },
 
-  // Membership
   {
     key: 'membership.page.featuresHeading',
     page: 'membership',
@@ -722,7 +709,6 @@ const sectionData = [
     valueEs: '¿POR QUÉ IMPULSO GALERÍA?',
   },
 
-  // Artists
   {
     key: 'artists.grid.title',
     page: 'artists',
@@ -769,7 +755,7 @@ const sectionData = [
 ]
 
 const cardData = [
-  // Landing membership card
+
   {
     key: 'landing.membership.benefitsTitle',
     page: 'landing',
@@ -807,7 +793,6 @@ const cardData = [
     valueEs: 'Adquirir',
   },
 
-  // Membership card
   {
     key: 'membership.card.heading',
     page: 'membership',
@@ -900,10 +885,6 @@ const filterData = [
   },
 ]
 
-// =============================================
-// BANNERS PAGE — 3 separate tables
-// =============================================
-
 const welcomeBannerData = [
   {
     key: 'banners.registration.title',
@@ -985,10 +966,6 @@ const couponDialogData = [
     valueEs: 'Código copiado al portapapeles',
   },
 ]
-
-// =============================================
-// CONTACT PAGE — 3 content tables + 2 link tables
-// =============================================
 
 const contactInfoData = [
   {
@@ -1146,12 +1123,8 @@ const navigationLinks = [
   },
 ]
 
-// --- FUNCTIONS ---
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function createDatabase(pageId: string, title: string, properties: any) {
-  // Bypassing the Notion SDK entirely because databases.create() strips
-  // the `properties` field from the body (not in its internal bodyParams whitelist).
+
   const res = await fetch('https://api.notion.com/v1/databases', {
     body: JSON.stringify({
       parent: { page_id: pageId, type: 'page_id' },
@@ -1176,7 +1149,6 @@ async function createDatabase(pageId: string, title: string, properties: any) {
   return response
 }
 
-// --- Helper to populate a simple Key/ValueEN/ValueES table (no Page column) ---
 async function populateSimpleTable(
   notionPageId: string,
   tableName: string,
@@ -1203,7 +1175,6 @@ async function populateSimpleTable(
   }
 }
 
-// --- Helper to populate a Key/Page/ValueEN/ValueES table (with Page column) ---
 async function populatePagedTable(
   notionPageId: string,
   tableName: string,
@@ -1395,8 +1366,6 @@ async function populateTerms() {
   }
 }
 
-// --- HOME PAGE: 5 separate tables ---
-
 const homePageOptions = [
   { name: 'landing' },
   { name: 'membership' },
@@ -1425,8 +1394,6 @@ async function populateFilter() {
   await populatePagedTable(PAGES.HOME, 'Filter', filterData, homePageOptions)
 }
 
-// --- BANNERS PAGE: 3 separate tables ---
-
 async function populateWelcomeBanner() {
   await populateSimpleTable(PAGES.BANNERS, 'Welcome Banner', welcomeBannerData)
 }
@@ -1438,8 +1405,6 @@ async function populateRegistrationDialog() {
 async function populateCouponDialog() {
   await populateSimpleTable(PAGES.BANNERS, 'Coupon', couponDialogData)
 }
-
-// --- CONTACT PAGE: 3 content tables + 2 link tables ---
 
 async function populateContactInfo() {
   await populateSimpleTable(PAGES.CONTACT, 'Info', contactInfoData)
@@ -1505,7 +1470,7 @@ async function main() {
   console.log('🚀 Starting Notion content population...\n')
 
   try {
-    // HOME page
+
     await populateSlides()
     await populateServices()
     await populateBenefits()
@@ -1517,12 +1482,10 @@ async function main() {
     await populateCard()
     await populateFilter()
 
-    // BANNERS page
     await populateWelcomeBanner()
     await populateRegistrationDialog()
     await populateCouponDialog()
 
-    // CONTACT page
     await populateContactInfo()
     await populateWhatsApp()
     await populateFooter()

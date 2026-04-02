@@ -260,14 +260,13 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
   if (inventoryQuantity && inventoryQuantity > 0) {
     const defaultVariant = newEventData.variants.edges[0]?.node
     try {
-      // Primero, activar el tracking de inventario para la variante
       const variantUpdatePayload = {
         productId: newEventData.id,
         variants: [
           {
             id: defaultVariant.id,
             inventoryItem: { tracked: true },
-            inventoryPolicy: 'DENY', // No permitir venta cuando no hay stock
+            inventoryPolicy: 'DENY',
           },
         ],
       }
@@ -305,7 +304,6 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
           inventoryUpdatePayload
         )
 
-        // Revalidar cache manualmente después de crear evento con inventario
         try {
           const revalidationResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
             body: JSON.stringify({
@@ -313,7 +311,7 @@ async function createEvent(payload: CreateEventPayload, session: AuthSession): P
               type: 'inventory',
             }),
             headers: {
-              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+              Authorization: `Bearer ${process.env.REVALIDATION_SECRET}`,
               'Content-Type': 'application/json',
             },
             method: 'POST',
@@ -441,14 +439,13 @@ async function updateEvent(payload: UpdateEventPayload, session: AuthSession): P
   if (inventoryQuantity !== undefined) {
     const defaultVariant = existingEvent.variants[0]
     try {
-      // Primero, activar el tracking de inventario para la variante
       const variantUpdatePayload = {
         productId: payload.id,
         variants: [
           {
             id: defaultVariant.id,
             inventoryItem: { tracked: true },
-            inventoryPolicy: 'DENY', // No permitir venta cuando no hay stock
+            inventoryPolicy: 'DENY',
           },
         ],
       }
@@ -485,7 +482,6 @@ async function updateEvent(payload: UpdateEventPayload, session: AuthSession): P
           inventoryUpdatePayload
         )
 
-        // Revalidar cache manualmente después de actualizar inventario del evento
         try {
           const revalidationResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
             body: JSON.stringify({
@@ -493,7 +489,7 @@ async function updateEvent(payload: UpdateEventPayload, session: AuthSession): P
               type: 'inventory',
             }),
             headers: {
-              'Authorization': `Bearer ${process.env.REVALIDATION_SECRET}`,
+              Authorization: `Bearer ${process.env.REVALIDATION_SECRET}`,
               'Content-Type': 'application/json',
             },
             method: 'POST',

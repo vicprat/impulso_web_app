@@ -12,17 +12,14 @@ function verifyShopifyWebhook(body: string, signature: string): boolean {
     return process.env.NODE_ENV !== 'production'
   }
 
-  // Método 1: Verificación estándar
   const hmac = crypto.createHmac('sha256', webhookSecret)
   hmac.update(body, 'utf8')
   const hash = hmac.digest('base64')
 
-  // Método 2: Verificación alternativa (por si Shopify usa un encoding diferente)
   const hmac2 = crypto.createHmac('sha256', webhookSecret)
   hmac2.update(Buffer.from(body))
   const hash2 = hmac2.digest('base64')
 
-  // Si estamos en desarrollo y ninguna funciona, permitir
   if (process.env.NODE_ENV !== 'production' && hash !== signature && hash2 !== signature) {
     return true
   }
@@ -39,7 +36,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
     }
 
-    // Verificar autenticidad del webhook
     const isValid = verifyShopifyWebhook(body, signature)
 
     if (!isValid) {
@@ -53,7 +49,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Inventory item ID not found' }, { status: 400 })
     }
 
-    // Obtener el producto asociado al inventory item desde Shopify
     let productId: string | null = null
     try {
       let storeDomain = process.env.NEXT_PUBLIC_SHOPIFY_STORE || ''
@@ -89,16 +84,13 @@ export async function POST(request: Request) {
       })
     }
 
-    // Revalidar cache usando CacheManager
     CacheManager.revalidateProducts(productId)
     CacheManager.revalidateInventory(productId)
     CacheManager.revalidateCollections()
     CacheManager.revalidateHomepage()
 
-    // Invalidar todos los caches en memoria (dashboard, stats, etc.)
     await CacheManager.clearAllCaches()
 
-    // Revalidar rutas que muestran productos y eventos
     revalidatePath('/store', 'page')
     revalidatePath('/store/product/[handle]', 'page')
     revalidatePath('/store/event/[handle]', 'page')

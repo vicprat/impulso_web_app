@@ -25,7 +25,6 @@ export const useCollections = (
   options?: Omit<UseQueryOptions<any, Error, any>, 'queryKey' | 'queryFn'>
 ) => {
   return useQuery({
-    // 5 minutos
     gcTime: 1000 * 60 * 10,
 
     queryFn: async () => {
@@ -44,7 +43,6 @@ export const useCollections = (
 
     queryKey: COLLECTION_KEYS.list(params),
 
-    // 10 minutos
     retry: 2,
 
     retryDelay: 1000,

@@ -1,3 +1,6 @@
+import { handleGraphQLErrors } from '@/lib/graphql'
+import { storeClient } from '@/lib/shopify'
+
 import { transformCollectionData, transformProductData } from './helpers'
 import {
   COLLECTIONS_QUERY,
@@ -22,10 +25,6 @@ import {
   type RawProduct,
 } from './types'
 
-import { handleGraphQLErrors } from '@/lib/graphql'
-import { storeClient } from '@/lib/shopify'
-
-// Tipo para la respuesta de getProductByHandle que devuelve ShopifyProductData
 export interface ShopifyProductDataResponse {
   data: {
     id: string
@@ -54,10 +53,7 @@ export interface ShopifyProductDataResponse {
   statusCode: number
 }
 
-// Función para convertir datos del API público al formato ShopifyProductData
 function convertToShopifyProductData(rawProduct: RawProduct) {
-  // Convertir metafields al formato esperado por el modelo Product
-  // Filtrar metafields null y convertir al formato de aristas
   const metafieldEdges =
     rawProduct.metafields
       ?.filter((mf): mf is NonNullable<typeof mf> => mf !== null)
@@ -70,7 +66,6 @@ function convertToShopifyProductData(rawProduct: RawProduct) {
       })) ?? []
 
   return {
-    // Los productos públicos no tienen tags personalizados
     createdAt: rawProduct.createdAt,
 
     descriptionHtml: rawProduct.descriptionHtml,
@@ -83,7 +78,7 @@ function convertToShopifyProductData(rawProduct: RawProduct) {
     },
 
     media: {
-      nodes: [], // Los productos públicos no tienen media adicional
+      nodes: [],
     },
 
     metafields: {
@@ -94,7 +89,6 @@ function convertToShopifyProductData(rawProduct: RawProduct) {
 
     status: 'ACTIVE' as const,
 
-    // Los productos públicos siempre están activos
     tags: [],
 
     title: rawProduct.title,

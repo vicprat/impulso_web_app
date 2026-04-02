@@ -6,14 +6,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-import { SearchTrigger } from './components/SearchTrigger'
-import { ThemeSwitch } from './components/ThemeSwitch'
-import { UserMenu } from './components/UserMenu'
-
 import { MiniCart } from '@/components/Cart/MiniCart'
 import { Logo } from '@/components/Logo'
 import { getStoreNavRoutes } from '@/config/routes'
 import { useAuth } from '@/src/modules/auth/context/useAuth'
+
+import { SearchTrigger } from './components/SearchTrigger'
+import { ThemeSwitch } from './components/ThemeSwitch'
+import { UserMenu } from './components/UserMenu'
 
 interface PublicHeaderProps {
   isHomePage?: boolean
@@ -99,14 +99,12 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
       >
         <div className='container mx-auto px-3 sm:px-4 lg:px-6'>
           <div className='flex h-14 items-center justify-between gap-2 sm:h-16 sm:gap-4'>
-            {/* Logo - empujado a la izquierda */}
             <div className='flex items-center gap-2 sm:gap-3'>
               <div className='h-6 max-w-48 px-2 sm:h-10 lg:mt-2 lg:h-12'>
                 <Logo />
               </div>
             </div>
 
-            {/* SearchTrigger centrado en desktop */}
             <div className='hidden lg:flex lg:max-w-md lg:flex-1 lg:justify-center'>
               <SearchTrigger />
             </div>
@@ -161,7 +159,6 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
                     )
                   })}
 
-                  {/* Enlace Experiencias */}
                   <div className='relative'>
                     <Link
                       href='https://collectiveart.mx/'
@@ -308,7 +305,6 @@ export function Public({ isHomePage = false }: PublicHeaderProps) {
                 )
               })}
 
-              {/* Enlace Experiencias - Móvil */}
               <div
                 className={`relative transition-all duration-700 ease-out ${
                   isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'

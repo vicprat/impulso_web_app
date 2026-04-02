@@ -1,27 +1,26 @@
-// Configuración para Open Graph y Twitter Cards
 export const ogConfig = {
   dimensions: {
     height: 630,
     width: 1200,
   },
   facebook: {
-    appId: process.env.FACEBOOK_APP_ID || '',
+    appId: process.env.FACEBOOK_APP_ID ?? '',
   },
   images: {
+    artist: '/og-artist.jpg',
     artists: '/og-artists.jpg',
     blog: '/og-blog.jpg',
+    cart: '/og-cart.jpg',
     default: '/og-image.jpg',
+    event: '/og-event.jpg',
     events: '/og-events.jpg',
     gallery: '/og-gallery.jpg',
     home: '/og-home.jpg',
-    cart: '/og-cart.jpg',
     membership: '/og-membership.jpg',
-    artist: '/og-artist.jpg',
     news: '/og-news.jpg',
-    event: '/og-event.jpg',
-    services: '/og-services.jpg',
     product: '/og-product.jpg',
     search: '/og-search.jpg',
+    services: '/og-services.jpg',
     terms: '/og-terms.jpg',
   },
   instagram: {
@@ -37,13 +36,11 @@ export const ogConfig = {
   type: 'website',
 }
 
-// Función para generar URL completa de imagen OG
 export const getOgImageUrl = (imagePath: string): string => {
   const baseUrl = process.env.NEXTAUTH_URL ?? 'https://impulsogaleria.com'
   return imagePath.startsWith('http') ? imagePath : `${baseUrl}${imagePath}`
 }
 
-// Función para generar metadatos de Open Graph
 export const generateOgMetadata = (config: {
   title: string
   description: string
@@ -79,7 +76,6 @@ export const generateOgMetadata = (config: {
   }
 }
 
-// Función para generar metadatos de Twitter
 export const generateTwitterMetadata = (config: {
   title: string
   description: string
@@ -103,12 +99,11 @@ export const generateTwitterMetadata = (config: {
   }
 }
 
-// Configuración de imágenes por tipo de contenido
 export const getImageByContentType = (contentType: string): string => {
   const imageMap: Record<string, string> = {
+    artist: ogConfig.images.artist,
     artists: ogConfig.images.artists,
     blog: ogConfig.images.blog,
-    artist: ogConfig.images.artist,
     cart: ogConfig.images.cart,
     event: ogConfig.images.event,
     events: ogConfig.images.events,
@@ -125,7 +120,6 @@ export const getImageByContentType = (contentType: string): string => {
   return imageMap[contentType] || ogConfig.images.default
 }
 
-// Función para generar metadatos completos de Open Graph y Twitter
 export const generateSocialMetadata = (config: {
   title: string
   description: string

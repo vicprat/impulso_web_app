@@ -5,7 +5,6 @@ const path = require('path')
 const prisma = new PrismaClient()
 const USERS_FILE = 'usuarios_woocommerce.json'
 
-// Roles específicos de tu sistema (basados en tu seed)
 const SYSTEM_ROLES = [
   {
     name: 'customer',
@@ -61,15 +60,15 @@ async function createDefaultRoles() {
 }
 
 async function deleteUserByEmail(email: string) {
-  // Borra usuario y dependencias por email
+
   const existingUser = await prisma.user.findUnique({ where: { email } })
   if (existingUser) {
-    // Borra dependencias
+
     await prisma.profile.deleteMany({ where: { userId: existingUser.id } })
     await prisma.links.deleteMany({ where: { userId: existingUser.id } })
     await prisma.userRole.deleteMany({ where: { userId: existingUser.id } })
     await prisma.activityLog.deleteMany({ where: { userId: existingUser.id } })
-    // Borra usuario
+
     await prisma.user.delete({ where: { id: existingUser.id } })
     console.log(`     🗑️ Usuario y dependencias eliminados: ${email}`)
   }
@@ -87,13 +86,12 @@ async function migrateUser(userData: UserData, roles: any[]): Promise<any> {
   const { user: userInfo, profile: profileInfo, links: linksInfo, roles: userRoles } = userData
 
   try {
-    // Eliminar usuario existente si lo hay
+
     await deleteUserByEmail(userInfo.email)
 
-    // 1. Crear usuario
     const user = await prisma.user.create({
       data: {
-        shopifyCustomerId: userInfo.shopifyCustomerId, // null hasta que hagan login con Shopify
+        shopifyCustomerId: userInfo.shopifyCustomerId,
         email: userInfo.email,
         firstName: userInfo.firstName,
         lastName: userInfo.lastName,
@@ -107,7 +105,6 @@ async function migrateUser(userData: UserData, roles: any[]): Promise<any> {
 
     console.log(`   👤 Usuario creado: ${user.email}`)
 
-    // 2. Crear perfil si hay datos
     if (
       profileInfo &&
       (profileInfo.description ||
@@ -128,7 +125,6 @@ async function migrateUser(userData: UserData, roles: any[]): Promise<any> {
       console.log(`     📝 Perfil creado`)
     }
 
-    // 3. Crear enlaces si existen
     if (linksInfo && linksInfo.length > 0) {
       for (const link of linksInfo) {
         await prisma.links.create({
@@ -144,9 +140,8 @@ async function migrateUser(userData: UserData, roles: any[]): Promise<any> {
       console.log(`     🔗 ${linksInfo.length} enlaces creados`)
     }
 
-    // 4. Asignar roles
     if (userRoles && userRoles.length > 0) {
-      // Mapeo explícito de roles según tipo de usuario
+
       const ROLE_MAP = {
         artist: 'artist',
         employee: 'employee',
@@ -159,7 +154,7 @@ async function migrateUser(userData: UserData, roles: any[]): Promise<any> {
         admin: 'admin',
       }
       for (const roleName of userRoles) {
-        // Normaliza y mapea el nombre del rol
+
         const mappedRole = ROLE_MAP[roleName.toLowerCase() as keyof typeof ROLE_MAP] || 'customer'
         const role = roles.find((r) => r.name.toLowerCase() === mappedRole)
         if (role) {
@@ -168,7 +163,7 @@ async function migrateUser(userData: UserData, roles: any[]): Promise<any> {
               userId: user.id,
               roleId: role.id,
               assignedAt: new Date(),
-              assignedBy: null, // Sistema automático
+              assignedBy: null,
             },
           })
         }
@@ -176,7 +171,6 @@ async function migrateUser(userData: UserData, roles: any[]): Promise<any> {
       console.log(`     👑 Roles asignados: ${userRoles.join(', ')}`)
     }
 
-    // 5. Crear log de actividad de migración
     await prisma.activityLog.create({
       data: {
         userId: user.id,
@@ -205,26 +199,21 @@ async function main(): Promise<void> {
   try {
     console.log('🚀 Iniciando migración de usuarios de WooCommerce...\n')
 
-    // Verificar que existe el archivo
     if (!fs.existsSync(USERS_FILE)) {
       throw new Error(
         `No se encontró el archivo ${USERS_FILE}. Ejecuta primero el script de extracción de Python.`
       )
     }
 
-    // Leer datos de usuarios
     console.log(`📖 Leyendo datos de ${USERS_FILE}...`)
     const usersData = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'))
     console.log(`   📊 Total de usuarios a migrar: ${usersData.length}\n`)
 
-    // Crear roles por defecto
     await createDefaultRoles()
 
-    // Obtener roles existentes
     const roles: { name: string }[] = await prisma.role.findMany()
     console.log(`   📋 Roles disponibles: ${roles.map((r) => r.name).join(', ')}\n`)
 
-    // Migrar usuarios
     console.log('👥 Migrando usuarios...')
     const results = []
     let successful = 0
@@ -244,7 +233,6 @@ async function main(): Promise<void> {
       }
     }
 
-    // Resumen final
     console.log('\n' + '='.repeat(50))
     console.log('📊 RESUMEN DE MIGRACIÓN')
     console.log('='.repeat(50))
@@ -261,7 +249,6 @@ async function main(): Promise<void> {
         })
     }
 
-    // Guardar reporte de migración
     const report = {
       migrationDate: new Date().toISOString(),
       totalUsers: usersData.length,
@@ -282,7 +269,6 @@ async function main(): Promise<void> {
   }
 }
 
-// Función para verificar y limpiar datos duplicados (opcional)
 async function cleanupDuplicates() {
   console.log('🧹 Verificando duplicados...')
 
@@ -310,7 +296,6 @@ async function cleanupDuplicates() {
   }
 }
 
-// Ejecutar migración
 if (require.main === module) {
   main()
     .then(() => {

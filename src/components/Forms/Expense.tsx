@@ -78,7 +78,6 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
     resolver: zodResolver(expenseFormSchema),
   })
 
-  // Populate form when expense is provided (edit mode)
   useEffect(() => {
     if (expense) {
       form.reset({

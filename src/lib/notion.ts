@@ -1,11 +1,9 @@
 import { Client } from '@notionhq/client'
 
-// Initialize Notion client
 export const notion = new Client({
   auth: process.env.NEXT_PUBLIC_NOTION_API_KEY,
 })
 
-// Page IDs
 export const PAGES = {
   BANNERS: process.env.NEXT_PUBLIC_NOTION_PAGE_ID_BANNERS as string,
   CONTACT: process.env.NEXT_PUBLIC_NOTION_PAGE_ID_CONTACT as string,

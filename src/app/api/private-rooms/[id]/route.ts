@@ -153,7 +153,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const body = await req.json()
     const { description, name, productIds, userIds, ...otherFields } = body
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {}
 

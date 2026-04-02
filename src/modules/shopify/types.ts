@@ -189,7 +189,6 @@ export interface ProductSearchParams {
   availableForSale?: boolean
   variantOption?: string
 
-  // Filtros de precio
   priceMin?: number
   priceMax?: number
 }

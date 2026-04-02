@@ -51,7 +51,6 @@ export const useArtistProducts = (
         setIsLoading(true)
         setError(null)
 
-        // 1. Fetch artist details
         const userResponse = await fetch(`/api/users/${userId}`)
         if (!userResponse.ok) {
           throw new Error(`Failed to fetch artist details: ${userResponse.statusText}`)
@@ -67,7 +66,6 @@ export const useArtistProducts = (
           return
         }
 
-        // 2. Fetch products using artist name as vendor with pagination, filtering, and sorting
         const queryParams = new URLSearchParams()
         queryParams.append('vendor', artistName)
         queryParams.append('page', String(page))

@@ -6,7 +6,7 @@ async function updateEmployeePermissions() {
   console.log('🔧 Actualizando permisos del rol employee...')
 
   try {
-    // Buscar el rol employee
+
     const employeeRole = await prisma.role.findUnique({
       where: { name: 'employee' },
     })
@@ -15,12 +15,10 @@ async function updateEmployeePermissions() {
       throw new Error('Rol employee no encontrado')
     }
 
-    // Buscar el permiso que queremos remover
     const viewFinancialEntriesPermission = await prisma.permission.findUnique({
       where: { name: 'view_financial_entries' },
     })
 
-    // Buscar permisos de blog que queremos agregar
     const blogPermissions = await prisma.permission.findMany({
       where: {
         name: {
@@ -30,7 +28,7 @@ async function updateEmployeePermissions() {
     })
 
     if (viewFinancialEntriesPermission) {
-      // Remover el permiso view_financial_entries del rol employee
+
       await prisma.rolePermission.deleteMany({
         where: {
           permissionId: viewFinancialEntriesPermission.id,
@@ -40,7 +38,6 @@ async function updateEmployeePermissions() {
       console.log('✅ Permiso view_financial_entries removido del rol employee')
     }
 
-    // Agregar permisos de blog al rol employee
     for (const blogPermission of blogPermissions) {
       await prisma.rolePermission.upsert({
         create: {
@@ -58,7 +55,6 @@ async function updateEmployeePermissions() {
       console.log(`✅ Permiso ${blogPermission.name} agregado al rol employee`)
     }
 
-    // Mostrar los permisos actuales del rol employee
     const currentPermissions = await prisma.rolePermission.findMany({
       include: { permission: true },
       where: { roleId: employeeRole.id },

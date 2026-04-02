@@ -18,12 +18,6 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       )
     }
 
-    // TODO: Implementar lógica de autorización para admin/manager
-    // const session = await auth()
-    // if (!session || !session.user || (!session.user.roles.includes('admin') && !session.user.roles.includes('manager'))) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-    // }
-
     const updatedUser = await updateUserPublicStatus(id, isPublic)
 
     return NextResponse.json(updatedUser)

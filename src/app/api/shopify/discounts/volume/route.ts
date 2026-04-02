@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { endsAt, minimumQuantity, productIds, startsAt, title, type, value } = body
 
-    // Validaciones
     if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
       return NextResponse.json(
         { error: 'productIds es requerido y debe ser un array no vacío' },

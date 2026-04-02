@@ -33,12 +33,10 @@ interface EventClientProps {
   session: UserType | null
 }
 
-// Estado de carga específico para eventos
 export const EventLoadingSkeleton = () => {
   return (
     <div className='min-h-screen'>
       <div className='mx-auto max-w-7xl px-3 py-6 sm:px-6 lg:px-8'>
-        {/* Breadcrumb skeleton */}
         <div className='mb-6 flex items-center gap-2'>
           <div className='h-4 w-12 animate-pulse rounded bg-muted' />
           <div className='h-4 w-1 animate-pulse rounded bg-muted' />
@@ -48,18 +46,15 @@ export const EventLoadingSkeleton = () => {
         </div>
 
         <div className='lg:grid lg:grid-cols-12 lg:gap-8'>
-          {/* Hero image skeleton */}
           <div className='lg:col-span-8'>
             <div className='mb-6 aspect-[16/9] animate-pulse rounded-2xl bg-muted' />
 
-            {/* Thumbnails skeleton */}
             <div className='mb-6 grid grid-cols-4 gap-3'>
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className='aspect-square animate-pulse rounded-lg bg-muted' />
               ))}
             </div>
 
-            {/* Description skeleton */}
             <Card className='bg-card shadow-elevation-1'>
               <CardHeader>
                 <div className='h-7 w-48 animate-pulse rounded bg-muted' />
@@ -72,7 +67,6 @@ export const EventLoadingSkeleton = () => {
             </Card>
           </div>
 
-          {/* Registration card skeleton */}
           <div className='mt-8 lg:col-span-4 lg:mt-0'>
             <Card className='bg-card shadow-elevation-3'>
               <CardHeader className='space-y-4 text-center'>
@@ -98,7 +92,6 @@ export const EventLoadingSkeleton = () => {
           </div>
         </div>
 
-        {/* Floating loading indicator */}
         <div className='fixed bottom-6 right-6 z-50'>
           <Card className='bg-card/90 border-primary/20 shadow-elevation-3 backdrop-blur-sm'>
             <CardContent className='flex items-center gap-3 p-4'>
@@ -122,10 +115,9 @@ const extractEventDetails = (event: Event) => {
   }
 }
 
-// Helper para crear fechas locales sin problemas de zona horaria
 const createLocalDate = (dateString: string): Date => {
   const [year, month, day] = dateString.split('-').map(Number)
-  return new Date(year, month - 1, day) // month es 0-indexed en Date constructor
+  return new Date(year, month - 1, day)
 }
 
 const calculateDaysUntilEvent = (eventDate: string | null): number | null => {
@@ -207,12 +199,9 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
   return (
     <div className='min-h-screen'>
       <div className='mx-auto max-w-7xl px-3 py-4 sm:px-6 lg:px-8'>
-        {/* Hero Section - Completamente rediseñado para móvil */}
         <div className='mb-8'>
           <div className='lg:grid lg:grid-cols-12 lg:gap-8'>
-            {/* Hero Image */}
             <div className='lg:col-span-8'>
-              {/* Mobile: Image sin overlay de información */}
               <div className='group relative mb-4 aspect-[16/9] overflow-hidden rounded-2xl bg-muted shadow-elevation-2'>
                 {event.images.length > 0 ? (
                   <img
@@ -227,12 +216,9 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                   </div>
                 )}
 
-                {/* Solo gradient sutil - sin texto superpuesto */}
                 <div className='absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent' />
 
-                {/* Botones flotantes mejorados */}
                 <div className='absolute right-4 top-4 flex gap-2'>
-                  {/* Status badge */}
                   {isPastEvent ? (
                     <Badge
                       variant='destructive'
@@ -246,7 +232,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                     </Badge>
                   ) : null}
 
-                  {/* Share button */}
                   <Button
                     variant='outline'
                     size='sm'
@@ -258,7 +243,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                 </div>
               </div>
 
-              {/* Mobile: Info del evento DEBAJO de la imagen */}
               <div className='mb-6'>
                 <div className='space-y-4'>
                   <div>
@@ -267,7 +251,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                     </h1>
                   </div>
 
-                  {/* Quick Info Cards para móvil */}
                   <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
                     {eventDate && (
                       <Card className='bg-card p-3 shadow-elevation-1'>
@@ -322,7 +305,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                 </div>
               </div>
 
-              {/* Thumbnails */}
               {event.images.length > 1 && (
                 <div className='mb-6 grid grid-cols-4 gap-2 sm:gap-3 lg:grid-cols-8'>
                   {event.images.map((image, index) => (
@@ -345,7 +327,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                 </div>
               )}
 
-              {/* Event Description */}
               {event.descriptionHtml && (
                 <Card className='mb-6 bg-card shadow-elevation-1'>
                   <CardHeader>
@@ -363,7 +344,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
               )}
             </div>
 
-            {/* Registration Card - Optimizado para móvil */}
             <div className='lg:col-span-4'>
               <Card className='sticky top-4 bg-card shadow-elevation-3'>
                 <CardHeader className='text-center'>
@@ -393,7 +373,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                 </CardHeader>
 
                 <CardContent className='space-y-6'>
-                  {/* Registration Button */}
                   <div className='space-y-3'>
                     <AddToCartButton
                       product={{
@@ -438,7 +417,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                     )}
                   </div>
 
-                  {/* Event Details Quick View */}
                   <div className='space-y-4 rounded-lg bg-surface-container p-4'>
                     <h3 className='font-semibold text-foreground'>Detalles del evento</h3>
 
@@ -480,7 +458,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                     )}
                   </div>
 
-                  {/* Digital Ticket Info */}
                   {session && (
                     <div className='rounded-lg bg-primary-container p-4'>
                       <div className='mb-2 flex items-center gap-2'>
@@ -506,7 +483,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
           </div>
         </div>
 
-        {/* Related Events */}
         {relatedEvents.length > 0 && (
           <div>
             <div className='mb-8 text-center'>
@@ -544,7 +520,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
                           </div>
                         )}
 
-                        {/* Overlay with price */}
                         <div className='absolute right-3 top-3'>
                           <Badge
                             className={`${
@@ -591,7 +566,6 @@ export const EventClient: React.FC<EventClientProps> = ({ event, relatedEvents, 
         )}
       </div>
 
-      {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className='max-w-screen-xl border-none bg-black/95 p-0'>
           <div className='relative flex h-[90vh] items-center justify-center'>

@@ -1,13 +1,6 @@
 'use client'
 
-import {
-  ArrowLeft,
-  ChevronRight,
-  FolderOpen,
-  Home,
-  SlidersHorizontal,
-  Store
-} from 'lucide-react'
+import { ArrowLeft, ChevronRight, FolderOpen, Home, SlidersHorizontal, Store } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
@@ -25,7 +18,7 @@ interface Props {
 export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters }) => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [ isMobile, setIsMobile ] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     const checkIsMobile = () => {
@@ -57,7 +50,7 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
       icon: Home,
       label: ROUTES.STORE.EVENTS.LABEL,
       shortLabel: 'Eventos',
-    }
+    },
   ]
 
   const isSearchPage = pathname.includes('/search')
@@ -66,13 +59,10 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
   const isCollectionPage = pathname.includes('/collections/') && pathname.split('/').length > 3
   const collectionHandle = isCollectionPage ? pathname.split('/').pop() : null
 
-
   return (
     <div className='relative'>
-
-      {/* Breadcrumbs - Enhanced responsiveness */}
       {(pathname.includes('/product/') || isCollectionPage) && (
-        <div >
+        <div>
           <div className='w-full px-3 py-2 sm:px-4 lg:px-6 lg:py-3'>
             <div className='flex items-center space-x-1 overflow-x-auto text-xs sm:space-x-2 sm:text-sm'>
               <Button
@@ -129,13 +119,10 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
               )}
             </div>
           </div>
-          {/* Right section - Back button */}
+
           <div className='hidden items-center space-x-4 md:flex'>
             {(pathname.includes('/product/') || isCollectionPage) && (
-              <Button
-                variant='container-success'
-                asChild
-              >
+              <Button variant='container-success' asChild>
                 <Link href={ROUTES.STORE.MAIN.PATH}>
                   <ArrowLeft className='size-3.5 lg:size-4' />
                   <span className='text-sm font-medium lg:text-base'>Volver a la Galería</span>
@@ -146,13 +133,9 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
         </div>
       )}
 
-
-      {/* Main navigation container */}
       <div className='w-full px-3 sm:px-4 lg:px-6'>
         <div className='flex min-h-[60px] items-center justify-between md:min-h-[70px]'>
-          {/* Left section - Filters and Navigation */}
           <div className='flex flex-1 items-center space-x-2 sm:space-x-4 lg:space-x-6'>
-            {/* Desktop filter button */}
             <div className='hidden lg:flex'>
               <Button
                 variant='ghost'
@@ -181,7 +164,6 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
               </Button>
             </div>
 
-            {/* Mobile filter button */}
             <div className='flex lg:hidden'>
               <Button
                 variant='ghost'
@@ -210,7 +192,6 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
               </Button>
             </div>
 
-            {/* Desktop Navigation items */}
             <div className='hidden space-x-1 md:flex lg:space-x-2'>
               {navItems.map((item) => {
                 const Icon = item.icon
@@ -250,7 +231,6 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                 )
               })}
 
-              {/* Search page indicator - Desktop */}
               {isSearchPage && (
                 <div className='border-primary/20 flex h-auto min-w-[90px] flex-col gap-1 rounded-xl border bg-primary-container p-2 text-on-primary-container shadow-md lg:min-w-[120px] lg:px-4 lg:py-3'>
                   <Store className='mx-auto mb-1 size-4 text-primary lg:size-5' />
@@ -267,7 +247,6 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                 </div>
               )}
 
-              {/* Collection page indicator - Desktop */}
               {isCollectionPage && (
                 <div className='border-primary/20 flex h-auto min-w-[90px] flex-col gap-1 rounded-xl border bg-primary-container p-2 text-on-primary-container shadow-md lg:min-w-[120px] lg:px-4 lg:py-3'>
                   <FolderOpen className='mx-auto mb-1 size-4 text-primary lg:size-5' />
@@ -280,15 +259,9 @@ export const Content: React.FC<Props> = ({ activeFiltersCount = 0, onOpenFilters
                 </div>
               )}
             </div>
-
-
           </div>
-
         </div>
       </div>
-
-
-
     </div>
   )
 }

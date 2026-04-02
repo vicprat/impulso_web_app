@@ -2,7 +2,6 @@ import { postTypeMetadata } from './metadata-routes'
 
 import type { Metadata } from 'next'
 
-// Configuración base de metadata
 export const baseMetadata: Metadata = {
   alternates: {
     canonical: '/',
@@ -77,7 +76,6 @@ export const baseMetadata: Metadata = {
   },
 }
 
-// Metadata específica para cada ruta
 export const routeMetadata: Record<string, Metadata> = {
   '/': {
     description:
@@ -322,7 +320,6 @@ export const routeMetadata: Record<string, Metadata> = {
   },
 }
 
-// Función para generar metadata dinámica para perfiles de artistas
 export const generateArtistMetadata = (artist: {
   firstName: string
   lastName: string
@@ -375,7 +372,6 @@ export const generateArtistMetadata = (artist: {
   }
 }
 
-// Función para generar metadata dinámica para productos
 export const generateProductMetadata = (product: {
   title: string
   description?: string
@@ -430,7 +426,6 @@ export const generateProductMetadata = (product: {
   }
 }
 
-// Función para generar metadata dinámica para eventos
 export const generateEventMetadata = (event: {
   title: string
   description?: string
@@ -483,16 +478,13 @@ export const generateEventMetadata = (event: {
   }
 }
 
-// Función para generar metadata dinámica para tipos de posts
 export const generatePostTypeMetadata = (postType: string): Metadata => {
   const normalizedType = postType.toLowerCase()
 
   return postTypeMetadata[normalizedType] || postTypeMetadata.blog
 }
 
-// Agregar metadata para página de contacto
 export const contactMetadata: Metadata = {
-  title: 'Contacto | Impulso Galería',
   description:
     'Contacta con Impulso Galería en Querétaro. Información de ubicación, horarios, teléfono y formulario de contacto para consultas sobre arte contemporáneo.',
   keywords: [
@@ -506,16 +498,17 @@ export const contactMetadata: Metadata = {
     'arte contemporáneo',
   ],
   openGraph: {
-    title: 'Contacto | Impulso Galería',
     description:
       'Contacta con Impulso Galería en Querétaro. Información de ubicación, horarios, teléfono y formulario de contacto.',
+    title: 'Contacto | Impulso Galería',
     type: 'website',
     url: 'https://impulsogaleria.com/contact',
   },
+  title: 'Contacto | Impulso Galería',
   twitter: {
     card: 'summary',
-    title: 'Contacto | Impulso Galería',
     description:
       'Contacta con Impulso Galería en Querétaro. Información de ubicación, horarios, teléfono y formulario de contacto.',
+    title: 'Contacto | Impulso Galería',
   },
 }

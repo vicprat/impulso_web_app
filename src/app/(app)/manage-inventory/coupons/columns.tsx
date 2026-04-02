@@ -226,10 +226,10 @@ export const columns: ColumnDef<Discount>[] = [
       const startsAt = new Date(row.startsAt)
       const endsAt = row.endsAt ? new Date(row.endsAt) : null
 
-      if (!row.isActive) return 0 // Inactivo
-      if (endsAt && now > endsAt) return 1 // Expirado
-      if (now < startsAt) return 2 // Pendiente
-      return 3 // Activo
+      if (!row.isActive) return 0
+      if (endsAt && now > endsAt) return 1
+      if (now < startsAt) return 2
+      return 3
     },
     cell: ({ row }) => {
       return getStatusBadge(row.original)

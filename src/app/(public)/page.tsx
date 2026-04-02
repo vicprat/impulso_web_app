@@ -27,8 +27,6 @@ import type { Metadata } from 'next'
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = routeMetadata['/']
 
-// Notion data will be fetched in the Page component
-
 export default async function Page() {
   const [
     events,
@@ -88,8 +86,6 @@ export default async function Page() {
     text: (b.text as Record<Locale, string>).es,
   }))
 
-  // Combinar eventos de Shopify con posts de tipo EVENT
-  // Si hay eventos de Shopify, los usamos primero, si no hay suficientes, agregamos posts
   const shopifyEvents = events
   const eventPostsAsEvents: PublicEvent[] = eventPosts
     .slice(0, Math.max(0, 6 - shopifyEvents.length))

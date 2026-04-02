@@ -86,7 +86,6 @@ const CREATE_FULFILLMENT_MUTATION = `
 
 export const shopifyFulfillmentService = {
   async createFulfillment(input: CreateFulfillmentInput) {
-    // Primero, obtener el FulfillmentOrder ID
     const shopifyOrderId = `gid://shopify/Order/${input.orderId}`
 
     const fulfillmentOrdersResponse = await makeAdminApiRequest<{
@@ -135,10 +134,8 @@ export const shopifyFulfillmentService = {
       )
     }
 
-    // Usar el primer fulfillment order disponible
     const fulfillmentOrder = fulfillmentOrders[0].node
 
-    // Mapear los line items al formato correcto
     const fulfillmentOrderLineItems = input.lineItems.map((inputItem) => {
       const foLineItem = fulfillmentOrder.lineItems.edges.find(
         (edge) => edge.node.lineItem.id === inputItem.id

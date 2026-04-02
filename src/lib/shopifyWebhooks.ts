@@ -106,11 +106,12 @@ export class ShopifyWebhookService {
     }
 
     try {
-      const response: WebhookSubscriptionCreateResponse =
-        await makeAdminApiRequest(mutation, variables)
+      const response: WebhookSubscriptionCreateResponse = await makeAdminApiRequest(
+        mutation,
+        variables
+      )
 
-      const userErrors =
-        response.data?.webhookSubscriptionCreate?.userErrors || []
+      const userErrors = response.data?.webhookSubscriptionCreate?.userErrors || []
 
       if (userErrors.length > 0) {
         console.warn(`⚠️ Advertencias al crear webhook ${config.topic}:`, userErrors)
@@ -147,10 +148,7 @@ export class ShopifyWebhookService {
 
     try {
       const response: WebhookListResponse = await makeAdminApiRequest(query)
-      return (
-        response.data?.webhookSubscriptions?.edges?.map((edge: any) => edge.node) ||
-        []
-      )
+      return response.data?.webhookSubscriptions?.edges?.map((edge: any) => edge.node) || []
     } catch (error) {
       console.error('❌ Error listando webhooks:', error)
       throw error
@@ -171,11 +169,11 @@ export class ShopifyWebhookService {
     `
 
     try {
-      const response: WebhookSubscriptionDeleteResponse =
-        await makeAdminApiRequest(mutation, { id: webhookId })
+      const response: WebhookSubscriptionDeleteResponse = await makeAdminApiRequest(mutation, {
+        id: webhookId,
+      })
 
-      const userErrors =
-        response.data?.webhookSubscriptionDelete?.userErrors || []
+      const userErrors = response.data?.webhookSubscriptionDelete?.userErrors || []
 
       if (userErrors.length > 0) {
         console.warn('⚠️ Advertencias al eliminar webhook:', userErrors)
@@ -205,4 +203,4 @@ export class ShopifyWebhookService {
       throw error
     }
   }
-} 
+}

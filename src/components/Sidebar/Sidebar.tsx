@@ -64,15 +64,12 @@ export const AppSidebar: React.FC<Props> = ({ routes }) => {
 
       <SidebarContent className='mt-4'>
         <SidebarMenu>
-          {/* Rutas individuales */}
           {individualRoutes.map(renderRoute)}
 
-          {/* Grupo de Gestión de Inventario */}
           {inventoryGroupRoutes.length > 0 && (
             <MenuGroup route={ROUTES.INVENTORY.GROUP} children={inventoryGroupRoutes} />
           )}
 
-          {/* Grupo de Administración */}
           {groupedRoutes.length > 0 && (
             <MenuGroup route={ROUTES.ADMIN.GROUP} children={groupedRoutes} />
           )}

@@ -38,12 +38,10 @@ export default function EventFinancePage() {
   const { data: bankAccounts } = useBankAccounts()
   const createEntry = useCreateFinancialEntry()
 
-  // Filtrar movimientos por tipo y estado
   const incomeEntries = entries?.filter((entry) => entry.type === 'INCOME') || []
   const expenseEntries = entries?.filter((entry) => entry.type === 'EXPENSE') || []
   const pendingEntries = entries?.filter((entry) => entry.status !== 'COMPLETED') || []
 
-  // Calcular totales
   const totalIncome = incomeEntries.reduce(
     (sum, entry) => sum + parseFloat(entry.amount.toString()),
     0
@@ -102,7 +100,6 @@ export default function EventFinancePage() {
   }
 
   const handleQuickCreate = (type: 'INCOME' | 'EXPENSE') => {
-    // TODO: Implementar modal de creación rápida
     toast.info(
       `Función de creación rápida de ${type === 'INCOME' ? 'ingreso' : 'gasto'} próximamente disponible`
     )
@@ -131,7 +128,6 @@ export default function EventFinancePage() {
 
   return (
     <div className='space-y-6 p-6'>
-      {/* Header */}
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-4'>
           <Link href={ROUTES.ADMIN.EVENTS.MAIN.PATH}>
@@ -157,7 +153,6 @@ export default function EventFinancePage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className='flex space-x-1 rounded-lg bg-muted p-1'>
         {[
           { icon: TrendingUp, id: 'overview', label: 'Resumen' },
@@ -180,10 +175,8 @@ export default function EventFinancePage() {
         })}
       </div>
 
-      {/* Contenido según tab activo */}
       {activeTab === 'overview' && (
         <div className='space-y-6'>
-          {/* KPIs principales */}
           <div className='grid gap-4 md:grid-cols-4'>
             <Card>
               <CardContent className='p-4'>
@@ -250,14 +243,12 @@ export default function EventFinancePage() {
             </Card>
           </div>
 
-          {/* Detalle de pendientes */}
           <Card>
             <CardHeader>
               <CardTitle>Cuentas Pendientes</CardTitle>
             </CardHeader>
             <CardContent>
               <div className='grid gap-4 md:grid-cols-2'>
-                {/* Ingresos pendientes */}
                 <div>
                   <h3 className='mb-3 font-semibold text-green-700'>Ingresos Pendientes</h3>
                   <div className='space-y-3'>
@@ -312,7 +303,6 @@ export default function EventFinancePage() {
                   </div>
                 </div>
 
-                {/* Gastos pendientes */}
                 <div>
                   <h3 className='mb-3 font-semibold text-red-700'>Gastos Pendientes</h3>
                   <div className='space-y-3'>
@@ -525,7 +515,6 @@ export default function EventFinancePage() {
                       </div>
                     </div>
 
-                    {/* Barra de progreso */}
                     <div className='mb-2 h-2 w-full rounded-full bg-gray-200'>
                       <div
                         className={`h-2 rounded-full ${entry.type === 'INCOME' ? 'bg-green-600' : 'bg-red-600'}`}
@@ -545,11 +534,6 @@ export default function EventFinancePage() {
                           </Badge>
                         )}
                       </div>
-                      {/* <Link href=''>
-                        <Button variant='outline' size='sm'>
-                          Ver Detalle
-                        </Button>
-                      </Link> */}
                     </div>
                   </div>
                 ))}

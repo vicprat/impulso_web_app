@@ -12,7 +12,6 @@ export async function GET() {
 
     const tickets = await ticketService.getTicketsByUserId(userId, session)
 
-    // Agrupar tickets por evento y orden
     const groupedTickets = tickets.reduce(
       (acc, ticket) => {
         const key = `${ticket.eventId}_${ticket.orderId || 'no_order'}`
@@ -23,7 +22,6 @@ export async function GET() {
             event: null,
           }
         } else {
-          // Si ya existe un ticket para este evento y orden, sumar las cantidades
           acc[key].quantity += ticket.quantity
         }
 

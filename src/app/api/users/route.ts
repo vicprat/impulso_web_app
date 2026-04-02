@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
     const sortBy = (searchParams.get('sortBy') ?? 'createdAt') as UserFilters['sortBy']
     const sortOrder = (searchParams.get('sortOrder') ?? 'desc') as UserFilters['sortOrder']
 
-    // Obtener todos los valores de 'role' (puede haber múltiples)
     const roleParams = searchParams.getAll('role')
     const roleFilter = roleParams.length > 0 ? (roleParams.length === 1 ? roleParams[0] : roleParams) : undefined
 
@@ -63,7 +62,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar si el usuario ya existe
     const existingUser = await prisma.user.findUnique({
       where: { email },
     })
@@ -75,11 +73,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Obtener el rol
     const roleRecord = await prisma.role.findFirst({
-      where: { 
+      where: {
         isActive: true,
-        name: role 
+        name: role
       },
     })
 
@@ -90,7 +87,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Crear el usuario
     const user = await prisma.user.create({
       data: {
         UserRole: {
@@ -114,8 +110,8 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       user: {
         email: user.email,
         firstName: user.firstName,
@@ -127,8 +123,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
   } catch (error) {
     console.error('Error creating user:', error)
-    
-    // Manejar errores específicos de Prisma
+
     if (error instanceof Error) {
       if (error.message.includes('Unique constraint')) {
         return NextResponse.json(
@@ -143,7 +138,7 @@ export async function POST(request: NextRequest) {
         )
       }
     }
-    
+
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

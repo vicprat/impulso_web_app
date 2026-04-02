@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getChildDatabases, getFileUrl, getRichTextPlain, PAGES, queryDatabase } from '@/lib/notion'
 
 import type {
@@ -11,14 +12,13 @@ import type {
   TermsSection,
 } from '@/types/notion-content.types'
 
-// --- Helper: query a simple Key/Value EN/Value ES table and return content dict ---
 async function querySimpleContentTable(
   pageId: string,
   tableName: string
 ): Promise<Record<string, { en: string; es: string }>> {
   try {
     const databases = await getChildDatabases(pageId)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const db = databases.find((d: any) => d.child_database.title.toLowerCase().includes(tableName))
 
     if (!db) return {}
@@ -27,7 +27,6 @@ async function querySimpleContentTable(
     const content: Record<string, { en: string; es: string }> = {}
 
     for (const item of results) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const p = item as any
       const key = getRichTextPlain(p.properties.Key?.title ?? [])
       if (!key) continue
@@ -47,13 +46,10 @@ async function querySimpleContentTable(
   }
 }
 
-// --- Existing functions ---
-
 export async function getCarouselSlides(_locale: Locale = 'es'): Promise<CarouselSlide[]> {
   try {
     const databases = await getChildDatabases(PAGES.HOME)
     const slidesDb = databases.find(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (db: any) =>
         db.child_database.title.toLowerCase().includes('carousel') ||
         db.child_database.title.toLowerCase().includes('slide')
@@ -110,7 +106,7 @@ export async function getServices(full = false): Promise<Service[]> {
   try {
     const pageId = PAGES.SERVICES
     const databases = await getChildDatabases(pageId)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const servicesDb = databases.find((db: any) =>
       db.child_database.title.toLowerCase().includes('service')
     )
@@ -122,7 +118,6 @@ export async function getServices(full = false): Promise<Service[]> {
 
     const results = await queryDatabase(servicesDb.id)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return results.map((page: any) => ({
       action: getRichTextPlain(page.properties.Action?.rich_text ?? []),
       description: {
@@ -175,9 +170,8 @@ export async function getServices(full = false): Promise<Service[]> {
 
 export async function getBenefits(_page: 'landing' | 'membership' = 'landing'): Promise<Benefit[]> {
   try {
-    // Benefits database lives under MEMBERSHIP page
     const databases = await getChildDatabases(PAGES.MEMBERSHIP)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const benefitsDb = databases.find((db: any) =>
       db.child_database.title.toLowerCase().includes('benefit')
     )
@@ -189,7 +183,6 @@ export async function getBenefits(_page: 'landing' | 'membership' = 'landing'): 
 
     const results = await queryDatabase(benefitsDb.id)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return results.map((page: any) => ({
       id: page.id,
       order: page.properties.Order?.number ?? 0,
@@ -214,7 +207,7 @@ export async function getBenefits(_page: 'landing' | 'membership' = 'landing'): 
 export async function getFeatures(): Promise<Feature[]> {
   try {
     const databases = await getChildDatabases(PAGES.MEMBERSHIP)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const featuresDb = databases.find((db: any) =>
       db.child_database.title.toLowerCase().includes('feature')
     )
@@ -226,7 +219,6 @@ export async function getFeatures(): Promise<Feature[]> {
 
     const results = await queryDatabase(featuresDb.id)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return results.map((page: any) => ({
       description: {
         en: getRichTextPlain(
@@ -264,7 +256,7 @@ export async function getFeatures(): Promise<Feature[]> {
 export async function getTermsSections(): Promise<TermsSection[]> {
   try {
     const databases = await getChildDatabases(PAGES.TERMS)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const termsDb = databases.find((db: any) =>
       db.child_database.title.toLowerCase().includes('term')
     )
@@ -276,7 +268,6 @@ export async function getTermsSections(): Promise<TermsSection[]> {
 
     const results = await queryDatabase(termsDb.id)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return results.map((page: any) => ({
       content: {
         en: getRichTextPlain(
@@ -303,7 +294,6 @@ export async function getTermsSections(): Promise<TermsSection[]> {
   }
 }
 
-// --- Helper: query a Key/Page/Value EN/Value ES table and return content dict ---
 async function queryPagedContentTable(
   pageId: string,
   tableName: string,
@@ -311,7 +301,7 @@ async function queryPagedContentTable(
 ): Promise<Record<string, { en: string; es: string }>> {
   try {
     const databases = await getChildDatabases(pageId)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const db = databases.find((d: any) => d.child_database.title.toLowerCase().includes(tableName))
 
     if (!db) return {}
@@ -320,12 +310,10 @@ async function queryPagedContentTable(
     const content: Record<string, { en: string; es: string }> = {}
 
     for (const item of results) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const p = item as any
       const key = getRichTextPlain(p.properties.Key?.title ?? [])
       if (!key) continue
 
-      // Filter by page if specified
       if (targetPage) {
         const itemPage = p.properties.Page?.select?.name
         if (itemPage && itemPage !== targetPage.toLowerCase()) continue
@@ -345,8 +333,6 @@ async function queryPagedContentTable(
     return {}
   }
 }
-
-// --- Granular Fetchers ---
 
 export async function getHeroContent(
   page?: string
@@ -378,10 +364,6 @@ export async function getFilterContent(
   return queryPagedContentTable(PAGES.HOME, 'filter', page)
 }
 
-// --- Restructured getPageContent ---
-// Queries ALL content tables (Hero, CTA, Section, Card, Filter) and merges them.
-// Now uses the granular fetchers internally.
-
 export async function getPageContent(
   page?: string
 ): Promise<Record<string, { en: string; es: string }>> {
@@ -401,15 +383,11 @@ export async function getPageContent(
   }
 }
 
-// --- New functions: Banners page content ---
-
 export async function getBannerContent(
   tableName: 'welcome banner' | 'registration dialog' | 'coupon'
 ): Promise<Record<string, { en: string; es: string }>> {
   return querySimpleContentTable(PAGES.BANNERS, tableName)
 }
-
-// --- New functions: Contact page content ---
 
 export async function getContactContent(
   tableName: 'info' | 'whatsapp' | 'footer'
@@ -420,7 +398,7 @@ export async function getContactContent(
 export async function getSocialLinks(): Promise<SocialLink[]> {
   try {
     const databases = await getChildDatabases(PAGES.CONTACT)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const db = databases.find((d: any) => d.child_database.title.toLowerCase().includes('social'))
 
     if (!db) {
@@ -430,17 +408,15 @@ export async function getSocialLinks(): Promise<SocialLink[]> {
 
     const results = await queryDatabase(db.id)
 
-    return (
-      results
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((page: any) => ({
-          handle: getRichTextPlain(page.properties.Handle?.rich_text ?? []),
-          name: getRichTextPlain(page.properties.Name?.title ?? []),
-          order: page.properties.Order?.number ?? 0,
-          url: page.properties.URL?.url ?? '',
-        }))
-        .sort((a: SocialLink, b: SocialLink) => a.order - b.order)
-    )
+    return results
+
+      .map((page: any) => ({
+        handle: getRichTextPlain(page.properties.Handle?.rich_text ?? []),
+        name: getRichTextPlain(page.properties.Name?.title ?? []),
+        order: page.properties.Order?.number ?? 0,
+        url: page.properties.URL?.url ?? '',
+      }))
+      .sort((a: SocialLink, b: SocialLink) => a.order - b.order)
   } catch (error) {
     console.error('Error fetching social links:', error)
     return []
@@ -450,7 +426,7 @@ export async function getSocialLinks(): Promise<SocialLink[]> {
 export async function getNavigationLinks(): Promise<NavigationLink[]> {
   try {
     const databases = await getChildDatabases(PAGES.CONTACT)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const db = databases.find((d: any) =>
       d.child_database.title.toLowerCase().includes('navigation')
     )
@@ -462,19 +438,17 @@ export async function getNavigationLinks(): Promise<NavigationLink[]> {
 
     const results = await queryDatabase(db.id)
 
-    return (
-      results
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((page: any) => ({
-          name: {
-            en: getRichTextPlain(page.properties['Name EN']?.rich_text ?? []),
-            es: getRichTextPlain(page.properties['Name ES']?.title ?? []),
-          },
-          order: page.properties.Order?.number ?? 0,
-          path: getRichTextPlain(page.properties.Path?.rich_text ?? []),
-        }))
-        .sort((a: NavigationLink, b: NavigationLink) => a.order - b.order)
-    )
+    return results
+
+      .map((page: any) => ({
+        name: {
+          en: getRichTextPlain(page.properties['Name EN']?.rich_text ?? []),
+          es: getRichTextPlain(page.properties['Name ES']?.title ?? []),
+        },
+        order: page.properties.Order?.number ?? 0,
+        path: getRichTextPlain(page.properties.Path?.rich_text ?? []),
+      }))
+      .sort((a: NavigationLink, b: NavigationLink) => a.order - b.order)
   } catch (error) {
     console.error('Error fetching navigation links:', error)
     return []

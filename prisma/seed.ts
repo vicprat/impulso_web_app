@@ -5,9 +5,8 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Iniciando seed de la base de datos...')
 
-  // Crear permisos básicos
   const permissions = [
-    // Permisos de cuenta de usuario
+
     {
       action: 'read',
       description: 'Ver perfil de usuario',
@@ -29,7 +28,6 @@ async function main() {
       resource: 'orders',
     },
 
-    // Permisos de direcciones
     {
       action: 'read',
       description: 'Ver direcciones propias',
@@ -43,7 +41,6 @@ async function main() {
       resource: 'addresses',
     },
 
-    // Permisos de carrito
     {
       action: 'crud',
       description: 'Gestionar carrito de compras',
@@ -51,7 +48,6 @@ async function main() {
       resource: 'cart',
     },
 
-    // Permisos de administración
     {
       action: 'read',
       description: 'Acceder al panel de administración',
@@ -95,7 +91,6 @@ async function main() {
       resource: 'events',
     },
 
-    // Permisos de productos (si planeas permitir gestión)
     { action: 'read', description: 'Ver productos', name: 'view_products', resource: 'products' },
     {
       action: 'crud',
@@ -110,7 +105,6 @@ async function main() {
       resource: 'inventory',
     },
 
-    // Permisos de colaboradores (antes artistas)
     {
       action: 'crud_own',
       description: 'Crear, editar y borrar sus propios productos',
@@ -130,7 +124,6 @@ async function main() {
       resource: 'blog_posts',
     },
 
-    // Permisos financieros para colaboradores
     {
       action: 'read_own',
       description: 'Ver sus propias entradas financieras',
@@ -156,7 +149,6 @@ async function main() {
       resource: 'financials',
     },
 
-    // Permisos especiales
     {
       action: 'export',
       description: 'Exportar datos del sistema',
@@ -182,7 +174,7 @@ async function main() {
       name: 'view_acquired_tickets',
       resource: 'tickets',
     },
-    // Permisos de finanzas
+
     {
       action: 'crud',
       description: 'Gestionar finanzas',
@@ -242,7 +234,6 @@ async function main() {
     })
   }
 
-  // Crear roles básicos
   const roles = [
     {
       description: 'Cliente básico del sistema',
@@ -379,7 +370,7 @@ async function main() {
     {
       description: 'Administrador con acceso completo',
       name: 'admin',
-      permissions: permissions.map((p) => p.name), // Todos los permisos
+      permissions: permissions.map((p) => p.name),
     },
   ]
 
@@ -393,7 +384,6 @@ async function main() {
       where: { name: roleInfo.name },
     })
 
-    // Asignar permisos al rol
     console.log(`🔗 Asignando permisos al rol ${role.name}...`)
     for (const permissionName of rolePermissions) {
       const permission = await prisma.permission.findUnique({
@@ -418,7 +408,6 @@ async function main() {
     }
   }
 
-  // Crear configuraciones de la aplicación
   const appConfigs = [
     { key: 'default_user_role', type: 'string', value: 'customer' },
     { key: 'auto_assign_vip_threshold', type: 'number', value: '1000' },
@@ -440,7 +429,6 @@ async function main() {
 
   console.log('✅ Seed completado exitosamente!')
 
-  // Mostrar resumen
   const totalPermissions = await prisma.permission.count()
   const totalRoles = await prisma.role.count()
   const totalConfigs = await prisma.appConfig.count()
@@ -448,7 +436,7 @@ async function main() {
   console.log(`
 📊 Resumen:
    - Permisos creados: ${totalPermissions}
-   - Roles creados: ${totalRoles}  
+   - Roles creados: ${totalRoles}
    - Configuraciones: ${totalConfigs}
 
 🚀 Tu sistema de autenticación está listo!

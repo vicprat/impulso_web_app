@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { getRouteMeta, isPublicRoute, ROUTES } from '@/config/routes'
 const tokenVerificationCache = new Map<string, { valid: boolean; timestamp: number }>()
-const CACHE_DURATION = 60 * 1000 // Reduced to 1 minute
+const CACHE_DURATION = 60 * 1000
 
 function parseJwt(token: string) {
   try {
@@ -168,7 +168,6 @@ async function verifyTokenWithCache(accessToken: string): Promise<boolean> {
     valid: isValid,
   })
 
-  // Cleanup old cache entries
   for (const [token, data] of tokenVerificationCache.entries()) {
     if (Date.now() - data.timestamp > CACHE_DURATION) {
       tokenVerificationCache.delete(token)

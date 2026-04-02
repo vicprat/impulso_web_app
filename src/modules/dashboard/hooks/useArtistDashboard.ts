@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 
-
 interface ArtistDashboardData {
   user: {
     id: string
@@ -27,18 +26,17 @@ interface ArtistDashboardData {
 
 export const useArtistDashboard = () => {
   return useQuery({
-    // 5 minutos
-gcTime: 10 * 60 * 1000,
-    
-queryFn: async (): Promise<ArtistDashboardData> => {
+    gcTime: 10 * 60 * 1000,
+
+    queryFn: async (): Promise<ArtistDashboardData> => {
       const response = await fetch('/api/dashboard/artist')
       if (!response.ok) {
         throw new Error('Error al obtener datos del dashboard del artista')
       }
       return response.json()
     },
-    
-queryKey: [ 'artist-dashboard' ], 
-    staleTime: 5 * 60 * 1000, // 10 minutos
+
+    queryKey: ['artist-dashboard'],
+    staleTime: 5 * 60 * 1000,
   })
 }

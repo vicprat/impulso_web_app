@@ -44,7 +44,7 @@ export function CollectionManagerModal({ isOpen, onClose }: CollectionManagerMod
       limit: 100,
     },
     {
-      enabled: isOpen, // Cargar solo cuando el modal esté abierto
+      enabled: isOpen,
     }
   )
 
@@ -91,10 +91,8 @@ export function CollectionManagerModal({ isOpen, onClose }: CollectionManagerMod
     try {
       const url = `${typeof window !== 'undefined' ? window.location.origin : ''}${ROUTES.COLLECTIONS.DETAIL.PATH.replace(':collection', collection.handle)}`
 
-      // Usar una API externa para generar el QR limpio
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`
 
-      // Crear un canvas simple solo para el QR
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       if (!ctx) return
@@ -102,19 +100,15 @@ export function CollectionManagerModal({ isOpen, onClose }: CollectionManagerMod
       canvas.width = 400
       canvas.height = 400
 
-      // Fondo blanco
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-      // Cargar y dibujar solo el QR
       const qrImg = new Image()
       qrImg.crossOrigin = 'anonymous'
 
       qrImg.onload = () => {
-        // Dibujar el QR ocupando todo el canvas
         ctx.drawImage(qrImg, 0, 0, canvas.width, canvas.height)
 
-        // Descargar la imagen
         canvas.toBlob((blob) => {
           if (blob) {
             const link = document.createElement('a')

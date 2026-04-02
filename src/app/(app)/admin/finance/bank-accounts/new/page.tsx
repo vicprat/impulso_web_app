@@ -2,7 +2,6 @@
 
 import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -13,7 +12,6 @@ import { Label } from '@/components/ui/label'
 import { useCreateBankAccount } from '@/modules/finance/hooks'
 
 export default function NewBankAccountPage() {
-  const router = useRouter()
   const createBankAccount = useCreateBankAccount()
 
   const [formData, setFormData] = useState({
@@ -75,7 +73,6 @@ export default function NewBankAccountPage() {
       })
 
       toast.success('Cuenta bancaria creada exitosamente')
-      // router.push(ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN.PATH)
     } catch (error) {
       console.error('Error creating bank account:', error)
       toast.error('Error al crear la cuenta bancaria')

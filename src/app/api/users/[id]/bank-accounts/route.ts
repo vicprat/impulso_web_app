@@ -12,10 +12,9 @@ export async function GET(
 ) {
   try {
     await requirePermission(PERMISSIONS.MANAGE_USERS)
-    
+
     const { id: userId } = await params
 
-    // Verificar que el usuario existe
     const user = await prisma.user.findUnique({
       where: { id: userId }
     })
@@ -24,7 +23,6 @@ export async function GET(
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
     }
 
-    // Obtener cuentas bancarias que tienen movimientos relacionados con este usuario
     const bankAccounts = await prisma.bankAccount.findMany({
       include: {
         movements: {
@@ -39,7 +37,7 @@ export async function GET(
           take: 5,
           where: {
             userId
-          } // Últimos 5 movimientos
+          }
         }
       },
       where: {
@@ -81,4 +79,4 @@ export async function GET(
       { status: 500 }
     )
   }
-} 
+}

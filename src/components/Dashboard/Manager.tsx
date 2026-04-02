@@ -23,16 +23,16 @@ import {
   YAxis,
 } from 'recharts'
 
-import { Guard } from '../Guards'
-import { Badge } from '../ui/badge'
-import { FinanceOverview } from './FinanceOverview'
-
 import { PERMISSIONS } from '@/config/Permissions'
 import {
   useAdminDashboard,
   useAdvancedAnalytics,
   useProductMetrics,
 } from '@/src/modules/dashboard/hooks'
+
+import { Guard } from '../Guards'
+import { Badge } from '../ui/badge'
+import { FinanceOverview } from './FinanceOverview'
 
 interface TopProduct {
   name: string
@@ -186,7 +186,6 @@ export const Manager = () => {
         </Guard.Permission>
       </div>
 
-      {/* Resumen financiero */}
       <Guard.Permission permission={PERMISSIONS.VIEW_ANALYTICS}>
         <ChartCard title='Resumen Financiero'>
           <div className='grid grid-cols-1 gap-6 md:grid-cols-4'>
@@ -218,7 +217,6 @@ export const Manager = () => {
         </ChartCard>
       </Guard.Permission>
 
-      {/* Métricas adicionales */}
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
         <Guard.Permission permission={PERMISSIONS.MANAGE_INVENTORY}>
           <div className='rounded-lg border-outline bg-card p-6 shadow-elevation-1'>
@@ -249,7 +247,6 @@ export const Manager = () => {
         </ChartCard>
       </div>
 
-      {/* Gráficos principales */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <ChartCard title='Tendencia de Ventas'>
           <ResponsiveContainer width='100%' height={300}>
@@ -298,7 +295,6 @@ export const Manager = () => {
         </ChartCard>
       </div>
 
-      {/* Estado del inventario y productos destacados */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <Guard.Permission permission={PERMISSIONS.MANAGE_INVENTORY}>
           <ChartCard title='Estado del Inventario'>
@@ -351,7 +347,6 @@ export const Manager = () => {
         </ChartCard>
       </div>
 
-      {/* Product Metrics */}
       <Guard.Permission permission={PERMISSIONS.VIEW_ANALYTICS}>
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
           <ChartCard title='Métricas de Producto'>
@@ -401,7 +396,6 @@ export const Manager = () => {
             )}
           </ChartCard>
 
-          {/* Advanced Analytics */}
           <ChartCard title='Analíticas Avanzadas'>
             {advancedAnalytics.data && (
               <div className='space-y-4'>
@@ -464,7 +458,6 @@ export const Manager = () => {
         </ChartCard>
       </Guard.Permission>
 
-      {/* Finance Overview */}
       <Guard.Permission permission={PERMISSIONS.VIEW_FINANCE_REPORTS}>
         <FinanceOverview role='manager' showDetails={true} />
       </Guard.Permission>

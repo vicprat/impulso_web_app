@@ -3,13 +3,12 @@
 import fs from 'fs'
 import path from 'path'
 
-// Cargar variables de entorno desde .env
 function loadEnvFile() {
   const envPath = path.join(process.cwd(), '.env')
   if (fs.existsSync(envPath)) {
     const envContent = fs.readFileSync(envPath, 'utf8')
     const lines = envContent.split('\n')
-    
+
     lines.forEach(line => {
       const trimmedLine = line.trim()
       if (trimmedLine && !trimmedLine.startsWith('#')) {
@@ -49,13 +48,13 @@ async function checkWebhooks(): Promise<any[]> {
 }
 
 async function checkSystem() {
-  // Cargar variables de entorno
+
   loadEnvFile()
-  
+
   console.log('🔍 Verificando estado del sistema...\n')
 
   try {
-    // Verificar variables de entorno de Shopify
+
     console.log('🔧 Variables de entorno de Shopify:')
     const shopifyEnvVars = [
       'NEXT_PUBLIC_SHOPIFY_STORE',
@@ -64,7 +63,7 @@ async function checkSystem() {
     ]
 
     const shopifyEnvConfigured = shopifyEnvVars.filter(v => process.env[v]).length
-    
+
     shopifyEnvVars.forEach((envVar) => {
       const value = process.env[envVar]
       const status = value ? '✅' : '❌'
@@ -72,13 +71,12 @@ async function checkSystem() {
       console.log(`  ${status} ${envVar}: ${displayValue}`)
     })
 
-    // Solo intentar verificar webhooks si las variables de Shopify están configuradas
     if (shopifyEnvConfigured === shopifyEnvVars.length) {
       try {
-        // Verificar webhooks configurados
+
         console.log('\n📋 Webhooks configurados:')
         const webhooks = await checkWebhooks()
-        
+
         if (webhooks.length === 0) {
           console.log('  ❌ No hay webhooks configurados')
           console.log('  💡 Ejecuta: npm run setup-webhooks')
@@ -98,7 +96,6 @@ async function checkSystem() {
       console.log('  💡 Configura las variables de entorno para verificar webhooks')
     }
 
-    // Verificar variables de entorno generales
     console.log('\n🔧 Variables de entorno generales:')
     const requiredEnvVars = [
       'NEXTAUTH_URL',
@@ -113,7 +110,6 @@ async function checkSystem() {
       console.log(`  ${status} ${envVar}: ${displayValue}`)
     })
 
-    // Verificar endpoints
     console.log('\n🌐 Endpoints de verificación:')
     const appUrl = process.env.NEXTAUTH_URL
     if (appUrl) {
@@ -130,20 +126,19 @@ async function checkSystem() {
       console.log('  ❌ NEXTAUTH_URL no configurado')
     }
 
-    // Resumen
     console.log('\n📊 Resumen:')
     const envVarsConfigured = requiredEnvVars.filter(v => process.env[v]).length
-    
+
     console.log(`  Variables de Shopify: ${shopifyEnvConfigured}/${shopifyEnvVars.length}`)
     console.log(`  Variables generales: ${envVarsConfigured}/${requiredEnvVars.length}`)
-    
+
     if (shopifyEnvConfigured === shopifyEnvVars.length && envVarsConfigured === requiredEnvVars.length) {
       console.log('\n✅ Sistema configurado correctamente')
       console.log('  💡 Ejecuta: npm run setup-webhooks')
     } else {
       console.log('\n⚠️ Sistema requiere configuración adicional')
       console.log('  💡 Configura las variables de entorno faltantes')
-      
+
       if (!process.env.NEXTAUTH_URL) {
         console.log('  📝 Verifica NEXTAUTH_URL en tu archivo .env')
       }
@@ -158,4 +153,4 @@ async function checkSystem() {
   }
 }
 
-checkSystem() 
+checkSystem()

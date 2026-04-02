@@ -23,7 +23,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       ? id
       : `gid://shopify/Collection/${id}`
 
-    // Obtener las publicaciones disponibles
     const publicationsResponse = await makeAdminApiRequest<{
       publications: { edges: { node: { id: string; name: string } }[] }
     }>(GET_PUBLICATIONS_QUERY, {})
@@ -92,7 +91,6 @@ export async function DELETE(
       ? id
       : `gid://shopify/Collection/${id}`
 
-    // Obtener las publicaciones disponibles
     const publicationsResponse = await makeAdminApiRequest<{
       publications: { edges: { node: { id: string; name: string } }[] }
     }>(GET_PUBLICATIONS_QUERY, {})

@@ -36,15 +36,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     console.log('🔍 DEBUG - PATCH endpoint recibido:', { body, id })
 
-    // Si se está actualizando isActive, usar el método separado
     if (body.isActive !== undefined) {
       console.log('🔍 DEBUG - Cambiando estado isActive:', body.isActive)
       await shopifyDiscountService.toggleDiscountStatus(id, body.isActive)
-      // Remover isActive del body para la actualización normal
+
       delete body.isActive
     }
 
-    // Actualizar otros campos si hay alguno (excluyendo endsAt si se cambió isActive)
     if (Object.keys(body).length > 0) {
       console.log('🔍 DEBUG - Actualizando otros campos:', body)
       const discount = await shopifyDiscountService.updateDiscount({
@@ -54,7 +52,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json(discount)
     }
 
-    // Si solo se actualizó isActive, devolver el descuento actualizado
     console.log('🔍 DEBUG - Solo se cambió isActive, obteniendo descuento actualizado')
     const discount = await shopifyDiscountService.getDiscount(id)
     return NextResponse.json(discount)

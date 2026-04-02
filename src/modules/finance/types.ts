@@ -1,6 +1,5 @@
 import type { FinancialEntryStatus, FinancialEntryType } from '@prisma/client'
 
-// Tipos base para entidades financieras
 export interface BankAccount {
   id: string
   name: string
@@ -39,7 +38,6 @@ export interface FinancialEntry {
   event?: Event
 }
 
-// Tipos para usuarios del sistema financiero
 export interface User {
   id: string
   email: string
@@ -71,7 +69,6 @@ export interface Event {
   date?: string
 }
 
-// Tipos para reportes financieros
 export interface IncomeStatement {
   totalIncome: number
   totalExpense: number
@@ -112,7 +109,6 @@ export interface GlobalSummary {
   }
 }
 
-// Tipos para respuestas de API
 export interface ApiResponse<T> {
   data?: T
   error?: string
@@ -135,7 +131,6 @@ export interface FinancialReportResponse {
   generatedAt: string
 }
 
-// Tipos para filtros y parámetros
 export interface DateRange {
   startDate?: string
   endDate?: string
@@ -155,7 +150,6 @@ export interface ReportFilters extends DateRange {
   userId?: string
 }
 
-// Tipos para formularios
 export interface CreateBankAccountData {
   name: string
   bankName?: string
@@ -190,10 +184,8 @@ export interface CreateFinancialEntryData {
 
 export type UpdateFinancialEntryData = Partial<CreateFinancialEntryData>
 
-// Enums para tipos de reporte
 export type ReportType = 'income-statement' | 'cash-flow' | 'balance-sheet' | 'global-summary'
 
-// Tipos para estadísticas
 export interface FinancialStatistics {
   totalEntries: number
   pendingEntries: number

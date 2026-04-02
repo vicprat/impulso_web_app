@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 
 import { processImage } from './imageProcessing'
 
-import type { ImageProcessingOptions } from './imageProcessing'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { ImageProcessingOptions } from './imageProcessing'
 
 let supabase: SupabaseClient
 
@@ -45,7 +45,7 @@ export async function uploadImageToSupabase(
 
   try {
     const client = getSupabaseClient()
-    // Procesar la imagen
+
     const processedImage = await processImage(fileBuffer, originalFilename, {
       format,
       maxHeight,
@@ -53,11 +53,9 @@ export async function uploadImageToSupabase(
       quality,
     })
 
-    // Generar nombre único para el archivo
     const uniqueFilename = `${folder}/${processedImage.filename}`
     const filePath = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}_${uniqueFilename}`
 
-    // Subir a Supabase Storage
     const { data, error } = await client.storage
       .from(bucket)
       .upload(filePath, processedImage.buffer, {
@@ -69,10 +67,7 @@ export async function uploadImageToSupabase(
       throw new Error(`Error al subir a Supabase: ${error.message}`)
     }
 
-    // Obtener URL pública
-    const { data: urlData } = client.storage
-      .from(bucket)
-      .getPublicUrl(filePath)
+    const { data: urlData } = client.storage.from(bucket).getPublicUrl(filePath)
 
     return {
       filename: processedImage.filename,
@@ -81,16 +76,12 @@ export async function uploadImageToSupabase(
       url: urlData.publicUrl,
     }
   } catch (error) {
-    throw new Error(`Error en uploadImageToSupabase: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+    throw new Error(
+      `Error en uploadImageToSupabase: ${error instanceof Error ? error.message : 'Error desconocido'}`
+    )
   }
 }
 
-/**
- * Sube una imagen de perfil a Supabase
- * @param fileBuffer - Buffer del archivo original
- * @param originalFilename - Nombre original del archivo
- * @returns URL pública de la imagen subida
- */
 export async function uploadProfileImage(
   fileBuffer: ArrayBuffer,
   originalFilename: string
@@ -105,12 +96,6 @@ export async function uploadProfileImage(
   })
 }
 
-/**
- * Sube una imagen de fondo a Supabase
- * @param fileBuffer - Buffer del archivo original
- * @param originalFilename - Nombre original del archivo
- * @returns URL pública de la imagen subida
- */
 export async function uploadBackgroundImage(
   fileBuffer: ArrayBuffer,
   originalFilename: string
@@ -125,12 +110,6 @@ export async function uploadBackgroundImage(
   })
 }
 
-/**
- * Sube una imagen de blog a Supabase
- * @param fileBuffer - Buffer del archivo original
- * @param originalFilename - Nombre original del archivo
- * @returns URL pública de la imagen subida
- */
 export async function uploadBlogImage(
   fileBuffer: ArrayBuffer,
   originalFilename: string
@@ -145,21 +124,13 @@ export async function uploadBlogImage(
   })
 }
 
-/**
- * Elimina una imagen de Supabase Storage
- * @param filePath - Ruta del archivo a eliminar
- * @param bucket - Bucket donde está el archivo
- * @returns true si se eliminó correctamente
- */
 export async function deleteImageFromSupabase(
   filePath: string,
   bucket = 'images'
 ): Promise<boolean> {
   try {
     const client = getSupabaseClient()
-    const { error } = await client.storage
-      .from(bucket)
-      .remove([filePath])
+    const { error } = await client.storage.from(bucket).remove([filePath])
 
     if (error) {
       throw new Error(`Error al eliminar de Supabase: ${error.message}`)
@@ -172,27 +143,16 @@ export async function deleteImageFromSupabase(
   }
 }
 
-/**
- * Lista todas las imágenes en una carpeta
- * @param folder - Carpeta a listar
- * @param bucket - Bucket donde buscar
- * @returns Lista de archivos
- */
-export async function listImagesInFolder(
-  folder: string,
-  bucket = 'images'
-): Promise<string[]> {
+export async function listImagesInFolder(folder: string, bucket = 'images'): Promise<string[]> {
   try {
     const client = getSupabaseClient()
-    const { data, error } = await client.storage
-      .from(bucket)
-      .list(folder)
+    const { data, error } = await client.storage.from(bucket).list(folder)
 
     if (error) {
       throw new Error(`Error al listar archivos: ${error.message}`)
     }
 
-    return data?.map(file => file.name) || []
+    return data?.map((file) => file.name) || []
   } catch (error) {
     console.error('Error listando imágenes:', error)
     return []

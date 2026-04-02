@@ -18,10 +18,8 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       <Header.Public />
       <GradientBackground className='absolute inset-0' />
 
-      {/* Large animated spheres */}
       <AnimatedSpheres className='absolute inset-0' />
 
-      {/* Floating particles */}
       <FloatingParticles
         config={{
           color: 'bg-gray-800/50 dark:bg-white/75',
@@ -31,11 +29,9 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         }}
       />
 
-      {/* Mobile Layout */}
       <div className='relative flex min-h-screen flex-col justify-center overflow-hidden lg:hidden'>
         <div className='relative z-10 p-4 md:p-8'>
           <div className='mx-auto max-w-sm'>
-            {/* Logo for mobile */}
             <div className='mb-8 text-center'>
               <h1 className='mb-2 text-2xl font-bold'>Bienvenido</h1>
               <p className=' text-sm'>Accede a tu cuenta</p>
@@ -46,7 +42,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             <div className='mt-6 text-center'>
               <p className='text-sm text-gray-400'>
                 ¿Necesitas ayuda?{' '}
-                {/* TODO: ROUTING - Handle mailto links if they should be part of ROUTES */}
                 <Link
                   href={`mailto:${CONTACT.EMAIL_SUPPORT}`}
                   className='font-semibold text-orange-400 transition-colors hover:text-orange-300'
@@ -59,11 +54,8 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         </div>
       </div>
 
-      {/* Desktop Layout */}
       <div className='hidden min-h-screen lg:flex'>
-        {/* Left Panel - Welcome Section */}
         <div className='relative flex w-1/2 items-center justify-center overflow-hidden'>
-          {/* Content */}
           <div className='relative z-10 max-w-lg px-12'>
             <div className='mb-8'>
               <div className='relative mb-6 inline-block'>
@@ -81,7 +73,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                 Si tienes alguna duda o problema para acceder a tu cuenta, contáctanos y te
                 ayudaremos.
               </p>
-              {/* TODO: ROUTING - Handle mailto links if they should be part of ROUTES */}
               <Link href={`mailto:${CONTACT.EMAIL_SUPPORT}`}>
                 <Button className='w-full font-semibold text-white '>Contactar Soporte</Button>
               </Link>
@@ -89,7 +80,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           </div>
         </div>
 
-        {/* Right Panel - Form Section */}
         <div className='relative flex w-1/2 items-center justify-center overflow-hidden p-8'>
           <div className='relative z-10 w-full max-w-md'>
             {children}

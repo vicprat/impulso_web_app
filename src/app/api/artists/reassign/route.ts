@@ -24,14 +24,12 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // Desvincular al usuario anterior (si existe)
       const previousUser = await tx.user.findFirst({ where: { artistId: artist.id } })
 
       if (previousUser) {
         await tx.user.update({ data: { artistId: null }, where: { id: previousUser.id } })
       }
 
-      // Vincular artista al nuevo usuario
       const updated = await tx.user.update({
         data: { artistId: artist.id },
         include: {

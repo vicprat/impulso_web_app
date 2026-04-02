@@ -2,7 +2,6 @@ import { Suspense } from 'react'
 
 import { Client } from './Client'
 
-// Metadatos estáticos para la página de búsqueda
 export const metadata = {
   description:
     'Encuentra las obras de arte perfectas en nuestra galería. Busca por artista, estilo, técnica o palabra clave.',

@@ -42,7 +42,6 @@ export function StructuredData({ data, type = 'custom' }: StructuredDataProps) {
   )
 }
 
-// Componente específico para la página de inicio
 export function HomeStructuredData() {
   return (
     <>
@@ -53,7 +52,6 @@ export function HomeStructuredData() {
   )
 }
 
-// Componente para datos estructurados de artista
 export function ArtistStructuredData({
   artist,
 }: {
@@ -80,7 +78,6 @@ export function ArtistStructuredData({
   return <StructuredData data={structuredData} />
 }
 
-// Componente para datos estructurados de producto
 export function ProductStructuredData({
   product,
 }: {
@@ -99,7 +96,6 @@ export function ProductStructuredData({
   return <StructuredData data={structuredData} />
 }
 
-// Componente para datos estructurados de evento
 export function EventStructuredData({
   event,
 }: {
@@ -118,7 +114,6 @@ export function EventStructuredData({
   return <StructuredData data={structuredData} />
 }
 
-// Componente para breadcrumbs
 export function BreadcrumbStructuredData({
   items,
 }: {
@@ -132,7 +127,6 @@ export function BreadcrumbStructuredData({
   return <StructuredData data={structuredData} />
 }
 
-// Componente para artículo
 export function ArticleStructuredData({
   article,
 }: {

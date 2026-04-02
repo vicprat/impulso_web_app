@@ -42,10 +42,8 @@ export function useBulkUpdateQueue<T = any>(
     onItemSuccess,
   } = options
 
-  // Flag para evitar múltiples llamadas a onComplete
   const hasCompletedRef = useRef(false)
 
-  // Flag para evitar iniciar procesamiento múltiples veces
   const isStartingRef = useRef(false)
 
   const [queue, setQueue] = useState<BulkUpdateQueue<T>>({
@@ -60,12 +58,10 @@ export function useBulkUpdateQueue<T = any>(
   })
 
   const addItems = useCallback((items: T[]) => {
-    // Resetear los flags cuando se agregan nuevos items
     hasCompletedRef.current = false
     isStartingRef.current = false
 
     const bulkItems: BulkUpdateItem<T>[] = items.map((item, index) => {
-      // Extraer el ID numérico de Shopify si existe, o usar el ID original
       let itemId = (item as any).id
       if (typeof itemId === 'string' && itemId.includes('gid://shopify/Product/')) {
         itemId = itemId.split('/').pop() || itemId
@@ -101,11 +97,9 @@ export function useBulkUpdateQueue<T = any>(
   }, [])
 
   const clearQueue = useCallback(() => {
-    // Resetear flags
     isStartingRef.current = false
     hasCompletedRef.current = false
 
-    // Detener cualquier procesamiento en curso
     setQueue((prev) => ({
       ...prev,
       isProcessing: false,
@@ -129,7 +123,6 @@ export function useBulkUpdateQueue<T = any>(
 
       processingItems.add(item.id)
 
-      // Marcar como procesando
       setQueue((prev) => ({
         ...prev,
         items: prev.items.map((i) =>
@@ -140,7 +133,6 @@ export function useBulkUpdateQueue<T = any>(
       try {
         await updateFunction(item.data)
 
-        // Marcar como exitoso
         setQueue((prev) => ({
           ...prev,
           items: prev.items.map((i) =>
@@ -158,7 +150,6 @@ export function useBulkUpdateQueue<T = any>(
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
 
         if (item.retryCount < maxRetries) {
-          // Reintentar - NO incrementar contadores
           setQueue((prev) => ({
             ...prev,
             items: prev.items.map((i) =>
@@ -176,7 +167,6 @@ export function useBulkUpdateQueue<T = any>(
           const productTitle = (item.data as any).title || item.id
           toast.warning(`Reintentando "${productTitle}" (${item.retryCount + 1}/${maxRetries})`)
         } else {
-          // Marcar como error definitivo - SOLO aquí incrementar contadores
           setQueue((prev) => ({
             ...prev,
             items: prev.items.map((i) =>
@@ -202,12 +192,10 @@ export function useBulkUpdateQueue<T = any>(
       } finally {
         processingItems.delete(item.id)
 
-        // Verificar si este item quedó en estado "processing" por más de 30 segundos
         setTimeout(() => {
           setQueue((prev) => {
             const currentItem = prev.items.find((i) => i.id === item.id)
-            if (currentItem && currentItem.status === 'processing') {
-              // Marcar como error si quedó colgado
+            if (currentItem?.status === 'processing') {
               return {
                 ...prev,
                 items: prev.items.map((i) =>
@@ -232,17 +220,14 @@ export function useBulkUpdateQueue<T = any>(
       }
     }
 
-    // Procesar items en lotes concurrentes de forma recursiva
     const processBatch = async () => {
-      // Obtener items pendientes del estado actual usando setQueue para acceder al estado
       setQueue((currentQueue) => {
         const pending = currentQueue.items.filter((item) => item.status === 'pending')
 
         if (pending.length === 0) {
-          // No hay items pendientes, marcar como completado
           setTimeout(() => {
             setQueue((prev) => ({ ...prev, isProcessing: false }))
-            // Solo llamar onComplete si realmente se completó todo y no se ha llamado antes
+
             if (
               currentQueue.progress.completed === currentQueue.progress.total &&
               !hasCompletedRef.current
@@ -256,11 +241,8 @@ export function useBulkUpdateQueue<T = any>(
 
         const batch = pending.slice(0, maxConcurrent)
 
-        // Procesar este lote
         void Promise.all(batch.map(processItem)).then(() => {
-          // Después de procesar este lote, verificar si hay más
           setTimeout(() => {
-            // Solo continuar si aún hay items pendientes y no se ha detenido el procesamiento
             setQueue((currentState) => {
               if (!currentState.isProcessing) {
                 return currentState
@@ -272,7 +254,7 @@ export function useBulkUpdateQueue<T = any>(
                 void processBatch()
               } else {
                 setQueue((prev) => ({ ...prev, isProcessing: false }))
-                // Solo llamar onComplete si no se ha llamado antes
+
                 if (!hasCompletedRef.current) {
                   hasCompletedRef.current = true
                   onComplete?.(currentState)
@@ -287,7 +269,6 @@ export function useBulkUpdateQueue<T = any>(
       })
     }
 
-    // Iniciar el procesamiento
     void processBatch()
   }, [
     updateFunction,
@@ -300,21 +281,17 @@ export function useBulkUpdateQueue<T = any>(
   ])
 
   const processQueue = useCallback(() => {
-    // Verificar y establecer el flag de inicio ANTES de cualquier otra cosa
     if (isStartingRef.current) {
       return
     }
 
-    // Marcar inmediatamente que se está iniciando
     isStartingRef.current = true
 
-    // Programar el setTimeout UNA SOLA VEZ aquí, FUERA de setQueue
     setTimeout(() => {
       isStartingRef.current = false
       startProcessing()
     }, 10)
 
-    // Actualizar el estado
     setQueue((prev) => {
       if (prev.isProcessing) {
         return prev

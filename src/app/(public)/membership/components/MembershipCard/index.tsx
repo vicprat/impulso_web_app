@@ -66,7 +66,6 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
         </motion.div>
 
         <div className='grid grid-cols-1 items-center gap-12 lg:grid-cols-2'>
-          {/* Left Content */}
           <motion.div
             variants={slideUp}
             initial='initial'
@@ -84,7 +83,6 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
             </Button>
           </motion.div>
 
-          {/* Right Content - Membership Card */}
           <motion.div
             variants={slideUp}
             initial='initial'

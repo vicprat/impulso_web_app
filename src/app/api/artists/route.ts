@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
       where: { name: vendorName },
     })
 
-    // Si el artista existe pero no está asignado a ningún usuario, podemos reutilizarlo
     if (existingArtist && !existingArtist.user) {
       // OK: vendor libre
     } else if (existingArtist && existingArtist.user) {
@@ -69,10 +68,8 @@ export async function POST(request: NextRequest) {
       let artistToUse
 
       if (existingArtist && !existingArtist.user) {
-        // Reutilizar artista existente que no está asignado
         artistToUse = existingArtist
       } else {
-        // Crear nuevo artista
         artistToUse = await tx.artist.create({
           data: {
             artistType: artistType as 'IMPULSO' | 'COLLECTIVE',
@@ -86,13 +83,11 @@ export async function POST(request: NextRequest) {
         throw new Error("El rol 'artist' no se encuentra en la base de datos.")
       }
 
-      // Actualizar el usuario con la relación al artista (si ya tenía uno, reemplazar)
       await tx.user.update({
         data: { artistId: artistToUse.id },
         where: { id: userId },
       })
 
-      // Eliminar roles existentes y asignar el rol de artista
       await tx.userRole.deleteMany({
         where: { userId },
       })
@@ -136,12 +131,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(transformedUser)
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Error al crear el perfil de artista:', error)
 
-    // Manejar errores específicos de Prisma
     if (error instanceof Error) {
       if (error.message.includes("El rol 'artist' no se encuentra")) {
         return NextResponse.json({ error: error.message }, { status: 500 })

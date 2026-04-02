@@ -1,12 +1,12 @@
 'use client'
 
 import {
+  closestCenter,
   DndContext,
   type DragEndEvent,
   PointerSensor,
   useSensor,
   useSensors,
-  closestCenter,
 } from '@dnd-kit/core'
 import {
   arrayMove,
@@ -34,7 +34,6 @@ import {
 import { PLATFORMS } from '@/config/platforms'
 import { useUserProfile } from '@/modules/user/hooks/useUserProfile'
 
-// --- SortableLinkItem Component ---
 interface SortableLinkItemProps {
   link: LinkType
   isEditing: boolean
@@ -144,7 +143,6 @@ const SortableLinkItem = ({
   )
 }
 
-// --- Main Links Component ---
 export const Links = () => {
   const [newLinkUrl, setNewLinkUrl] = useState('')
   const [selectedPlatform, setSelectedPlatform] = useState(PLATFORMS[0].id)

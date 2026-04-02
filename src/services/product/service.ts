@@ -79,7 +79,6 @@ async function getProducts(
     validateSession(session)
   }
 
-  // Admin siempre usa el cache completo para filtrar/ordenar sobre TODOS los productos
   const reverse = params.sortOrder === 'desc'
   const manualSortField = params.sortBy ?? 'title'
   const limit = params.limit ? parseInt(String(params.limit), 10) : 10
@@ -95,18 +94,13 @@ async function getProductsWithManualSorting(
   manualSortField: string,
   scope: 'storefront' | 'admin' = 'storefront'
 ): Promise<PaginatedProductsResponse> {
-  // 1. Obtener TODOS los productos desde el caché (full catalog)
-  // Esto es mucho más rápido que paginar contra Shopify API cada vez
   let allProducts = await CacheManager.getFullCatalog(scope)
 
-  // Transformar a instancias de Product si vienen del caché como objetos planos
   const locationId = await getPrimaryLocationId()
   allProducts = allProducts.map((p: any) => {
     if (p instanceof Product) return p
 
-    // Si ya tiene la estructura de Product (ej: images es array), lo hidratamos como instancia sin usar el constructor que espera estructura de Shopify
     if (Array.isArray(p.images) && !p.images.edges) {
-      // Si tiene artworkDetails directo del cache, usarlo; si no, crear Product normalmente
       if (p.artworkDetails) {
         const instance = Object.create(Product.prototype)
         return Object.assign(instance, p)
@@ -116,8 +110,6 @@ async function getProductsWithManualSorting(
     return new Product(p, locationId)
   })
 
-  // 2. Aplicar filtros base (los que Shopify haría nativamente) en memoria
-  // Esto es necesario porque getFullCatalog devuelve TODO, sin filtrar por status/vendor/etc
   if (params.status) {
     allProducts = allProducts.filter((p) => p.status === params.status)
   }
@@ -130,12 +122,10 @@ async function getProductsWithManualSorting(
     allProducts = allProducts.filter((p) => artworkTypes.includes(p.productType))
   }
 
-  // 3. Aplicar Búsqueda de Texto (si existe) usando matchesSearch
   if (params.search?.trim()) {
     allProducts = allProducts.filter((p) => matchesSearch(p, params.search!))
   }
 
-  // 4. Aplicar filtros de Metafields
   if (params.technique?.trim()) {
     const techniques = params.technique.split(',').map((t) => t.trim().toLowerCase())
     allProducts = allProducts.filter((p) =>
@@ -170,7 +160,6 @@ async function getProductsWithManualSorting(
     })
   }
 
-  // 5. Aplicar filtros de Precio
   if (params.priceMin !== undefined) {
     allProducts = allProducts.filter((p) => {
       const price = parseFloat(p.variants[0]?.price.amount ?? '0')
@@ -184,17 +173,14 @@ async function getProductsWithManualSorting(
     })
   }
 
-  // 6. Ordenamiento Manual
   allProducts.sort((a: Product, b: Product) => {
     let valA: any = ''
     let valB: any = ''
 
-    // Usar sortBy si manualSortField está vacío (fallback)
     const effectiveSortField = manualSortField || params.sortBy || 'title'
 
     switch (effectiveSortField) {
       case 'id':
-        // Extraer número del ID
         valA = parseInt(a.id.split('/').pop() || '0', 10)
         valB = parseInt(b.id.split('/').pop() || '0', 10)
         break
@@ -251,7 +237,6 @@ async function getProductsWithManualSorting(
         valB = new Date(b.updatedAt).getTime()
         break
       case 'inventoryQuantity':
-        // Sumar inventario de variantes
         valA = a.variants.reduce((acc: number, v: any) => acc + (v.inventoryQuantity || 0), 0)
         valB = b.variants.reduce((acc: number, v: any) => acc + (v.inventoryQuantity || 0), 0)
         break
@@ -260,7 +245,6 @@ async function getProductsWithManualSorting(
         valB = b.title.toLowerCase()
     }
 
-    // Usar localeCompare para strings (manejo correcto de acentos: Á junto a A, Ñ después de N)
     if (typeof valA === 'string' && typeof valB === 'string') {
       const cmp = valA.localeCompare(valB, 'es', { sensitivity: 'base' })
       return reverse ? -cmp : cmp
@@ -271,7 +255,6 @@ async function getProductsWithManualSorting(
     return 0
   })
 
-  // 7. Paginación en memoria
   let startIndex = 0
   if (params.cursor) {
     try {
@@ -310,10 +293,8 @@ async function getProductStats(search?: string, session?: AuthSession) {
     throw new Error('Session is required')
   }
 
-  // Usar el cache completo en lugar de paginar contra Shopify cada vez
   const allProducts = await CacheManager.getFullCatalog('admin')
 
-  // Hidratar a instancias de Product
   const locationId = await getPrimaryLocationId()
   let products: Product[] = allProducts.map((p: any) => {
     if (p instanceof Product) return p
@@ -324,7 +305,6 @@ async function getProductStats(search?: string, session?: AuthSession) {
     return new Product(p, locationId)
   })
 
-  // Obtener información del usuario para verificar si es artista
   const user = await prisma.user.findUnique({
     include: {
       UserRole: {
@@ -338,7 +318,6 @@ async function getProductStats(search?: string, session?: AuthSession) {
     where: { id: session.user.id },
   })
 
-  // Si el usuario es artista, filtrar solo sus productos
   const isArtist =
     user?.UserRole?.some((ur) => ur.role.name === 'artist') || user?.role?.name === 'artist'
 
@@ -346,7 +325,6 @@ async function getProductStats(search?: string, session?: AuthSession) {
     products = products.filter((p) => p.vendor === user.artist!.name)
   }
 
-  // Aplicar filtro de búsqueda si existe
   if (search?.trim()) {
     products = products.filter((p) => matchesSearch(p, search))
   }
@@ -375,7 +353,6 @@ async function getProductById(id: string, session: AuthSession): Promise<Product
   const locationId = await getPrimaryLocationId()
   const product = new Product(response.product, locationId)
 
-  // Verificar si el usuario es artista y si el producto le pertenece
   const user = await prisma.user.findUnique({
     include: {
       UserRole: {
@@ -389,7 +366,6 @@ async function getProductById(id: string, session: AuthSession): Promise<Product
     where: { id: session.user.id },
   })
 
-  // Si el usuario es artista, verificar que el producto sea suyo
   const isArtist =
     user?.UserRole?.some((ur) => ur.role.name === 'artist') || user?.role?.name === 'artist'
 
@@ -438,7 +414,6 @@ async function getProductsFromRequest(
 ): Promise<PaginatedProductsResponse> {
   const { searchParams } = new URL(request.url)
 
-  // Obtener información del usuario para verificar si es artista
   const user = await prisma.user.findUnique({
     include: {
       UserRole: {
@@ -468,7 +443,6 @@ async function getProductsFromRequest(
     vendor: searchParams.get('vendor') ?? undefined,
   }
 
-  // Si el usuario es artista, establecer automáticamente su vendor
   const isArtist =
     user?.UserRole?.some((ur) => ur.role.name === 'artist') || user?.role?.name === 'artist'
 
@@ -526,7 +500,6 @@ async function createProduct(
 
   const newProductData = response.productCreate.product
 
-  // Crear metafields para los detalles de la obra si se proporcionan
   if (payload.details) {
     try {
       const metafields = Object.entries(payload.details)
@@ -543,7 +516,6 @@ async function createProduct(
       }
     } catch (metafieldError) {
       console.error('Error al crear metafields para detalles de la obra:', metafieldError)
-      // No lanzar error aquí para no interrumpir la creación del producto
     }
   }
 
@@ -580,14 +552,13 @@ async function createProduct(
   if (payload.inventoryQuantity && payload.inventoryQuantity > 0) {
     const defaultVariant = newProductData.variants.edges[0]?.node
     try {
-      // Primero, activar el tracking de inventario para la variante
       const variantUpdatePayload = {
         productId: newProductData.id,
         variants: [
           {
             id: defaultVariant.id,
             inventoryItem: { tracked: true },
-            inventoryPolicy: 'DENY', // No permitir venta cuando no hay stock
+            inventoryPolicy: 'DENY',
           },
         ],
       }
@@ -625,7 +596,6 @@ async function createProduct(
           inventoryUpdatePayload
         )
 
-        // Revalidar cache manualmente después de crear producto con inventario
         try {
           const revalidationResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
             body: JSON.stringify({
@@ -699,7 +669,6 @@ async function createProduct(
     throw new Error('Error al obtener el producto creado')
   }
 
-  // Registrar ubicación inicial si se proporcionó
   if (payload.details?.location) {
     try {
       let locationIdToTrack: string | null = null
@@ -722,7 +691,7 @@ async function createProduct(
       console.error('Error tracking initial location:', locationError)
     }
   }
-  // Invalidar el full catalog cache para que el nuevo producto aparezca inmediatamente
+
   await CacheManager.revalidateFullCatalog()
 
   return finalProduct
@@ -818,7 +787,6 @@ async function addImagesToProduct(
 async function deleteImagesFromProduct(productId: string, imageIds: string[]) {
   if (imageIds.length === 0) return
 
-  // Eliminar imágenes una por una para manejar errores individuales
   const results = []
   for (const imageId of imageIds) {
     try {
@@ -842,7 +810,7 @@ async function deleteImagesFromProduct(productId: string, imageIds: string[]) {
         }
       }>(PRODUCT_DELETE_MEDIA_MUTATION, {
         mediaIds: [imageId],
-        productId, // Solo una imagen a la vez
+        productId,
       })
 
       if (response.productDeleteMedia.mediaUserErrors.length > 0) {
@@ -868,7 +836,6 @@ async function deleteImagesFromProduct(productId: string, imageIds: string[]) {
     }
   }
 
-  // Log de resultados
   const successful = results.filter((r) => r.success)
   const failed = results.filter((r) => !r.success)
 
@@ -879,7 +846,6 @@ async function deleteImagesFromProduct(productId: string, imageIds: string[]) {
     )
   }
 
-  // No lanzar error si al menos algunas imágenes se eliminaron
   if (successful.length === 0 && failed.length > 0) {
     throw new Error(
       `No se pudo eliminar ninguna imagen. Errores: ${failed.map((f) => f.error).join(', ')}`
@@ -936,9 +902,6 @@ async function updateProduct(
   const { updatePayload } = existingProduct.toShopifyInput()
   const { variants, ...productUpdateInput } = updatePayload.input
 
-  // Remover la lógica de imágenes del productUpdate ya que no es un campo válido
-  // Las imágenes se manejarán por separado después de la actualización del producto
-
   const productUpdateResponse = await makeAdminApiRequest<ProductMutationResponse<'productUpdate'>>(
     UPDATE_PRODUCT_MUTATION,
     { input: productUpdateInput }
@@ -948,7 +911,6 @@ async function updateProduct(
     throw new Error(productUpdateResponse.productUpdate.userErrors.map((e) => e.message).join(', '))
   }
 
-  // Track si hubo cambios en variantes para decidir si re-fetchear el producto
   let hadVariantChanges = false
 
   if (variants.length > 0) {
@@ -989,14 +951,13 @@ async function updateProduct(
     if (payload.inventoryQuantity !== undefined) {
       hadVariantChanges = true
       try {
-        // Primero, activar el tracking de inventario para la variante
         const variantUpdatePayload = {
           productId: existingProduct.id,
           variants: [
             {
               id: variant.id,
               inventoryItem: { tracked: true },
-              inventoryPolicy: 'DENY', // No permitir venta cuando no hay stock
+              inventoryPolicy: 'DENY',
             },
           ],
         }
@@ -1041,7 +1002,6 @@ async function updateProduct(
             )
           }
 
-          // Revalidar cache manualmente después de actualizar inventario
           try {
             await fetch(`${process.env.NEXTAUTH_URL}/api/revalidate`, {
               body: JSON.stringify({
@@ -1055,7 +1015,7 @@ async function updateProduct(
               method: 'POST',
             })
           } catch {
-            // Silenciar errores de revalidación
+            //error
           }
         }
       } catch (inventoryError) {
@@ -1066,27 +1026,22 @@ async function updateProduct(
 
   const locationId = await getPrimaryLocationId()
 
-  // Manejar la adición de nuevas imágenes si se proporcionan
   if (payload.images && payload.images.length > 0) {
     try {
       await addImagesToProduct(existingProduct.id, payload.images)
     } catch (imageError) {
       console.error('Error al agregar imágenes al producto:', imageError)
-      // No lanzar error aquí para no interrumpir la actualización del producto
     }
   }
 
-  // Manejar la eliminación de imágenes si se proporcionan
   if (payload.imagesToDelete && payload.imagesToDelete.length > 0) {
     try {
       await deleteImagesFromProduct(existingProduct.id, payload.imagesToDelete)
     } catch (imageError) {
       console.error('Error al eliminar imágenes del producto:', imageError)
-      // No lanzar error aquí para no interrumpir la actualización del producto
     }
   }
 
-  // Registrar cambio de ubicación si se proporcionó una nueva
   if (payload.details?.location !== undefined) {
     try {
       let locationIdToTrack: string | null = null
@@ -1112,7 +1067,6 @@ async function updateProduct(
     }
   }
 
-  // Invalidar el full catalog cache después de cualquier cambio
   console.info(`📦 updateProduct: Invalidating cache for product ${payload.id}`)
   await CacheManager.revalidateFullCatalog()
 
@@ -1141,7 +1095,7 @@ async function updateProduct(
             collectionUpdateResponse.collectionAddProducts.userErrors
           )
         } else {
-          hadVariantChanges = true // force refetch to include new collection format
+          hadVariantChanges = true
         }
       }
     } catch (e) {
@@ -1149,8 +1103,6 @@ async function updateProduct(
     }
   }
 
-  // Si hubo cambios en variantes (precio, inventario), re-fetchear el producto
-  // para devolver datos actualizados (el productUpdate response no incluye esos cambios)
   if (hadVariantChanges) {
     const freshProduct = await getProductById(payload.id, session)
     if (freshProduct) return freshProduct
@@ -1235,10 +1187,10 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
     params.priceMin !== undefined ||
     params.priceMax !== undefined
 
-  let sortKey = 'TITLE' // Default sort key
-  let reverse = false // Default sort order
-  let useManualSorting = false // Flag para usar sorting manual
-  let manualSortField = '' // Campo para sorting manual
+  let sortKey = 'TITLE'
+  let reverse = false
+  let useManualSorting = false
+  let manualSortField = ''
 
   if (params.sortBy) {
     switch (params.sortBy) {
@@ -1282,9 +1234,6 @@ async function getProductsPublic(params: GetProductsParams): Promise<PaginatedPr
 
   const limit = params.limit ? parseInt(String(params.limit), 10) : 10
 
-  // Siempre usar el flujo de caché para mantener consistencia con los filtros
-  // El caché garantiza que los conteos y resultados sean idénticos
-  // Paginar en memoria es más eficiente que usar cursores de Shopify
   return await getProductsWithManualSorting(
     params,
     shopifyQuery,

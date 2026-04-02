@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const file = formData.get('file') as File | null
-    const type = (formData.get('type') as string) || 'general' // 'profile', 'background', 'blog', 'general'
+    const type = (formData.get('type') as string) || 'general'
 
     if (!file) {
       return NextResponse.json({ error: 'No se ha proporcionado ningún archivo.' }, { status: 400 })
@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
 
     let result
 
-    // Usar función específica según el tipo de imagen
     switch (type) {
       case 'profile':
         result = await uploadProfileImage(fileBuffer, file.name)
@@ -32,7 +31,7 @@ export async function POST(request: NextRequest) {
         result = await uploadBlogImage(fileBuffer, file.name)
         break
       default:
-        // Upload general con opciones personalizadas
+
         result = await uploadImageToSupabase(fileBuffer, file.name, {
           bucket: 'images',
           folder: 'general',
@@ -69,4 +68,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

@@ -21,13 +21,13 @@ export const useAdminUserProfile = (userId: string) => {
   const profileQuery = useQuery({
     enabled: !!userId,
     queryFn: () => fetchUserProfile(userId),
-    queryKey: [ 'admin', 'user', userId, 'profile' ],
+    queryKey: ['admin', 'user', userId, 'profile'],
   })
 
   const linksQuery = useQuery({
     enabled: !!userId,
     queryFn: () => fetchUserLinks(userId),
-    queryKey: [ 'admin', 'user', userId, 'links' ],
+    queryKey: ['admin', 'user', userId, 'links'],
   })
 
   const updateProfileMutation = useMutation({
@@ -46,9 +46,9 @@ export const useAdminUserProfile = (userId: string) => {
       })
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'user', userId, 'profile' ] })
-      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'users' ] })
-      void queryClient.invalidateQueries({ queryKey: [ 'user', userId ] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'user', userId, 'profile'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+      void queryClient.invalidateQueries({ queryKey: ['user', userId] })
       toast.success('Perfil del usuario actualizado correctamente')
     },
   })
@@ -69,13 +69,19 @@ export const useAdminUserProfile = (userId: string) => {
       })
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'user', userId, 'links' ] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'user', userId, 'links'] })
       toast.success('Link del usuario creado correctamente')
     },
   })
 
   const updateLinkMutation = useMutation({
-    mutationFn: async ({ data, linkId }: { linkId: string; data: { platform: string; url: string } }) => {
+    mutationFn: async ({
+      data,
+      linkId,
+    }: {
+      linkId: string
+      data: { platform: string; url: string }
+    }) => {
       const response = await fetch(`/api/admin/users/${userId}/links/${linkId}`, {
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
@@ -90,7 +96,7 @@ export const useAdminUserProfile = (userId: string) => {
       })
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'user', userId, 'links' ] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'user', userId, 'links'] })
       toast.success('Link del usuario actualizado correctamente')
     },
   })
@@ -109,7 +115,7 @@ export const useAdminUserProfile = (userId: string) => {
       })
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'user', userId, 'links' ] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'user', userId, 'links'] })
       toast.success('Link del usuario eliminado correctamente')
     },
   })
@@ -130,7 +136,7 @@ export const useAdminUserProfile = (userId: string) => {
       })
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [ 'admin', 'user', userId, 'links' ] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'user', userId, 'links'] })
       toast.success('Orden de los links del usuario actualizado')
     },
   })
@@ -138,24 +144,22 @@ export const useAdminUserProfile = (userId: string) => {
   return {
     createLink: createLinkMutation.mutateAsync,
     deleteLink: deleteLinkMutation.mutateAsync,
-    
-isCreatingLink: createLinkMutation.isPending,
-    
 
-isDeletingLink: deleteLinkMutation.isPending,
-    
-    
-isLinksLoading: linksQuery.isLoading,
-    
-isProfileLoading: profileQuery.isLoading,
-    
-isUpdatingLink: updateLinkMutation.isPending,
-    
-isUpdatingLinksOrder: updateLinksOrderMutation.isPending,
-    
-isUpdatingProfile: updateProfileMutation.isPending,
-    // Links functionality
-links: linksQuery.data,
+    isCreatingLink: createLinkMutation.isPending,
+
+    isDeletingLink: deleteLinkMutation.isPending,
+
+    isLinksLoading: linksQuery.isLoading,
+
+    isProfileLoading: profileQuery.isLoading,
+
+    isUpdatingLink: updateLinkMutation.isPending,
+
+    isUpdatingLinksOrder: updateLinksOrderMutation.isPending,
+
+    isUpdatingProfile: updateProfileMutation.isPending,
+
+    links: linksQuery.data,
     profile: profileQuery.data,
     updateLink: updateLinkMutation.mutateAsync,
     updateLinksOrder: updateLinksOrderMutation.mutateAsync,

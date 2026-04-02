@@ -33,7 +33,6 @@ import {
 } from '@/components/ui/select'
 import { PLATFORMS } from '@/config/platforms'
 
-// --- SortableLinkItem Component ---
 interface SortableLinkItemProps {
   link: LinkType
   isEditing: boolean
@@ -71,7 +70,7 @@ const SortableLinkItem = ({
 
   const platform = useMemo(
     () => PLATFORMS.find((p) => p.id === link.platform) || PLATFORMS.find((p) => p.id === 'custom'),
-    [ link.platform ]
+    [link.platform]
   )
 
   return (
@@ -143,7 +142,6 @@ const SortableLinkItem = ({
   )
 }
 
-// --- Main AdminLinks Component ---
 interface AdminLinksProps {
   userId: string
   links: LinkType[]
@@ -171,17 +169,17 @@ export const AdminLinks = ({
   onUpdateLinksOrder,
   userId,
 }: AdminLinksProps) => {
-  const [ newLinkUrl, setNewLinkUrl ] = useState('')
-  const [ selectedPlatform, setSelectedPlatform ] = useState(PLATFORMS[ 0 ].id)
-  const [ editingLinkId, setEditingLinkId ] = useState<string | null>(null)
-  const [ editedLinkUrl, setEditedLinkUrl ] = useState('')
-  const [ orderedLinks, setOrderedLinks ] = useState<LinkType[]>([])
+  const [newLinkUrl, setNewLinkUrl] = useState('')
+  const [selectedPlatform, setSelectedPlatform] = useState(PLATFORMS[0].id)
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null)
+  const [editedLinkUrl, setEditedLinkUrl] = useState('')
+  const [orderedLinks, setOrderedLinks] = useState<LinkType[]>([])
 
   useEffect(() => {
     if (links) {
       setOrderedLinks(links)
     }
-  }, [ links ])
+  }, [links])
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 

@@ -5,15 +5,15 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
-import type { FinancialEntryFilters } from '@/src/modules/finance'
-import type { FinancialEntryStatus, FinancialEntryType } from '@prisma/client'
-
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useDeleteFinancialEntry, useFinancialEntries } from '@/modules/finance/hooks'
 import { formatCurrency } from '@/src/helpers'
+
+import type { FinancialEntryFilters } from '@/src/modules/finance'
+import type { FinancialEntryStatus, FinancialEntryType } from '@prisma/client'
 
 export default function FinancialEntriesPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -116,11 +116,9 @@ export default function FinancialEntriesPage() {
         </Link>
       </div>
 
-      {/* Filtros */}
       <Card>
         <CardContent className='p-4'>
           <div className='space-y-4'>
-            {/* Búsqueda */}
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
               <Input
@@ -131,7 +129,6 @@ export default function FinancialEntriesPage() {
               />
             </div>
 
-            {/* Filtros avanzados */}
             <div className='grid gap-4 md:grid-cols-3 lg:grid-cols-6'>
               <div>
                 <label className='text-sm font-medium'>Tipo</label>
@@ -222,7 +219,6 @@ export default function FinancialEntriesPage() {
         </CardContent>
       </Card>
 
-      {/* Lista de movimientos */}
       <div className='space-y-4'>
         {filteredEntries.length === 0 ? (
           <Card>
@@ -310,7 +306,6 @@ export default function FinancialEntriesPage() {
         )}
       </div>
 
-      {/* Resumen */}
       {entries && entries.length > 0 && (
         <Card>
           <CardContent className='p-4'>

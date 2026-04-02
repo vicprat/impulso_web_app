@@ -35,4 +35,4 @@ export async function POST() {
     console.error('Error al limpiar artistas huérfanos:', error)
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
-} 
+}

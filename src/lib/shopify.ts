@@ -4,7 +4,6 @@ const apiVersion = process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION ?? '2024-10'
 const publicAccessToken = process.env.NEXT_PUBLIC_API_SHOPIFY_STOREFRONT ?? ''
 let storeDomain = process.env.NEXT_PUBLIC_SHOPIFY_STORE ?? ''
 
-// Limpiar el storeDomain removiendo el protocolo si está presente
 if (storeDomain.startsWith('https://')) {
   storeDomain = storeDomain.replace('https://', '')
 } else if (storeDomain.startsWith('http://')) {

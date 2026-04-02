@@ -84,7 +84,6 @@ export const getAllUsers = async (filters: UserFilters) => {
 
   const skip = (page - 1) * limit
 
-  // Normalizar la búsqueda eliminando acentos/diacríticos para el fallback
   const searchNormalized = search ? search.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : ''
 
   const where: Prisma.UserWhereInput = {
@@ -247,7 +246,6 @@ export const updateUserRole = async (userId: string, roleName: string) => {
     throw new Error(`Role ${roleName} not found`)
   }
 
-  // Obtener el usuario actual para verificar si es artista
   const currentUser = await prisma.user.findUnique({
     include: {
       UserRole: {
@@ -264,17 +262,14 @@ export const updateUserRole = async (userId: string, roleName: string) => {
     throw new Error(`User ${userId} not found`)
   }
 
-  // Verificar si el usuario actual es artista
   const isCurrentlyArtist = currentUser.UserRole.some((ur) => ur.role.name === 'artist')
   const willBeArtist = roleName === 'artist'
 
   await prisma.$transaction(async (tx) => {
-    // Eliminar roles actuales
     await tx.userRole.deleteMany({
       where: { userId },
     })
 
-    // Crear nuevo rol
     await tx.userRole.create({
       data: {
         assignedBy: 'admin',
@@ -283,21 +278,16 @@ export const updateUserRole = async (userId: string, roleName: string) => {
       },
     })
 
-    // Si el usuario era artista y ahora no lo será, eliminar el registro del artista
     if (isCurrentlyArtist && !willBeArtist && currentUser.artist) {
       await tx.artist.delete({
         where: { id: currentUser.artist.id },
       })
 
-      // También limpiar la referencia en el usuario
       await tx.user.update({
         data: { artistId: null },
         where: { id: userId },
       })
     }
-
-    // Importante: ya no creamos automáticamente un Artist al promover a 'artist'.
-    // La asociación con un vendor se hará explícitamente mediante los endpoints de artistas.
   })
 
   return await getUserById(userId)
@@ -407,7 +397,6 @@ export const updateUserAndRelatedData = async (
 }
 
 export const cleanupOrphanedArtists = async () => {
-  // Encontrar artistas que no están asignados a ningún usuario
   const orphanedArtists = await prisma.artist.findMany({
     where: {
       user: null,

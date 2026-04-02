@@ -60,7 +60,6 @@ export const Room: React.FC<Props> = ({
   const isReadOnly = mode === 'view' || mode === 'delete'
   const isDeleteMode = mode === 'delete'
 
-  // Obtener usuarios con roles que tengan permiso view_private_rooms (todos excepto 'customer')
   const { data: usersData, isLoading: isLoadingUsers } = useUsersManagement({
     limit: 1000,
     role: [

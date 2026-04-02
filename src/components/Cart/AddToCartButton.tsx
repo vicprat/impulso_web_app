@@ -21,12 +21,12 @@ interface AddToCartButtonProps {
   showQuantitySelector?: boolean
   disabled?: boolean
   title?: {
-    primary: string // Texto principal del botón (ej: "Registrarse")
-    adding: string // Texto mientras se agrega (ej: "Registrando...")
-    addMore: string // Texto cuando ya hay items (ej: "Registrar más")
-    loginPrompt: string // Texto para login (ej: "Iniciar sesión para registrarse")
-    unavailable: string // Mensaje de no disponible (ej: "Evento no disponible")
-    alreadyInCart: string // Mensaje cuando ya está en carrito (ej: "Ya estás registrado")
+    primary: string
+    adding: string
+    addMore: string
+    loginPrompt: string
+    unavailable: string
+    alreadyInCart: string
   }
 }
 
@@ -79,28 +79,23 @@ export function AddToCartButton({
       return
     }
 
-    try {
-      await addProduct(variantToAdd.id, quantity)
+    await addProduct(variantToAdd.id, quantity)
 
-      // Shopify Analytics: Track Add to Cart
-      trackAddToCart({
-        cartId: cart?.id ?? '',
-        products: [
-          {
-            brand: product.vendor,
-            name: product.title,
-            price: variantToAdd.price.amount,
-            productGid: product.id,
-            sku: variantToAdd.sku,
-            variantGid: variantToAdd.id,
-            variantName: variantToAdd.title,
-          },
-        ],
-        totalValue: parseFloat(variantToAdd.price.amount) * quantity,
-      })
-    } catch {
-      // Error already handled by addProduct
-    }
+    trackAddToCart({
+      cartId: cart?.id ?? '',
+      products: [
+        {
+          brand: product.vendor,
+          name: product.title,
+          price: variantToAdd.price.amount,
+          productGid: product.id,
+          sku: variantToAdd.sku,
+          variantGid: variantToAdd.id,
+          variantName: variantToAdd.title,
+        },
+      ],
+      totalValue: parseFloat(variantToAdd.price.amount) * quantity,
+    })
   }
 
   const incrementQuantity = () => {

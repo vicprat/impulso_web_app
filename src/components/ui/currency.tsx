@@ -22,11 +22,9 @@ export function Currency({ amount, children, className = '', currency = 'MXN' }:
   const isPositive = amount > 0
 
   return (
-    <span 
+    <span
       className={`font-mono ${className} ${
-        isNegative ? 'text-error' : 
-        isPositive ? 'text-success' : 
-        'text-foreground'
+        isNegative ? 'text-error' : isPositive ? 'text-success' : 'text-foreground'
       }`}
     >
       {children || formattedAmount}
@@ -41,4 +39,4 @@ export function formatCurrency(amount: number, currency = 'MXN') {
     minimumFractionDigits: 2,
     style: 'currency',
   }).format(amount)
-} 
+}

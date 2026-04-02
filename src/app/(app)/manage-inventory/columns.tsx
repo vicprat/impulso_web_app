@@ -35,7 +35,6 @@ import {
 } from '@/services/product/hook'
 import { ROUTES, replaceRouteParams } from '@/src/config/routes'
 
-// Componente para la celda de descuentos (solo visualización)
 const DiscountCell = ({
   getProductDiscounts,
   isAdmin,
@@ -119,15 +118,15 @@ declare module '@tanstack/react-table' {
     handleSorting?: (columnId: string) => void
     currentSortBy?: string
     currentSortOrder?: 'asc' | 'desc'
-    // Nuevos campos para manejo de cambios acumulados
+
     editingChanges?: Record<string, any>
     updateEditingChanges?: (changes: Record<string, any>) => void
     saveAllChanges?: () => void
-    // Información del usuario para las columnas
+
     user?: any
     isAdmin?: boolean
     isArtist?: boolean
-    // Campos para bulk operations
+
     isBulkMode?: boolean
     selectedRows?: Set<string>
     onRowSelectionChange?: (id: string, selected: boolean) => void
@@ -144,7 +143,6 @@ declare module '@tanstack/react-table' {
   }
 }
 
-// Componente para edición inline de texto
 const EditableText = ({
   className = '',
   fieldName = '',
@@ -179,7 +177,7 @@ const EditableText = ({
         onChange={(e) => {
           const newValue = e.target.value
           setEditValue(newValue)
-          onUpdate(newValue) // Actualizar cambios en tiempo real
+          onUpdate(newValue)
         }}
         placeholder={placeholder}
         className={`h-8 ${className}`}
@@ -191,7 +189,6 @@ const EditableText = ({
   )
 }
 
-// Componente para edición inline de número
 const EditableNumber = ({
   className = '',
   fieldName = '',
@@ -230,7 +227,7 @@ const EditableNumber = ({
         onChange={(e) => {
           const newValue = e.target.value
           setEditValue(newValue)
-          onUpdate(newValue) // Actualizar cambios en tiempo real
+          onUpdate(newValue)
         }}
         placeholder={placeholder}
         className={`h-8 ${className}`}
@@ -242,7 +239,6 @@ const EditableNumber = ({
   )
 }
 
-// Componente para edición inline de select
 const EditableSelect = ({
   className = '',
   fieldName = '',
@@ -284,7 +280,6 @@ const EditableSelect = ({
   )
 }
 
-// Componente para edición inline de colecciones
 const EditableCollectionSelect = ({
   className = '',
   collections = [],
@@ -316,11 +311,10 @@ const EditableCollectionSelect = ({
     try {
       setSelectedCollection(collectionId)
       await onUpdate(collectionId)
-      // Limpiar la selección después de agregar
+
       setSelectedCollection('')
     } catch (error) {
       console.error('Error al agregar producto a colección:', error)
-      // Mantener la selección en caso de error para que el usuario pueda intentar de nuevo
     } finally {
       setIsAdding(false)
     }
@@ -349,7 +343,6 @@ const EditableCollectionSelect = ({
   )
 }
 
-// Componente para mostrar las colecciones de un producto
 const CollectionCell = ({
   collections = [],
   handleAddProductToCollection,
@@ -367,7 +360,6 @@ const CollectionCell = ({
 }) => {
   if (!isAdmin) return null
 
-  // Obtener las colecciones del producto (vienen en el objeto product)
   const productCollections = product.collections || []
 
   if (isEditing) {
@@ -381,7 +373,6 @@ const CollectionCell = ({
             if (handleAddProductToCollection) {
               try {
                 await handleAddProductToCollection(product.id, collectionId)
-                // No cerrar el modo de edición, permitir seguir editando otros campos
               } catch (error) {
                 console.error('Error al agregar producto a colección:', error)
               }
@@ -428,7 +419,6 @@ const CollectionCell = ({
     )
   }
 
-  // Mostrar las colecciones del producto
   if (productCollections.length === 0) {
     return <span className='text-sm text-muted-foreground'>-</span>
   }
@@ -461,7 +451,6 @@ const CollectionCell = ({
   )
 }
 
-// Componente para edición inline de medidas
 const EditableDimensions = ({
   depth,
   fieldName = '',
@@ -572,7 +561,6 @@ const EditableVendorSelect = ({
     return <Skeleton className='h-8 w-32' />
   }
 
-  // El endpoint /api/vendors devuelve un array de strings, no objetos
   const vendorOptions =
     vendors?.map((vendor: string) => ({
       label: vendor,
@@ -1132,7 +1120,6 @@ export const columns: ColumnDef<Product>[] = [
         table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentValue =
         isEditing && editingChanges?.title !== undefined ? editingChanges.title : product.title
 
@@ -1190,10 +1177,8 @@ export const columns: ColumnDef<Product>[] = [
       } = table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
-      // Los artistas no pueden cambiar el vendor (solo pueden editar sus propios productos)
       const isVendorDisabled = isArtist
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentValue =
         isEditing && editingChanges?.vendor !== undefined ? editingChanges.vendor : product.vendor
 
@@ -1246,7 +1231,6 @@ export const columns: ColumnDef<Product>[] = [
         table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentValue =
         isEditing && editingChanges?.productType !== undefined
           ? editingChanges.productType
@@ -1301,7 +1285,6 @@ export const columns: ColumnDef<Product>[] = [
         table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentValue =
         isEditing && editingChanges?.artworkDetails?.medium !== undefined
           ? editingChanges.artworkDetails.medium
@@ -1358,7 +1341,6 @@ export const columns: ColumnDef<Product>[] = [
         table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentValue =
         isEditing && editingChanges?.artworkDetails?.year !== undefined
           ? editingChanges.artworkDetails.year
@@ -1415,7 +1397,6 @@ export const columns: ColumnDef<Product>[] = [
         table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentHeight =
         isEditing && editingChanges?.artworkDetails?.height !== undefined
           ? editingChanges.artworkDetails.height
@@ -1487,7 +1468,6 @@ export const columns: ColumnDef<Product>[] = [
         table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentValue =
         isEditing && editingChanges?.artworkDetails?.serie !== undefined
           ? editingChanges.artworkDetails.serie
@@ -1544,7 +1524,6 @@ export const columns: ColumnDef<Product>[] = [
         table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentValue =
         isEditing && editingChanges?.artworkDetails?.location !== undefined
           ? editingChanges.artworkDetails.location
@@ -1601,7 +1580,6 @@ export const columns: ColumnDef<Product>[] = [
         table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentValue =
         isEditing && editingChanges?.artworkDetails?.arrendamiento !== undefined
           ? editingChanges.artworkDetails.arrendamiento
@@ -1660,7 +1638,6 @@ export const columns: ColumnDef<Product>[] = [
       const variant = product.variants[0]
       const currentPrice = variant.price.amount
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentValue =
         isEditing && editingChanges?.price !== undefined ? editingChanges.price : currentPrice
 
@@ -1717,7 +1694,6 @@ export const columns: ColumnDef<Product>[] = [
       const variant = product.variants[0]
       const currentQuantity = variant.inventoryQuantity ?? 0
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentValue =
         isEditing && editingChanges?.inventoryQuantity !== undefined
           ? editingChanges.inventoryQuantity
@@ -1779,7 +1755,6 @@ export const columns: ColumnDef<Product>[] = [
         table.options.meta ?? {}
       const isEditing = editingRowId === product.id
 
-      // Usar el valor de editingChanges si está disponible, sino el valor original del producto
       const currentValue =
         isEditing && editingChanges?.status !== undefined ? editingChanges.status : product.status
 

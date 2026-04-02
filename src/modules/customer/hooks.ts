@@ -153,7 +153,6 @@ export function useSetDefaultAddress() {
   })
 }
 
-// Fixed: Remove the extra { data: } wrapper to match the actual usage in the component
 export function useCustomerOrders(
   params?: { first?: number; after?: string; query?: string },
   options?: Omit<UseQueryOptions<CustomerOrdersResult, Error>, 'queryKey' | 'queryFn'>
@@ -203,7 +202,6 @@ export function useCustomerOrderSmart(
     'queryKey' | 'queryFn'
   >
 ) {
-  // Determinar si es un ID de Shopify o local
   const isShopifyId = orderId.startsWith('gid://shopify/Order/')
 
   return useQuery({
@@ -232,7 +230,6 @@ export function useCustomerOrderHybrid(
   })
 }
 
-// Fixed: Remove the extra wrapper to match the actual usage in the component
 export function useAllOrders(
   params?: { first?: number; after?: string; query?: string },
   options?: Omit<UseQueryOptions<AllOrdersResult, Error>, 'queryKey' | 'queryFn'>

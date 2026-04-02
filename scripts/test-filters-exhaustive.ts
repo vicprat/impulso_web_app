@@ -171,9 +171,6 @@ async function main() {
   console.log(`   - Años: ${filterOptions.years.length}`)
   console.log(`   - Otros tags: ${filterOptions.otherTags.length}`)
 
-  // ==============================================
-  // FILTROS DE PRECIO
-  // ==============================================
   console.log('\n\n')
   console.log(`╔${'═'.repeat(78)}╗`)
   console.log(`║${' '.repeat(30)}💰 FILTROS DE PRECIO${' '.repeat(29)}║`)
@@ -224,9 +221,6 @@ async function main() {
     ),
   })
 
-  // ==============================================
-  // FILTROS DE ARTISTA
-  // ==============================================
   console.log('\n\n')
   console.log(`╔${'═'.repeat(78)}╗`)
   console.log(`║${' '.repeat(29)}👤 FILTROS DE ARTISTA${' '.repeat(28)}║`)
@@ -252,9 +246,6 @@ async function main() {
     }
   }
 
-  // ==============================================
-  // FILTROS DE TIPO DE OBRA
-  // ==============================================
   console.log('\n\n')
   console.log(`╔${'═'.repeat(78)}╗`)
   console.log(`║${' '.repeat(27)}🎨 FILTROS DE TIPO DE OBRA${' '.repeat(26)}║`)
@@ -281,9 +272,6 @@ async function main() {
     })
   }
 
-  // ==============================================
-  // FILTROS DE TÉCNICA
-  // ==============================================
   console.log('\n\n')
   console.log(`╔${'═'.repeat(78)}╗`)
   console.log(`║${' '.repeat(28)}🖌️  FILTROS DE TÉCNICA${' '.repeat(27)}║`)
@@ -310,9 +298,6 @@ async function main() {
     })
   }
 
-  // ==============================================
-  // FILTROS DE AÑO
-  // ==============================================
   console.log('\n\n')
   console.log(`╔${'═'.repeat(78)}╗`)
   console.log(`║${' '.repeat(31)}📅 FILTROS DE AÑO${' '.repeat(30)}║`)
@@ -340,9 +325,6 @@ async function main() {
     })
   }
 
-  // ==============================================
-  // FILTROS DE DIMENSIONES
-  // ==============================================
   console.log('\n\n')
   console.log(`╔${'═'.repeat(78)}╗`)
   console.log(`║${' '.repeat(27)}📏 FILTROS DE DIMENSIONES${' '.repeat(27)}║`)
@@ -391,9 +373,6 @@ async function main() {
     })
   }
 
-  // ==============================================
-  // RESUMEN FINAL
-  // ==============================================
   console.log('\n\n')
   console.log(`╔${'═'.repeat(78)}╗`)
   console.log(`║${' '.repeat(30)}📊 RESUMEN FINAL${' '.repeat(33)}║`)

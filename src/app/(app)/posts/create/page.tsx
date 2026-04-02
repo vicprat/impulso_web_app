@@ -16,7 +16,9 @@ export default function BlogCreatePage() {
       <div className='space-y-6'>
         <div className='flex items-center justify-between'>
           <h1 className='text-xl font-semibold'>Crear nueva entrada</h1>
-          <a className='text-sm text-primary hover:underline' href={ROUTES.ADMIN.BLOG.MAIN.PATH}>Volver a lista</a>
+          <a className='text-sm text-primary hover:underline' href={ROUTES.ADMIN.BLOG.MAIN.PATH}>
+            Volver a lista
+          </a>
         </div>
 
         <div className='grid gap-6 md:grid-cols-3'>
@@ -25,7 +27,7 @@ export default function BlogCreatePage() {
               <CardTitle>Contenido</CardTitle>
             </CardHeader>
             <CardContent>
-              <Form.Post onSuccess={() => { /* redirección en detalle si se desea */ }} />
+              <Form.Post />
             </CardContent>
           </Card>
 
@@ -34,13 +36,20 @@ export default function BlogCreatePage() {
               <CardHeader className='flex flex-row items-center justify-between'>
                 <CardTitle>Categorías</CardTitle>
                 <Permission permission={PERMISSIONS.MANAGE_ALL_BLOG_POSTS}>
-                  <Dialog.Form onOpenChange={categoryDialog.onOpenChange} open={categoryDialog.open} title='Crear Categoría' triggerText='Añadir'>
+                  <Dialog.Form
+                    onOpenChange={categoryDialog.onOpenChange}
+                    open={categoryDialog.open}
+                    title='Crear Categoría'
+                    triggerText='Añadir'
+                  >
                     <Form.Category />
                   </Dialog.Form>
                 </Permission>
               </CardHeader>
               <CardContent>
-                <p className='text-sm text-muted-foreground'>Gestiona categorías desde el botón “Añadir”.</p>
+                <p className='text-sm text-muted-foreground'>
+                  Gestiona categorías desde el botón “Añadir”.
+                </p>
               </CardContent>
             </Card>
 
@@ -48,13 +57,20 @@ export default function BlogCreatePage() {
               <CardHeader className='flex flex-row items-center justify-between'>
                 <CardTitle>Tags</CardTitle>
                 <Permission permission={PERMISSIONS.MANAGE_ALL_BLOG_POSTS}>
-                  <Dialog.Form onOpenChange={tagDialog.onOpenChange} open={tagDialog.open} title='Crear Tag' triggerText='Añadir'>
+                  <Dialog.Form
+                    onOpenChange={tagDialog.onOpenChange}
+                    open={tagDialog.open}
+                    title='Crear Tag'
+                    triggerText='Añadir'
+                  >
                     <Form.Tag />
                   </Dialog.Form>
                 </Permission>
               </CardHeader>
               <CardContent>
-                <p className='text-sm text-muted-foreground'>Gestiona tags desde el botón “Añadir”.</p>
+                <p className='text-sm text-muted-foreground'>
+                  Gestiona tags desde el botón “Añadir”.
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -63,5 +79,3 @@ export default function BlogCreatePage() {
     </Permission>
   )
 }
-
-

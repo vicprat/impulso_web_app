@@ -136,7 +136,6 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
   const applyFilters = () => {
     const newSearchParams = new URLSearchParams(searchParams.toString())
 
-    // Limpiar parámetros existentes
     ;[
       'product_types',
       'vendor',
@@ -151,7 +150,6 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
       'order',
     ].forEach((param) => newSearchParams.delete(param))
 
-    // Aplicar filtros
     if (filters.productTypes.length > 0)
       newSearchParams.set('product_types', filters.productTypes.join(','))
     if (filters.vendors.length > 0) newSearchParams.set('vendor', filters.vendors.join(','))
@@ -174,7 +172,6 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
     if (filters.priceRange.min) newSearchParams.set('price_min', filters.priceRange.min)
     if (filters.priceRange.max) newSearchParams.set('price_max', filters.priceRange.max)
 
-    // Aplicar sorting
     if (filters.sortBy) newSearchParams.set('sort', filters.sortBy)
     if (filters.sortOrder) newSearchParams.set('order', filters.sortOrder)
 
@@ -268,7 +265,7 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
 
   const clearFilters = () => {
     setFilters(defaultFilters)
-    // Ir a /store sin parámetros de filtro, solo con paginación si existe
+
     const newPath = '/store'
     router.push(newPath)
     onClose()
@@ -451,16 +448,13 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
 
   return (
     <>
-      {/* Overlay para cerrar el sidebar */}
       <div className='fixed inset-0 z-40 bg-black/20 backdrop-blur-sm' onClick={onClose} />
 
-      {/* Sidebar con responsive design mejorado */}
       <div
-        className='fixed inset-y-0 right-0 z-50 flex w-full max-w-full flex-col 
+        className='fixed inset-y-0 right-0 z-50 flex w-full max-w-full flex-col
                       bg-background shadow-2xl sm:left-0 sm:right-auto
                       sm:w-[28rem] sm:max-w-none'
       >
-        {/* Header del sidebar - fijo y más prominente en móvil */}
         <div className='shrink-0 border-b bg-background px-4 py-3 sm:px-6 sm:py-4'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center space-x-2 sm:space-x-3'>
@@ -490,13 +484,11 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
           </p>
         </div>
 
-        {/* Contenido scrolleable del sidebar */}
         <div className='flex-1 overflow-y-auto px-4 py-3 sm:px-6 sm:py-4'>
           {isLoadingFilters ? (
             <FilterSkeleton />
           ) : (
             <div className='space-y-3 sm:space-y-4'>
-              {/* Sorting */}
               <Card className='border shadow-sm'>
                 <div
                   onClick={() => toggleSection('sorting')}
@@ -575,7 +567,6 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
                 )}
               </Card>
 
-              {/* Rango de precio */}
               <Card className='border shadow-sm'>
                 <div
                   onClick={() => toggleSection('price')}
@@ -702,9 +693,8 @@ export const Filter = ({ isOpen, onClose }: FilterProps) => {
           )}
         </div>
 
-        {/* Footer del sidebar - fijo y más visible en móvil */}
         <div
-          className='shrink-0 border-t bg-background px-4 py-3 shadow-lg sm:px-6 
+          className='shrink-0 border-t bg-background px-4 py-3 shadow-lg sm:px-6
                         sm:py-4 sm:shadow-none'
         >
           <div className='space-y-2 sm:space-y-3'>

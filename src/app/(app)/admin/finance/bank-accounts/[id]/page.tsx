@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Edit, Trash2, TrendingDown, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +13,6 @@ import { formatCurrency } from '@/src/helpers'
 
 export default function BankAccountDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const accountId = params.id as string
 
   const { data: account, error, isLoading } = useBankAccount(accountId)
@@ -27,7 +26,6 @@ export default function BankAccountDetailPage() {
       try {
         await deleteBankAccount.mutateAsync(accountId)
         toast.success('Cuenta bancaria eliminada exitosamente')
-        // router.push(ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.MAIN.PATH)
       } catch (error) {
         console.error('Error deleting bank account:', error)
         toast.error('Error al eliminar la cuenta bancaria')
@@ -131,7 +129,6 @@ export default function BankAccountDetailPage() {
       </div>
 
       <div className='grid gap-6 md:grid-cols-2'>
-        {/* Información de la cuenta */}
         <Card>
           <CardHeader>
             <CardTitle>Información de la Cuenta</CardTitle>
@@ -173,7 +170,6 @@ export default function BankAccountDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Resumen de movimientos */}
         <Card>
           <CardHeader>
             <CardTitle>Resumen de Movimientos</CardTitle>
@@ -208,7 +204,6 @@ export default function BankAccountDetailPage() {
         </Card>
       </div>
 
-      {/* Movimientos recientes */}
       <Card>
         <CardHeader>
           <CardTitle>Movimientos Recientes</CardTitle>

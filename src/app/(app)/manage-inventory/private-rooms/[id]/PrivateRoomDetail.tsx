@@ -74,7 +74,6 @@ export function PrivateRoomDetail({ roomId }: PrivateRoomDetailProps) {
     })
   }
 
-  // Calculate dimensions value for sorting
   const getDimensionValue = (p: Product) => {
     const h = parseFloat(p.artworkDetails.height || '0')
     const w = parseFloat(p.artworkDetails.width || '0')

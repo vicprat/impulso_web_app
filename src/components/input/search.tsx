@@ -24,7 +24,6 @@ export function SearchInput({
 }: SearchInputProps) {
   const [internalValue, setInternalValue] = useState(initialValue)
 
-  // Sync internal state if initialValue changes externally
   useEffect(() => {
     if (initialValue !== internalValue) {
       setInternalValue(initialValue)

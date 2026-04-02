@@ -60,18 +60,15 @@ export default function EventPage({ params }: EventPageProps) {
     }
   }, [event])
 
-  // Mostrar loading mientras se inicializa
   if (isLoading || eventLoading) {
     return <EventLoadingSkeleton />
   }
 
-  // Mostrar error si ocurrió alguno
   if (error) {
     console.error('Error in EventPage:', error)
     notFound()
   }
 
-  // Validaciones del evento
   if (!event) {
     notFound()
   }

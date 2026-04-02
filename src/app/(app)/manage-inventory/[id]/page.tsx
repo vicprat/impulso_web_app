@@ -162,12 +162,10 @@ export default function ProductDetailPage() {
 
   const { data: product, error, isLoading, refetch } = useGetProduct(productId)
 
-  // Hooks para obtener las opciones
   const { data: techniques = [], isLoading: isLoadingTechniques } = useGetTechniques()
   const { data: artworkTypes = [], isLoading: isLoadingArtworkTypes } = useGetArtworkTypes()
   const { data: locations = [], isLoading: isLoadingLocations } = useGetLocations()
 
-  // Hook para obtener el historial de ubicaciones
   const { data: locationHistory = [], isLoading: isLoadingHistory } =
     useGetLocationHistory(productId)
 
@@ -216,7 +214,6 @@ export default function ProductDetailPage() {
     }
   }
 
-  // Función para agregar nuevas opciones
   const handleAddNewOption = async (optionType: string, name: string) => {
     const response = await fetch(`/api/options/${optionType}`, {
       body: JSON.stringify({ name }),
@@ -231,7 +228,6 @@ export default function ProductDetailPage() {
       throw new Error(errorData.error || 'Error al agregar la opción')
     }
 
-    // Invalidar las queries para refrescar las opciones
     await queryClient.invalidateQueries({ queryKey: ['techniques'] })
     await queryClient.invalidateQueries({ queryKey: ['artwork_types'] })
     await queryClient.invalidateQueries({ queryKey: ['locations'] })
@@ -299,7 +295,6 @@ export default function ProductDetailPage() {
   return (
     <div className='min-h-screen bg-surface'>
       <div className='container mx-auto space-y-8 py-8'>
-        {/* Header */}
         <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
           <CardContent className='p-6'>
             <div className='mb-4 flex items-center justify-between'>
@@ -375,10 +370,8 @@ export default function ProductDetailPage() {
           />
         ) : (
           <>
-            {/* Layout principal con información */}
             <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
               <div className='space-y-6 lg:col-span-2'>
-                {/* Información del Producto */}
                 <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
                   <CardHeader className='pb-4'>
                     <CardTitle className='flex items-center gap-2 text-on-surface'>
@@ -438,8 +431,8 @@ export default function ProductDetailPage() {
                             Descripción
                           </Label>
                           <div
-                            className='prose prose-sm prose-slate max-w-none dark:prose-invert 
-                   prose-headings:text-foreground prose-p:text-muted-foreground 
+                            className='prose prose-sm prose-slate max-w-none dark:prose-invert
+                   prose-headings:text-foreground prose-p:text-muted-foreground
                    prose-strong:text-foreground prose-code:text-foreground
                    prose-pre:border prose-pre:bg-muted'
                             dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
@@ -450,7 +443,6 @@ export default function ProductDetailPage() {
                   </CardContent>
                 </Card>
 
-                {/* Galería de Imágenes - Más discreta */}
                 {product.images.length > 0 && (
                   <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
                     <CardHeader className='pb-3'>
@@ -476,7 +468,6 @@ export default function ProductDetailPage() {
                           </div>
                         ))}
 
-                        {/* Mostrar contador si hay más imágenes */}
                         {product.images.length > 8 && (
                           <div className='flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-outline-variant bg-surface-container-high'>
                             <div className='text-center'>
@@ -491,7 +482,6 @@ export default function ProductDetailPage() {
                   </Card>
                 )}
 
-                {/* Detalles de la Obra */}
                 {product.artworkDetails && (
                   <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
                     <CardHeader className='pb-4'>
@@ -557,7 +547,6 @@ export default function ProductDetailPage() {
                   </Card>
                 )}
 
-                {/* Tags */}
                 {product.tags.length > 0 && (
                   <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
                     <CardHeader className='pb-4'>
@@ -579,9 +568,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Sidebar */}
               <div className='space-y-6'>
-                {/* Precio */}
                 <Card className='border-primary/20 bg-primary-container shadow-elevation-2'>
                   <CardHeader className='pb-4'>
                     <CardTitle className='flex items-center gap-2 text-on-primary-container'>
@@ -608,7 +595,6 @@ export default function ProductDetailPage() {
                   </CardContent>
                 </Card>
 
-                {/* Inventario */}
                 <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
                   <CardHeader className='pb-4'>
                     <CardTitle className='flex items-center gap-2 text-on-surface'>
@@ -647,7 +633,6 @@ export default function ProductDetailPage() {
                   </CardContent>
                 </Card>
 
-                {/* Opciones Disponibles */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Opciones Disponibles</CardTitle>
@@ -679,7 +664,6 @@ export default function ProductDetailPage() {
                   </CardContent>
                 </Card>
 
-                {/* Historial de Ubicaciones */}
                 <Card className='border-outline-variant/20 bg-card shadow-elevation-1'>
                   <CardHeader className='pb-4'>
                     <CardTitle className='flex items-center gap-2 text-on-surface'>
@@ -755,7 +739,6 @@ export default function ProductDetailPage() {
                   </CardContent>
                 </Card>
 
-                {/* Detalles Técnicos */}
                 <Card className='border-outline-variant/20 shadow-elevation-1'>
                   <CardHeader className='pb-4'>
                     <CardTitle className='flex items-center gap-2 text-on-surface'>

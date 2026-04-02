@@ -3,10 +3,6 @@ import { NextResponse } from 'next/server'
 import { makeAdminApiRequest } from '@/lib/shopifyAdmin'
 import { api } from '@/modules/shopify/api'
 
-// ID de ubicación por defecto para eventos públicos
-const DEFAULT_LOCATION_ID = 'gid://shopify/Location/123456789'
-
-// Consulta para obtener metafields e inventario desde la API de administración
 const EVENT_DETAILS_QUERY = `
   query EventDetails($id: ID!) {
     product(id: $id) {
@@ -44,27 +40,21 @@ const EVENT_DETAILS_QUERY = `
   }
 `
 
-// Función para adaptar datos de la API de la tienda al formato esperado por el modelo Event
 function adaptShopifyDataToEventModel(shopifyData: any, adminData?: any) {
-  // Función helper para normalizar imágenes
   const normalizeImages = (images: any) => {
     if (!images) return { edges: [] }
 
-    // Si ya tiene la estructura edges/node, devolverlo tal como está
     if (images.edges && Array.isArray(images.edges)) {
       return images
     }
 
-    // Si es un array directo, convertirlo al formato edges/node
     if (Array.isArray(images)) {
       return {
         edges: images.map((image: any) => ({ node: image })),
       }
     }
 
-    // Si es un objeto con otra estructura, intentar extraer las imágenes
     if (typeof images === 'object') {
-      // Buscar propiedades que puedan contener imágenes
       const possibleImageProps = ['src', 'url', 'image', 'images']
       for (const prop of possibleImageProps) {
         if (images[prop] && Array.isArray(images[prop])) {
@@ -75,35 +65,30 @@ function adaptShopifyDataToEventModel(shopifyData: any, adminData?: any) {
       }
     }
 
-    // Si no se puede determinar, devolver array vacío
     return { edges: [] }
   }
 
-  // Función helper para normalizar variantes
   const normalizeVariants = (variants: any) => {
     if (!variants) return { edges: [] }
 
-    // Si ya tiene la estructura edges/node, devolverlo tal como está
     if (variants.edges && Array.isArray(variants.edges)) {
       return variants
     }
 
-    // Si es un array directo, convertirlo al formato edges/node
     if (Array.isArray(variants)) {
       return {
         edges: variants.map((variant: any, index: number) => {
-          // Usar datos de la API de administración si están disponibles
           const adminVariant = adminData?.variants?.edges?.[index]?.node
 
           return {
             node: {
               ...variant,
-              // Usar datos de inventario de la API de administración
+
               inventoryItem: adminVariant?.inventoryItem || { tracked: false },
               inventoryPolicy: adminVariant?.inventoryPolicy || variant.inventoryPolicy || 'DENY',
               inventoryQuantity:
                 adminVariant?.inventoryQuantity || variant.inventoryQuantity || null,
-              // Corregir la estructura del precio
+
               price:
                 typeof variant.price === 'object' && variant.price.amount
                   ? variant.price.amount
@@ -114,7 +99,6 @@ function adaptShopifyDataToEventModel(shopifyData: any, adminData?: any) {
       }
     }
 
-    // Si no se puede determinar, devolver array vacío
     return { edges: [] }
   }
 
@@ -142,7 +126,6 @@ export async function GET(request: Request) {
     const first = parseInt(searchParams.get('first') || '12')
     const after = searchParams.get('after')
 
-    // Construir filtros para eventos
     let query = "product_type:'Evento' OR product_type:'Event' OR product_type:'Events'"
     if (search?.trim()) {
       query += ` AND (title:*${search}* OR vendor:*${search}*)`
@@ -154,12 +137,10 @@ export async function GET(request: Request) {
       first,
     })
 
-    // Obtener eventos enriquecidos con metafields e inventario
     const enrichedEvents = []
 
     for (const product of response.data.products) {
       try {
-        // Obtener metafields e inventario desde la API de administración
         let adminData = null
         try {
           const adminResponse = (await makeAdminApiRequest(EVENT_DETAILS_QUERY, {
@@ -170,14 +151,11 @@ export async function GET(request: Request) {
           console.warn(`No se pudieron obtener metafields para ${product.handle}:`, adminError)
         }
 
-        // Adaptar datos al formato esperado por el modelo Event
         const adaptedData = adaptShopifyDataToEventModel(product, adminData)
 
-        // Devolver los datos crudos para que el cliente los procese
         enrichedEvents.push(adaptedData)
       } catch (error) {
         console.error(`Error enriching event ${product.handle}:`, error)
-        // Continuar con el siguiente evento
       }
     }
 

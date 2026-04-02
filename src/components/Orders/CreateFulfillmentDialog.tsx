@@ -28,7 +28,7 @@ interface CreateFulfillmentDialogProps {
   lineItems: LineItem[]
   orderId: string
   onSuccess?: () => void
-  shippingMethod?: 'standard' | 'local' // Determina si es envío estándar o local
+  shippingMethod?: 'standard' | 'local'
 }
 
 export function CreateFulfillmentDialog({
@@ -49,7 +49,6 @@ export function CreateFulfillmentDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validación para envío estándar
     if (!isLocalShipping) {
       if (!trackingCompany && !trackingNumber) {
         toast.error('Debe proporcionar al menos Compañía de Envío o Número de Rastreo')

@@ -1,7 +1,6 @@
 import { type CustomerAddress } from '../auth/types'
 
 export interface UserProfile {
-  // Datos básicos del usuario
   id: string
   shopifyCustomerId?: string
   email: string
@@ -17,7 +16,6 @@ export interface UserProfile {
   bio?: string | null
   profileImage?: string | null
 
-  // Información del artista (si el usuario es artista)
   artist?: {
     id: string
     name: string
@@ -26,10 +24,8 @@ export interface UserProfile {
     artistType?: 'IMPULSO' | 'COLLECTIVE'
   } | null
 
-  // Estado de sincronización
   needsShopifySync?: boolean
 
-  // Datos extendidos de Shopify
   shopifyData?: {
     displayName: string
     imageUrl: string
@@ -44,11 +40,9 @@ export interface UserProfile {
     }
   }
 
-  // Control de acceso - mantener como arrays para compatibilidad
   roles: string[]
   permissions: string[]
 
-  // Metadatos adicionales
   preferences?: {
     language?: string
     timezone?: string
@@ -60,7 +54,6 @@ export interface UserProfile {
   }
 }
 
-// ✅ NUEVO: Tipo para los datos crudos de la base de datos con UserRole
 export interface UserWithUserRole {
   id: string
   shopifyCustomerId?: string
@@ -72,7 +65,6 @@ export interface UserWithUserRole {
   updatedAt: Date
   lastLoginAt?: Date
 
-  // Relación UserRole de la base de datos
   UserRole: {
     id: string
     userId: string
@@ -100,12 +92,10 @@ export interface UserWithUserRole {
 }
 
 export interface UserManagementContextType {
-  // Estado del usuario actual
   currentUser: UserProfile | null
   isLoading: boolean
   error: string | null
 
-  // Gestión de usuarios (para admins)
   users: UserProfile[]
   usersLoading: boolean
   pagination: {
@@ -116,22 +106,18 @@ export interface UserManagementContextType {
     hasPrev: boolean
   }
 
-  // Acciones del usuario actual
   updateProfile: (data: Partial<UserProfile>) => Promise<void>
   syncWithShopify: () => Promise<void>
   updatePreferences: (preferences: UserProfile['preferences']) => Promise<void>
 
-  // Acciones administrativas
   getAllUsers: (filters?: UserFilters) => Promise<void>
   getUserById: (id: string) => Promise<UserProfile | null>
 
-  // ✅ ACTUALIZADO: Un solo rol en lugar de array
   updateUserRole: (userId: string, role: string) => Promise<void>
 
   deactivateUser: (userId: string) => Promise<void>
   reactivateUser: (userId: string) => Promise<void>
 
-  // Control de acceso
   hasPermission: (permission: string) => boolean
   hasRole: (role: string) => boolean
   canManageUser: (targetUserId: string) => boolean
@@ -139,16 +125,15 @@ export interface UserManagementContextType {
 
 export interface UserFilters {
   search?: string
-  role?: string | string[] // Puede ser un rol único o múltiples roles
+  role?: string | string[]
   isActive?: boolean
-  isPublic?: boolean // ✅ NUEVO: Filtro para visibilidad pública del perfil
+  isPublic?: boolean
   page?: number
   limit?: number
   sortBy?: 'createdAt' | 'lastLoginAt' | 'email' | 'firstName'
   sortOrder?: 'asc' | 'desc'
 }
 
-// ✅ NUEVO: Tipos para operaciones de roles
 export interface RoleAssignment {
   userId: string
   roleName: string
@@ -163,7 +148,6 @@ export interface UserRoleInfo {
   assignedBy?: string
 }
 
-// ✅ NUEVO: Tipo para crear/actualizar usuarios
 export interface UserCreateInput {
   shopifyCustomerId?: string
   email: string
@@ -179,7 +163,6 @@ export interface UserUpdateInput {
   isActive?: boolean
 }
 
-// ✅ ACTUALIZADO: Inputs para perfil y links
 export interface ProfileUpdateInput {
   occupation?: string | null
   description?: string | null
@@ -214,21 +197,11 @@ export class AuthorizationError extends Error {
   }
 }
 
-// ✅ NUEVO: Tipos para transformar datos de DB a frontend
 export interface UserTransformer {
-  /**
-   * Convierte un usuario con UserRole de la DB a UserProfile para el frontend
-   */
   fromUserWithUserRole(user: UserWithUserRole): UserProfile
 
-  /**
-   * Extrae roles de UserRole array
-   */
   extractRoles(userRoles: UserWithUserRole['UserRole']): string[]
 
-  /**
-   * Extrae permisos de UserRole array
-   */
   extractPermissions(userRoles: UserWithUserRole['UserRole']): string[]
 }
 

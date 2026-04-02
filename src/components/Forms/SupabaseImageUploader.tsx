@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 interface SupabaseImageUploaderProps {
-  value?: string | null // Current image URL
-  onChange: (resourceUrl: string | null) => void // Callback for when the URL changes
-  hidePreview?: boolean // New prop to hide the internal preview
-  onUploadComplete?: (resourceUrl: string) => void // Callback for when upload completes
-  type?: 'profile' | 'background' | 'blog' | 'general' // Type of image being uploaded
-  maxFileSize?: number // Max file size in bytes (default: 10MB)
-  acceptedFormats?: string // Accepted file formats (default: image/*)
+  value?: string | null
+  onChange: (resourceUrl: string | null) => void
+  hidePreview?: boolean
+  onUploadComplete?: (resourceUrl: string) => void
+  type?: 'profile' | 'background' | 'blog' | 'general'
+  maxFileSize?: number
+  acceptedFormats?: string
 }
 
 interface UploadedImage {
@@ -30,7 +30,7 @@ export const SupabaseImageUploader: React.FC<SupabaseImageUploaderProps> = ({
   maxFileSize = 10 * 1024 * 1024,
   onChange,
   onUploadComplete,
-  type = 'general', // 10MB default
+  type = 'general',
   value,
 }) => {
   const inputId = useId()
@@ -39,7 +39,6 @@ export const SupabaseImageUploader: React.FC<SupabaseImageUploaderProps> = ({
 
   useEffect(() => {
     if (value && !uploadedImage) {
-      // Initialize if a value is provided and no image is currently set
       setUploadedImage({
         filename: value.substring(value.lastIndexOf('/') + 1),
         id: 'initial',
@@ -48,8 +47,7 @@ export const SupabaseImageUploader: React.FC<SupabaseImageUploaderProps> = ({
         size: 0,
         status: 'completed',
       })
-    } else if (!value && uploadedImage && uploadedImage.id === 'initial') {
-      // Clear if value becomes null and it was an initial image
+    } else if (!value && uploadedImage?.id === 'initial') {
       setUploadedImage(null)
     }
   }, [value, uploadedImage])
@@ -58,16 +56,15 @@ export const SupabaseImageUploader: React.FC<SupabaseImageUploaderProps> = ({
     const files = event.target.files
     if (!files || files.length === 0) return
 
-    const file = files[0] // Only take the first file for single upload
+    const file = files[0]
 
-    // Validate file size
     if (file.size > maxFileSize) {
       toast.error(`El archivo es demasiado grande. Máximo ${formatFileSize(maxFileSize)}`)
       return
     }
 
     await uploadFile(file)
-    event.target.value = '' // Clear the input
+    event.target.value = ''
   }
 
   const uploadFile = async (file: File) => {
@@ -107,15 +104,15 @@ export const SupabaseImageUploader: React.FC<SupabaseImageUploaderProps> = ({
         prev ? { ...prev, resourceUrl: data.resourceUrl, status: 'completed' as const } : null
       )
 
-      onChange(data.resourceUrl) // Notify parent of the new URL
-      onUploadComplete?.(data.resourceUrl) // Notify parent that the upload is complete
+      onChange(data.resourceUrl)
+      onUploadComplete?.(data.resourceUrl)
       toast.success(`Imagen "${file.name}" subida exitosamente`)
     } catch (error) {
       setUploadedImage((prev) => (prev ? { ...prev, status: 'error' as const } : null))
 
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
       toast.error(`Error subiendo "${file.name}": ${errorMessage}`)
-      onChange(null) // Notify parent of upload failure
+      onChange(null)
     } finally {
       setIsUploading(false)
     }
@@ -126,7 +123,7 @@ export const SupabaseImageUploader: React.FC<SupabaseImageUploaderProps> = ({
       URL.revokeObjectURL(uploadedImage.preview)
     }
     setUploadedImage(null)
-    onChange(null) // Notify parent that the image is removed
+    onChange(null)
   }
 
   const formatFileSize = (bytes: number): string => {

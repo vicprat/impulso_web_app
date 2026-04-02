@@ -76,7 +76,6 @@ export const Search: React.FC<Props> = ({ open, setOpen }) => {
 
   const isError = !!error
 
-  // Estados de carga específicos
   const isTextSearching = query !== debouncedQuery && query.trim().length > 0
   const isFilterSearching = isLoading && hasAnyFilter
   const isSearching = isTextSearching || isFilterSearching

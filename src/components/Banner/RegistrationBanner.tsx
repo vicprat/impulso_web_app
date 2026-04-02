@@ -24,7 +24,6 @@ export function RegistrationBanner({
   const [isVisible, setIsVisible] = useState(true)
   const { user } = useAuth()
 
-  // Solo mostrar el banner si no hay usuario autenticado y el banner está visible
   if (!isVisible || user) return null
 
   return (
@@ -36,7 +35,6 @@ export function RegistrationBanner({
       className='relative overflow-hidden border-b border-slate-700/50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white backdrop-blur-xl'
       suppressHydrationWarning
     >
-      {/* Elementos decorativos sutiles */}
       <div className='absolute inset-0' suppressHydrationWarning>
         <div
           suppressHydrationWarning
@@ -57,7 +55,6 @@ export function RegistrationBanner({
         />
       </div>
 
-      {/* Gradiente sutil de overlay */}
       <div className='absolute inset-0 bg-gradient-to-r from-indigo-600/10 via-transparent to-violet-600/10' />
 
       <div className='container relative z-10 mx-auto px-6 py-1.5'>
@@ -100,7 +97,6 @@ export function RegistrationBanner({
         </div>
       </div>
 
-      {/* Efecto de brillo sutil */}
       <motion.div
         className='absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent'
         animate={{

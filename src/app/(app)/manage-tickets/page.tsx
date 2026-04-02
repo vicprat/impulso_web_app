@@ -233,17 +233,6 @@ export default function ManageTicketsPage() {
                         Ver Detalles
                       </Link>
                     </Button>
-
-                    {/* {ticket.status === 'VALID' && (
-                      <Button
-                        size='sm'
-                        className='flex-1'
-                        onClick={() => setTicketToShowQr(ticket)}
-                      >
-                        <QrCode className='mr-1 size-4' />
-                        Mostrar QR
-                      </Button>
-                    )} */}
                   </div>
                 </CardContent>
               </Card>

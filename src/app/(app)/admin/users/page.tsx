@@ -18,7 +18,6 @@ import { Dialog } from '@/components/Dialog'
 import { Form } from '@/components/Forms'
 import { Table } from '@/components/Table'
 import { Button } from '@/components/ui/button'
-// import { useDebounce } from '@/hooks/use-debounce'
 import { useDialog } from '@/hooks/useDialog'
 import { useAuth } from '@/modules/auth/context/useAuth'
 import {
@@ -60,7 +59,6 @@ export default function UserManagementPage() {
   const roleDialog = useDialog()
   const createUserDialog = useDialog()
 
-  // Hooks
   const { data: usersData, isLoading: usersLoading } = useUsersManagement({
     isActive: isActiveInUrl,
     limit: limitInUrl,
@@ -72,7 +70,7 @@ export default function UserManagementPage() {
   })
   const deactivateUser = useDeactivateUser()
   const reactivateUser = useReactivateUser()
-  const toggleUserPublicStatus = useToggleUserPublicStatus() // Inicializar el hook
+  const toggleUserPublicStatus = useToggleUserPublicStatus()
 
   const users = usersData?.users ?? []
   const pagination = usersData?.pagination ?? {
@@ -82,8 +80,6 @@ export default function UserManagementPage() {
     page: 1,
     total: 0,
   }
-
-  // Sin debounce: el usuario confirma la búsqueda con submit/botón
 
   useEffect(() => {
     setSorting([{ desc: sortOrderInUrl === 'desc', id: String(sortByInUrl) }])

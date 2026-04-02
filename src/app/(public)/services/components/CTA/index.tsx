@@ -22,7 +22,6 @@ export const CTA: React.FC<Props> = ({ content = {} }) => {
     >
       <Card className='bg-card/50 border-primary/20 overflow-hidden shadow-elevation-3 backdrop-blur-sm'>
         <CardContent className='relative p-12'>
-          {/* Background pattern */}
           <div className='absolute inset-0 opacity-5'>
             <div className='absolute inset-0 bg-gradient-to-br from-primary via-transparent to-primary' />
           </div>

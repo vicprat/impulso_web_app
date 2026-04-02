@@ -40,12 +40,9 @@ export function buildProductSearchQuery(
   const queryParts: string[] = []
 
   words.forEach((word) => {
-    // Para cada palabra, construimos una sub-query que busca esa palabra en CUALQUIERA de los campos
     const fieldQueries: string[] = []
 
     searchFields.forEach((field) => {
-      // Para títulos, usar búsqueda más flexible con wildcards
-      // Shopify es case-insensitive por defecto
       if (field === 'title') {
         fieldQueries.push(`${field}:*${word}*`)
       } else {
@@ -53,7 +50,6 @@ export function buildProductSearchQuery(
       }
     })
 
-    // Agregar búsqueda por ID si está habilitada y la palabra parece un número
     if (includeId) {
       const numericId = word.replace(/\D/g, '')
       if (numericId.length > 0) {
@@ -61,16 +57,9 @@ export function buildProductSearchQuery(
       }
     }
 
-    // Nota: Eliminamos búsquedas en metafields y variants.price aquí porque Shopify
-    // no soporta wildcards consistentemente en esos campos via API search string.
-    // El filtrado fino de esos campos se hace en memoria via matchesSearch().
-
-    // Unimos los campos con OR: (title:*word* OR vendor:*word* OR ...)
     queryParts.push(`(${fieldQueries.join(' OR ')})`)
   })
 
-  // Unimos las palabras con AND: (palabra1 en campos) AND (palabra2 en campos)
-  // Esto asegura que el resultado contenga TODAS las palabras buscadas.
   if (queryParts.length > 1) {
     return queryParts.join(' AND ')
   }
@@ -78,11 +67,6 @@ export function buildProductSearchQuery(
   return queryParts[0] ?? ''
 }
 
-/**
- * Verifica si un producto coincide con los términos de búsqueda en memoria.
- * Esta función es crucial para filtrar campos que Shopify no soporta bien en su query string
- * (como metafields con wildcards) y para asegurar coincidencia exacta de todas las palabras.
- */
 export function matchesSearch(
   product: {
     id: string
@@ -116,7 +100,6 @@ export function matchesSearch(
 
   if (searchWords.length === 0) return true
 
-  // Cada palabra de la búsqueda debe estar presente en AL MENOS UN campo del producto
   return searchWords.every((word) => {
     const fields: (string | null | undefined)[] = [
       product.id.split('/').pop() ?? product.id,
@@ -131,13 +114,11 @@ export function matchesSearch(
       ...product.tags,
     ]
 
-    // Agregar dimensiones como string buscable (ej: "50 x 70", "50x70")
     if (product.artworkDetails.height && product.artworkDetails.width) {
       fields.push(`${product.artworkDetails.height} x ${product.artworkDetails.width}`)
       fields.push(`${product.artworkDetails.height}x${product.artworkDetails.width}`)
     }
 
-    // Agregar colecciones
     if (product.collections) {
       product.collections.forEach((c) => {
         if (typeof c === 'string') {
@@ -148,10 +129,8 @@ export function matchesSearch(
       })
     }
 
-    // Agregar datos de variantes: precio, SKU, inventario
     if (product.variants) {
       product.variants.forEach((v) => {
-        // Precio como string para búsqueda (ej: buscar "1500" o "1,500")
         if (v.price) {
           const priceStr = typeof v.price === 'string' ? v.price : v.price.amount
           if (priceStr) fields.push(priceStr)
@@ -161,7 +140,6 @@ export function matchesSearch(
       })
     }
 
-    // Buscamos la palabra en cualquiera de los campos normalizados
     return fields.some((field) => (field ? normalizeText(field).includes(word) : false))
   })
 }

@@ -16,16 +16,11 @@ export interface HybridOrderDetail extends LocalOrderDetail {
   }[]
 }
 
-/**
- * Combines Shopify order detail with local database data
- * ALWAYS prioritizes Shopify as the primary source, falls back to local if Shopify doesn't exist
- */
 export async function getHybridOrderDetail(orderId: string): Promise<HybridOrderDetail | null> {
-  // Try to determine if it's a Shopify ID or numeric ID
+
   const isShopifyId = orderId.startsWith('gid://shopify/Order/')
   const numericOrderId = isShopifyId ? orderId.replace('gid://shopify/Order/', '') : orderId
 
-  // Extract numeric ID for Shopify query
   const shopifyOrderId = `gid://shopify/Order/${numericOrderId}`
 
   let shopifyOrder: {
@@ -85,7 +80,6 @@ export async function getHybridOrderDetail(orderId: string): Promise<HybridOrder
     fulfillments: { id: string; status: string; updatedAt: string }[]
   } | null = null
 
-  // ALWAYS try to fetch from Shopify Admin API first (primary source)
   try {
     const response = await makeAdminApiRequest<{
       order: {
@@ -181,10 +175,9 @@ export async function getHybridOrderDetail(orderId: string): Promise<HybridOrder
     shopifyOrder = response.order
   } catch (shopifyError) {
     console.error('Error fetching from Shopify Admin API:', shopifyError)
-    // If Shopify fails, continue to try local data as fallback
+
   }
 
-  // Fetch local data (tickets and financial entries) to complement Shopify data
   const localTickets = await prisma.ticket.findMany({
     include: {
       user: {
@@ -206,7 +199,6 @@ export async function getHybridOrderDetail(orderId: string): Promise<HybridOrder
     },
   })
 
-  // Priority 1: If we have Shopify data, use it as the primary source
   if (shopifyOrder) {
     return {
       billingAddress: shopifyOrder.billingAddress
@@ -305,7 +297,6 @@ export async function getHybridOrderDetail(orderId: string): Promise<HybridOrder
     }
   }
 
-  // Priority 2: Fall back to local data if Shopify doesn't have the order
   if (localTickets.length > 0 || localFinancialEntries.length > 0) {
     const firstEntry = localFinancialEntries[0]
     const ticket = localTickets[0]
@@ -386,6 +377,5 @@ export async function getHybridOrderDetail(orderId: string): Promise<HybridOrder
     }
   }
 
-  // If neither Shopify nor local data exists, return null
   return null
 }

@@ -14,7 +14,6 @@ import { ROUTES } from '@/src/config/routes'
 
 import type { NavigationLink, SocialLink } from '@/types/notion-content.types'
 
-// Icon mapping for social link names
 const SOCIAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Facebook,
   Instagram,
@@ -22,7 +21,6 @@ const SOCIAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   YouTube: Youtube,
 }
 
-// Fallback data
 const FALLBACK_NAV_LINKS = [
   { href: ROUTES.STORE.MAIN.PATH, name: 'Galería' },
   { href: ROUTES.STORE.EVENTS.PATH, name: 'Eventos' },
@@ -90,10 +88,8 @@ export const FooterClient = ({
     <footer className='relative overflow-hidden bg-zinc-900'>
       <GradientBackground className='absolute inset-0' />
 
-      {/* Animated spheres */}
       <AnimatedSpheres />
 
-      {/* Floating particles */}
       <FloatingParticles
         config={{
           color: 'bg-primary/20',

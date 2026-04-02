@@ -117,7 +117,6 @@ const ImageCell = ({ imageUrl, product }: { product: Product; imageUrl: string |
       {imageUrl && (
         <DialogContent className='max-w-4xl border-none bg-transparent p-0 shadow-none'>
           <div className='relative flex h-[80vh] w-full flex-col items-center justify-center'>
-            {/* Controles de Zoom */}
             <div className='absolute right-4 top-4 z-10 flex space-x-2 rounded-md bg-black/50 p-2 backdrop-blur-sm'>
               <Button
                 variant='secondary'
@@ -150,7 +149,6 @@ const ImageCell = ({ imageUrl, product }: { product: Product; imageUrl: string |
               </Button>
             </div>
 
-            {/* Contenedor draggable para imágenes con zoom grande */}
             <div
               className={`flex size-full items-center justify-center overflow-hidden ${scale > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
               onMouseDown={handleMouseDown}
@@ -164,7 +162,7 @@ const ImageCell = ({ imageUrl, product }: { product: Product; imageUrl: string |
                 className={`max-h-full max-w-full origin-center object-contain ${!isDragging ? 'transition-transform duration-200' : ''}`}
                 style={{
                   pointerEvents: 'none',
-                  transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`, // Evita que el propio tag <img> capture el drag predeterminado del navegador
+                  transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
                 }}
               />
             </div>
@@ -431,7 +429,6 @@ export function PrivateRoomProductsTable({
       onProductSelect,
       onSelectAll,
       selectedProducts,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
   })
 

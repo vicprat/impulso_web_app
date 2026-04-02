@@ -27,7 +27,6 @@ import { useOrdersByProduct } from '@/src/modules/customer/hooks'
 
 import { columns } from './columns'
 
-// Forzar que la página sea dinámica
 export const dynamic = 'force-dynamic'
 
 const defaultPageSize = 50
@@ -40,7 +39,6 @@ export function Client() {
 
   const eventId = params.eventId as string
 
-  // Obtener parámetros de la URL
   const pageInUrl = parseInt(searchParams.get('page') ?? '1', 10)
   const afterCursorInUrl = searchParams.get('after') ?? null
   const pageSizeInUrl = parseInt(searchParams.get('pageSize') ?? defaultPageSize.toString(), 10)
@@ -53,10 +51,8 @@ export function Client() {
   const [historyCursors, setHistoryCursors] = useState<Record<number, string | null>>({})
   const [previousPageSize, setPreviousPageSize] = useState(pageSizeInUrl)
 
-  // Obtener información del evento
   const { data: event, isLoading: isLoadingEvent } = useGetEvent(eventId)
 
-  // Obtener órdenes del evento
   const {
     data: ordersData,
     error,
@@ -68,14 +64,11 @@ export function Client() {
     first: pageSizeInUrl,
   })
 
-  // Obtener entradas financieras para mapear información del cliente
   const { data: financialEntries } = useFinancialEntries({ eventId })
 
-  // Función para obtener el nombre del cliente desde las entradas financieras
   const getCustomerNameFromFinancialEntries = (orderId: string): string => {
     if (!financialEntries) return 'Cliente no disponible'
 
-    // Buscar la entrada financiera que coincida con el orderId
     const entry = financialEntries.find(
       (entry) =>
         entry.source === 'Shopify Order' && entry.sourceId === orderId && entry.relatedParty
@@ -84,26 +77,23 @@ export function Client() {
     return entry?.relatedParty ?? 'Cliente no disponible'
   }
 
-  // Limpiar caché cuando cambian los filtros
   useEffect(() => {
     void queryClient.invalidateQueries({
       queryKey: ['orderManagement', 'ordersByProduct', eventId],
     })
   }, [queryClient, eventId, searchInUrl, statusFilterInUrl, sortByInUrl, sortOrderInUrl])
 
-  // Sincronizar input de búsqueda con la URL
   useEffect(() => {
     setSearchInput(searchInUrl)
   }, [searchInUrl])
 
   const orders =
     ordersData?.orders.edges.map((edge) => {
-      // Extraer el orderId de Shopify para buscar en las entradas financieras
       const orderId = edge.node.id.replace('gid://shopify/Order/', '')
 
       return {
         customer: edge.node.customer,
-        // Obtener información del cliente desde entradas financieras
+
         customerName: getCustomerNameFromFinancialEntries(orderId),
 
         displayFinancialStatus: edge.node.displayFinancialStatus,
@@ -133,13 +123,11 @@ export function Client() {
 
   const pageInfo = ordersData?.orders.pageInfo
 
-  // Filtrar órdenes por estado si es necesario
   const filteredOrders =
     statusFilterInUrl === 'all'
       ? orders
       : orders.filter((order) => order.displayFinancialStatus === statusFilterInUrl)
 
-  // Calcular estadísticas
   const stats = {
     paid: orders.filter((order) => order.displayFinancialStatus === 'PAID').length,
     pending: orders.filter((order) => order.displayFinancialStatus === 'PENDING').length,
@@ -266,7 +254,6 @@ export function Client() {
     router.replace(`/admin/events/${eventId}/tickets`, { scroll: false })
   }, [router, eventId])
 
-  // Manejar cambios de pageSize
   useEffect(() => {
     if (pageSizeInUrl !== previousPageSize) {
       setPreviousPageSize(pageSizeInUrl)
@@ -282,7 +269,6 @@ export function Client() {
     }
   }, [pageSizeInUrl, previousPageSize, pageInUrl, afterCursorInUrl, router, searchParams, eventId])
 
-  // Actualizar historial de cursors
   useEffect(() => {
     setHistoryCursors((prev) => {
       const newCursors = { ...prev }
@@ -563,7 +549,6 @@ export function Client() {
         </div>
       </div>
 
-      {/* Botón para limpiar todos los filtros */}
       {(searchInUrl ||
         statusFilterInUrl !== 'all' ||
         sortByInUrl !== 'processedAt' ||
@@ -579,12 +564,10 @@ export function Client() {
         </div>
       )}
 
-      {/* Mostrar loader cuando se están cargando datos inicialmente o cuando se están actualizando filtros */}
       {isLoading ? (
         <Table.Loader />
       ) : (
         <>
-          {/* Indicador sutil de carga solo para órdenes */}
           {isFetching && (
             <div className='mb-4 flex items-center space-x-2 text-sm text-muted-foreground'>
               <RefreshCw className='size-4 animate-spin' />

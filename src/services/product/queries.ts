@@ -85,15 +85,15 @@ export const PRODUCT_FRAGMENT = `
 
 export const GET_PRODUCTS_QUERY = `
   query getProducts(
-    $query: String!, 
-    $first: Int = 10, 
+    $query: String!,
+    $first: Int = 10,
     $after: String,
     $sortKey: ProductSortKeys,
     $reverse: Boolean
   ) {
     products(
-      first: $first, 
-      after: $after, 
+      first: $first,
+      after: $after,
       query: $query,
       sortKey: $sortKey,
       reverse: $reverse
@@ -344,7 +344,6 @@ export const PRODUCT_DELETE_MEDIA_MUTATION = `
   }
 `
 
-// Mutaciones para descuentos y cupones
 export const CREATE_DISCOUNT_MUTATION = `
   mutation createDiscount($input: DiscountCodeInput!) {
     discountCodeCreate(input: $input) {
@@ -506,7 +505,6 @@ export const GET_DISCOUNTS_QUERY = `
 }
 `
 
-// Queries para cupones de descuento usando API routes
 export const useGetDiscounts = (filters?: DiscountFilters) => {
   return useQuery({
     queryFn: async () => {
@@ -523,7 +521,7 @@ export const useGetDiscounts = (filters?: DiscountFilters) => {
       return response.json()
     },
     queryKey: ['discounts', filters],
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -543,7 +541,7 @@ export const useDiscount = (
       return response.json()
     },
     queryKey: ['discounts', 'detail', id],
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 5 * 60 * 1000,
     ...options,
   })
 }

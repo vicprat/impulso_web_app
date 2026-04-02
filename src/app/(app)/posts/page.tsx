@@ -20,7 +20,6 @@ import { Table } from '@/components/Table'
 import { Button } from '@/components/ui/button'
 import { PERMISSIONS } from '@/config/Permissions'
 import { ROUTES } from '@/config/routes'
-// import { useDebounce } from '@/hooks/use-debounce'
 import { blogApi } from '@/modules/blog/api'
 import { BLOG_KEYS, useAdminPosts, useCategories, useTags } from '@/modules/blog/hooks'
 
@@ -77,8 +76,6 @@ export default function BlogAdminPage() {
   const { data: categories } = useCategories()
   const { data: tags } = useTags()
   const queryClient = useQueryClient()
-
-  // Sin debounce: el usuario debe confirmar con Enter o botón
 
   useEffect(() => {
     setSorting([{ desc: sortOrderInUrl === 'desc', id: sortByInUrl }])

@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Edit, Save, Trash2, X } from 'lucide-react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -22,7 +22,6 @@ import { formatCurrency } from '@/src/helpers'
 
 export default function FinancialEntryDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const entryId = params.id as string
 
   const { data: entry, error, isLoading } = useFinancialEntry(entryId)
@@ -48,7 +47,6 @@ export default function FinancialEntryDetailPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Pre-llenar el formulario cuando se cargan los datos
   useEffect(() => {
     if (entry) {
       setFormData({
@@ -139,7 +137,6 @@ export default function FinancialEntryDetailPage() {
   }
 
   const handleCancel = () => {
-    // Restaurar datos originales
     if (entry) {
       setFormData({
         amount: entry.amount.toString(),
@@ -167,7 +164,6 @@ export default function FinancialEntryDetailPage() {
       try {
         await deleteEntry.mutateAsync(entryId)
         toast.success('Movimiento eliminado exitosamente')
-        // router.push(ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH)
       } catch (error) {
         console.error('Error deleting entry:', error)
         toast.error('Error al eliminar el movimiento')
@@ -302,9 +298,7 @@ export default function FinancialEntryDetailPage() {
         </CardHeader>
         <CardContent>
           {isEditing ? (
-            // Formulario de edición
             <form className='space-y-6'>
-              {/* Tipo y Montos */}
               <div className='grid gap-4 md:grid-cols-3'>
                 <div className='space-y-2'>
                   <Label htmlFor='type'>Tipo de Movimiento *</Label>
@@ -348,7 +342,6 @@ export default function FinancialEntryDetailPage() {
                 </div>
               </div>
 
-              {/* Descripción y Fecha */}
               <div className='grid gap-4 md:grid-cols-2'>
                 <div className='space-y-2'>
                   <Label htmlFor='description'>Descripción *</Label>
@@ -377,7 +370,6 @@ export default function FinancialEntryDetailPage() {
                 </div>
               </div>
 
-              {/* Cuenta Bancaria y Categoría */}
               <div className='grid gap-4 md:grid-cols-2'>
                 <div className='space-y-2'>
                   <Label htmlFor='bankAccountId'>Cuenta Bancaria</Label>
@@ -407,7 +399,6 @@ export default function FinancialEntryDetailPage() {
                 </div>
               </div>
 
-              {/* Método de Pago y Parte Relacionada */}
               <div className='grid gap-4 md:grid-cols-2'>
                 <div className='space-y-2'>
                   <Label htmlFor='paymentMethod'>Método de Pago</Label>
@@ -430,7 +421,6 @@ export default function FinancialEntryDetailPage() {
                 </div>
               </div>
 
-              {/* Estado y Fecha de Vencimiento */}
               <div className='grid gap-4 md:grid-cols-2'>
                 <div className='space-y-2'>
                   <Label htmlFor='status'>Estado</Label>
@@ -460,7 +450,6 @@ export default function FinancialEntryDetailPage() {
                 </div>
               </div>
 
-              {/* Notas */}
               <div className='space-y-2'>
                 <Label htmlFor='notes'>Notas</Label>
                 <Textarea
@@ -473,9 +462,7 @@ export default function FinancialEntryDetailPage() {
               </div>
             </form>
           ) : (
-            // Vista de solo lectura
             <div className='space-y-6'>
-              {/* Header con badges */}
               <div className='mb-6 flex items-center gap-4'>
                 {getTypeBadge(entry.type)}
                 {getStatusBadge(entry.status)}
@@ -490,7 +477,6 @@ export default function FinancialEntryDetailPage() {
                 </div>
               </div>
 
-              {/* Información principal */}
               <div className='grid gap-6 md:grid-cols-2'>
                 <div className='space-y-4'>
                   <div>
@@ -555,7 +541,6 @@ export default function FinancialEntryDetailPage() {
                 </div>
               </div>
 
-              {/* Notas */}
               {entry.notes && (
                 <div>
                   <h3 className='mb-2 text-lg font-semibold'>Notas</h3>
@@ -565,7 +550,6 @@ export default function FinancialEntryDetailPage() {
                 </div>
               )}
 
-              {/* Información del sistema */}
               <div className='border-t pt-4'>
                 <h3 className='mb-2 text-sm font-medium text-muted-foreground'>
                   Información del Sistema

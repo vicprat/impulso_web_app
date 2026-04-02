@@ -233,7 +233,6 @@ export const Admin = () => {
   const productMetrics = useProductMetrics()
   const advancedAnalytics = useAdvancedAnalytics()
 
-  // Estado para los accordions
   const [expandedArtists, setExpandedArtists] = useState(false)
   const [expandedEvents, setExpandedEvents] = useState(false)
 
@@ -280,7 +279,6 @@ export const Admin = () => {
         />
       </div>
 
-      {/* Métricas adicionales */}
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
         <div className='rounded-lg border-outline bg-card p-6 shadow-elevation-1'>
           <h3 className='mb-2 text-sm font-medium text-muted-foreground'>Valor del Inventario</h3>
@@ -311,37 +309,6 @@ export const Admin = () => {
         </div>
       </div>
 
-      {/* Resumen financiero */}
-      {/* <ChartCard title='Resumen Financiero'>
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-4'>
-          <div className='text-center'>
-            <p className='text-2xl font-bold text-success'>
-              ${financialSummary.revenue.toLocaleString()}
-            </p>
-            <p className='text-sm text-muted-foreground'>Ingresos</p>
-          </div>
-          <div className='text-center'>
-            <p className='text-2xl font-bold text-error'>
-              ${financialSummary.expenses.toLocaleString()}
-            </p>
-            <p className='text-sm text-muted-foreground'>Gastos</p>
-          </div>
-          <div className='text-center'>
-            <p className='text-2xl font-bold text-primary'>
-              ${financialSummary.profit.toLocaleString()}
-            </p>
-            <p className='text-sm text-muted-foreground'>Ganancia</p>
-          </div>
-          <div className='text-center'>
-            <p className='text-2xl font-bold text-warning'>
-              ${financialSummary.pendingPayments.toLocaleString()}
-            </p>
-            <p className='text-sm text-muted-foreground'>Pendientes</p>
-          </div>
-        </div>
-      </ChartCard> */}
-
-      {/* Estado del inventario y productos destacados */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <ChartCard title='Estado del Inventario'>
           <div className='space-y-4'>
@@ -392,7 +359,6 @@ export const Admin = () => {
         </ChartCard>
       </div>
 
-      {/* Product Metrics */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <ChartCard title='Métricas de Producto'>
           {productMetrics.data && (
@@ -426,7 +392,6 @@ export const Admin = () => {
           )}
         </ChartCard>
 
-        {/* Advanced Analytics */}
         <ChartCard title='Analíticas Avanzadas'>
           {advancedAnalytics.data && (
             <div className='space-y-4'>
@@ -472,7 +437,6 @@ export const Admin = () => {
         </ChartCard>
       </div>
 
-      {/* Gráficos principales */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <ChartCard title='Tendencia de Ventas'>
           <ResponsiveContainer width='100%' height={300}>
@@ -521,14 +485,13 @@ export const Admin = () => {
         </ChartCard>
       </div>
 
-      {/* Distribución por Artista */}
       <ChartCard title='Distribución por Artista'>
         {productMetrics.data?.productsByArtist && (
           <ResponsiveContainer width='100%' height={400}>
             <BarChart
               data={Object.entries(productMetrics.data.productsByArtist)
                 .sort(([, a], [, b]) => (b as number) - (a as number))
-                .slice(0, 10) // Top 10 artistas
+                .slice(0, 10)
                 .map(([artist, count], index) => ({
                   color: `hsl(${(index * 137.5) % 360}, 70%, 50%)`,
                   name: artist,
@@ -552,7 +515,6 @@ export const Admin = () => {
         )}
       </ChartCard>
 
-      {/* Eventos en el Sistema */}
       <AccordionCard
         title='Eventos en el Sistema'
         isExpanded={expandedEvents}
@@ -612,7 +574,6 @@ export const Admin = () => {
         )}
       </AccordionCard>
 
-      {/* Análisis de Ubicaciones y Series */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <ChartCard title='Distribución por Ubicación'>
           {productMetrics.data?.productsByLocation && (
@@ -655,7 +616,6 @@ export const Admin = () => {
         </ChartCard>
       </div>
 
-      {/* Análisis por Artista */}
       <AccordionCard
         title='Análisis por Artista'
         isExpanded={expandedArtists}
@@ -710,8 +670,6 @@ export const Admin = () => {
           <p className='text-center text-muted-foreground'>No hay datos de artistas disponibles</p>
         )}
       </AccordionCard>
-
-      {/* <FinanceOverview role={ROLES.ADMIN.NAME} /> */}
     </div>
   )
 }

@@ -29,11 +29,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -49,12 +45,14 @@ const automaticDiscountSchema = z.object({
     required_error: 'La fecha de inicio es requerida',
   }),
   title: z.string().min(1, 'El título es requerido'),
-  type: z.enum([ 'PERCENTAGE', 'FIXED_AMOUNT' ], {
+  type: z.enum(['PERCENTAGE', 'FIXED_AMOUNT'], {
     required_error: 'Selecciona el tipo de descuento',
   }),
-  value: z.union([ z.number().min(1, 'El valor debe ser mayor a 0'), z.undefined() ]).refine((val) => val !== undefined, {
-    message: 'El valor es requerido',
-  }),
+  value: z
+    .union([z.number().min(1, 'El valor debe ser mayor a 0'), z.undefined()])
+    .refine((val) => val !== undefined, {
+      message: 'El valor es requerido',
+    }),
 })
 
 type AutomaticDiscountFormData = z.infer<typeof automaticDiscountSchema>
@@ -74,12 +72,11 @@ export function ProductAutomaticDiscountModal({
   selectedProducts,
   singleProduct,
 }: ProductAutomaticDiscountModalProps) {
-  const [ isSubmitting, setIsSubmitting ] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Determinar qué productos usar: singleProduct o selectedProducts
   const productsToUse = useMemo(() => {
-    return singleProduct ? [ singleProduct ] : (selectedProducts ?? [])
-  }, [ singleProduct, selectedProducts ])
+    return singleProduct ? [singleProduct] : (selectedProducts ?? [])
+  }, [singleProduct, selectedProducts])
 
   const form = useForm<AutomaticDiscountFormData>({
     defaultValues: {
@@ -117,7 +114,7 @@ export function ProductAutomaticDiscountModal({
         const response = await fetch('/api/shopify/discounts/automatic', {
           body: JSON.stringify({
             endsAt: data.endsAt?.toISOString(),
-            productIds: productsToUse.map(p => p.id),
+            productIds: productsToUse.map((p) => p.id),
             startsAt: data.startsAt.toISOString(),
             title: data.title,
             type: data.type,
@@ -146,26 +143,25 @@ export function ProductAutomaticDiscountModal({
         setIsSubmitting(false)
       }
     },
-    [ productsToUse, onDiscountCreated, onClose, form ]
+    [productsToUse, onDiscountCreated, onClose, form]
   )
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className='sm:max-w-[500px]'>
         <DialogHeader>
           <DialogTitle>Crear Descuento Automático por Producto</DialogTitle>
           <DialogDescription>
-            Crea un descuento que se aplicará automáticamente a los productos seleccionados. Se genera un código único internamente, pero el descuento se activa automáticamente.
+            Crea un descuento que se aplicará automáticamente a los productos seleccionados. Se
+            genera un código único internamente, pero el descuento se activa automáticamente.
             {productsToUse.length > 0 && (
-              <div className="mt-2">
+              <div className='mt-2'>
                 <strong>Productos seleccionados ({productsToUse.length}):</strong>
-                <ul className="mt-1 text-sm text-muted-foreground">
+                <ul className='mt-1 text-sm text-muted-foreground'>
                   {productsToUse.slice(0, 3).map((product) => (
                     <li key={product.id}>• {product.title}</li>
                   ))}
-                  {productsToUse.length > 3 && (
-                    <li>• ... y {productsToUse.length - 3} más</li>
-                  )}
+                  {productsToUse.length > 3 && <li>• ... y {productsToUse.length - 3} más</li>}
                 </ul>
               </div>
             )}
@@ -173,15 +169,15 @@ export function ProductAutomaticDiscountModal({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
             <FormField
               control={form.control}
-              name="title"
+              name='title'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Título del Descuento</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej: Descuento especial de temporada" {...field} />
+                    <Input placeholder='Ej: Descuento especial de temporada' {...field} />
                   </FormControl>
                   <FormDescription>
                     Nombre descriptivo para identificar este descuento
@@ -191,22 +187,22 @@ export function ProductAutomaticDiscountModal({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className='grid grid-cols-2 gap-4'>
               <FormField
                 control={form.control}
-                name="type"
+                name='type'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo de Descuento</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecciona el tipo" />
+                          <SelectValue placeholder='Selecciona el tipo' />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="PERCENTAGE">Porcentaje (%)</SelectItem>
-                        <SelectItem value="FIXED_AMOUNT">Monto Fijo ($)</SelectItem>
+                        <SelectItem value='PERCENTAGE'>Porcentaje (%)</SelectItem>
+                        <SelectItem value='FIXED_AMOUNT'>Monto Fijo ($)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -216,15 +212,15 @@ export function ProductAutomaticDiscountModal({
 
               <FormField
                 control={form.control}
-                name="value"
+                name='value'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Valor del Descuento</FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
-                        step="1"
-                        min="1"
+                        type='number'
+                        step='1'
+                        min='1'
                         placeholder={watchedType === 'PERCENTAGE' ? '25' : '100'}
                         value={field.value || ''}
                         onChange={(e) => {
@@ -234,7 +230,9 @@ export function ProductAutomaticDiscountModal({
                       />
                     </FormControl>
                     <FormDescription>
-                      {watchedType === 'PERCENTAGE' ? 'Porcentaje de descuento (ej: 25 para 25%)' : 'Monto fijo en pesos'}
+                      {watchedType === 'PERCENTAGE'
+                        ? 'Porcentaje de descuento (ej: 25 para 25%)'
+                        : 'Monto fijo en pesos'}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -243,25 +241,25 @@ export function ProductAutomaticDiscountModal({
             </div>
 
             {calculateDiscountPreview() && (
-              <div className="rounded-lg bg-blue-50 p-3 text-center">
-                <p className="text-sm font-medium text-blue-900">
+              <div className='rounded-lg bg-blue-50 p-3 text-center'>
+                <p className='text-sm font-medium text-blue-900'>
                   Vista previa: {calculateDiscountPreview()}
                 </p>
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className='grid grid-cols-2 gap-4'>
               <FormField
                 control={form.control}
-                name="startsAt"
+                name='startsAt'
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem className='flex flex-col'>
                     <FormLabel>Fecha de Inicio</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
-                            variant="outline"
+                            variant='outline'
                             className={cn(
                               'w-full pl-3 text-left font-normal',
                               !field.value && 'text-muted-foreground'
@@ -272,13 +270,13 @@ export function ProductAutomaticDiscountModal({
                             ) : (
                               <span>Selecciona una fecha</span>
                             )}
-                            <CalendarIcon className="ml-auto size-4 opacity-50" />
+                            <CalendarIcon className='ml-auto size-4 opacity-50' />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className='w-auto p-0' align='start'>
                         <Calendar
-                          mode="single"
+                          mode='single'
                           selected={field.value}
                           onSelect={field.onChange}
                           disabled={(date) => date < new Date('1900-01-01')}
@@ -293,15 +291,15 @@ export function ProductAutomaticDiscountModal({
 
               <FormField
                 control={form.control}
-                name="endsAt"
+                name='endsAt'
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem className='flex flex-col'>
                     <FormLabel>Fecha de Fin (Opcional)</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
-                            variant="outline"
+                            variant='outline'
                             className={cn(
                               'w-full pl-3 text-left font-normal',
                               !field.value && 'text-muted-foreground'
@@ -312,13 +310,13 @@ export function ProductAutomaticDiscountModal({
                             ) : (
                               <span>Selecciona una fecha</span>
                             )}
-                            <CalendarIcon className="ml-auto size-4 opacity-50" />
+                            <CalendarIcon className='ml-auto size-4 opacity-50' />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className='w-auto p-0' align='start'>
                         <Calendar
-                          mode="single"
+                          mode='single'
                           selected={field.value}
                           onSelect={field.onChange}
                           disabled={(date) => date < new Date()}
@@ -333,13 +331,13 @@ export function ProductAutomaticDiscountModal({
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+              <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting || !productsToUse.length}>
+              <Button type='submit' disabled={isSubmitting || !productsToUse.length}>
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    <Loader2 className='mr-2 size-4 animate-spin' />
                     Creando...
                   </>
                 ) : (

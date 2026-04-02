@@ -1,23 +1,9 @@
-/**
- * Script para agregar el permiso 'view_private_rooms' a todos los roles
- * excepto 'customer' (solo customer regular no tiene este permiso)
- *
- * Roles que recibirán el permiso:
- * - vip_customer (ya lo tiene)
- * - artist
- * - employee
- * - provider
- * - partner
- * - support
- * - manager (ya lo tiene)
- * - admin (ya tiene todos los permisos)
- */
+
 
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-// Roles que deben tener el permiso view_private_rooms
 const ROLES_WITH_PERMISSION = [
   'vip_customer',
   'artist',
@@ -33,7 +19,7 @@ async function addViewPrivateRoomsPermission() {
   console.log('🔧 Iniciando actualización de permisos...\n')
 
   try {
-    // Buscar el permiso view_private_rooms
+
     const permission = await prisma.permission.findUnique({
       where: { name: 'view_private_rooms' },
     })
@@ -46,11 +32,9 @@ async function addViewPrivateRoomsPermission() {
 
     console.log(`✅ Permiso encontrado: ${permission.name} (${permission.id})\n`)
 
-    // Procesar cada rol
     for (const roleName of ROLES_WITH_PERMISSION) {
       console.log(`📋 Procesando rol: ${roleName}`)
 
-      // Buscar el rol
       const role = await prisma.role.findUnique({
         where: { name: roleName },
       })
@@ -60,7 +44,6 @@ async function addViewPrivateRoomsPermission() {
         continue
       }
 
-      // Verificar si el rol ya tiene el permiso
       const existingRolePermission = await prisma.rolePermission.findUnique({
         where: {
           roleId_permissionId: {
@@ -75,7 +58,6 @@ async function addViewPrivateRoomsPermission() {
         continue
       }
 
-      // Asignar el permiso al rol
       await prisma.rolePermission.create({
         data: {
           permissionId: permission.id,
@@ -86,7 +68,6 @@ async function addViewPrivateRoomsPermission() {
       console.log(`   ✅ Permiso agregado exitosamente\n`)
     }
 
-    // Mostrar resumen
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     console.log('📊 RESUMEN DE PERMISOS\n')
 
@@ -121,5 +102,4 @@ async function addViewPrivateRoomsPermission() {
   }
 }
 
-// Ejecutar el script
 addViewPrivateRoomsPermission()

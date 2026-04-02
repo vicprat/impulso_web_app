@@ -8,9 +8,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'lastUpdate is required' }, { status: 400 })
     }
 
-    // Por ahora, siempre retornar que no hay actualizaciones
-    // En el futuro, podríamos implementar una lógica más sofisticada
-    // para detectar cambios en productos, inventario, etc.
     return NextResponse.json({
       hasUpdates: false,
       lastUpdate: Date.now(),
@@ -25,4 +22,4 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
-} 
+}

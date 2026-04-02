@@ -7,7 +7,6 @@ interface Props {
   data: PublicArtist[]
 }
 
-
 const publicArtist = (publicArtist: PublicArtist) => {
   return {
     email: publicArtist.email,
@@ -25,8 +24,6 @@ const publicArtist = (publicArtist: PublicArtist) => {
 export const Artists: React.FC<Props> = ({ data }) => {
   return (
     <>
-
-
       {data.length > 0 && (
         <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4'>
           {data.slice(0, 8).map((artist, index) => (
@@ -43,13 +40,22 @@ export const Artists: React.FC<Props> = ({ data }) => {
 
       {data.length === 0 && (
         <div className='animate-fade-in-up py-16 text-center'>
-          <div className='mx-auto mb-6 flex size-24 animate-scale-in items-center justify-center rounded-full bg-muted' style={{ animationDelay: '0.2s' }}>
+          <div
+            className='mx-auto mb-6 flex size-24 animate-scale-in items-center justify-center rounded-full bg-muted'
+            style={{ animationDelay: '0.2s' }}
+          >
             <Users className='size-8 text-muted-foreground' />
           </div>
-          <h3 className='mb-2 animate-fade-in-up text-xl font-semibold text-foreground' style={{ animationDelay: '0.3s' }}>
+          <h3
+            className='mb-2 animate-fade-in-up text-xl font-semibold text-foreground'
+            style={{ animationDelay: '0.3s' }}
+          >
             Construyendo nuestra comunidad
           </h3>
-          <p className='animate-fade-in-up text-muted-foreground' style={{ animationDelay: '0.4s' }}>
+          <p
+            className='animate-fade-in-up text-muted-foreground'
+            style={{ animationDelay: '0.4s' }}
+          >
             Pronto podrás conocer a nuestros increíbles artistas
           </p>
         </div>

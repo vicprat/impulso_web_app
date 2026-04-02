@@ -234,7 +234,6 @@ export default function Page() {
         <h1 className='text-3xl font-bold tracking-tight text-on-surface'>Todas las colecciones</h1>
 
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
-          {/* Search Input */}
           <form onSubmit={handleSearch} className='relative'>
             <Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
             <Input
@@ -255,7 +254,6 @@ export default function Page() {
             )}
           </form>
 
-          {/* Sort Select */}
           <div className='flex items-center gap-2'>
             <label className='whitespace-nowrap text-sm font-medium text-on-surface-variant'>
               Ordenar:
@@ -278,7 +276,6 @@ export default function Page() {
             </Select>
           </div>
 
-          {/* Limit Select */}
           <div className='flex items-center gap-2'>
             <label className='whitespace-nowrap text-sm font-medium text-on-surface-variant'>
               Mostrar:

@@ -163,7 +163,7 @@ export const shopifyService = {
     const allProductsResponse = await api.getProducts(params)
 
     const filteredProducts = allProductsResponse.data.products.filter(
-      (product: Product) => product.vendor !== 'Evento' // Excluir eventos de la tienda general
+      (product: Product) => product.vendor !== 'Evento'
     )
 
     return {

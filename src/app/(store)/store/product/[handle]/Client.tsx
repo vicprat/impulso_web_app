@@ -29,7 +29,7 @@ import { type IProductForCart, type Variant } from '@/modules/shopify/types'
 import { useShopifyAnalytics } from '@/src/components/ShopifyAnalytics'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
-// Tipo para producto plano (sin métodos de clase)
+
 interface ProductData {
   id: string
   handle: string
@@ -91,7 +91,7 @@ interface ProductData {
     serie: string | null
     location: string | null
   }
-  // Getters
+
   primaryImage: {
     id?: string
     url: string
@@ -130,7 +130,6 @@ interface Props {
   relatedProducts: ProductData[]
 }
 
-// Adaptador para convertir Product a IProductForCart
 const adaptProductForCart = (product: ProductData): IProductForCart => ({
   availableForSale: product.isAvailable,
   createdAt: new Date().toISOString(),
@@ -139,7 +138,7 @@ const adaptProductForCart = (product: ProductData): IProductForCart => ({
   handle: product.handle,
   id: product.id,
   images: product.images,
-  // No tenemos esta info en el modelo Product
+
   priceRange: {
     maxVariantPrice: product.primaryVariant?.price || { amount: '0', currencyCode: 'MXN' },
     minVariantPrice: product.primaryVariant?.price || { amount: '0', currencyCode: 'MXN' },
@@ -204,7 +203,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
     }
   }, [product.variants, state.variant])
 
-  // Shopify Analytics: Track Product View
   useEffect(() => {
     const variant = state.variant ?? product.primaryVariant
     if (!variant) return
@@ -219,7 +217,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
       variantGid: variant.id,
       variantName: variant.title,
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id])
 
   const classNames = (...classes: string[]) => {
@@ -274,14 +271,12 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.lightboxOpen])
 
   return (
     <div className='min-h-screen'>
       <div className='mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8'>
         <div className='lg:grid lg:auto-rows-min lg:grid-cols-12 lg:gap-x-8'>
-          {/* Galería de Imágenes */}
           <div className='lg:col-span-7 lg:col-start-1 lg:row-span-3 lg:row-start-1'>
             <h2 className='sr-only'>Imágenes del producto</h2>
 
@@ -343,10 +338,8 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
             )}
           </div>
 
-          {/* Información del Producto */}
           <div className='lg:col-span-5 lg:col-start-8'>
             <div className='space-y-6'>
-              {/* Header con Título y Precio */}
               <div className='space-y-4'>
                 <div>
                   <h1 className='text-2xl font-bold leading-tight text-foreground sm:text-3xl lg:text-4xl'>
@@ -401,7 +394,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                 </div>
               </div>
 
-              {/* Formulario de Compra */}
               <form className='space-y-6'>
                 {product.variants.length > 1 && (
                   <div className='space-y-4'>
@@ -480,7 +472,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                 </div>
               </form>
 
-              {/* Detalles de la Obra */}
               {product.artworkDetails &&
                 (product.artworkDetails.medium ||
                   product.artworkDetails.year ||
@@ -549,7 +540,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                   </Card>
                 )}
 
-              {/* Detalles del Producto */}
               <Card className='border-border bg-card shadow-sm'>
                 <CardHeader className='pb-4'>
                   <CardTitle className='flex items-center gap-2 text-foreground'>
@@ -595,28 +585,10 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Descripción */}
-              {/* {product.descriptionHtml && (
-                <Card className='border-border bg-card shadow-sm'>
-                  <CardHeader className='pb-4'>
-                    <CardTitle className='text-foreground'>Descripción</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div
-                      className='prose prose-sm max-w-none text-muted-foreground prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground'
-                      dangerouslySetInnerHTML={{
-                        __html: product.descriptionHtml,
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              )} */}
             </div>
           </div>
         </div>
 
-        {/* Productos Relacionados */}
         {relatedProducts.length > 0 && (
           <div className='mt-16 lg:mt-24'>
             <div className='mb-8 flex items-center justify-between'>
@@ -693,7 +665,6 @@ export const Client: React.FC<Props> = ({ product, relatedProducts }) => {
         )}
       </div>
 
-      {/* Lightbox */}
       <Dialog open={state.lightboxOpen} onOpenChange={closeLightbox}>
         <DialogContent className='h-[calc(100vh-4rem)] max-h-screen w-full max-w-screen-xl border-none bg-black/95 p-0'>
           <div className='relative flex size-full items-center justify-center'>

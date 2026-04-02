@@ -9,7 +9,7 @@ import {
   MapPin,
   Palette,
   TrendingDown,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react'
 import React, { useState } from 'react'
 import {
@@ -22,68 +22,12 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
-  YAxis
+  YAxis,
 } from 'recharts'
 
-import {
-  useArtistDashboard,
-} from '@/src/modules/dashboard/hooks'
+import { useArtistDashboard } from '@/src/modules/dashboard/hooks'
 
 import { Badge } from '../ui/badge'
-
-interface TopProduct {
-  name: string
-  artist: string
-  sales: number
-  units: number
-}
-
-interface ArtworkDetails {
-  medium: string | null
-  year: string | null
-  location: string | null
-  artist: string | null
-  serie: string | null
-  height: string | null
-  width: string | null
-  depth: string | null
-}
-
-interface EventDetails {
-  date: string | null
-  location: string | null
-  startTime: string | null
-  endTime: string | null
-  organizer: string | null
-}
-
-interface EnrichedProduct {
-  id: string
-  title: string
-  vendor: string
-  productType: string
-  status: string
-  formattedPrice: string
-  isAvailable: boolean
-  artworkDetails: ArtworkDetails
-  manualTags: string[]
-  autoTags: string[]
-}
-
-interface EnrichedEvent {
-  id: string
-  title: string
-  vendor: string
-  productType: string
-  status: string
-  formattedPrice: string
-  isAvailable: boolean
-  availableForSale: boolean
-  eventDetails: EventDetails
-  formattedEventDetails: string
-  isPastEvent: boolean
-  daysUntilEvent: number | null
-}
 
 const AccordionCard = ({
   children,
@@ -151,7 +95,7 @@ const MetricCard = ({
 
   return (
     <div
-      className={`rounded-lg border-outline p-6 ${colorClasses[ color ]} transition-all hover:shadow-md`}
+      className={`rounded-lg border-outline p-6 ${colorClasses[color]} transition-all hover:shadow-md`}
     >
       <div className='flex items-center justify-between'>
         <div>
@@ -197,12 +141,12 @@ const LoadingDashboard = () => (
     <div className='animate-pulse space-y-6'>
       <div className='h-8 w-1/3 rounded bg-gray-200'></div>
       <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
-        {[ ...Array(4) ].map((_, i) => (
+        {[...Array(4)].map((_, i) => (
           <div key={i} className='h-32 rounded-lg bg-gray-200'></div>
         ))}
       </div>
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-        {[ ...Array(4) ].map((_, i) => (
+        {[...Array(4)].map((_, i) => (
           <div key={i} className='h-64 rounded-lg bg-gray-200'></div>
         ))}
       </div>
@@ -224,13 +168,8 @@ const ErrorDashboard = ({ error }: { error: Error }) => (
 export const Artist = () => {
   const { data, error, isLoading } = useArtistDashboard()
 
-  // Estado para los accordions
-  const [ expandedArtists, setExpandedArtists ] = useState(false)
-  const [ expandedEvents, setExpandedEvents ] = useState(false)
-
-  // Console logs para analizar la data
-  console.log('=== ARTIST DASHBOARD DATA ===')
-  console.log('data:', data)
+  const [expandedArtists, setExpandedArtists] = useState(false)
+  const [expandedEvents, setExpandedEvents] = useState(false)
 
   if (isLoading) return <LoadingDashboard />
   if (error) return <ErrorDashboard error={error as Error} />
@@ -252,13 +191,11 @@ export const Artist = () => {
 
   return (
     <div className='min-h-screen space-y-8 bg-surface-container-low p-8'>
-      {/* Header del Artista */}
       <div className='mb-8'>
         <h1 className='text-3xl font-bold text-foreground'>Dashboard de {currentArtist}</h1>
         <p className='text-muted-foreground'>Bienvenido a tu panel de control personal</p>
       </div>
 
-      {/* Métricas principales del artista */}
       <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
         <MetricCard
           title='Mis Obras'
@@ -290,7 +227,6 @@ export const Artist = () => {
         />
       </div>
 
-      {/* Gráficos de distribución del artista */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <ChartCard title='Mis Obras por Categoría'>
           {Object.keys(artistProductsByCategory).length > 0 ? (
@@ -298,11 +234,11 @@ export const Artist = () => {
               <PieChart>
                 <Pie
                   data={Object.entries(artistProductsByCategory)
-                    .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
-                    .map(([ category, count ], index) => ({
+                    .sort(([, a], [, b]) => (b as number) - (a as number))
+                    .map(([category, count], index) => ({
                       color: `hsl(${(index * 137.5) % 360}, 70%, 50%)`,
                       name: category,
-                      value: count
+                      value: count,
                     }))}
                   cx='50%'
                   cy='50%'
@@ -312,16 +248,21 @@ export const Artist = () => {
                   label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                 >
                   {Object.entries(artistProductsByCategory)
-                    .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
-                    .map(([ category, count ], index) => (
-                      <Cell key={`cell-${index}`} fill={`hsl(${(index * 137.5) % 360}, 70%, 50%)`} />
+                    .sort(([, a], [, b]) => (b as number) - (a as number))
+                    .map(([category, count], index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={`hsl(${(index * 137.5) % 360}, 70%, 50%)`}
+                      />
                     ))}
                 </Pie>
-                <Tooltip formatter={(value) => [ value, 'Obras' ]} />
+                <Tooltip formatter={(value) => [value, 'Obras']} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <p className='text-center text-muted-foreground'>No hay datos de categorías disponibles</p>
+            <p className='text-center text-muted-foreground'>
+              No hay datos de categorías disponibles
+            </p>
           )}
         </ChartCard>
 
@@ -330,16 +271,17 @@ export const Artist = () => {
             <ResponsiveContainer width='100%' height={300}>
               <BarChart
                 data={Object.entries(artistProductsByMedium)
-                  .filter(([ medium ]) => medium !== 'Sin medio especificado')
-                  .map(([ medium, count ]) => ({
+                  .filter(([medium]) => medium !== 'Sin medio especificado')
+                  .map(([medium, count]) => ({
                     color: `hsl(${Math.random() * 360}, 70%, 50%)`,
                     name: medium,
-                    value: count
-                  }))}>
+                    value: count,
+                  }))}
+              >
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='name' angle={-45} textAnchor='end' height={80} />
                 <YAxis />
-                <Tooltip formatter={(value) => [ value, 'Obras' ]} />
+                <Tooltip formatter={(value) => [value, 'Obras']} />
                 <Bar dataKey='value' fill='#8884d8' />
               </BarChart>
             </ResponsiveContainer>
@@ -349,24 +291,24 @@ export const Artist = () => {
         </ChartCard>
       </div>
 
-      {/* Distribución por año y ubicación */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <ChartCard title='Mis Obras por Año'>
           {Object.keys(artistProductsByYear).length > 0 ? (
             <ResponsiveContainer width='100%' height={300}>
               <BarChart
                 data={Object.entries(artistProductsByYear)
-                  .filter(([ year ]) => year !== 'Sin año especificado')
-                  .sort(([ a ], [ b ]) => parseInt(a as string) - parseInt(b as string))
-                  .map(([ year, count ]) => ({
+                  .filter(([year]) => year !== 'Sin año especificado')
+                  .sort(([a], [b]) => parseInt(a as string) - parseInt(b as string))
+                  .map(([year, count]) => ({
                     color: `hsl(${Math.random() * 360}, 70%, 50%)`,
                     name: year,
-                    value: count
-                  }))}>
+                    value: count,
+                  }))}
+              >
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='name' />
                 <YAxis />
-                <Tooltip formatter={(value) => [ value, 'Obras' ]} />
+                <Tooltip formatter={(value) => [value, 'Obras']} />
                 <Bar dataKey='value' fill='#82ca9d' />
               </BarChart>
             </ResponsiveContainer>
@@ -379,10 +321,10 @@ export const Artist = () => {
           {Object.keys(artistProductsByLocation).length > 0 ? (
             <div className='space-y-4'>
               {Object.entries(artistProductsByLocation)
-                .filter(([ location ]) => location !== 'Sin ubicación especificada')
-                .sort(([ , a ], [ , b ]) => (b as number) - (a as number))
+                .filter(([location]) => location !== 'Sin ubicación especificada')
+                .sort(([, a], [, b]) => (b as number) - (a as number))
                 .slice(0, 10)
-                .map(([ location, count ]) => (
+                .map(([location, count]) => (
                   <div key={location} className='flex items-center justify-between'>
                     <div className='flex items-center'>
                       <MapPin className='mr-2 size-4 text-primary' />
@@ -393,12 +335,13 @@ export const Artist = () => {
                 ))}
             </div>
           ) : (
-            <p className='text-center text-muted-foreground'>No hay datos de ubicaciones disponibles</p>
+            <p className='text-center text-muted-foreground'>
+              No hay datos de ubicaciones disponibles
+            </p>
           )}
         </ChartCard>
       </div>
 
-      {/* Mis Obras */}
       <AccordionCard
         title='Mis Obras'
         isExpanded={expandedArtists}
@@ -411,7 +354,10 @@ export const Artist = () => {
             {artistProducts
               .slice(0, expandedArtists ? undefined : 5)
               .map((product: any, index: number) => (
-                <div key={index} className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'>
+                <div
+                  key={index}
+                  className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'
+                >
                   <div className='flex-1'>
                     <div className='flex items-center'>
                       <Palette className='mr-2 size-4 text-primary' />
@@ -426,7 +372,8 @@ export const Artist = () => {
                       <div className='mt-2 text-sm text-muted-foreground'>
                         {product.artworkDetails.medium && `🎨 ${product.artworkDetails.medium}`}
                         {product.artworkDetails.year && ` | 📅 ${product.artworkDetails.year}`}
-                        {product.artworkDetails.location && ` | 📍 ${product.artworkDetails.location}`}
+                        {product.artworkDetails.location &&
+                          ` | 📍 ${product.artworkDetails.location}`}
                         {product.artworkDetails.serie && ` | 📚 ${product.artworkDetails.serie}`}
                       </div>
                     )}
@@ -445,7 +392,6 @@ export const Artist = () => {
         )}
       </AccordionCard>
 
-      {/* Mis Eventos */}
       <AccordionCard
         title='Mis Eventos'
         isExpanded={expandedEvents}
@@ -458,7 +404,10 @@ export const Artist = () => {
             {artistEvents
               .slice(0, expandedEvents ? undefined : 5)
               .map((event: any, index: number) => (
-                <div key={index} className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'>
+                <div
+                  key={index}
+                  className='flex items-center justify-between rounded-lg bg-surface-container-low p-4'
+                >
                   <div className='flex-1'>
                     <div className='flex items-center'>
                       <Calendar className='mr-2 size-4 text-primary' />

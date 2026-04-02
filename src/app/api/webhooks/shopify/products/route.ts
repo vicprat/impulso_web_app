@@ -12,17 +12,14 @@ function verifyShopifyWebhook(body: string, signature: string): boolean {
     return process.env.NODE_ENV !== 'production'
   }
 
-  // Método 1: Verificación estándar
   const hmac = crypto.createHmac('sha256', webhookSecret)
   hmac.update(body, 'utf8')
   const hash = hmac.digest('base64')
 
-  // Método 2: Verificación alternativa (por si Shopify usa un encoding diferente)
   const hmac2 = crypto.createHmac('sha256', webhookSecret)
   hmac2.update(Buffer.from(body))
   const hash2 = hmac2.digest('base64')
 
-  // Si estamos en desarrollo y ninguna funciona, permitir
   if (process.env.NODE_ENV !== 'production' && hash !== signature && hash2 !== signature) {
     return true
   }
@@ -39,7 +36,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
     }
 
-    // Verificar autenticidad del webhook
     const isValid = verifyShopifyWebhook(body, signature)
 
     if (!isValid) {
@@ -54,35 +50,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Product handle not found' }, { status: 400 })
     }
 
-    // Revalidar cache usando CacheManager
     CacheManager.revalidateProductCache({
       handle: productHandle,
       id: product.id,
       vendor: product.vendor,
     })
 
-    // Invalidar todos los caches en memoria (dashboard, stats, etc.)
     await CacheManager.clearAllCaches()
 
-    // Revalidar rutas específicas según el tipo
     if (isEvent) {
-      // Para eventos
+
       const eventPath = `/store/event/${productHandle}`
       revalidatePath(eventPath, 'page')
       revalidatePath('/store/events', 'page')
       revalidatePath('/store/event/[handle]', 'page')
     } else {
-      // Para productos normales
+
       const productPath = `/store/product/${productHandle}`
       revalidatePath(productPath, 'page')
       revalidatePath('/store/product/[handle]', 'page')
     }
 
-    // Revalidar rutas comunes
     revalidatePath('/store', 'page')
     revalidatePath('/', 'page')
 
-    // Revalidar rutas de artistas si el producto tiene vendor (no eventos)
     if (product.vendor && !isEvent) {
       revalidatePath('/artists', 'page')
     }

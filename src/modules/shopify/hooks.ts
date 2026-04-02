@@ -16,8 +16,6 @@ import type {
   ShopInfoResponse,
 } from './types'
 
-// Importar el tipo desde el API
-
 export const SHOPIFY_KEYS = {
   all: ['shopify'] as const,
   collection: (handle: string) => [...SHOPIFY_KEYS.collections(), handle] as const,

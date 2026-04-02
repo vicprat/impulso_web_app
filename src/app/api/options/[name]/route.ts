@@ -14,14 +14,12 @@ const TABLE_MAP: Record<string, string> = {
 
 const MODELS_WITH_IS_ACTIVE = ['Arrendamiento', 'ArtworkType', 'Location', 'Technique']
 
-// Define a type for model names only
 type ModelName = 'Technique' | 'ArtworkType' | 'Location' | 'Arrendamiento' | 'Artist'
 
 export async function GET(req: Request, context: { params: Promise<{ name: string }> }) {
   try {
     const { name } = await context.params
 
-    // Validar que el parámetro name existe
     if (!name) {
       return NextResponse.json({ error: 'El parámetro "name" es requerido' }, { status: 400 })
     }
@@ -39,16 +37,13 @@ export async function GET(req: Request, context: { params: Promise<{ name: strin
       )
     }
 
-    // Verificar que el modelo existe en Prisma
     if (!(prisma as any)[tableName]) {
       console.error(`Modelo ${tableName} no encontrado en Prisma`)
       return NextResponse.json({ error: 'Error interno: modelo no disponible' }, { status: 500 })
     }
 
-    // Construir el where clause condicionalmente
     const whereClause = MODELS_WITH_IS_ACTIVE.includes(tableName) ? { isActive: true } : {}
 
-    // Type assertion to specific model names
     const data = await (prisma as any)[tableName as ModelName].findMany({
       orderBy: { name: 'asc' },
       select: { id: true, name: true },
@@ -59,7 +54,6 @@ export async function GET(req: Request, context: { params: Promise<{ name: strin
   } catch (error) {
     console.error('Error fetching options:', error)
 
-    // Manejo específico de errores de Prisma
     if (error instanceof Error) {
       if (error.message.includes('Unknown table')) {
         return NextResponse.json(
@@ -89,7 +83,6 @@ export async function POST(req: Request, context: { params: Promise<{ name: stri
     await requirePermission([PERMISSIONS.MANAGE_INVENTORY, PERMISSIONS.MANAGE_OWN_PRODUCTS])
     const { name: optionType } = await context.params
 
-    // Validar que el parámetro name existe
     if (!optionType) {
       return NextResponse.json({ error: 'El parámetro "name" es requerido' }, { status: 400 })
     }
@@ -107,7 +100,6 @@ export async function POST(req: Request, context: { params: Promise<{ name: stri
       )
     }
 
-    // Verificar que el modelo existe en Prisma
     if (!(prisma as any)[tableName]) {
       console.error(`Modelo ${tableName} no encontrado en Prisma`)
       return NextResponse.json({ error: 'Error interno: modelo no disponible' }, { status: 500 })
@@ -116,7 +108,6 @@ export async function POST(req: Request, context: { params: Promise<{ name: stri
     const body = await req.json()
     const { name } = body
 
-    // Validar el body de la request
     if (!name) {
       return NextResponse.json(
         { error: 'El campo "name" es requerido en el body' },
@@ -142,7 +133,6 @@ export async function POST(req: Request, context: { params: Promise<{ name: stri
       )
     }
 
-    // Verificar si ya existe
     const existing = await (prisma as any)[tableName as ModelName].findFirst({
       where: { name: name.trim() },
     })
@@ -166,7 +156,6 @@ export async function POST(req: Request, context: { params: Promise<{ name: stri
   } catch (error) {
     console.error('Error creating option:', error)
 
-    // Manejo específico de errores de Prisma
     if (error instanceof Error) {
       if (error.message.includes('Unknown table')) {
         return NextResponse.json(

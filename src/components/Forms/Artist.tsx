@@ -34,7 +34,7 @@ import { availableRoles } from '@/src/config/Roles'
 export const dynamic = 'force-dynamic'
 
 interface UserRoleFormProps {
-  user?: UserProfile // Opcional para crear nuevos usuarios
+  user?: UserProfile
   onSuccess: () => void
   onCancel: () => void
   mode?: 'create' | 'edit'
@@ -54,7 +54,6 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
   } | null>(null)
   const [reassignTargetUserId, setReassignTargetUserId] = useState<string | null>(null)
 
-  // Campos para crear nuevo usuario
   const [formData, setFormData] = useState({
     email: user?.email ?? '',
     firstName: user?.firstName ?? '',
@@ -70,7 +69,6 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
     queryKey: ['vendors'],
   })
 
-  // Si el usuario ya es artista, obtener el nombre del vendor y tipo
   useEffect(() => {
     if (user?.artist?.name) {
       setVendorName(user.artist.name)
@@ -81,7 +79,6 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
     }
   }, [user])
 
-  // Actualizar el estado isNewVendor cuando cambie vendorName
   useEffect(() => {
     if (vendorName.trim() && vendors) {
       const isExisting = vendors.some((v) => v.toLowerCase() === vendorName.toLowerCase())
@@ -104,7 +101,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
       }).then(async (res) => {
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}))
-          // Captura conflicto 409 para reasignación
+
           if (res.status === 409 && errorData?.code === 'ARTIST_ASSIGNED') {
             setConflictInfo({ assignedTo: errorData.assignedTo, vendorName: errorData.vendorName })
             setConfirmReassignOpen(true)
@@ -208,13 +205,11 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
 
     try {
       if (mode === 'create') {
-        // Crear nuevo usuario
         if (!formData.email.trim()) {
           toast.error('El email es requerido')
           return
         }
 
-        // Si es artista, validar que se seleccione un vendor
         if (selectedRole === 'artist' && !vendorName.trim()) {
           toast.error('Debes seleccionar un vendor para crear un usuario artista')
           return
@@ -228,7 +223,6 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
           role: selectedRole,
         })
 
-        // Si es artista, crear también la relación con el vendor
         if (selectedRole === 'artist' && vendorName.trim() && userResponse.user?.id) {
           setReassignTargetUserId(userResponse.user.id)
           try {
@@ -238,7 +232,6 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
               vendorName: vendorName.trim(),
             })
           } catch {
-            // El error ya fue gestionado para abrir el diálogo si aplica
             return
           }
         } else {
@@ -246,7 +239,6 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
           onSuccess()
         }
       } else {
-        // Editar usuario existente
         if (!user) return
 
         const isBecomingArtist = selectedRole === 'artist' && !user.roles.includes('artist')
@@ -314,7 +306,7 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
           <span className='font-medium'>Artista actual:</span> {user.artist.name}
         </div>
       )}
-      {/* Campos para crear usuario */}
+
       {mode === 'create' && (
         <div className='space-y-4'>
           <div className='space-y-2'>
@@ -369,7 +361,6 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
         </div>
       )}
 
-      {/* Selección de rol */}
       <div className='space-y-3'>
         <h3 className='text-lg font-medium'>Asignar Rol</h3>
         {availableRoles.map((role) => (
@@ -441,7 +432,6 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
                     {vendorsLoading ? 'Cargando...' : 'No se encontraron vendors.'}
                   </CommandEmpty>
                   <CommandGroup>
-                    {/* Mostrar vendors existentes que coincidan */}
                     {vendors
                       ?.filter((v) => v.toLowerCase().includes(vendorName.toLowerCase()))
                       .map((v) => (
@@ -465,13 +455,11 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
                         </CommandItem>
                       ))}
 
-                    {/* Opción para crear nuevo vendor si el texto no coincide exactamente con ningún vendor existente */}
                     {vendorName.trim() &&
                       !vendors?.some((v) => v.toLowerCase() === vendorName.toLowerCase()) && (
                         <CommandItem
                           value={`create:${vendorName}`}
                           onSelect={() => {
-                            // Mantener el vendorName actual para crear el nuevo vendor
                             setPopoverOpen(false)
                           }}
                           className='bg-primary/5 border-t text-primary'
@@ -489,7 +477,6 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
             </PopoverContent>
           </Popover>
 
-          {/* Selector de tipo de artista */}
           <div className='mt-4'>
             <Label className='text-sm font-medium text-on-primary-container'>Tipo de Artista</Label>
             <div className='mt-2 space-y-2'>

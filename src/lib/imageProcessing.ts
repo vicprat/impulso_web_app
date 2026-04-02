@@ -18,13 +18,6 @@ export interface ProcessedImage {
   height?: number
 }
 
-/**
- * Procesa una imagen convirtiéndola a WebP y optimizándola
- * @param fileBuffer - Buffer del archivo original
- * @param originalFilename - Nombre original del archivo
- * @param options - Opciones de procesamiento
- * @returns Objeto con la imagen procesada
- */
 export async function processImageToWebP(
   fileBuffer: ArrayBuffer,
   originalFilename: string,
@@ -38,22 +31,17 @@ export async function processImageToWebP(
     withoutEnlargement = true,
   } = options
 
-  // Obtener información de la imagen original
   const originalImage = sharp(Buffer.from(fileBuffer))
 
-  // Aplicar corrección automática de orientación EXIF
   const orientedImage = originalImage.rotate()
 
-  // Obtener metadatos después de aplicar la orientación
   const metadata = await orientedImage.metadata()
 
-  // Procesar la imagen
   const processedBuffer = await orientedImage
     .webp({ quality })
     .resize(maxWidth, maxHeight, { fit, withoutEnlargement })
     .toBuffer()
 
-  // Generar nuevo nombre de archivo con extensión .webp
   const filename = originalFilename.replace(/\.[^/.]+$/, '.webp')
 
   return {
@@ -66,13 +54,6 @@ export async function processImageToWebP(
   }
 }
 
-/**
- * Procesa una imagen con formato específico
- * @param fileBuffer - Buffer del archivo original
- * @param originalFilename - Nombre original del archivo
- * @param options - Opciones de procesamiento
- * @returns Objeto con la imagen procesada
- */
 export async function processImage(
   fileBuffer: ArrayBuffer,
   originalFilename: string,
@@ -87,20 +68,16 @@ export async function processImage(
     withoutEnlargement = true,
   } = options
 
-  // Obtener información de la imagen original
   const originalImage = sharp(Buffer.from(fileBuffer))
 
-  // Aplicar corrección automática de orientación EXIF
   const orientedImage = originalImage.rotate()
 
-  // Obtener metadatos después de aplicar la orientación
   const metadata = await orientedImage.metadata()
 
   let processedBuffer: Buffer
   let mimeType: string
   let filename: string
 
-  // Procesar según el formato especificado
   switch (format) {
     case 'webp':
       processedBuffer = await orientedImage
@@ -143,19 +120,11 @@ export async function processImage(
   }
 }
 
-/**
- * Valida si un archivo es una imagen válida
- * @param file - Archivo a validar
- * @param maxSize - Tamaño máximo en bytes
- * @returns true si es válido, false en caso contrario
- */
 export function validateImageFile(file: File, maxSize: number = 10 * 1024 * 1024): boolean {
-  // Verificar tipo de archivo
   if (!file.type.startsWith('image/')) {
     return false
   }
 
-  // Verificar tamaño
   if (file.size > maxSize) {
     return false
   }
@@ -163,12 +132,6 @@ export function validateImageFile(file: File, maxSize: number = 10 * 1024 * 1024
   return true
 }
 
-/**
- * Genera un nombre único para el archivo
- * @param originalFilename - Nombre original del archivo
- * @param folder - Carpeta opcional
- * @returns Nombre único del archivo
- */
 export function generateUniqueFilename(originalFilename: string, folder?: string): string {
   const timestamp = Date.now()
   const randomId = Math.random().toString(36).substring(2, 15)
@@ -180,9 +143,6 @@ export function generateUniqueFilename(originalFilename: string, folder?: string
   return folder ? `${folder}/${uniqueName}` : uniqueName
 }
 
-/**
- * Configuraciones predefinidas para diferentes tipos de imágenes
- */
 export const imageProcessingPresets = {
   avatar: {
     fit: 'inside' as const,

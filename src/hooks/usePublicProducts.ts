@@ -27,8 +27,8 @@ export const usePublicProducts = (limit = 10) => {
       }
     }
 
-    fetchProducts()
+    void fetchProducts()
   }, [limit])
 
   return { error, loading, products }
-} 
+}

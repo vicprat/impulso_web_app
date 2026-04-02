@@ -12,7 +12,6 @@ export default function ContactPage() {
           <h1 className='mb-8 text-4xl font-bold text-foreground'>Contacto - Impulso Galería</h1>
 
           <div className='grid gap-12 md:grid-cols-2'>
-            {/* Información de Contacto */}
             <div className='space-y-8'>
               <div>
                 <h2 className='mb-4 text-2xl font-semibold text-foreground'>
@@ -57,7 +56,6 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Formulario de Contacto */}
             <div>
               <h2 className='mb-4 text-2xl font-semibold text-foreground'>Envíanos un Mensaje</h2>
               <form className='space-y-6'>

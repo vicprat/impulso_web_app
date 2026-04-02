@@ -90,7 +90,6 @@ export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, p
   return (
     <form onSubmit={handleSubmit} className={`space-y-${compact ? '4' : '6'}`}>
       <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-        {/* First Name Field */}
         <div className='space-y-2'>
           <Label htmlFor='firstName' className='font-medium text-foreground'>
             Nombre
@@ -105,7 +104,6 @@ export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, p
           />
         </div>
 
-        {/* Last Name Field */}
         <div className='space-y-2'>
           <Label htmlFor='lastName' className='font-medium text-foreground'>
             Apellido
@@ -120,7 +118,7 @@ export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, p
           />
         </div>
       </div>
-      {/* Avatar Field */}
+
       <div className='space-y-2'>
         <Label htmlFor='avatar' className='font-medium text-foreground'>
           Avatar
@@ -144,7 +142,6 @@ export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, p
         />
       </div>
 
-      {/* Background Image Field */}
       <div className='space-y-2'>
         <Label htmlFor='backgroundImage' className='font-medium text-foreground'>
           Imagen de Fondo
@@ -168,7 +165,6 @@ export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, p
         />
       </div>
 
-      {/* Occupation Field */}
       <div className='space-y-2'>
         <Label htmlFor='occupation' className='font-medium text-foreground'>
           Ocupación
@@ -184,7 +180,6 @@ export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, p
         />
       </div>
 
-      {/* Description Field */}
       <div className='space-y-2'>
         <Label htmlFor='description' className='font-medium text-foreground'>
           Descripción Corta
@@ -200,7 +195,6 @@ export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, p
         />
       </div>
 
-      {/* Bio Field */}
       <div className='space-y-2'>
         <Label htmlFor='bio' className='font-medium text-foreground'>
           Bio
@@ -213,7 +207,6 @@ export const Profile: React.FC<Props> = ({ compact = false, isLoading, onSave, p
         </div>
       </div>
 
-      {/* Submit Button */}
       <div className='flex justify-end pt-4'>
         <Button
           type='submit'

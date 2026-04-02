@@ -43,13 +43,10 @@ export function StoreLayoutContent({ children }: { children: React.ReactNode }) 
 
   return (
     <div className='relative min-h-screen overflow-hidden'>
-      {/* Background using GradientBackground component */}
       <GradientBackground className='fixed inset-0 z-0' />
 
-      {/* Animated spheres */}
       <AnimatedSpheres className='fixed inset-0 z-0' />
 
-      {/* Contenido principal */}
       <div className='relative z-10'>
         <main className='w-full'>
           <Header.Public />

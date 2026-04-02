@@ -28,20 +28,20 @@ interface UserBankAccountsData {
 export function useUserBankAccounts(userId: string) {
   return useQuery({
     enabled: !!userId,
-    // 5 minutos
-gcTime: 10 * 60 * 1000,
-    
-queryFn: async (): Promise<UserBankAccountsData> => {
+
+    gcTime: 10 * 60 * 1000,
+
+    queryFn: async (): Promise<UserBankAccountsData> => {
       const response = await fetch(`/api/users/${userId}/bank-accounts`)
-      
+
       if (!response.ok) {
         throw new Error('Error al obtener las cuentas bancarias del usuario')
       }
-      
+
       return response.json()
     },
-    
-queryKey: ['user-bank-accounts', userId], 
-    staleTime: 5 * 60 * 1000, // 10 minutos
+
+    queryKey: ['user-bank-accounts', userId],
+    staleTime: 5 * 60 * 1000,
   })
-} 
+}

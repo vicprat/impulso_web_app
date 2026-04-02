@@ -100,7 +100,6 @@ function OrdersContentComponent({
 }
 
 const OrdersContent = memo(OrdersContentComponent, (prev, next) => {
-  // Only re-render if searchInput or orders data changes
   return (
     prev.searchInput === next.searchInput &&
     prev.orders.length === next.orders.length &&
@@ -126,7 +125,6 @@ export default function OrdersPage() {
   const [historyCursors, setHistoryCursors] = useState<Record<number, string | null>>({})
   const [previousPageSize, setPreviousPageSize] = useState(pageSizeInUrl)
 
-  // Update activeTab when URL changes
   useEffect(() => {
     setActiveTab(activeTabInUrl as OrdersTab)
   }, [activeTabInUrl])
@@ -185,7 +183,6 @@ export default function OrdersPage() {
         })) ?? []
     }
 
-    // Client-side sorting for fields not supported by Shopify API
     const serverSupportedSortKeys = [
       'name',
       'processedAt',
@@ -224,7 +221,6 @@ export default function OrdersPage() {
             return 0
         }
 
-        // Compare values
         if (aVal < bVal) return sortOrderInUrl === 'asc' ? -1 : 1
         if (aVal > bVal) return sortOrderInUrl === 'asc' ? 1 : -1
         return 0
@@ -257,8 +253,7 @@ export default function OrdersPage() {
   const tableColumns =
     activeTab === 'all-orders'
       ? columns
-      : // Customer sees: Orden, Fecha, Estado de Pago, Estado de Envío, Total
-        columns.filter(
+      : columns.filter(
           (col) =>
             col.id !== 'customerName' &&
             col.id !== 'customerEmail' &&
@@ -266,7 +261,6 @@ export default function OrdersPage() {
             col.id !== 'displayFinancialStatus'
         )
 
-  // Handlers
   const handleRefresh = useCallback(() => {
     void activeQuery.refetch()
     toast.info('Actualizando datos...')
@@ -351,7 +345,6 @@ export default function OrdersPage() {
     [router, searchParams]
   )
 
-  // Update cursors
   useEffect(() => {
     setHistoryCursors((prev) => {
       const newCursors = { ...prev }
@@ -377,7 +370,6 @@ export default function OrdersPage() {
     })
   }, [pageInUrl, afterCursorInUrl, pageInfo])
 
-  // Update previousPageSize
   useEffect(() => {
     if (pageSizeInUrl !== previousPageSize) {
       setPreviousPageSize(pageSizeInUrl)

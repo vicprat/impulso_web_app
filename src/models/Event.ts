@@ -1,9 +1,8 @@
 const EVENT_METAFIELD_NAMESPACE = 'event_details'
 
-// Helper para crear fechas locales sin problemas de zona horaria
 const createLocalDate = (dateString: string): Date => {
   const [year, month, day] = dateString.split('-').map(Number)
-  return new Date(year, month - 1, day) // month es 0-indexed en Date constructor
+  return new Date(year, month - 1, day)
 }
 
 export interface Money {

@@ -3,8 +3,6 @@ import path from 'path'
 
 import { revalidateTag } from 'next/cache'
 
-// In-memory cache for the full product catalog
-// This is more reliable than unstable_cache + revalidateTag which can be flaky in dev mode
 interface CatalogCacheEntry {
   data: any[]
   fetchedAt: number
@@ -13,19 +11,16 @@ interface CatalogCacheEntry {
 }
 
 const catalogCache = new Map<string, CatalogCacheEntry>()
-const CATALOG_CACHE_TTL = 24 * 3600 * 1000 // 24 hours in ms
-const REQUEST_DELAY_MS = 200 // Delay entre llamadas a Shopify
+const CATALOG_CACHE_TTL = 24 * 3600 * 1000
+const REQUEST_DELAY_MS = 200
 const MAX_RETRY_ATTEMPTS = 3
 const RETRY_DELAY_BASE_MS = 1000
 
-// Directorio de caché: usar /tmp en producción (Vercel/AWS Lambda), .cache local en dev
-// Detectamos producción por VERCEL_ENV o si process.cwd() no es escribible
 const isProduction =
   process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production'
 const CACHE_DIR = isProduction ? '/tmp/cache' : path.join(process.cwd(), '.cache')
 const CACHE_DATA_FILE = path.join(CACHE_DIR, 'catalog-cache.json')
 
-// Asegurar que existe el directorio de cache
 async function ensureCacheDir() {
   try {
     if (!existsSync(CACHE_DIR)) {
@@ -36,7 +31,6 @@ async function ensureCacheDir() {
   }
 }
 
-// Guardar catálogo en archivo (separado por scope)
 async function saveCatalogToFile(scope: string, data: any[], version: number) {
   try {
     await ensureCacheDir()
@@ -54,7 +48,6 @@ async function saveCatalogToFile(scope: string, data: any[], version: number) {
   }
 }
 
-// Cargar catálogo desde archivo (por scope)
 async function loadCatalogFromFile(
   scope: string
 ): Promise<{ data: any[]; version: number } | null> {
@@ -81,7 +74,6 @@ async function loadCatalogFromFile(
   }
 }
 
-// Cada scope tiene su propia versión, leída desde su archivo de caché
 async function getCacheVersion(scope: string): Promise<number> {
   try {
     const cache = await loadCatalogFromFile(scope)
@@ -92,18 +84,12 @@ async function getCacheVersion(scope: string): Promise<number> {
 }
 
 async function setCacheVersion(scope: string, version: number): Promise<void> {
-  try {
-    const scopeFile = path.join(CACHE_DIR, `catalog-cache-version-${scope}.json`)
-    await fs.writeFile(scopeFile, version.toString(), 'utf8')
-  } catch {
-    // Ignorar errores de escritura (serverless sin permisos)
-  }
+  const scopeFile = path.join(CACHE_DIR, `catalog-cache-version-${scope}.json`)
+  await fs.writeFile(scopeFile, version.toString(), 'utf8')
 }
 
-// Utility function for delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-// Registro global de caches en memoria para invalidación centralizada
 interface SimpleCacheEntry {
   data: unknown
   fetchedAt: number
@@ -122,7 +108,6 @@ export function clearAllGlobalCaches() {
 }
 
 export class CacheManager {
-  // Tags para productos
   static readonly PRODUCT_TAGS = {
     all: 'products',
     byHandle: (handle: string) => `product-handle-${handle}`,
@@ -130,34 +115,28 @@ export class CacheManager {
     byVendor: (vendor: string) => `products-vendor-${vendor}`,
   }
 
-  // Tag específico para el full catalog (para revalidación cross-worker)
   static readonly FULL_CATALOG_TAG = 'full-catalog'
 
-  // Tags para colecciones
   static readonly COLLECTION_TAGS = {
     all: 'collections',
     byHandle: (handle: string) => `collection-${handle}`,
   }
 
-  // Tags para artistas
   static readonly ARTIST_TAGS = {
     all: 'artists',
     byId: (id: string) => `artist-${id}`,
   }
 
-  // Tags para inventario
   static readonly INVENTORY_TAGS = {
     all: 'inventory',
     byProductId: (productId: string) => `inventory-${productId}`,
   }
 
-  // Tags para página principal
   static readonly HOMEPAGE_TAGS = {
     all: 'homepage',
     featured: 'homepage-featured',
   }
 
-  // Revalidar cache de productos
   static revalidateProducts(productId?: string, handle?: string, vendor?: string) {
     revalidateTag(this.PRODUCT_TAGS.all, 'max')
 
@@ -174,7 +153,6 @@ export class CacheManager {
     }
   }
 
-  // Revalidar cache de inventario
   static revalidateInventory(productId?: string) {
     revalidateTag(this.INVENTORY_TAGS.all, 'max')
 
@@ -183,7 +161,6 @@ export class CacheManager {
     }
   }
 
-  // Revalidar cache de artistas
   static revalidateArtists(artistId?: string) {
     revalidateTag(this.ARTIST_TAGS.all, 'max')
 
@@ -192,7 +169,6 @@ export class CacheManager {
     }
   }
 
-  // Revalidar cache de colecciones
   static revalidateCollections(handle?: string) {
     revalidateTag(this.COLLECTION_TAGS.all, 'max')
 
@@ -201,13 +177,11 @@ export class CacheManager {
     }
   }
 
-  // Revalidar cache de página principal
   static revalidateHomepage() {
     revalidateTag(this.HOMEPAGE_TAGS.all, 'max')
     revalidateTag(this.HOMEPAGE_TAGS.featured, 'max')
   }
 
-  // Revalidar todo el cache relacionado con un producto
   static revalidateProductCache(product: { id: string; handle: string; vendor?: string }) {
     this.revalidateProducts(product.id, product.handle, product.vendor)
     this.revalidateInventory(product.id)
@@ -220,20 +194,12 @@ export class CacheManager {
     }
   }
 
-  // --- Full Catalog Cache for Search Optimization ---
-
-  /**
-   * Obtiene el catálogo completo de productos cacheado en memoria.
-   * Se usa para búsquedas rápidas sin golpear la API de Shopify constantemente.
-   * @param scope 'storefront' para versión super optimizada, 'admin' para versión con más datos
-   */
   static async getFullCatalog(scope: 'storefront' | 'admin' = 'storefront'): Promise<any[]> {
     const cacheKey = `full-catalog-${scope}`
     const entry = catalogCache.get(cacheKey)
     const now = Date.now()
     const currentVersion = await getCacheVersion(scope)
 
-    // Return cached data if valid AND version matches (cache busting)
     if (entry && now - entry.fetchedAt < CATALOG_CACHE_TTL && entry.version === currentVersion) {
       console.info(
         `✅ Memory Cache HIT (${scope}): Returning cached data (${entry.data.length} products, version ${entry.version})`
@@ -241,17 +207,14 @@ export class CacheManager {
       return entry.data
     }
 
-    // If there's already a fetch in progress for this scope, reuse it
     if (entry?.fetchPromise) {
       console.info(`⏳ Fetch in progress (${scope}): Reusing existing promise`)
       return entry.fetchPromise
     }
 
-    // CRÍTICO: En serverless (Vercel), el caché en memoria se pierde entre requests
-    // Intentar cargar desde archivo PRIMERO si no hay en memoria
-    if (!entry || entry.version !== currentVersion) {
+    if (entry?.version !== currentVersion) {
       const fileCache = await loadCatalogFromFile(scope)
-      if (fileCache && fileCache.version === currentVersion) {
+      if (fileCache?.version === currentVersion) {
         console.info(
           `✅ File Cache HIT (${scope}): Loaded ${fileCache.data.length} products from file (serverless recovery)`
         )
@@ -264,11 +227,9 @@ export class CacheManager {
       }
     }
 
-    // Fetch fresh data
     console.info(`🔄 Cache MISS (${scope}): Starting fresh fetch...`)
     const fetchPromise = this._fetchFullCatalog(scope)
 
-    // Store the promise so concurrent requests reuse it
     catalogCache.set(cacheKey, {
       data: entry?.data ?? [],
       fetchPromise,
@@ -282,10 +243,8 @@ export class CacheManager {
       console.info(`✅ Fetch complete (${scope}): Cached ${data.length} products`)
       return data
     } catch (error) {
-      // On error, clear the promise so next request retries
       console.error(`❌ Fetch failed (${scope}):`, error)
       if (entry && entry.data.length > 0) {
-        // Si hay datos antiguos en cache, devolverlos como fallback
         console.warn(`⚠️ Returning stale cache data (${entry.data.length} products)`)
         return entry.data
       } else {
@@ -298,14 +257,12 @@ export class CacheManager {
   private static async _fetchFullCatalog(scope: 'storefront' | 'admin'): Promise<any[]> {
     console.info(`🔄 Cache MISS (${scope}): Fetching full catalog from Shopify...`)
 
-    // Intentar cargar desde archivo primero
     const fileCache = await loadCatalogFromFile(scope)
     if (fileCache) {
       console.info(`✅ Using file cache for ${scope}`)
       return fileCache.data
     }
 
-    // Usar GraphQL directo para evitar dependencia circular con getProductsPublic
     const { makeAdminApiRequest } = await import('@/lib/shopifyAdmin')
 
     const GET_ALL_PRODUCTS_QUERY = `
@@ -372,14 +329,12 @@ export class CacheManager {
     let consecutiveErrors = 0
     let pageCount = 0
 
-    // Storefront: solo productos activos | Admin: todos los productos
     const includeInactive = scope === 'admin'
 
     while (hasNextPage) {
       pageCount++
       const variables: Record<string, unknown> = { after: cursor, first: 250 }
 
-      // Rate limiting: delay entre llamadas (excepto la primera)
       if (pageCount > 1) {
         await delay(REQUEST_DELAY_MS)
       }
@@ -427,7 +382,6 @@ export class CacheManager {
           for (const edge of response.products.edges) {
             const node = edge.node
 
-            // Definir tipo para las variantes
             interface VariantNode {
               node: {
                 id: string
@@ -441,24 +395,20 @@ export class CacheManager {
               }
             }
 
-            // Filtrar por status si es storefront
             if (!includeInactive && node.status !== 'ACTIVE') {
               continue
             }
 
-            // Extraer metafields
             const metafields: Record<string, string> = {}
             for (const mf of node.metafields.edges) {
               metafields[mf.node.key] = mf.node.value
             }
 
-            // Transformar imágenes
             const images = node.images.edges.map(
               (imgEdge: { node: { id: string; url: string; altText: string | null } }) =>
                 imgEdge.node
             )
 
-            // Transformar variantes
             const variants = (node.variants.edges as unknown as VariantNode[]).map((vEdge) => ({
               availableForSale: vEdge.node.availableForSale,
               compareAtPrice: null,
@@ -502,7 +452,6 @@ export class CacheManager {
           consecutiveErrors++
           retryAttempt++
 
-          // Detectar throttling de Shopify
           const isThrottled =
             error.message?.includes('Throttled') ||
             error.message?.includes('Rate limit') ||
@@ -529,7 +478,6 @@ export class CacheManager {
         }
       }
 
-      // Log progreso cada 10 páginas
       if (pageCount % 10 === 0) {
         console.info(`📊 Progress: ${allProducts.length} products fetched (${pageCount} pages)`)
       }
@@ -541,13 +489,11 @@ export class CacheManager {
       `✅ Fetched ${allProducts.length} products (scope: ${scope}). Converting to LightProduct for cache...`
     )
 
-    // Optimización: Reducir tamaño del objeto para cache
     const lightProducts = allProducts.map((p: any) => {
-      // Base: siempre eliminamos lo más pesado
       const base = {
         ...p,
-        descriptionHtml: '', // Vaciar para ahorrar espacio (~50-80% del tamaño)
-        media: [], // Vaciar arrays pesados no usados en cards
+        descriptionHtml: '',
+        media: [],
       }
 
       if (scope === 'storefront') {
@@ -584,7 +530,6 @@ export class CacheManager {
 
     console.info(`✅ Cached ${lightProducts.length} products in full catalog (${scope})`)
 
-    // Guardar en archivo para persistencia
     const currentVersion = await getCacheVersion(scope)
     await saveCatalogToFile(scope, lightProducts, currentVersion)
 
@@ -593,13 +538,11 @@ export class CacheManager {
 
   static async revalidateFullCatalog(scope?: 'storefront' | 'admin') {
     if (scope) {
-      // Invalidar solo un scope específico
       const currentVersion = await getCacheVersion(scope)
       const newVersion = currentVersion + 1
       await setCacheVersion(scope, newVersion)
       console.info(`🔖 Revalidate ${scope} catalog cache: Incremented version to ${newVersion}`)
     } else {
-      // Invalidar todos los scopes
       const scopes: ('storefront' | 'admin')[] = ['storefront', 'admin']
       for (const s of scopes) {
         const currentVersion = await getCacheVersion(s)

@@ -9,7 +9,6 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession()
 
-    // Permitir acceso público solo para consultar el cupón de bienvenida
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
 
@@ -31,7 +30,6 @@ export async function GET(request: NextRequest) {
 
     const discounts = await shopifyDiscountService.getDiscounts()
 
-    // Aplicar filtros
     let filteredDiscounts = discounts
 
     if (filters.isActive !== undefined) {
@@ -69,7 +67,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    // Validar que los IDs de productos tengan el formato correcto
     if (body.productIds) {
       body.productIds = body.productIds.map((id: string) =>
         id.startsWith('gid://shopify/Product/')

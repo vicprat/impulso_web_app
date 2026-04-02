@@ -183,12 +183,10 @@ export const blogService = {
     return prisma.tag.findUnique({ where: { id } })
   },
 
-  // ===== Categorías =====
   async listCategories() {
     return prisma.category.findMany({ orderBy: { order: 'asc' } })
   },
 
-  // ===== Posts =====
   async listPosts(rawFilters: Partial<PostFilters>): Promise<PaginatedResult<PostWithRelations>> {
     const filters = postFiltersSchema.parse(rawFilters)
     const where = buildPostWhere(filters)
@@ -237,7 +235,6 @@ export const blogService = {
     }
   },
 
-  // ===== Tags =====
   async listTags() {
     return prisma.tag.findMany({ orderBy: { name: 'asc' } })
   },

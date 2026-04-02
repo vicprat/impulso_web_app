@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { useAuth } from '@/modules/auth/context/useAuth'
 import {
-    useCustomerAddresses,
-    useCustomerOrders,
-    useCustomerProfile,
-    useUpdateCustomerProfile,
+  useCustomerAddresses,
+  useCustomerOrders,
+  useCustomerProfile,
+  useUpdateCustomerProfile,
 } from '@/modules/customer/hooks'
 import { PERMISSIONS } from '@/src/config/Permissions'
 
@@ -148,7 +148,6 @@ export function useReactivateUser() {
   })
 }
 
-// ✅ NUEVO: Hook para alternar el estado público de un usuario
 export function useToggleUserPublicStatus() {
   const queryClient = useQueryClient()
   const { hasPermission } = useAuth()
@@ -190,7 +189,6 @@ export function useCanManageUser(targetUserId: string) {
   return false
 }
 
-// ✅ NUEVO: Hook para obtener artistas públicos
 export function usePublicArtists() {
   return useQuery({
     queryFn: () => postgresUserApi.getPublicArtists(),

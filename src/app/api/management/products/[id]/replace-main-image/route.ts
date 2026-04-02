@@ -17,7 +17,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const hasExistingImage = currentImageId !== null && currentImageId !== undefined
 
-    // 1. Crear la nueva imagen
     const createImageResponse = (await makeAdminApiRequest(PRODUCT_CREATE_MEDIA_MUTATION, {
       media: [{ mediaContentType: 'IMAGE', originalSource: newImageUrl }],
       productId: `gid://shopify/Product/${productId}`,
@@ -41,7 +40,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       )
     }
 
-    // 2. Esperar a que la imagen se procese y obtener su ID final
     let attempts = 0
     const maxAttempts = 10
     let processedImage: { id: string; url: string; altText?: string } | null = null
@@ -72,8 +70,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         })) as any
         const images = checkResponse.product?.images?.edges || []
 
-        // Buscar la imagen más reciente (última en la lista)
-        // Esto evita problemas con URLs temporales
         const latestImage = images[images.length - 1]
         if (latestImage && !latestImage.node.url.includes('shopify-staged-uploads')) {
           processedImage = latestImage.node
@@ -87,12 +83,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Image processing timeout' }, { status: 400 })
     }
 
-    // 3. Eliminar la imagen principal actual (solo si existe)
     if (hasExistingImage) {
       try {
         await new Promise((resolve) => setTimeout(resolve, 3000))
 
-        // Obtener media IDs
         const getMediaQuery = `
           query getProduct($id: ID!) {
             product(id: $id) {
@@ -100,9 +94,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                 nodes {
                   id
                   ... on MediaImage {
-                    image { 
+                    image {
                       id
-                      url 
+                      url
                     }
                   }
                 }
@@ -115,7 +109,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           id: `gid://shopify/Product/${productId}`,
         })) as any
 
-        // Obtener URL de la imagen principal actual
         const getCurrentImageQuery = `
           query getProduct($id: ID!) {
             product(id: $id) {
@@ -139,7 +132,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         )?.node
 
         if (currentImage) {
-          // Encontrar y eliminar el media correspondiente
           const currentMedia = mediaResponse.product?.media?.nodes?.find(
             (media: any) =>
               media.image?.id === currentImageId || media.image?.url === currentImage.url
@@ -164,11 +156,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           }
         }
       } catch (error) {
-        // Continue even if deletion fails
+        // Continue trying
       }
     }
 
-    // 4. Reordenar para poner la nueva imagen primero
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
@@ -197,17 +188,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       const newMediaNode = mediaNodes.find((media: any) => media.id === newImageId)
 
       if (newMediaNode && mediaNodes.length > 1) {
-        // Crear el array reordenado con la nueva imagen primero
         const otherMediaIds = mediaNodes
           .filter((media: any) => media.id !== newImageId)
           .map((media: any) => media.id)
 
         const reorderedMediaIds = [newImageId, ...otherMediaIds]
 
-        // Construir los movimientos para productReorderMedia
         const moves = reorderedMediaIds.map((mediaId: string, index: number) => ({
           id: mediaId,
-          newPosition: index + 1, // Las posiciones en Shopify comienzan en 1
+          newPosition: index + 1,
         }))
 
         const reorderMutation = `
@@ -232,16 +221,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         if (reorderResult.productReorderMedia?.userErrors?.length > 0) {
           console.error('Error reordering media:', reorderResult.productReorderMedia.userErrors)
         } else {
-          // Esperar un poco para que se complete el reordenamiento
           await new Promise((resolve) => setTimeout(resolve, 2000))
         }
       }
     } catch (error) {
       console.error('Error in reorder step:', error)
-      // Continue even if reorder fails
     }
 
-    // 5. Obtener producto final (esperar un poco más para asegurar que el reordenamiento se completó)
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     let finalAttempts = 0
@@ -273,7 +259,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         id: `gid://shopify/Product/${productId}`,
       })) as any
 
-      // Verificar que la primera imagen no sea una URL temporal
       const firstImage = productResponse?.product?.images?.edges?.[0]?.node
       if (firstImage && !firstImage.url.includes('shopify-staged-uploads')) {
         break
@@ -284,12 +269,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Failed to get final product' }, { status: 500 })
     }
 
-    // Asegurar que la nueva imagen esté primero en la respuesta
     if (!processedImage) {
       return NextResponse.json({ error: 'Processed image not found' }, { status: 500 })
     }
 
-    // TypeScript ahora sabe que processedImage no es null
     const processedImageId = processedImage.id
     const images = productResponse.product?.images?.edges || []
     const newImageInList = images.find((edge: any) => edge.node.id === processedImageId)

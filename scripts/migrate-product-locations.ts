@@ -104,10 +104,9 @@ async function migrateProductLocations() {
   console.log('='.repeat(60))
 
   try {
-    // Paso 1: Obtener todos los productos de Shopify
+
     const products = await getAllProducts()
 
-    // Paso 2: Extraer ubicaciones únicas
     console.log('📍 Extrayendo ubicaciones únicas...')
     const locationNames = new Set<string>()
     const productsWithLocation: {
@@ -127,7 +126,6 @@ async function migrateProductLocations() {
     console.log(`  ✓ Productos con ubicación: ${productsWithLocation.length}`)
     console.log(`  ✓ Productos sin ubicación: ${products.length - productsWithLocation.length}\n`)
 
-    // Paso 3: Sincronizar tabla Location
     console.log('📦 Sincronizando tabla Location...')
     const existingLocations = await prisma.location.findMany()
     const existingLocationNames = new Set(existingLocations.map((loc) => loc.name))
@@ -148,12 +146,10 @@ async function migrateProductLocations() {
       console.log('  ✓ No hay ubicaciones nuevas por crear')
     }
 
-    // Obtener todas las ubicaciones actualizadas
     const allLocations = await prisma.location.findMany()
     const locationMap = new Map(allLocations.map((loc) => [loc.name, loc.id]))
     console.log(`  ✓ Total de ubicaciones en DB: ${allLocations.length}\n`)
 
-    // Paso 4: Poblar tabla Product
     console.log('🏗️  Poblando tabla Product...')
     let createdProducts = 0
     let updatedProducts = 0
@@ -198,7 +194,6 @@ async function migrateProductLocations() {
     console.log(`  ✓ Productos creados: ${createdProducts}`)
     console.log(`  ✓ Productos actualizados: ${updatedProducts}\n`)
 
-    // Paso 5: Crear registros iniciales en LocationHistory
     console.log('📝 Creando registros iniciales en LocationHistory...')
     let historyCreated = 0
 
@@ -209,7 +204,6 @@ async function migrateProductLocations() {
       const locationId = locationMap.get(location)
       if (!locationId) continue
 
-      // Verificar si ya existe un registro de historial
       const existingHistory = await prisma.locationHistory.findFirst({
         where: { productId: numericId },
       })
@@ -227,7 +221,6 @@ async function migrateProductLocations() {
 
     console.log(`  ✓ Registros de historial creados: ${historyCreated}\n`)
 
-    // Resumen final
     console.log('='.repeat(60))
     console.log('✅ MIGRACIÓN COMPLETADA CON ÉXITO\n')
     console.log('📊 Resumen:')
@@ -245,7 +238,6 @@ async function migrateProductLocations() {
   }
 }
 
-// Ejecutar migración
 migrateProductLocations()
   .then(() => {
     console.log('\n🎉 Script de migración finalizado')

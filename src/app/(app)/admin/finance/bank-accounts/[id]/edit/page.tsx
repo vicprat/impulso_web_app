@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -14,7 +14,6 @@ import { useBankAccount, useUpdateBankAccount } from '@/modules/finance/hooks'
 
 export default function EditBankAccountPage() {
   const params = useParams()
-  const router = useRouter()
   const accountId = params.id as string
 
   const { data: account, error, isLoading } = useBankAccount(accountId)
@@ -30,7 +29,6 @@ export default function EditBankAccountPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Pre-llenar el formulario cuando se cargan los datos
   useEffect(() => {
     if (account) {
       setFormData({
@@ -95,7 +93,6 @@ export default function EditBankAccountPage() {
       })
 
       toast.success('Cuenta bancaria actualizada exitosamente')
-      // router.push(ROUTES.ADMIN.FINANCE.BANK_ACCOUNTS.DETAIL.PATH.replace(':id', accountId))
     } catch (error) {
       console.error('Error updating bank account:', error)
       toast.error('Error al actualizar la cuenta bancaria')

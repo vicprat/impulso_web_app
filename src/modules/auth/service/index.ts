@@ -1,14 +1,14 @@
 import { type Links, type Profile } from '@prisma/client'
 
+import { prisma } from '@/src/lib/prisma'
+import { type AuthConfig, type CustomerInfo, type TokenResponse } from '@/src/types'
+
 import {
   calculateExpiresAt,
   exchangeCodeForTokens,
   getCustomerInfo,
   refreshAccessToken,
 } from '../utils'
-
-import { prisma } from '@/src/lib/prisma'
-import { type AuthConfig, type CustomerInfo, type TokenResponse } from '@/src/types'
 
 export interface AuthSession {
   user: {
@@ -312,13 +312,11 @@ export class AuthService {
   }
 
   private async upsertUser(customerInfo: CustomerInfo) {
-    // Primero buscar por shopifyCustomerId
     let existingUser = await prisma.user.findUnique({
       include: { UserRole: true },
       where: { shopifyCustomerId: customerInfo.id },
     })
 
-    // Si no se encuentra por shopifyCustomerId, buscar por email
     if (!existingUser) {
       existingUser = await prisma.user.findUnique({
         include: { UserRole: true },
@@ -327,7 +325,6 @@ export class AuthService {
     }
 
     if (existingUser) {
-      // Si el usuario existe pero no tiene shopifyCustomerId, actualizarlo
       const updateData: any = {
         email: customerInfo.email,
         firstName: customerInfo.firstName,
@@ -335,7 +332,6 @@ export class AuthService {
         lastName: customerInfo.lastName,
       }
 
-      // Solo actualizar shopifyCustomerId si no lo tiene
       if (!existingUser.shopifyCustomerId) {
         updateData.shopifyCustomerId = customerInfo.id
       }
@@ -507,7 +503,7 @@ export class AuthService {
       data: {
         action,
         ipAddress,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         metadata: metadata as any,
         resource,
         userAgent,

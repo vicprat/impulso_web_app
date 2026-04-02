@@ -235,17 +235,6 @@ export function ArtistsClient() {
         />
       </div>
 
-      {/* <Table.Pagination
-        currentPage={pagination.pageIndex + 1}
-        hasNextPage={pagination.pageIndex < table.getPageCount() - 1}
-        hasPreviousPage={pagination.pageIndex > 0}
-        isLoading={isFetching}
-        isServerSide={true}
-        onPageChange={(page) => setPagination((prev) => ({ ...prev, pageIndex: page - 1 }))}
-        onPageSizeChange={(size) => setPagination({ pageIndex: 0, pageSize: size })}
-        table={table}
-      /> */}
-
       <Dialog open={showInfoDialog} onOpenChange={setShowInfoDialog}>
         <DialogContent>
           <DialogHeader>

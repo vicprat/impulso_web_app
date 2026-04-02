@@ -1,4 +1,3 @@
-// Configuración de imágenes para Open Graph
 export const OG_IMAGES = {
   ARTIST: '/og-artist.jpg',
   ARTISTS: '/og-artists.jpg',
@@ -12,13 +11,11 @@ export const OG_IMAGES = {
   SEARCH: '/og-search.jpg',
 } as const
 
-// Función para generar URLs de imágenes OG
 export function getOGImageUrl(imagePath: string): string {
   const baseUrl = 'https://impulsogaleria.com'
   return `${baseUrl}${imagePath}`
 }
 
-// Función para obtener la imagen OG según la ruta
 export function getOGImageForRoute(pathname: string): string {
   switch (pathname) {
     case '/':
@@ -45,4 +42,4 @@ export function getOGImageForRoute(pathname: string): string {
       }
       return OG_IMAGES.DEFAULT
   }
-} 
+}

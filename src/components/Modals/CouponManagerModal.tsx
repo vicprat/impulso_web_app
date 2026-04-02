@@ -4,7 +4,11 @@ import { Tag } from 'lucide-react'
 
 import { CouponList } from '@/components/Forms/CouponList'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { type CreateDiscountInput, type Discount, type UpdateDiscountInput } from '@/services/product/types'
+import {
+  type CreateDiscountInput,
+  type Discount,
+  type UpdateDiscountInput,
+} from '@/services/product/types'
 
 interface CouponManagerModalProps {
   isOpen: boolean
@@ -25,20 +29,17 @@ export function CouponManagerModal({
   onCouponDeleted,
   onCouponUpdated,
 }: CouponManagerModalProps) {
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto">
+      <DialogContent className='max-h-[90vh] max-w-6xl overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Tag className="size-6 text-blue-500" />
+          <DialogTitle className='flex items-center gap-2 text-xl'>
+            <Tag className='size-6 text-blue-500' />
             Gestión de Cupones de Descuento
           </DialogTitle>
-
         </DialogHeader>
 
-
-        <div className="space-y-4">
+        <div className='space-y-4'>
           <CouponList
             coupons={coupons}
             isLoading={isLoading}
@@ -46,8 +47,6 @@ export function CouponManagerModal({
             onCouponDeleted={onCouponDeleted}
           />
         </div>
-
-
       </DialogContent>
     </Dialog>
   )

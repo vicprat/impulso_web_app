@@ -8,15 +8,13 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
 
-    // Obtener un post por slug si se pasa como query param
     const slug = searchParams.get('slug') ?? undefined
-    const visibility = searchParams.get('visibility') ?? undefined // 'all' requiere permiso
+    const visibility = searchParams.get('visibility') ?? undefined
 
     if (slug) {
       const post = await blogService.getPostBySlug(slug)
       if (!post) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
 
-      // Si no está publicado, solo devolver si el usuario tiene permisos
       if (!post.publishedAt) {
         try {
           await requirePermission([
@@ -30,20 +28,17 @@ export async function GET(request: Request) {
       return NextResponse.json(post)
     }
 
-    // Listado con filtros; por defecto solo publicados (público)
     const rawFilters: Record<string, string> = {}
     searchParams.forEach((value, key) => {
       rawFilters[key] = value
     })
 
     if (visibility === 'all') {
-      // Requiere permisos para ver todo el inventario de posts (incluye borradores)
       const session = await requirePermission([
         PERMISSIONS.MANAGE_ALL_BLOG_POSTS,
         PERMISSIONS.MANAGE_OWN_BLOG_POSTS,
       ])
 
-      // Si el usuario no tiene permiso global, limitar a sus propios posts
       try {
         await requirePermission(PERMISSIONS.MANAGE_ALL_BLOG_POSTS)
       } catch {

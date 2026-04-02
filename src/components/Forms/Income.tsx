@@ -111,7 +111,6 @@ export const Income: React.FC<IncomeFormProps> = ({
   )
 }
 
-// Componente para asignar ingresos pendientes (funcionalidad original)
 const AssignIncomeComponent: React.FC<Omit<IncomeFormProps, 'income' | 'onCancel'>> = ({
   error,
   eventId,
@@ -269,7 +268,6 @@ const AssignIncomeComponent: React.FC<Omit<IncomeFormProps, 'income' | 'onCancel
   )
 }
 
-// Componente para el formulario de registro/edición manual
 const ManualIncomeFormComponent: React.FC<Omit<IncomeFormProps, 'pendingIncomes'>> = ({
   eventId,
   income,

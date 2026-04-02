@@ -36,10 +36,9 @@ import { type UpdateEventPayload } from '@/services/event/types'
 import { replaceRouteParams, ROUTES } from '@/src/config/routes'
 import { formatCurrency } from '@/src/helpers'
 
-// Helper para crear fechas locales sin problemas de zona horaria
 const createLocalDate = (dateString: string): Date => {
   const [year, month, day] = dateString.split('-').map(Number)
-  return new Date(year, month - 1, day) // month es 0-indexed en Date constructor
+  return new Date(year, month - 1, day)
 }
 
 export default function EventDetailPage() {
@@ -88,7 +87,6 @@ export default function EventDetailPage() {
     return (
       <div className='min-h-screen bg-surface'>
         <div className='container mx-auto space-y-8 py-8'>
-          {/* Header Skeleton */}
           <div className='rounded-xl  p-6 shadow-sm'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center space-x-4'>
@@ -103,7 +101,6 @@ export default function EventDetailPage() {
             </div>
           </div>
 
-          {/* Content Skeleton */}
           <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
             <div className='space-y-6 lg:col-span-2'>
               <Skeleton className='h-96 w-full rounded-xl' />

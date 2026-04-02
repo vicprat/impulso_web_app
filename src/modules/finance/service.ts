@@ -11,7 +11,6 @@ export const getFinancialEntries = async (params: {
 }) => {
   const { category, endDate, search, startDate, type } = params
 
-  // Validación de parámetros
   if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
     throw new Error('Start date cannot be after end date')
   }
@@ -55,7 +54,6 @@ export const getFinancialEntries = async (params: {
 export const getFinancialSummary = async (params: { startDate?: string; endDate?: string }) => {
   const { endDate, startDate } = params
 
-  // Validación de parámetros
   if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
     throw new Error('Start date cannot be after end date')
   }
@@ -69,7 +67,6 @@ export const getFinancialSummary = async (params: { startDate?: string; endDate?
     where.date = dateFilter
   }
 
-  // Usar agregaciones de Prisma para optimizar la consulta
   const summary = await prisma.financialEntry.groupBy({
     _sum: { amount: true },
     by: ['type'],
@@ -92,7 +89,6 @@ export const getFinancialSummary = async (params: { startDate?: string; endDate?
 export const getIncomeStatement = async (params: { startDate?: string; endDate?: string }) => {
   const { endDate, startDate } = params
 
-  // Validación de parámetros
   if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
     throw new Error('Start date cannot be after end date')
   }
@@ -106,7 +102,6 @@ export const getIncomeStatement = async (params: { startDate?: string; endDate?:
     where.date = dateFilter
   }
 
-  // Agrupar por mes y tipo
   const monthlyData = await prisma.financialEntry.groupBy({
     _count: true,
     _sum: { amount: true },
@@ -132,7 +127,6 @@ export const getIncomeStatement = async (params: { startDate?: string; endDate?:
 export const getCashFlow = async (params: { startDate?: string; endDate?: string }) => {
   const { endDate, startDate } = params
 
-  // Validación de parámetros
   if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
     throw new Error('Start date cannot be after end date')
   }
@@ -146,7 +140,6 @@ export const getCashFlow = async (params: { startDate?: string; endDate?: string
     where.date = dateFilter
   }
 
-  // Agrupar por tipo para calcular entradas y salidas
   const cashFlowData = await prisma.financialEntry.groupBy({
     _sum: { amount: true },
     by: ['type'],
@@ -169,19 +162,16 @@ export const getCashFlow = async (params: { startDate?: string; endDate?: string
 export const getBalanceSheet = async (params: { startDate?: string; endDate?: string }) => {
   const { endDate, startDate } = params
 
-  // Validación de parámetros
   if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
     throw new Error('Start date cannot be after end date')
   }
 
-  // Obtener saldos de cuentas bancarias
   const bankAccounts = await prisma.bankAccount.findMany()
   const totalAssets = bankAccounts.reduce(
     (sum, account) => sum + account.currentBalance.toNumber(),
     0
   )
 
-  // Obtener movimientos pendientes (pasivos)
   const where: Prisma.FinancialEntryWhereInput = {}
   if (startDate || endDate) {
     const dateFilter: Prisma.DateTimeFilter = {}
@@ -218,18 +208,14 @@ export const getBalanceSheet = async (params: { startDate?: string; endDate?: st
 export const getGlobalSummary = async (params: { startDate?: string; endDate?: string }) => {
   const { endDate, startDate } = params
 
-  // Validación de parámetros
   if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
     throw new Error('Start date cannot be after end date')
   }
 
-  // Obtener resumen financiero
   const financialSummary = await getFinancialSummary({ endDate, startDate })
 
-  // Obtener saldos de cuentas
   const bankAccounts = await prisma.bankAccount.findMany()
 
-  // Obtener estadísticas de movimientos
   const where: Prisma.FinancialEntryWhereInput = {}
   if (startDate || endDate) {
     const dateFilter: Prisma.DateTimeFilter = {}

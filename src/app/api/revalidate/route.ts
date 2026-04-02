@@ -11,7 +11,6 @@ export async function POST(request: Request) {
     const tag = searchParams.get('tag')
     const type = searchParams.get('type')
 
-    // También verificar el body JSON si no hay query parameters
     let bodyData: any = {}
     try {
       bodyData = await request.json()
@@ -19,23 +18,19 @@ export async function POST(request: Request) {
       // Si no hay body JSON, continuar con query parameters
     }
 
-    // Usar token del header Authorization o del body
     const authHeader = request.headers.get('authorization')
     const authToken = authHeader?.replace('Bearer ', '')
     const finalToken = token || authToken || bodyData.token
 
-    // Verificar token de seguridad
     if (finalToken !== process.env.REVALIDATION_SECRET) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    // Usar datos del body o query parameters
     const finalType = type || bodyData.type
     const finalPath = path || bodyData.path
     const finalTag = tag || bodyData.tag
     const productId = bodyData.productId
 
-    // Revalidar por tipo
     if (finalType) {
       switch (finalType) {
         case 'products':
@@ -68,12 +63,10 @@ export async function POST(request: Request) {
       }
     }
 
-    // Revalidar por path específico
     if (finalPath) {
       revalidatePath(finalPath)
     }
 
-    // Revalidar por tag específico
     if (finalTag) {
       revalidateTag(finalTag, 'max')
     }
@@ -99,7 +92,6 @@ export async function POST(request: Request) {
   }
 }
 
-// TEST TO REVALIDATE IN "Health Check"
 export async function GET() {
   return NextResponse.json({
     availableTypes: ['products', 'inventory', 'artists', 'collections', 'homepage', 'all'],

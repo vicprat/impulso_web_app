@@ -53,7 +53,6 @@ export default function Page() {
 
   const isEventOrder = order?.requiresShipping === false
 
-  // Determine shipping method based on shipping line
   const determineShippingMethod = (): 'standard' | 'local' => {
     if (!order?.shippingLine?.title) return 'standard'
 

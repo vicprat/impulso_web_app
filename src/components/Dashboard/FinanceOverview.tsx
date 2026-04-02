@@ -65,7 +65,6 @@ export const FinanceOverview: React.FC<FinanceOverviewProps> = ({
     }).format(amount)
   }
 
-  // Configuración específica por rol
   const getRoleSpecificMetrics = (): {
     title: string
     value: string | number
@@ -81,7 +80,7 @@ export const FinanceOverview: React.FC<FinanceOverviewProps> = ({
           {
             change: 5.2,
             color: globalSummary.balance >= 0 ? 'success' : 'error',
-            // Esto vendría de comparación con período anterior
+
             icon: DollarSign,
 
             subtitle: 'Saldo general',
@@ -115,10 +114,8 @@ export const FinanceOverview: React.FC<FinanceOverviewProps> = ({
         ]
 
       case ROLES.ARTIST.NAME:
-        // Para artistas, mostrar sus ingresos específicos
         return [
           {
-            // Ejemplo: 30% de ingresos
             change: 8.5,
 
             color: 'success',

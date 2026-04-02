@@ -9,14 +9,12 @@ const apiVersion = process.env.NEXT_PUBLIC_SHOPIFY_API_VERSION ?? '2024-10'
 const publicAccessToken = process.env.NEXT_PUBLIC_API_SHOPIFY_STOREFRONT ?? ''
 let storeDomain = process.env.NEXT_PUBLIC_SHOPIFY_STORE ?? ''
 
-// Limpiar el storeDomain removiendo el protocolo si está presente
 if (storeDomain.startsWith('https://')) {
   storeDomain = storeDomain.replace('https://', '')
 } else if (storeDomain.startsWith('http://')) {
   storeDomain = storeDomain.replace('http://', '')
 }
 
-// Función para hacer requests a Shopify con revalidate para static generation
 async function fetchShopifyForSitemap(query: string, variables?: Record<string, unknown>) {
   const response = await fetch(`https://${storeDomain}/api/${apiVersion}/graphql.json`, {
     body: JSON.stringify({ query, variables }),
@@ -25,7 +23,7 @@ async function fetchShopifyForSitemap(query: string, variables?: Record<string, 
       'X-Shopify-Storefront-Access-Token': publicAccessToken,
     },
     method: 'POST',
-    next: { revalidate: 3600 }, // Revalidar cada 1 hora para el sitemap
+    next: { revalidate: 3600 },
   })
 
   if (!response.ok) {
@@ -45,14 +43,12 @@ async function fetchShopifyForSitemap(query: string, variables?: Record<string, 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXTAUTH_URL ?? 'https://impulsogaleria.com'
 
-  // Obtener rutas públicas desde la configuración
   const publicRoutes = getAllPublicRoutes()
 
-  // Crear páginas estáticas basadas en las rutas públicas
   const staticPages: MetadataRoute.Sitemap = publicRoutes
-    .filter((route) => !route.includes(':')) // Excluir rutas dinámicas
+    .filter((route) => !route.includes(':'))
     .map((route) => {
-      // Asignar prioridades basadas en la importancia de la ruta
+
       let priority = 0.5
       let changeFrequency:
         | 'always'
@@ -94,7 +90,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     })
 
-  // Agregar páginas dinámicas de artistas
   let artistPages: MetadataRoute.Sitemap = []
   try {
     const artists = await getPublicArtists()
@@ -108,7 +103,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Error fetching artists for sitemap:', error)
   }
 
-  // Agregar páginas dinámicas de posts
   let postPages: MetadataRoute.Sitemap = []
   try {
     const postTypes = [
@@ -119,11 +113,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const { postType, type } of postTypes) {
       const postsResult = await blogService.listPosts({
         page: 1,
-        pageSize: 100, // Obtener más posts para el sitemap
+        pageSize: 100,
         postType,
       })
 
-      // Verificar si postsResult tiene la propiedad data
       const posts = 'data' in postsResult ? postsResult.data : postsResult
 
       if (Array.isArray(posts)) {
@@ -141,7 +134,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Error fetching posts for sitemap:', error)
   }
 
-  // Agregar páginas dinámicas de productos de la tienda
   let productPages: MetadataRoute.Sitemap = []
   try {
     const data = await fetchShopifyForSitemap(PRODUCTS_QUERY, {
@@ -165,7 +157,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Error fetching products for sitemap:', error)
   }
 
-  // Agregar páginas dinámicas de eventos de la tienda
   let eventPages: MetadataRoute.Sitemap = []
   try {
     const data = await fetchShopifyForSitemap(PRODUCTS_QUERY, {

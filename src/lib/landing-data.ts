@@ -10,8 +10,8 @@ import {
 import { api as shopifyApi } from '@/modules/shopify/api'
 import { shopifyService, type PublicEvent } from '@/modules/shopify/service'
 import { type Product } from '@/modules/shopify/types'
-import { productService } from '@/services/product/service'
 import { type PublicArtist } from '@/modules/user/types'
+import { productService } from '@/services/product/service'
 
 export async function getPublicArtists(
   artistType?: 'IMPULSO' | 'COLLECTIVE'
@@ -50,12 +50,10 @@ export async function getPublicArtists(
     })
 
     const filteredArtists = artists.filter((artist) => {
-      // Solo filtrar por firstName (debe tener valor no vacío)
       if (!artist.firstName?.trim()) {
         return false
       }
 
-      // Si se especifica artistType, filtrar por ese tipo
       if (artistType && artist.artist?.artistType !== artistType) {
         return false
       }
@@ -281,7 +279,6 @@ export async function getBlogPostBySlug(slug: string): Promise<PostWithRelations
   }
 }
 
-// Notion Content Services
 export {
   getBannerContent,
   getBenefits,

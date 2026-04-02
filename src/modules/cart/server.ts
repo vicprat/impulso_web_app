@@ -34,7 +34,6 @@ export async function getOrCreateCartForUser(userId: string, email: string): Pro
   const { cartCreate } = await makeStorefrontRequest(CREATE_CART_MUTATION, { input })
 
   if (cartCreate.userErrors && cartCreate.userErrors.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     throw new Error(cartCreate.userErrors.map((e: { message: any }) => e.message).join(', '))
   }
 

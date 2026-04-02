@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
 
     const fileBuffer = await file.arrayBuffer()
 
-    // Procesar imagen a WebP usando la utilidad abstraída
     const processedImage = await processImageToWebP(fileBuffer, file.name, {
       maxHeight: 2048,
       maxWidth: 2048,

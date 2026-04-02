@@ -159,8 +159,6 @@ export function Client({ optionName }: ClientProps) {
         />
       </div>
 
-      {/* <Table.Pagination table={table} /> */}
-
       <CreateOptionDialog
         description={`Ingresa el nombre para la nueva ${config.singularLabel.toLowerCase()}.`}
         error={createError}

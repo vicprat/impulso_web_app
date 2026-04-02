@@ -34,14 +34,13 @@ import type {
   UpdateCollectionInput,
 } from '@/services/collection/types'
 
-// Función para generar slug automáticamente
 function generateSlug(title: string): string {
   return title
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '') // Remover caracteres especiales
-    .replace(/[\s_-]+/g, '-') // Reemplazar espacios y guiones bajos con guiones
-    .replace(/^-+|-+$/g, '') // Remover guiones al inicio y final
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 const collectionSchema = z.object({
@@ -74,7 +73,6 @@ export function CollectionModal({ collection, isOpen, onClose, onSuccess }: Coll
     resolver: zodResolver(collectionSchema),
   })
 
-  // Actualizar el formulario cuando cambie la colección
   useEffect(() => {
     if (collection) {
       form.reset({
@@ -91,12 +89,10 @@ export function CollectionModal({ collection, isOpen, onClose, onSuccess }: Coll
     }
   }, [collection, form])
 
-  // Generar slug automáticamente cuando cambia el título (solo para creación)
   const watchedTitle = form.watch('title')
   const watchedHandle = form.watch('handle')
   const generatedSlug = watchedTitle ? generateSlug(watchedTitle) : ''
 
-  // Usar el handle manual si existe, sino usar el generado
   const finalHandle = watchedHandle ?? generatedSlug
 
   const createCollectionMutation = useCreateCollection({
@@ -133,7 +129,7 @@ export function CollectionModal({ collection, isOpen, onClose, onSuccess }: Coll
       } else {
         const createData: CreateCollectionInput = {
           ...data,
-          handle: finalHandle, // Usar el handle final (manual o generado)
+          handle: finalHandle,
         }
         await createCollectionMutation.mutateAsync(createData)
       }
@@ -219,7 +215,6 @@ export function CollectionModal({ collection, isOpen, onClose, onSuccess }: Coll
               )}
             />
 
-            {/* Mostrar la URL donde se encontrará la colección */}
             {finalHandle && (
               <div className='bg-muted/50 rounded-md p-3'>
                 <p className='mb-1 text-sm font-medium text-muted-foreground'>

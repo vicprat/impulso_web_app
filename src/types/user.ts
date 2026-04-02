@@ -31,7 +31,7 @@ export interface UserPublicProfile extends User {
 
 export interface UserFilters {
   search?: string
-  role?: string | string[] // Puede ser un rol único o múltiples roles
+  role?: string | string[]
   isActive?: boolean
   page?: number
   limit?: number

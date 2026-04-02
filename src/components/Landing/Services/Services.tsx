@@ -5,11 +5,11 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { iconMap } from '@/lib/icon-map'
-import { ROUTES } from '@/src/config/routes'
 import { getWhatsAppLink } from '@/lib/utils'
+import { ROUTES } from '@/src/config/routes'
 
 interface Props {
-  data: any[] // Simplified for now as we'll pass processed Notion data
+  data: any[]
   content?: Record<string, { en: string; es: string }>
 }
 
@@ -40,7 +40,6 @@ const ServiceCard = ({ service }: { service: any; _index: number }) => {
         <div className='pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent' />
 
         <CardContent className='relative z-10 flex h-full flex-col p-6'>
-          {/* Header con ícono */}
           <div className='mb-4 flex items-start gap-4'>
             <div
               className={`flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary text-on-primary shadow-elevation-2 transition-all duration-300 group-hover:scale-110`}
@@ -49,17 +48,14 @@ const ServiceCard = ({ service }: { service: any; _index: number }) => {
             </div>
           </div>
 
-          {/* Título */}
           <h3 className='mb-3 text-lg font-semibold leading-tight text-foreground'>
             {service.title}
           </h3>
 
-          {/* Descripción */}
           <p className='mb-4 grow text-sm leading-relaxed text-muted-foreground'>
             {service.description}
           </p>
 
-          {/* Features si existen */}
           {service.features && (
             <div className='mt-auto space-y-2'>
               <div className='flex flex-wrap gap-1'>
@@ -87,7 +83,7 @@ const ServiceCard = ({ service }: { service: any; _index: number }) => {
   )
 }
 
-export const Services: React.FC<Props> = ({ data, content = {} }) => {
+export const Services: React.FC<Props> = ({ content = {}, data }) => {
   const t = (key: string, fallback: string) => content[key]?.es ?? fallback
 
   return (

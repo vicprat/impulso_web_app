@@ -1,4 +1,3 @@
-// Componente Loader para Events
 import { Card, CardContent } from '@/components/ui/card'
 
 export const Loader = ({ count = 4 }) => (
@@ -16,7 +15,7 @@ export const Loader = ({ count = 4 }) => (
             <div className='h-6 w-3/4 animate-pulse rounded bg-muted' />
           </div>
           <div className='space-y-2'>
-            {[ 1, 2, 3 ].map((i) => (
+            {[1, 2, 3].map((i) => (
               <div key={i} className='h-4 w-full animate-pulse rounded bg-muted' />
             ))}
           </div>

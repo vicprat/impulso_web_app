@@ -4,11 +4,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.text()
     const headers = Object.fromEntries(request.headers.entries())
-    
+
     console.log('🧪 Test webhook recibido:')
     console.log('  - Headers:', JSON.stringify(headers, null, 2))
-    console.log('  - Body:', `${body.substring(0, 500)  }...`)
-    
+    console.log('  - Body:', `${body.substring(0, 500)}...`)
+
     return NextResponse.json({
       bodyLength: body.length,
       headers,
@@ -32,4 +32,4 @@ export async function GET() {
     message: 'Test webhook endpoint is active',
     timestamp: new Date().toISOString(),
   })
-} 
+}

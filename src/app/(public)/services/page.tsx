@@ -9,8 +9,6 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = routeMetadata['/services']
 
-// Data fetched in the Page component
-
 export default async function Page() {
   const [notionServices, pageContent] = await Promise.all([
     getServices(true),

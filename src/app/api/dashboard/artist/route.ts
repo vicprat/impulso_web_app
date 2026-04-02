@@ -5,15 +5,13 @@ import { PERMISSIONS } from '@/src/config/Permissions'
 import { makeAdminApiRequest } from '@/src/lib/shopifyAdmin'
 import { requirePermission } from '@/src/modules/auth/server/server'
 
-// Cache simple para artist dashboard (por artista)
 interface CacheEntry {
   data: unknown
   fetchedAt: number
 }
 const cache = new Map<string, CacheEntry>()
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
+const CACHE_TTL = 5 * 60 * 1000
 
-// Registrar cache para invalidación centralizada
 registerGlobalCache('dashboard-artist', cache)
 
 interface ShopifyResponse {
@@ -28,7 +26,6 @@ interface ShopifyResponse {
 
 export async function GET(request: NextRequest) {
   try {
-    // Verificar permisos de artista
     const session = await requirePermission(PERMISSIONS.MANAGE_OWN_PRODUCTS)
     const userData = { user: session.user }
 
@@ -44,7 +41,6 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Verificar cache (por artista)
     const cacheKey = `artist-dashboard-${currentArtist}`
     const cached = cache.get(cacheKey)
     const now = Date.now()
@@ -52,7 +48,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(cached.data)
     }
 
-    // Obtener productos del artista específico usando el vendor como filtro
     const productsQuery = `
       query GetArtistProducts($first: Int!, $after: String) {
         products(first: $first, after: $after, query: "vendor:\\"${currentArtist}\\"") {
@@ -111,7 +106,6 @@ export async function GET(request: NextRequest) {
           hasNextPage = false
         }
 
-        // Delay para evitar throttling
         await new Promise((resolve) => setTimeout(resolve, 200))
       } catch (error: any) {
         console.error('Error fetching products from Shopify:', error)
@@ -125,18 +119,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filtrar productos del artista actual
     const artistProducts = allProducts.filter((product) => {
-      // Si el producto no tiene vendor, no incluirlo
       if (!product.vendor) return false
 
-      // Comparar vendor del producto con el nombre del artista (case-insensitive)
       return product.vendor.toLowerCase() === currentArtist.toLowerCase()
     })
 
-    // Crear objetos enriquecidos para los productos del artista
     const enrichedProducts = artistProducts.map((product: any) => {
-      // Extraer metafields de art_details
       const artworkDetails: any = {}
       if (product.metafields?.edges) {
         product.metafields.edges.forEach((edge: any) => {
@@ -150,12 +139,11 @@ export async function GET(request: NextRequest) {
         artworkDetails,
 
         isAvailable: product.variants?.edges?.[0]?.node?.availableForSale || false,
-        // Calcular precio desde variants
+
         price: product.variants?.edges?.[0]?.node?.price || '0',
       }
     })
 
-    // Calcular métricas enriquecidas
     const metrics = {
       activeProducts: enrichedProducts.filter((p: any) => p.status === 'ACTIVE').length,
       averagePrice:
@@ -176,10 +164,8 @@ export async function GET(request: NextRequest) {
       }, 0),
     }
 
-    // Filtrar eventos del artista
     const artistEvents = enrichedProducts.filter((p) => p.productType === 'Evento')
 
-    // Calcular distribuciones
     const artistProductsByCategory = enrichedProducts.reduce(
       (acc, product) => {
         const category = product.productType ?? 'Sin categoría'
@@ -246,7 +232,6 @@ export async function GET(request: NextRequest) {
       },
     }
 
-    // Guardar en cache
     cache.set(cacheKey, { data, fetchedAt: now })
 
     return NextResponse.json(data)

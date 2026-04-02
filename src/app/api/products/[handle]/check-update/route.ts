@@ -12,11 +12,9 @@ export async function POST(
     const { handle } = await params
     const { lastUpdate, productId } = await request.json()
 
-    // Obtener el producto actual desde Shopify
     const productResponse = await api.getProductByHandle(handle)
     const product = productResponse.data
 
-    // Verificar si el producto ha sido actualizado
     const productUpdatedAt = new Date(product.updatedAt).getTime()
     const hasUpdates = productUpdatedAt > lastUpdate
 
@@ -35,4 +33,4 @@ export async function POST(
       { status: 500 }
     )
   }
-} 
+}

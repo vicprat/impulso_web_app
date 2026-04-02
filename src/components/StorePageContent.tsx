@@ -10,4 +10,4 @@ export function StorePageContent() {
       <Client />
     </Suspense>
   )
-} 
+}

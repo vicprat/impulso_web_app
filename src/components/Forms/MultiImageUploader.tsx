@@ -37,18 +37,16 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
       const files = event.target.files
       if (!files || files.length === 0) return
 
-      // Verificar límite de imágenes
       const remainingSlots = maxImages - existingImages.length
       if (files.length > remainingSlots) {
         toast.error(`Solo puedes agregar ${remainingSlots} imagen(es) más`)
         return
       }
 
-      // Convertir FileList a Array y subir en paralelo
       const fileArray = Array.from(files)
       await uploadMultipleFiles(fileArray)
 
-      event.target.value = '' // Clear the input
+      event.target.value = ''
     },
     [existingImages.length, maxImages]
   )
@@ -59,7 +57,6 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
 
       setIsUploading(true)
 
-      // Crear previews para todas las imágenes
       const newImages: ImageData[] = files.map((file, index) => {
         const uploadId = Date.now().toString() + Math.random().toString(36).substr(2, 9) + index
         const preview = URL.createObjectURL(file)
@@ -75,12 +72,10 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
         }
       })
 
-      // Agregar todas las imágenes al estado
       const updatedImages = [...existingImages, ...newImages]
       onImagesChange(updatedImages)
 
       try {
-        // Subir archivos en paralelo
         const uploadPromises = files.map(async (file, index) => {
           const uploadId = newImages[index].id
 
@@ -112,7 +107,6 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
 
         const results = await Promise.all(uploadPromises)
 
-        // Actualizar estado con resultados
         const finalImages = updatedImages.map((img) => {
           const result = results.find((r) => r.uploadId === img.id)
           if (result) {
@@ -127,7 +121,6 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
 
         onImagesChange(finalImages)
 
-        // Mostrar toasts de resultados
         const successful = results.filter((r) => r.success)
         const failed = results.filter((r) => !r.success)
 
@@ -165,7 +158,6 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
 
       const updatedImages = existingImages.filter((img) => img.id !== imageId)
 
-      // Si se removió la imagen principal, hacer la primera imagen la principal
       if (imageToRemove?.isPrimary && updatedImages.length > 0) {
         updatedImages[0].isPrimary = true
       }
@@ -246,7 +238,6 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
                 className='size-full object-cover'
               />
 
-              {/* Overlay con estado de carga */}
               <div className='absolute inset-0 flex items-center justify-center bg-black/50'>
                 {image.status === 'uploading' && (
                   <Loader2 className='size-6 animate-spin text-white' />
@@ -255,16 +246,13 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
                 {image.status === 'error' && <X className='size-6 text-red-400' />}
               </div>
 
-              {/* Badge de imagen principal */}
               {image.isPrimary && (
                 <Badge className='absolute left-1 top-1 bg-primary px-1 py-0 text-xs text-primary-foreground'>
                   Principal
                 </Badge>
               )}
 
-              {/* Botones de acción */}
               <div className='absolute right-1 top-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
-                {/* Botón para hacer principal */}
                 {!image.isPrimary && image.status === 'completed' && (
                   <Button
                     type='button'
@@ -278,7 +266,6 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
                   </Button>
                 )}
 
-                {/* Botón para remover */}
                 <Button
                   type='button'
                   variant='destructive'
@@ -291,7 +278,6 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
                 </Button>
               </div>
 
-              {/* Información de la imagen */}
               <div className='absolute inset-x-0 bottom-0 bg-black/70 p-2 text-white'>
                 <p className='truncate text-xs font-medium' title={image.filename}>
                   {image.filename || `Imagen ${index + 1}`}

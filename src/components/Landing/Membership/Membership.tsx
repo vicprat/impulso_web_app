@@ -21,7 +21,6 @@ export const Membership: React.FC<Props> = ({ content = {}, data }) => {
 
   return (
     <div className='grid grid-cols-1 items-center gap-12 lg:grid-cols-2'>
-      {/* Left Content - Benefits List */}
       <div className='animate-fade-in-left text-center lg:text-left'>
         <div className='mb-8'>
           <h3 className='mb-6 text-2xl font-bold text-foreground lg:text-3xl'>
@@ -42,7 +41,6 @@ export const Membership: React.FC<Props> = ({ content = {}, data }) => {
         </div>
       </div>
 
-      {/* Right Content - Membership Card */}
       <div className='animate-fade-in-right rounded-2xl bg-white p-8 shadow-2xl dark:bg-gray-900'>
         <div className='mb-6 text-center'>
           <h3 className='mb-2 text-2xl font-bold text-gray-900 dark:text-white'>

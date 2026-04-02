@@ -12,7 +12,6 @@ import {
   type User,
 } from './types'
 
-// ===== CUENTAS BANCARIAS =====
 export const useBankAccounts = () => {
   return useQuery({
     queryFn: () => financeApi.bankAccounts.getAll(),
@@ -34,7 +33,7 @@ export const useCreateBankAccount = () => {
   return useMutation({
     mutationFn: (data: CreateBankAccountData) => financeApi.bankAccounts.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
+      void queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
     },
   })
 }
@@ -46,8 +45,8 @@ export const useUpdateBankAccount = () => {
     mutationFn: ({ data, id }: { id: string; data: UpdateBankAccountData }) =>
       financeApi.bankAccounts.update(id, data),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
-      queryClient.invalidateQueries({ queryKey: ['bank-accounts', id] })
+      void queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
+      void queryClient.invalidateQueries({ queryKey: ['bank-accounts', id] })
     },
   })
 }
@@ -58,12 +57,11 @@ export const useDeleteBankAccount = () => {
   return useMutation({
     mutationFn: (id: string) => financeApi.bankAccounts.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
+      void queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
     },
   })
 }
 
-// ===== MOVIMIENTOS FINANCIEROS =====
 export const useFinancialEntries = (filters?: FinancialEntryFilters) => {
   return useQuery({
     queryFn: () => financeApi.entries.getAll(filters),
@@ -85,8 +83,8 @@ export const useCreateFinancialEntry = () => {
   return useMutation({
     mutationFn: (data: CreateFinancialEntryData) => financeApi.entries.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['financial-entries'] })
-      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      void queryClient.invalidateQueries({ queryKey: ['financial-entries'] })
+      void queryClient.invalidateQueries({ queryKey: ['reports'] })
     },
   })
 }
@@ -98,9 +96,9 @@ export const useUpdateFinancialEntry = () => {
     mutationFn: ({ data, id }: { id: string; data: UpdateFinancialEntryData }) =>
       financeApi.entries.update(id, data),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['financial-entries'] })
-      queryClient.invalidateQueries({ queryKey: ['financial-entries', id] })
-      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      void queryClient.invalidateQueries({ queryKey: ['financial-entries'] })
+      void queryClient.invalidateQueries({ queryKey: ['financial-entries', id] })
+      void queryClient.invalidateQueries({ queryKey: ['reports'] })
     },
   })
 }
@@ -111,13 +109,12 @@ export const useDeleteFinancialEntry = () => {
   return useMutation({
     mutationFn: (id: string) => financeApi.entries.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['financial-entries'] })
-      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      void queryClient.invalidateQueries({ queryKey: ['financial-entries'] })
+      void queryClient.invalidateQueries({ queryKey: ['reports'] })
     },
   })
 }
 
-// ===== PROVEEDORES =====
 export const useProviders = () => {
   return useQuery({
     queryFn: () => financeApi.providers.getAll(),
@@ -139,7 +136,7 @@ export const useCreateProvider = () => {
   return useMutation({
     mutationFn: (data: Partial<User>) => financeApi.providers.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['providers'] })
+      void queryClient.invalidateQueries({ queryKey: ['providers'] })
     },
   })
 }
@@ -151,8 +148,8 @@ export const useUpdateProvider = () => {
     mutationFn: ({ data, id }: { id: string; data: Partial<User> }) =>
       financeApi.providers.update(id, data),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['providers'] })
-      queryClient.invalidateQueries({ queryKey: ['providers', id] })
+      void queryClient.invalidateQueries({ queryKey: ['providers'] })
+      void queryClient.invalidateQueries({ queryKey: ['providers', id] })
     },
   })
 }
@@ -163,12 +160,11 @@ export const useDeleteProvider = () => {
   return useMutation({
     mutationFn: (id: string) => financeApi.providers.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['providers'] })
+      void queryClient.invalidateQueries({ queryKey: ['providers'] })
     },
   })
 }
 
-// ===== EMPLEADOS =====
 export const useEmployees = () => {
   return useQuery({
     queryFn: () => financeApi.employees.getAll(),
@@ -190,7 +186,7 @@ export const useCreateEmployee = () => {
   return useMutation({
     mutationFn: (data: Partial<User>) => financeApi.employees.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] })
+      void queryClient.invalidateQueries({ queryKey: ['employees'] })
     },
   })
 }
@@ -202,8 +198,8 @@ export const useUpdateEmployee = () => {
     mutationFn: ({ data, id }: { id: string; data: Partial<User> }) =>
       financeApi.employees.update(id, data),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] })
-      queryClient.invalidateQueries({ queryKey: ['employees', id] })
+      void queryClient.invalidateQueries({ queryKey: ['employees'] })
+      void queryClient.invalidateQueries({ queryKey: ['employees', id] })
     },
   })
 }
@@ -214,12 +210,11 @@ export const useDeleteEmployee = () => {
   return useMutation({
     mutationFn: (id: string) => financeApi.employees.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] })
+      void queryClient.invalidateQueries({ queryKey: ['employees'] })
     },
   })
 }
 
-// ===== SOCIOS =====
 export const usePartners = () => {
   return useQuery({
     queryFn: () => financeApi.partners.getAll(),
@@ -241,7 +236,7 @@ export const useCreatePartner = () => {
   return useMutation({
     mutationFn: (data: Partial<User>) => financeApi.partners.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['partners'] })
+      void queryClient.invalidateQueries({ queryKey: ['partners'] })
     },
   })
 }
@@ -253,8 +248,8 @@ export const useUpdatePartner = () => {
     mutationFn: ({ data, id }: { id: string; data: Partial<User> }) =>
       financeApi.partners.update(id, data),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['partners'] })
-      queryClient.invalidateQueries({ queryKey: ['partners', id] })
+      void queryClient.invalidateQueries({ queryKey: ['partners'] })
+      void queryClient.invalidateQueries({ queryKey: ['partners', id] })
     },
   })
 }
@@ -265,12 +260,11 @@ export const useDeletePartner = () => {
   return useMutation({
     mutationFn: (id: string) => financeApi.partners.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['partners'] })
+      void queryClient.invalidateQueries({ queryKey: ['partners'] })
     },
   })
 }
 
-// ===== REPORTES FINANCIEROS =====
 export const useIncomeStatement = (filters?: ReportFilters) => {
   return useQuery({
     queryFn: () => financeApi.reports.getIncomeStatement(filters),
@@ -306,7 +300,6 @@ export const useFinancialReport = (type: ReportType, filters?: ReportFilters) =>
   })
 }
 
-// ===== HOOKS DE UTILIDAD =====
 export const useFinanceData = () => {
   const bankAccounts = useBankAccounts()
   const financialEntries = useFinancialEntries()

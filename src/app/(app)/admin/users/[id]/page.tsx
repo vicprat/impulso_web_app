@@ -49,13 +49,12 @@ export default function UserDetailPage() {
   )
   const { data: bankAccountsData, isLoading: bankAccountsLoading } = useUserBankAccounts(userId)
 
-  // Hook para manejar el perfil del usuario por parte del admin
   const {
     createLink,
     deleteLink,
     isCreatingLink,
     isDeletingLink,
-    // Links functionality
+
     isLinksLoading,
     isProfileLoading,
     isUpdatingLink,
@@ -108,7 +107,6 @@ export default function UserDetailPage() {
 
   const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Sin nombre'
 
-  // Componentes específicos por rol
   const renderRoleSpecificContent = () => {
     switch (primaryRole) {
       case 'provider':
@@ -138,7 +136,6 @@ export default function UserDetailPage() {
 
   return (
     <div className='space-y-6 p-4 md:p-6'>
-      {/* User Header Card */}
       <Card className='overflow-hidden shadow-elevation-1'>
         <div className='bg-surface-container-low p-6'>
           <div className='flex flex-col items-center gap-4 text-center md:flex-row md:text-left'>
@@ -182,9 +179,7 @@ export default function UserDetailPage() {
         </div>
       </Card>
 
-      {/* User Details Grid */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-        {/* Main Info Card */}
         <Card className='shadow-elevation-1 lg:col-span-2'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2 text-foreground'>
@@ -219,7 +214,6 @@ export default function UserDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Roles and Status Card */}
         <Card className='shadow-elevation-1'>
           <CardHeader>
             <CardTitle className='flex items-center gap-2 text-foreground'>
@@ -257,7 +251,6 @@ export default function UserDetailPage() {
         </Card>
       </div>
 
-      {/* Bank Accounts Section */}
       {bankAccountsData && bankAccountsData.bankAccounts.length > 0 && (
         <Card className='shadow-elevation-1'>
           <CardHeader>
@@ -302,10 +295,8 @@ export default function UserDetailPage() {
         </Card>
       )}
 
-      {/* Role-Specific Content */}
       {renderRoleSpecificContent()}
 
-      {/* Shopify Info Card */}
       {user.shopifyData && (
         <Card className='shadow-elevation-1'>
           <CardHeader>
@@ -334,7 +325,6 @@ export default function UserDetailPage() {
         </Card>
       )}
 
-      {/* Edit User Dialog */}
       <Dialog.Form
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
@@ -345,14 +335,12 @@ export default function UserDetailPage() {
           user={user}
           onSuccess={() => {
             setEditDialogOpen(false)
-            // Refetch user data
             window.location.reload()
           }}
           onCancel={() => setEditDialogOpen(false)}
         />
       </Dialog.Form>
 
-      {/* Edit Profile Dialog - Only for Artists */}
       {primaryRole === 'artist' && (
         <Dialog.Form
           open={profileEditDialogOpen}
@@ -379,7 +367,6 @@ export default function UserDetailPage() {
         </Dialog.Form>
       )}
 
-      {/* Edit Links Dialog - Only for Artists */}
       {primaryRole === 'artist' && (
         <Dialog.Form
           open={linksEditDialogOpen}
@@ -413,7 +400,6 @@ export default function UserDetailPage() {
         </Dialog.Form>
       )}
 
-      {/* Edit Artist Type Dialog - Only for Artists */}
       {primaryRole === 'artist' && (
         <Dialog.Form
           open={artistTypeEditDialogOpen}
@@ -435,7 +421,6 @@ export default function UserDetailPage() {
   )
 }
 
-// Componentes específicos por rol
 function ProviderSection({
   financeData,
   isLoading,
@@ -504,22 +489,6 @@ function ProviderSection({
           </p>
         </div>
       </CardContent>
-      {/* <CardContent className='border-t pt-4'>
-        <div className='flex gap-2'>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
-            <Button variant='outline' size='sm'>
-              <FileText className='mr-2 size-4' />
-              Ver Movimientos
-            </Button>
-          </Link>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH}?userId=${user.id}`}>
-            <Button size='sm'>
-              <Plus className='mr-2 size-4' />
-              Crear Movimiento
-            </Button>
-          </Link>
-        </div>
-      </CardContent> */}
     </Card>
   )
 }
@@ -592,22 +561,6 @@ function EmployeeSection({
           </p>
         </div>
       </CardContent>
-      {/* <CardContent className='border-t pt-4'>
-        <div className='flex gap-2'>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
-            <Button variant='outline' size='sm'>
-              <FileText className='mr-2 size-4' />
-              Ver Movimientos
-            </Button>
-          </Link>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH}?userId=${user.id}`}>
-            <Button size='sm'>
-              <Plus className='mr-2 size-4' />
-              Crear Movimiento
-            </Button>
-          </Link>
-        </div>
-      </CardContent> */}
     </Card>
   )
 }
@@ -680,22 +633,6 @@ function PartnerSection({
           </p>
         </div>
       </CardContent>
-      {/* <CardContent className='border-t pt-4'>
-        <div className='flex gap-2'>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
-            <Button variant='outline' size='sm'>
-              <FileText className='mr-2 size-4' />
-              Ver Movimientos
-            </Button>
-          </Link>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH}?userId=${user.id}`}>
-            <Button size='sm'>
-              <Plus className='mr-2 size-4' />
-              Crear Movimiento
-            </Button>
-          </Link>
-        </div>
-      </CardContent> */}
     </Card>
   )
 }
@@ -787,34 +724,6 @@ function ArtistSection({
           </p>
         </div>
       </CardContent>
-      {/* <CardContent className='border-t pt-4'>
-        <div className='flex gap-2'>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
-            <Button variant='outline' size='sm'>
-              <FileText className='mr-2 size-4' />
-              Ver Movimientos
-            </Button>
-          </Link>
-          <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.CREATE.PATH}?userId=${user.id}`}>
-            <Button size='sm'>
-              <Plus className='mr-2 size-4' />
-              Crear Movimiento
-            </Button>
-          </Link>
-          <Button onClick={onEditProfile} className='ml-auto'>
-            <Edit className='mr-2 size-4' />
-            Editar Perfil
-          </Button>
-          <Button onClick={onEditLinks} variant='outline'>
-            <Edit className='mr-2 size-4' />
-            Editar Links
-          </Button>
-          <Button onClick={onEditArtistType} variant='outline'>
-            <Edit className='mr-2 size-4' />
-            Editar Tipo
-          </Button>
-        </div>
-      </CardContent> */}
     </Card>
   )
 }
@@ -888,14 +797,6 @@ function CustomerSection({
               Ver Perfil Público
             </Button>
           </Link>
-          {/* {customerInfo?.orders && customerInfo.orders.length > 0 && (
-            <Link href={`${ROUTES.ADMIN.FINANCE.ENTRIES.MAIN.PATH}?userId=${user.id}`}>
-              <Button variant='outline' size='sm'>
-                <FileText className='mr-2 size-4' />
-                Ver Movimientos
-              </Button>
-            </Link>
-          )} */}
         </div>
       </CardContent>
     </Card>
@@ -951,7 +852,6 @@ function ArtistTypeEditForm({
       onSuccess()
     } catch (error) {
       console.error('Error updating artist type:', error)
-      // Aquí podrías agregar un toast de error
     } finally {
       setIsLoading(false)
     }

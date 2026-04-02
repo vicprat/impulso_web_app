@@ -172,12 +172,10 @@ export const columns: ColumnDef<Order>[] = [
     cell: ({ row }) => {
       const { requiresShipping, shippingLine } = row.original
 
-      // Digital orders (tickets/events)
       if (requiresShipping === false) {
         return <Badge variant='outline'>Digital - Eventos/Tickets</Badge>
       }
 
-      // Determine shipping method based on title
       if (shippingLine?.title) {
         const title = shippingLine.title.toLowerCase()
 
@@ -227,7 +225,6 @@ export const columns: ColumnDef<Order>[] = [
       const fulfillmentStatus =
         row.original.fulfillmentStatus ?? row.original.displayFulfillmentStatus
 
-      // Digital orders don't need shipping
       if (requiresShipping === false) {
         return (
           <Badge className='bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'>

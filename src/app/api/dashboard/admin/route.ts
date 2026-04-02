@@ -6,30 +6,14 @@ import { makeAdminApiRequest } from '@/src/lib/shopifyAdmin'
 import { requirePermission } from '@/src/modules/auth/server/server'
 import { getAllUsers } from '@/src/modules/user/user.service'
 
-// Cache simple para el dashboard (evita múltiples llamadas a Shopify)
 interface DashboardCacheEntry {
   data: unknown
   fetchedAt: number
 }
 const dashboardCache = new Map<string, DashboardCacheEntry>()
-const DASHBOARD_CACHE_TTL = 5 * 60 * 1000 // 5 minutos
+const DASHBOARD_CACHE_TTL = 5 * 60 * 1000
 
-// Rate limiting config
-const REQUEST_DELAY_MS = 200
-const MAX_RETRY_ATTEMPTS = 3
-const RETRY_DELAY_BASE_MS = 1000
-
-// Registrar cache para invalidación centralizada
 registerGlobalCache('dashboard-admin', dashboardCache)
-
-// Utility function for delay
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-// Helper para crear fechas locales sin problemas de zona horaria
-const createLocalDate = (dateString: string): Date => {
-  const [year, month, day] = dateString.split('-').map(Number)
-  return new Date(year, month - 1, day) // month es 0-indexed en Date constructor
-}
 
 interface ShopifyMoneyV2 {
   amount: string
@@ -94,13 +78,10 @@ export async function GET() {
   try {
     const session = await requirePermission(PERMISSIONS.VIEW_ANALYTICS)
 
-    // Verificar permisos específicos del usuario
     const canManageUsers = session.user.permissions?.includes(PERMISSIONS.MANAGE_USERS) ?? false
     const canManageInventory =
       session.user.permissions?.includes(PERMISSIONS.MANAGE_INVENTORY) ?? false
 
-    // Verificar cache antes de hacer llamadas a Shopify
-    // Usar cache diferente según permisos para evitar filtrar datos incorrectos
     const cacheKey = `admin-dashboard-${session.user.id}-${canManageUsers}-${canManageInventory}`
     const cached = dashboardCache.get(cacheKey)
     const now = Date.now()
@@ -108,12 +89,9 @@ export async function GET() {
       return NextResponse.json(cached.data)
     }
 
-    const locationId = await getPrimaryLocationId()
-
     const today = new Date()
     const firstDayOfPreviousMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
 
-    // Obtener TODAS las órdenes usando paginación
     const allOrders: ShopifyOrderEdge[] = []
     let ordersHasNextPage = true
     let ordersCursor: string | undefined = undefined
@@ -161,17 +139,15 @@ export async function GET() {
         first: number
       } = {
         after: ordersCursor,
-        first: 250, // Máximo permitido por Shopify
+        first: 250,
       }
 
       const orderResponse: any = await makeAdminApiRequest(orderQuery, orderVariables)
       allOrders.push(...orderResponse.orders.edges)
 
-      // Verificar si hay más páginas
       ordersHasNextPage = orderResponse.orders.pageInfo.hasNextPage
       ordersCursor = orderResponse.orders.pageInfo.endCursor ?? undefined
 
-      // Para órdenes muy grandes, limitamos a 5000 órdenes máximo
       if (allOrders.length >= 5000) {
         break
       }
@@ -179,13 +155,10 @@ export async function GET() {
 
     const shopifyResponse: ShopifyOrdersResponse = { orders: { edges: allOrders } }
 
-    // Usar CacheManager para obtener productos - evita llamadas duplicadas a Shopify
     const managementProducts = await CacheManager.getFullCatalog('admin')
 
-    // Filtrar eventos directamente del catálogo cacheado
     const managementEvents = managementProducts.filter((p: any) => p.productType === 'Evento')
 
-    // Obtener usuarios solo si tiene permiso MANAGE_USERS
     let users: any[] = []
     let totalUsers = 0
     if (canManageUsers) {
@@ -201,11 +174,9 @@ export async function GET() {
 
         allUsers.push(...userList)
 
-        // Verificar si hay más páginas
         userHasMore = allUsers.length < total && userPage * 100 < total
         userPage++
 
-        // Para usuarios muy grandes, limitamos a 5000 usuarios máximo
         if (allUsers.length >= 5000) {
           break
         }
@@ -256,7 +227,6 @@ export async function GET() {
     const products = managementProducts ?? []
     const events = managementEvents ?? []
 
-    // Procesar datos enriquecidos de productos
     const productSalesMap = new Map<
       string,
       { name: string; artist: string; sales: number; units: number; details: any }
@@ -352,18 +322,15 @@ export async function GET() {
       value,
     }))
 
-    // Procesar eventos
     const eventsMap = new Map<string, { event: any; ticketsSold: number; totalTickets: number }>()
     const upcomingEvents = events.filter((event) => !event.isPastEvent && event.status === 'ACTIVE')
     const pastEvents = events.filter((event) => event.isPastEvent && event.status === 'ACTIVE')
 
-    // Calcular métricas de eventos
     const totalEvents = events.length
     const activeEvents = events.filter((event) => event.status === 'ACTIVE').length
     const upcomingEventsCount = upcomingEvents.length
     const pastEventsCount = pastEvents.length
 
-    // Procesar detalles de eventos
     const eventDetails = events.map((event) => ({
       availableForSale: event.availableForSale,
       daysUntilEvent: event.daysUntilEvent,
@@ -430,7 +397,6 @@ export async function GET() {
       return sum + price * quantity
     }, 0)
 
-    // Métricas adicionales con datos enriquecidos
     const productsWithArtworkDetails = products.filter(
       (p) => p.artworkDetails && Object.values(p.artworkDetails).some((value) => value !== null)
     ).length
@@ -483,8 +449,6 @@ export async function GET() {
           ) / orders.length
         : 0
 
-    // totalUsers ya está definido arriba según permisos
-
     const salesCurrentMonth = orders
       .filter(
         (order) =>
@@ -516,7 +480,6 @@ export async function GET() {
 
     const conversionRate = totalUsers > 0 ? (totalOrders / totalUsers) * 100 : 0
 
-    // Construir respuesta según permisos del usuario
     const data: any = {
       averageOrderValue,
 
@@ -537,7 +500,6 @@ export async function GET() {
         totalUsers: canManageUsers ? totalUsers : 0,
       },
 
-      // Información sobre permisos disponibles
       permissions: {
         canManageInventory,
         canManageUsers,
@@ -550,17 +512,14 @@ export async function GET() {
       topProducts,
     }
 
-    // Solo incluir datos de usuarios si tiene permiso
     if (canManageUsers) {
       data.artistStats = artistStats
       data.users = users
       data.recentActivity = recentActivity
     } else {
-      // Datos limitados para Manager sin permisos completos
       data.recentActivity = recentActivity.filter((item: any) => item.type !== 'user')
     }
 
-    // Solo incluir datos de inventario detallados si tiene permiso
     if (canManageInventory) {
       data.activeProducts = activeProducts
       data.financialSummary = {
@@ -579,7 +538,6 @@ export async function GET() {
         totalValue: totalInventoryValue,
       }
     } else {
-      // Datos básicos de inventario para usuarios sin permiso MANAGE_INVENTORY
       data.inventory = {
         lowStock: 0,
         outOfStock: 0,
@@ -587,7 +545,6 @@ export async function GET() {
       }
     }
 
-    // Guardar en cache
     dashboardCache.set(cacheKey, { data, fetchedAt: now })
 
     return NextResponse.json({ data })

@@ -40,7 +40,6 @@ export const Hero: React.FC<Props> = ({ content = {} }) => {
 
   const { mousePosition } = useMouseTracking(containerRef as React.RefObject<HTMLElement>)
 
-  // Helper to get content from Notion with a fallback
   const t = (key: string, fallback: string) => content[key]?.es ?? fallback
 
   const VIDEO_URL = t(
@@ -251,7 +250,7 @@ export const Hero: React.FC<Props> = ({ content = {} }) => {
         <FloatingParticles
           config={{
             color: 'bg-white/30',
-            count: 50, // Reducir partículas para mejor rendimiento
+            count: 50,
             maxDuration: 6,
             minDuration: 2,
           }}
@@ -277,7 +276,7 @@ export const Hero: React.FC<Props> = ({ content = {} }) => {
               isTabletOrMobile
                 ? 'text-2xl sm:text-3xl'
                 : 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl'
-            } mb-6 font-bold leading-tight tracking-wide text-white sm:mb-8 md:mb-10 ${isTabletOrMobile ? 'max-w-sm' : 'max-w-4xl'} 
+            } mb-6 font-bold leading-tight tracking-wide text-white sm:mb-8 md:mb-10 ${isTabletOrMobile ? 'max-w-sm' : 'max-w-4xl'}
     bg-gradient-to-r from-white via-white/95 to-white/90 bg-clip-text text-transparent
     shadow-black/50 drop-shadow-lg`}
           >

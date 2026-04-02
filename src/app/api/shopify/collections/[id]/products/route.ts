@@ -13,7 +13,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Product IDs are required' }, { status: 400 })
     }
 
-    // Verificar el tipo de colección antes de intentar agregar productos
     const formattedCollectionId = id.startsWith('gid://shopify/Collection/')
       ? id
       : `gid://shopify/Collection/${id}`
@@ -68,7 +67,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         )
       }
 
-      // Verificar si la colección está publicada
       const publicationCount = collectionCheck?.collection?.publicationCount ?? 0
       const isPublished = publicationCount > 0
 
@@ -76,7 +74,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         // No bloqueamos, pero advertimos en los logs
       }
 
-      // Obtener IDs de productos existentes en la colección
       if (collectionCheck?.collection?.products?.edges) {
         existingProductIds = new Set(
           collectionCheck.collection.products.edges.map((edge: any) => edge.node.id)
@@ -86,20 +83,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       // Continuar aunque no se pueda verificar el tipo de colección
     }
 
-    // Formatear IDs de productos
     let formattedProductIds = productIds.map((productId: string) => {
       return productId.startsWith('gid://shopify/Product/')
         ? productId
         : `gid://shopify/Product/${productId}`
     })
 
-    // Verificar si los productos ya están en la colección
     const productsAlreadyInCollection = formattedProductIds.filter((id: string) =>
       existingProductIds.has(id)
     )
 
     if (productsAlreadyInCollection.length > 0) {
-      // Si todos los productos ya están en la colección, retornar error
       if (productsAlreadyInCollection.length === formattedProductIds.length) {
         return NextResponse.json(
           {
@@ -117,7 +111,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         )
       }
 
-      // Si solo algunos están duplicados, filtrar y continuar con los que no están
       const productsToAdd = formattedProductIds.filter(
         (id: string) => !productsAlreadyInCollection.includes(id)
       )
@@ -139,7 +132,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         )
       }
 
-      // Actualizar la lista de productos para solo incluir los que no están
       formattedProductIds = productsToAdd
     }
 
@@ -169,8 +161,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const response = (await makeAdminApiRequest(MUTATION, variables)) as any
 
     if (response.collectionAddProducts?.userErrors?.length > 0) {
-
-      // Verificar si el error es porque la colección es inteligente
       const isSmartCollectionError = response.collectionAddProducts.userErrors.some(
         (error: any) =>
           error.message?.toLowerCase().includes('smart collection') ||
@@ -178,7 +168,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           error.message?.toLowerCase().includes('automatic')
       )
 
-      // Verificar si el error podría ser porque el producto ya está en la colección
       const errorMessages = response.collectionAddProducts.userErrors
         .map((e: any) => e.message)
         .join('; ')

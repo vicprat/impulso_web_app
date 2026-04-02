@@ -241,7 +241,6 @@ export const useCreateIncome = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (payload: CreateIncomePayload) => {
-      // Validaciones similares a useCreateExpense
       if (!payload.description.trim()) {
         throw new Error('La descripción es obligatoria.')
       }
@@ -271,7 +270,6 @@ export const useUpdateIncome = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (payload: Partial<CreateIncomePayload>) => {
-      // Validaciones similares a useUpdateExpense
       if (!payload.description?.trim()) {
         throw new Error('La descripción es obligatoria.')
       }

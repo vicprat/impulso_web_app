@@ -1,27 +1,23 @@
 import { NextResponse } from 'next/server'
 
-import { PERMISSIONS } from '@/src/config/Permissions'
 import { registerGlobalCache } from '@/lib/cache'
+import { PERMISSIONS } from '@/src/config/Permissions'
 import { makeAdminApiRequest } from '@/src/lib/shopifyAdmin'
 import { requirePermission } from '@/src/modules/auth/server/server'
 
-// Cache simple para advanced-analytics
 interface CacheEntry {
   data: unknown
   fetchedAt: number
 }
 const cache = new Map<string, CacheEntry>()
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
+const CACHE_TTL = 5 * 60 * 1000
 
-// Rate limiting config
 const REQUEST_DELAY_MS = 200
 const MAX_RETRY_ATTEMPTS = 3
 const RETRY_DELAY_BASE_MS = 1000
 
-// Registrar cache para invalidación centralizada
 registerGlobalCache('dashboard-advanced-analytics', cache)
 
-// Utility function for delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 interface ShopifyMoneyV2 {
@@ -68,7 +64,6 @@ export async function GET() {
   try {
     const session = await requirePermission(PERMISSIONS.VIEW_ANALYTICS)
 
-    // Verificar cache
     const cacheKey = 'advanced-analytics'
     const cached = cache.get(cacheKey)
     const now = Date.now()
@@ -76,7 +71,6 @@ export async function GET() {
       return NextResponse.json(cached.data)
     }
 
-    // Obtener TODAS las órdenes usando paginación con rate limiting
     const allOrders: ShopifyOrderEdge[] = []
     let hasNextPage = true
     let cursor: string | undefined = undefined
@@ -85,7 +79,6 @@ export async function GET() {
     while (hasNextPage) {
       pageCount++
 
-      // Rate limiting: delay entre llamadas (excepto la primera)
       if (pageCount > 1) {
         await delay(REQUEST_DELAY_MS)
       }
@@ -117,7 +110,7 @@ export async function GET() {
         first: number
       } = {
         after: cursor,
-        first: 250, // Máximo permitido por Shopify
+        first: 250,
       }
 
       let retryAttempt = 0
@@ -128,7 +121,6 @@ export async function GET() {
           const response: any = await makeAdminApiRequest(ordersQuery, variables)
           allOrders.push(...response.orders.edges)
 
-          // Verificar si hay más páginas
           hasNextPage = response.orders.pageInfo.hasNextPage
           cursor = response.orders.pageInfo.endCursor ?? undefined
           success = true
@@ -158,7 +150,6 @@ export async function GET() {
         }
       }
 
-      // Para órdenes muy grandes, limitamos a 5000 órdenes máximo
       if (allOrders.length >= 5000) {
         break
       }
@@ -167,7 +158,6 @@ export async function GET() {
     const orders: ShopifyOrderEdge[] = allOrders
     const currentDate = new Date()
 
-    // Análisis temporal
     const last30Days = orders.filter((order: ShopifyOrderEdge) => {
       const orderDate = new Date(order.node.createdAt)
       const daysDiff = (currentDate.getTime() - orderDate.getTime()) / (1000 * 3600 * 24)
@@ -180,7 +170,6 @@ export async function GET() {
       return daysDiff <= 7
     })
 
-    // Métricas de crecimiento
     const revenueThisMonth = last30Days.reduce(
       (sum: number, order: ShopifyOrderEdge) =>
         sum + parseFloat(order.node.currentTotalPriceSet?.shopMoney?.amount ?? '0'),
@@ -193,7 +182,6 @@ export async function GET() {
       0
     )
 
-    // Análisis por hora del día
     const ordersByHour = Array.from({ length: 24 }, (_, hour) => {
       const hourlyOrders = orders.filter((order: ShopifyOrderEdge) => {
         const orderDate = new Date(order.node.createdAt)
@@ -214,7 +202,7 @@ export async function GET() {
       customerInsights: {
         averageOrdersPerCustomer: 0,
         customerLifetimeValue: 0,
-        // Necesitarías analizar customer.id repetidos
+
         newCustomers: 0,
         returningCustomers: 0,
       },
@@ -237,15 +225,13 @@ export async function GET() {
         totalOrders: orders.length,
       },
       revenueGrowth: {
-        // Calcular vs semana anterior si tienes datos
         monthlyGrowth: 0,
         thisMonth: revenueThisMonth,
         thisWeek: revenueThisWeek,
-        weeklyGrowth: 0, // Calcular vs mes anterior si tienes datos
+        weeklyGrowth: 0,
       },
     }
 
-    // Guardar en cache
     cache.set(cacheKey, { data, fetchedAt: now })
 
     return NextResponse.json({ data })

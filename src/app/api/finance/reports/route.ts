@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
 
-    // Validar tipo de reporte
     if (!type) {
       return NextResponse.json({ error: 'Tipo de reporte requerido' }, { status: 400 })
     }

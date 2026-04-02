@@ -35,7 +35,6 @@ export const Product: React.FC<Props> = ({ product }) => {
         )
       : 0
 
-  // Detectar si es un post convertido (viene de posts de tipo EVENT)
   const isEventPost = product.id.startsWith('post-')
 
   const formatPrice = (price: string, currencyCode: string) => {
@@ -53,7 +52,6 @@ export const Product: React.FC<Props> = ({ product }) => {
         viewTransitionName: `product-image-${product.id}`,
       }}
     >
-      {/* Badges Container */}
       <div className='absolute inset-x-3 top-3 z-20 flex items-start justify-between'>
         {hasDiscount && (
           <Badge className='hover:bg-error/90 bg-error-container text-on-error shadow-elevation-2 backdrop-blur-sm transition-all duration-200 hover:scale-105'>
@@ -149,7 +147,6 @@ export const Product: React.FC<Props> = ({ product }) => {
             </p>
           )}
 
-          {/* Artwork Details - always show for consistency */}
           {'artworkDetails' in product && product.artworkDetails && (
             <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground'>
               {(() => {

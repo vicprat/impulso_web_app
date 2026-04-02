@@ -1,10 +1,8 @@
-// Datos estructurados (JSON-LD) para mejorar el SEO
 export interface StructuredDataConfig {
   type: 'Organization' | 'WebSite' | 'Article' | 'Event' | 'Product' | 'Person' | 'BreadcrumbList'
   data: Record<string, unknown>
 }
 
-// Datos estructurados para la organización
 export const organizationStructuredData = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
@@ -48,7 +46,6 @@ export const organizationStructuredData = {
   url: 'https://impulsogaleria.com',
 }
 
-// Datos estructurados para el sitio web
 export const websiteStructuredData = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
@@ -74,7 +71,6 @@ export const websiteStructuredData = {
   url: 'https://impulsogaleria.com',
 }
 
-// Función para generar datos estructurados de artista
 export const generateArtistStructuredData = (artist: {
   firstName: string
   lastName: string
@@ -127,7 +123,6 @@ export const generateArtistStructuredData = (artist: {
   }
 }
 
-// Función para generar datos estructurados de producto
 export const generateProductStructuredData = (product: {
   id: string
   title: string
@@ -173,7 +168,6 @@ export const generateProductStructuredData = (product: {
   }
 }
 
-// Función para generar datos estructurados de evento
 export const generateEventStructuredData = (event: {
   title: string
   description?: string
@@ -210,7 +204,6 @@ export const generateEventStructuredData = (event: {
   }
 }
 
-// Función para generar breadcrumbs
 export const generateBreadcrumbStructuredData = (
   items: {
     name: string
@@ -229,7 +222,6 @@ export const generateBreadcrumbStructuredData = (
   }
 }
 
-// Función para generar datos estructurados de artículo
 export const generateArticleStructuredData = (article: {
   title: string
   description?: string
@@ -267,7 +259,6 @@ export const generateArticleStructuredData = (article: {
   }
 }
 
-// Función para generar datos estructurados de colección de arte
 export const generateArtCollectionStructuredData = (collection: {
   name: string
   description?: string
@@ -300,7 +291,6 @@ export const generateArtCollectionStructuredData = (collection: {
   }
 }
 
-// Structured data para navegación del sitio (ayuda con sitelinks)
 export const generateSiteNavigationStructuredData = () => {
   return {
     '@context': 'https://schema.org',

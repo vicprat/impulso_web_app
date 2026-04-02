@@ -102,7 +102,6 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
   return (
     <>
       <div className='space-y-6 p-4 md:p-6'>
-        {/* Header con botón de regreso */}
         <div className='flex items-center gap-4'>
           <Button variant='ghost' size='sm' asChild>
             <Link href='/manage-tickets'>
@@ -119,7 +118,6 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
         </div>
 
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-          {/* Información del evento */}
           <Card>
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
@@ -195,7 +193,6 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
             </CardContent>
           </Card>
 
-          {/* Información del ticket */}
           <Card>
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
@@ -254,20 +251,12 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
                     </Link>
                   </Button>
                 )}
-
-                {/* {ticket.status === 'VALID' && (
-                  <Button className='flex-1' onClick={() => setShowQr(true)}>
-                    <QrCode className='mr-1 size-4' />
-                    Mostrar QR
-                  </Button>
-                )} */}
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Modal del QR */}
       <Dialog open={showQr} onOpenChange={setShowQr}>
         <DialogContent className='sm:max-w-md'>
           <DialogHeader>

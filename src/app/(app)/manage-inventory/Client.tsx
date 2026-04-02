@@ -152,26 +152,22 @@ export function Client() {
   const { data: locations = [], isLoading: locationsLoading } = useGetLocations()
   const { data: arrendamientos = [], isLoading: arrendamientosLoading } = useGetArrendamientos()
 
-  // Obtener cupones para mostrar en la columna de descuentos
   const { data: coupons = [] } = useGetDiscounts()
 
-  // Obtener todas las colecciones (solo colecciones manuales, no inteligentes)
   const { data: collectionsData } = useCollections({ limit: 250 })
   const allCollections = collectionsData?.collections ?? []
-  // Filtrar solo colecciones manuales (que no tienen ruleSet)
+
   const collections = allCollections.filter(
     (collection: any) => !collection.ruleSet || collection.ruleSet.rules?.length === 0
   )
 
-  // Función para verificar si un producto tiene descuentos aplicados
   const getProductDiscounts = useCallback(
     (productId: string) => {
       return coupons.filter((coupon: any) => {
-        // Verificar si el cupón aplica a productos específicos
         if (coupon.appliesTo === 'SPECIFIC_PRODUCTS' && coupon.productIds) {
           return coupon.productIds.includes(productId)
         }
-        // Verificar si aplica a todos los productos
+
         if (coupon.appliesTo === 'ALL_PRODUCTS') {
           return true
         }
@@ -181,7 +177,6 @@ export function Client() {
     [coupons]
   )
 
-  // Función para agregar producto a colección
   const addProductsToCollectionMutation = useAddProductsToCollection({
     onError: (
       error: Error & {
@@ -215,13 +210,10 @@ export function Client() {
 
   const handleAddProductToCollection = useCallback(
     async (productId: string, collectionId: string) => {
-      // Los IDs ya vienen en formato gid://shopify/Product/... desde Shopify
-      // Si vienen como número, los convertimos al formato correcto
       const formattedProductId = productId.startsWith('gid://shopify/Product/')
         ? productId
         : `gid://shopify/Product/${productId}`
 
-      // Las colecciones también pueden venir en formato gid o numérico
       const formattedCollectionId = collectionId.startsWith('gid://shopify/Collection/')
         ? collectionId
         : (collectionId.split('/').pop() ?? collectionId)
@@ -234,7 +226,6 @@ export function Client() {
     [addProductsToCollectionMutation]
   )
 
-  // Función para agregar múltiples productos a una colección (modo bulk)
   const handleAddSelectedProductsToCollection = useCallback(
     async (collectionId: string) => {
       if (selectedRows.size === 0) {
@@ -242,13 +233,10 @@ export function Client() {
         return
       }
 
-      // Las colecciones pueden venir en formato gid o numérico
       const formattedCollectionId = collectionId.startsWith('gid://shopify/Collection/')
         ? collectionId
         : (collectionId.split('/').pop() ?? collectionId)
 
-      // Los IDs de productos ya vienen en formato gid://shopify/Product/... desde Shopify
-      // Si vienen como número, los convertimos al formato correcto
       const productIds = Array.from(selectedRows).map((id) =>
         id.startsWith('gid://shopify/Product/') ? id : `gid://shopify/Product/${id}`
       )
@@ -269,7 +257,6 @@ export function Client() {
     [selectedRows, addProductsToCollectionMutation]
   )
 
-  // Función para remover producto de colección
   const removeProductsFromCollectionMutation = useRemoveProductsFromCollection({
     onError: (error: Error & { message?: string; details?: any[] }) => {
       const errorMessage = error.message || error.details?.[0]?.message || 'Error desconocido'
@@ -288,11 +275,8 @@ export function Client() {
         ? productId
         : `gid://shopify/Product/${productId}`
 
-      // El collectionId puede venir en formato gid://shopify/Collection/... o solo el número
-      // Necesitamos mantener el formato completo si ya lo tiene, o construirlo si solo es el número
       let formattedCollectionId = collectionId
       if (!collectionId.startsWith('gid://shopify/Collection/')) {
-        // Si solo es el número, extraerlo y construir el formato completo
         const numericId = collectionId.split('/').pop() ?? collectionId
         formattedCollectionId = `gid://shopify/Collection/${numericId}`
       }
@@ -305,7 +289,6 @@ export function Client() {
     [removeProductsFromCollectionMutation]
   )
 
-  // Función para remover múltiples productos de una colección (modo bulk)
   const handleRemoveSelectedProductsFromCollection = useCallback(
     async (collectionId: string) => {
       if (selectedRows.size === 0) {
@@ -1986,7 +1969,6 @@ export function Client() {
         </div>
       )}
 
-      {/* Modal para descuentos automáticos */}
       <ProductAutomaticDiscountModal
         isOpen={isAutomaticDiscountModalOpen}
         onClose={() => {
