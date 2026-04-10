@@ -58,8 +58,15 @@ export const useCreateProduct = () => {
       const { data } = await axios.post('/api/management/products', payload)
       return data
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [PRODUCTS_QUERY_KEY] })
+    onSuccess: async () => {
+      await queryClient.refetchQueries({
+        exact: false,
+        queryKey: [PRODUCTS_QUERY_KEY, 'paginated'],
+      })
+      await queryClient.refetchQueries({
+        exact: false,
+        queryKey: [PRODUCTS_QUERY_KEY, 'stats'],
+      })
     },
   })
 }

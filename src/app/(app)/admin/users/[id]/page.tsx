@@ -7,6 +7,7 @@ import {
   DollarSign,
   Edit,
   Handshake,
+  LinkIcon,
   Mail,
   Phone,
   Shield,
@@ -35,7 +36,6 @@ import { ROUTES } from '@/src/config/routes'
 export default function UserDetailPage() {
   const params = useParams()
   const userId = params.id as string
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [profileEditDialogOpen, setProfileEditDialogOpen] = useState(false)
   const [linksEditDialogOpen, setLinksEditDialogOpen] = useState(false)
   const [artistTypeEditDialogOpen, setArtistTypeEditDialogOpen] = useState(false)
@@ -116,16 +116,7 @@ export default function UserDetailPage() {
       case 'partner':
         return <PartnerSection user={user} financeData={financeData} isLoading={financeLoading} />
       case 'artist':
-        return (
-          <ArtistSection
-            user={user}
-            financeData={financeData}
-            isLoading={financeLoading}
-            onEditProfile={() => setProfileEditDialogOpen(true)}
-            onEditLinks={() => setLinksEditDialogOpen(true)}
-            onEditArtistType={() => setArtistTypeEditDialogOpen(true)}
-          />
-        )
+        return <ArtistSection user={user} financeData={financeData} isLoading={financeLoading} />
       case 'customer':
       case 'vip_customer':
         return <CustomerSection user={user} financeData={financeData} isLoading={financeLoading} />
@@ -170,10 +161,20 @@ export default function UserDetailPage() {
                   Volver
                 </Button>
               </Link>
-              <Button onClick={() => setEditDialogOpen(true)}>
+              <Button onClick={() => setProfileEditDialogOpen(true)}>
                 <Edit className='mr-2 size-4' />
-                Editar
+                Editar Perfil
               </Button>
+              <Button variant='outline' onClick={() => setLinksEditDialogOpen(true)}>
+                <LinkIcon className='mr-2 size-4' />
+                Editar Links
+              </Button>
+              {primaryRole === 'artist' && (
+                <Button variant='outline' onClick={() => setArtistTypeEditDialogOpen(true)}>
+                  <Edit className='mr-2 size-4' />
+                  Editar Tipo
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -326,79 +327,59 @@ export default function UserDetailPage() {
       )}
 
       <Dialog.Form
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        title={`Editar Usuario - ${fullName}`}
-        description='Modifica la información del usuario y sus roles.'
+        open={profileEditDialogOpen}
+        onOpenChange={setProfileEditDialogOpen}
+        title={`Editar Perfil - ${fullName}`}
+        description='Modifica la información del perfil del usuario.'
+        maxWidth='5xl'
+        contentClassName='max-h-[85vh] overflow-y-auto'
       >
-        <Form.Artist
-          user={user}
-          onSuccess={() => {
-            setEditDialogOpen(false)
-            window.location.reload()
-          }}
-          onCancel={() => setEditDialogOpen(false)}
-        />
+        <div className='space-y-4 pr-2'>
+          {isProfileLoading ? (
+            <div className='flex items-center justify-center p-8'>
+              <div className='size-8 animate-spin rounded-full border-2 border-primary border-t-transparent'></div>
+            </div>
+          ) : (
+            <Form.Profile
+              profile={userProfile}
+              onSave={updateProfile}
+              isLoading={isUpdatingProfile}
+              compact={true}
+            />
+          )}
+        </div>
       </Dialog.Form>
 
-      {primaryRole === 'artist' && (
-        <Dialog.Form
-          open={profileEditDialogOpen}
-          onOpenChange={setProfileEditDialogOpen}
-          title={`Editar Perfil de Artista - ${fullName}`}
-          description='Modifica la información del perfil del artista.'
-          maxWidth='5xl'
-          contentClassName='max-h-[85vh] overflow-y-auto'
-        >
-          <div className='space-y-4 pr-2'>
-            {isProfileLoading ? (
-              <div className='flex items-center justify-center p-8'>
-                <div className='size-8 animate-spin rounded-full border-2 border-primary border-t-transparent'></div>
-              </div>
-            ) : (
-              <Form.Profile
-                profile={userProfile}
-                onSave={updateProfile}
-                isLoading={isUpdatingProfile}
-                compact={true}
-              />
-            )}
-          </div>
-        </Dialog.Form>
-      )}
-
-      {primaryRole === 'artist' && (
-        <Dialog.Form
-          open={linksEditDialogOpen}
-          onOpenChange={setLinksEditDialogOpen}
-          title={`Editar Links de Artista - ${fullName}`}
-          description='Modifica los enlaces del artista.'
-          maxWidth='4xl'
-          contentClassName='max-h-[85vh] overflow-y-auto'
-        >
-          <div className='space-y-4 pr-2'>
-            {isLinksLoading ? (
-              <div className='flex items-center justify-center p-8'>
-                <div className='size-8 animate-spin rounded-full border-2 border-primary border-t-transparent'></div>
-              </div>
-            ) : (
-              <Form.AdminLinks
-                userId={userId}
-                links={userLinks || []}
-                isLoading={isLinksLoading}
-                isCreating={isCreatingLink}
-                isUpdating={isUpdatingLink}
-                isDeleting={isDeletingLink}
-                isUpdatingOrder={isUpdatingLinksOrder}
-                onCreateLink={createLink}
-                onUpdateLink={(linkId, data) => updateLink({ data, linkId })}
-                onDeleteLink={deleteLink}
-                onUpdateLinksOrder={updateLinksOrder}
-              />
-            )}
-          </div>
-        </Dialog.Form>
-      )}
+      <Dialog.Form
+        open={linksEditDialogOpen}
+        onOpenChange={setLinksEditDialogOpen}
+        title={`Editar Links - ${fullName}`}
+        description='Modifica los enlaces del usuario.'
+        maxWidth='4xl'
+        contentClassName='max-h-[85vh] overflow-y-auto'
+      >
+        <div className='space-y-4 pr-2'>
+          {isLinksLoading ? (
+            <div className='flex items-center justify-center p-8'>
+              <div className='size-8 animate-spin rounded-full border-2 border-primary border-t-transparent'></div>
+            </div>
+          ) : (
+            <Form.AdminLinks
+              userId={userId}
+              links={userLinks || []}
+              isLoading={isLinksLoading}
+              isCreating={isCreatingLink}
+              isUpdating={isUpdatingLink}
+              isDeleting={isDeletingLink}
+              isUpdatingOrder={isUpdatingLinksOrder}
+              onCreateLink={createLink}
+              onUpdateLink={(linkId, data) => updateLink({ data, linkId })}
+              onDeleteLink={deleteLink}
+              onUpdateLinksOrder={updateLinksOrder}
+            />
+          )}
+        </div>
+      </Dialog.Form>
 
       {primaryRole === 'artist' && (
         <Dialog.Form
@@ -640,20 +621,13 @@ function PartnerSection({
 function ArtistSection({
   financeData,
   isLoading,
-  onEditArtistType,
-  onEditLinks,
-  onEditProfile,
   user,
 }: {
   user: any
   financeData: any
   isLoading: boolean
-  onEditProfile: () => void
-  onEditLinks: () => void
-  onEditArtistType: () => void
 }) {
   const metrics = financeData?.financialMetrics
-  const artistInfo = financeData?.artistInfo
 
   return (
     <Card className='shadow-elevation-1'>

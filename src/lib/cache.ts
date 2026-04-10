@@ -76,8 +76,12 @@ async function loadCatalogFromFile(
 
 async function getCacheVersion(scope: string): Promise<number> {
   try {
-    const cache = await loadCatalogFromFile(scope)
-    return cache?.version ?? 0
+    const versionFile = path.join(CACHE_DIR, `catalog-cache-version-${scope}.json`)
+    if (existsSync(versionFile)) {
+      const content = await fs.readFile(versionFile, 'utf8')
+      return parseInt(content, 10) || 0
+    }
+    return 0
   } catch {
     return 0
   }
@@ -228,7 +232,7 @@ export class CacheManager {
     }
 
     console.info(`🔄 Cache MISS (${scope}): Starting fresh fetch...`)
-    const fetchPromise = this._fetchFullCatalog(scope)
+    const fetchPromise = this._fetchFullCatalog(scope, currentVersion)
 
     catalogCache.set(cacheKey, {
       data: entry?.data ?? [],
@@ -254,12 +258,12 @@ export class CacheManager {
     }
   }
 
-  private static async _fetchFullCatalog(scope: 'storefront' | 'admin'): Promise<any[]> {
-    console.info(`🔄 Cache MISS (${scope}): Fetching full catalog from Shopify...`)
-
+  private static async _fetchFullCatalog(
+    scope: 'storefront' | 'admin',
+    expectedVersion?: number
+  ): Promise<any[]> {
     const fileCache = await loadCatalogFromFile(scope)
-    if (fileCache) {
-      console.info(`✅ Using file cache for ${scope}`)
+    if (fileCache && (!expectedVersion || fileCache.version === expectedVersion)) {
       return fileCache.data
     }
 
@@ -528,10 +532,8 @@ export class CacheManager {
       }
     })
 
-    console.info(`✅ Cached ${lightProducts.length} products in full catalog (${scope})`)
-
-    const currentVersion = await getCacheVersion(scope)
-    await saveCatalogToFile(scope, lightProducts, currentVersion)
+    const finalVersion = await getCacheVersion(scope)
+    await saveCatalogToFile(scope, lightProducts, finalVersion)
 
     return lightProducts
   }
@@ -541,14 +543,14 @@ export class CacheManager {
       const currentVersion = await getCacheVersion(scope)
       const newVersion = currentVersion + 1
       await setCacheVersion(scope, newVersion)
-      console.info(`🔖 Revalidate ${scope} catalog cache: Incremented version to ${newVersion}`)
+      catalogCache.delete(`full-catalog-${scope}`)
     } else {
       const scopes: ('storefront' | 'admin')[] = ['storefront', 'admin']
       for (const s of scopes) {
         const currentVersion = await getCacheVersion(s)
         const newVersion = currentVersion + 1
         await setCacheVersion(s, newVersion)
-        console.info(`🔖 Revalidate ${s} catalog cache: Incremented version to ${newVersion}`)
+        catalogCache.delete(`full-catalog-${s}`)
       }
     }
   }
