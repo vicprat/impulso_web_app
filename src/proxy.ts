@@ -51,7 +51,7 @@ export async function proxy(request: NextRequest) {
 
     if (payload?.exp) {
       const expiresIn = payload.exp - now
-      console.error(
+      console.log(
         `[Middleware] Token check: exp=${payload.exp}, now=${now}, expiresIn=${expiresIn}s`
       )
 
@@ -159,9 +159,9 @@ async function verifyTokenWithCache(accessToken: string): Promise<boolean> {
     return cached.valid
   }
 
-  console.error('[Middleware] Verifying token with Shopify...')
+  console.log('[Middleware] Verifying token with Shopify...')
   const isValid = await verifyTokenWithShopify(accessToken)
-  console.error(`[Middleware] Token verification result: ${isValid}`)
+  console.log(`[Middleware] Token verification result: ${isValid}`)
 
   tokenVerificationCache.set(accessToken, {
     timestamp: Date.now(),
@@ -214,7 +214,7 @@ async function refreshTokens(refreshToken: string): Promise<{
   refreshToken: string
 } | null> {
   try {
-    console.error('[Middleware] Refreshing tokens...')
+    console.log('[Middleware] Refreshing tokens...')
     const shopId = process.env.SHOPIFY_SHOP_ID
     const clientId = process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID
     const clientSecret = process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET
