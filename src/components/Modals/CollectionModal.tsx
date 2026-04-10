@@ -1,11 +1,13 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect } from 'react'
+import { ImageIcon, Loader2, Upload, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
+import { ImageUploader } from '@/components/Forms/ImageUploader'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -33,6 +35,25 @@ import type {
   CreateCollectionInput,
   UpdateCollectionInput,
 } from '@/services/collection/types'
+
+interface ProductImage {
+  id: string
+  url: string
+  altText?: string
+  width?: number
+  height?: number
+  productId: string
+  productTitle: string
+}
+
+interface SelectedImage {
+  id: string
+  url: string
+  altText?: string
+  width?: number
+  height?: number
+  source: 'product' | 'upload'
+}
 
 function generateSlug(title: string): string {
   return title
@@ -63,6 +84,11 @@ interface CollectionModalProps {
 
 export function CollectionModal({ collection, isOpen, onClose, onSuccess }: CollectionModalProps) {
   const isEditing = !!collection
+  const [productImages, setProductImages] = useState<ProductImage[]>([])
+  const [isLoadingImages, setIsLoadingImages] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null)
+  const [activeTab, setActiveTab] = useState<'products' | 'upload'>('products')
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
 
   const form = useForm<CollectionFormData>({
     defaultValues: {
@@ -74,25 +100,70 @@ export function CollectionModal({ collection, isOpen, onClose, onSuccess }: Coll
   })
 
   useEffect(() => {
+    if (collection?.id && isOpen) {
+      setIsLoadingImages(true)
+      fetch(`/api/shopify/collections/${encodeURIComponent(collection.id)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.data?.products) {
+            const images: ProductImage[] = []
+            data.data.products.forEach((product: any) => {
+              if (product.images && product.images.length > 0) {
+                product.images.forEach((img: any) => {
+                  images.push({
+                    altText: img.altText,
+                    height: img.height,
+                    id: img.id,
+                    productId: product.id,
+                    productTitle: product.title,
+                    url: img.url,
+                    width: img.width,
+                  })
+                })
+              }
+            })
+            setProductImages(images)
+          }
+        })
+        .catch((error) => {
+          console.error('Error cargando imágenes:', error)
+        })
+        .finally(() => {
+          setIsLoadingImages(false)
+        })
+    }
+  }, [collection?.id, isOpen])
+
+  useEffect(() => {
     if (collection) {
       form.reset({
         description: collection.description ?? '',
         handle: collection.handle ?? '',
         title: collection.title ?? '',
       })
+      if (collection.image) {
+        setSelectedImage({
+          ...collection.image,
+          source: 'product',
+        })
+        setUploadedImageUrl(collection.image.url)
+      }
     } else {
       form.reset({
         description: '',
         handle: '',
         title: '',
       })
+      setSelectedImage(null)
+      setUploadedImageUrl(null)
+      setProductImages([])
+      setActiveTab('upload')
     }
   }, [collection, form])
 
   const watchedTitle = form.watch('title')
   const watchedHandle = form.watch('handle')
   const generatedSlug = watchedTitle ? generateSlug(watchedTitle) : ''
-
   const finalHandle = watchedHandle ?? generatedSlug
 
   const createCollectionMutation = useCreateCollection({
@@ -102,6 +173,8 @@ export function CollectionModal({ collection, isOpen, onClose, onSuccess }: Coll
     onSuccess: () => {
       toast.success('Colección creada exitosamente')
       form.reset()
+      setSelectedImage(null)
+      setUploadedImageUrl(null)
       onClose()
       onSuccess?.()
     },
@@ -118,18 +191,62 @@ export function CollectionModal({ collection, isOpen, onClose, onSuccess }: Coll
     },
   })
 
+  const handleSelectProductImage = (image: ProductImage) => {
+    setSelectedImage({
+      altText: image.altText,
+      height: image.height,
+      id: image.id,
+      source: 'product',
+      url: image.url,
+      width: image.width,
+    })
+    setUploadedImageUrl(image.url)
+  }
+
+  const handleUploadComplete = (url: string | null) => {
+    setUploadedImageUrl(url)
+    if (url) {
+      setSelectedImage({
+        altText: form.getValues('title') || 'Imagen de portada',
+        id: `uploaded-${Date.now()}`,
+        source: 'upload',
+        url: url,
+      })
+    } else {
+      setSelectedImage(null)
+    }
+  }
+
+  const handleClearSelection = () => {
+    setSelectedImage(null)
+    setUploadedImageUrl(null)
+  }
+
   const onSubmit = async (data: CollectionFormData) => {
     try {
+      const imageToSend = selectedImage
+        ? {
+            altText: selectedImage.altText ?? data.title,
+            id: selectedImage.source === 'product' ? selectedImage.id : undefined,
+            url: selectedImage.url,
+          }
+        : undefined
+
       if (isEditing && collection) {
         const updateData: UpdateCollectionInput = {
+          description: data.description,
+          handle: data.handle,
           id: collection.id,
-          ...data,
+          image: imageToSend,
+          title: data.title,
         }
         await updateCollectionMutation.mutateAsync(updateData)
       } else {
         const createData: CreateCollectionInput = {
-          ...data,
+          description: data.description,
           handle: finalHandle,
+          image: imageToSend,
+          title: data.title,
         }
         await createCollectionMutation.mutateAsync(createData)
       }
@@ -140,14 +257,20 @@ export function CollectionModal({ collection, isOpen, onClose, onSuccess }: Coll
 
   const handleClose = () => {
     form.reset()
+    setSelectedImage(null)
+    setUploadedImageUrl(null)
+    setProductImages([])
+    setActiveTab('upload')
     onClose()
   }
 
   const isLoading = createCollectionMutation.isPending || updateCollectionMutation.isPending
 
+  const hasProductImages = productImages.length > 0
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-[600px]'>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Colección' : 'Crear Nueva Colección'}</DialogTitle>
           <DialogDescription>
@@ -216,7 +339,7 @@ export function CollectionModal({ collection, isOpen, onClose, onSuccess }: Coll
             />
 
             {finalHandle && (
-              <div className='bg-muted/50 rounded-md p-3'>
+              <div className='rounded-md bg-muted/50 p-3'>
                 <p className='mb-1 text-sm font-medium text-muted-foreground'>
                   URL de la colección:
                 </p>
@@ -231,6 +354,158 @@ export function CollectionModal({ collection, isOpen, onClose, onSuccess }: Coll
                 </p>
               </div>
             )}
+
+            <div className='space-y-3 rounded-md border p-4'>
+              <div className='flex items-center justify-between'>
+                <label className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
+                  Imagen de portada
+                </label>
+                {selectedImage && (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={handleClearSelection}
+                    className='text-destructive hover:text-destructive'
+                  >
+                    <X className='mr-1 size-4' />
+                    Quitar selección
+                  </Button>
+                )}
+              </div>
+
+              {selectedImage ? (
+                <div className='relative overflow-hidden rounded-lg border'>
+                  <img
+                    src={selectedImage.url}
+                    alt={selectedImage.altText ?? 'Imagen de portada'}
+                    className='h-48 w-full object-cover'
+                  />
+                  <div className='absolute inset-x-0 bottom-0 bg-black/60 p-2 text-white'>
+                    <p className='text-xs'>
+                      {selectedImage.source === 'upload'
+                        ? 'Imagen subida'
+                        : 'Imagen seleccionada de productos'}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className='rounded-lg border-2 border-dashed border-gray-300 bg-muted/30 py-8 text-center'>
+                  <ImageIcon className='mx-auto mb-2 size-8 text-gray-400' />
+                  <p className='text-sm text-gray-600'>Ninguna imagen seleccionada</p>
+                  <p className='mt-1 text-xs text-gray-500'>
+                    {isEditing
+                      ? 'Se usará la primera imagen de los productos como fallback'
+                      : 'Selecciona una imagen de los productos o sube una nueva'}
+                  </p>
+                </div>
+              )}
+
+              <div className='flex border-b'>
+                <button
+                  type='button'
+                  onClick={() => setActiveTab('products')}
+                  className={`flex-1 pb-2 text-sm font-medium transition-colors ${
+                    activeTab === 'products'
+                      ? 'border-b-2 border-primary text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {isEditing ? `De productos (${productImages.length})` : 'De productos'}
+                </button>
+                <button
+                  type='button'
+                  onClick={() => setActiveTab('upload')}
+                  className={`flex-1 pb-2 text-sm font-medium transition-colors ${
+                    activeTab === 'upload'
+                      ? 'border-b-2 border-primary text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Subir nueva
+                </button>
+              </div>
+
+              {activeTab === 'products' ? (
+                <div className='space-y-2'>
+                  {isEditing ? (
+                    isLoadingImages ? (
+                      <div className='flex items-center justify-center py-8'>
+                        <Loader2 className='size-6 animate-spin text-primary' />
+                      </div>
+                    ) : hasProductImages ? (
+                      <div className='grid max-h-60 grid-cols-4 gap-2 overflow-y-auto p-1'>
+                        {productImages.map((image) => (
+                          <button
+                            key={image.id}
+                            type='button'
+                            onClick={() => handleSelectProductImage(image)}
+                            className={`group relative aspect-square overflow-hidden rounded-md border-2 transition-all ${
+                              selectedImage?.id === image.id
+                                ? 'border-primary ring-2 ring-primary/20'
+                                : 'border-transparent hover:border-primary/50'
+                            }`}
+                            title={`${image.productTitle}${image.altText ? ` - ${image.altText}` : ''}`}
+                          >
+                            <img
+                              src={image.url}
+                              alt={image.altText ?? image.productTitle}
+                              className='size-full object-cover'
+                            />
+                            {selectedImage?.id === image.id && (
+                              <div className='absolute inset-0 flex items-center justify-center bg-primary/20'>
+                                <div className='rounded-full bg-primary p-1'>
+                                  <svg
+                                    className='size-3 text-white'
+                                    fill='none'
+                                    viewBox='0 0 24 24'
+                                    stroke='currentColor'
+                                  >
+                                    <path
+                                      strokeLinecap='round'
+                                      strokeLinejoin='round'
+                                      strokeWidth={3}
+                                      d='M5 13l4 4L19 7'
+                                    />
+                                  </svg>
+                                </div>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className='py-4 text-center text-sm text-muted-foreground'>
+                        No hay productos con imágenes en esta colección. Agrega productos primero
+                        para poder seleccionar una imagen de portada.
+                      </div>
+                    )
+                  ) : (
+                    <div className='py-4 text-center text-sm text-muted-foreground'>
+                      <Upload className='mx-auto mb-2 size-6 text-gray-400' />
+                      <p>
+                        Primero debes crear la colección y agregar productos para poder seleccionar
+                        una imagen de ellos.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className='space-y-3'>
+                  <ImageUploader
+                    value={uploadedImageUrl}
+                    onChange={handleUploadComplete}
+                    onUploadComplete={(url) => {
+                      handleUploadComplete(url)
+                      toast.success('Imagen subida exitosamente')
+                    }}
+                  />
+                  <p className='text-xs text-muted-foreground'>
+                    Sube una imagen desde tu ordenador para usar como portada de la colección.
+                  </p>
+                </div>
+              )}
+            </div>
 
             <DialogFooter>
               <Button type='button' variant='outline' onClick={handleClose} disabled={isLoading}>

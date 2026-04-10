@@ -166,7 +166,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     if (image) {
-      input.image = image
+      input.image = {
+        altText: image.altText,
+        id: image.id,
+        src: image.url,
+      }
     }
 
     if (ruleSet) {

@@ -153,7 +153,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (image) {
-      input.image = image
+      input.image = {
+        altText: image.altText,
+        id: image.id,
+        src: image.url,
+      }
     }
 
     if (ruleSet) {

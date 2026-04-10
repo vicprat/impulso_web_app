@@ -42,7 +42,7 @@ export interface CreateCollectionInput {
   description?: string
   handle?: string
   image?: {
-    id: string
+    id?: string
     url: string
     altText?: string
   }
@@ -63,7 +63,7 @@ export interface UpdateCollectionInput {
   description?: string
   handle?: string
   image?: {
-    id: string
+    id?: string
     url: string
     altText?: string
   }
