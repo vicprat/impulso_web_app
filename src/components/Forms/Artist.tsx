@@ -29,9 +29,21 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils'
 import { useUpdateUserRoles } from '@/modules/user/hooks/management'
 import { type UserProfile } from '@/modules/user/types'
-import { availableRoles } from '@/src/config/Roles'
 
 export const dynamic = 'force-dynamic'
+
+interface Role {
+  id: string
+  name: string
+  description: string | null
+  isActive: boolean
+}
+
+const fetchRoles = async (): Promise<Role[]> => {
+  const response = await fetch('/api/admin/roles')
+  if (!response.ok) throw new Error('Failed to fetch roles')
+  return response.json()
+}
 
 interface UserRoleFormProps {
   user?: UserProfile
@@ -62,6 +74,11 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
   })
 
   const updateRoles = useUpdateUserRoles()
+
+  const { data: roles, isLoading: rolesLoading } = useQuery({
+    queryKey: ['admin', 'roles'],
+    queryFn: fetchRoles,
+  })
 
   const { data: vendors, isLoading: vendorsLoading } = useQuery<string[]>({
     enabled: selectedRole === 'artist',
@@ -363,22 +380,34 @@ export function UserRoleForm({ mode = 'edit', onCancel, onSuccess, user }: UserR
 
       <div className='space-y-3'>
         <h3 className='text-lg font-medium'>Asignar Rol</h3>
-        {availableRoles.map((role) => (
-          <label key={role.id} className='flex cursor-pointer items-start space-x-3'>
-            <input
-              type='radio'
-              name='userRole'
-              value={role.id}
-              checked={selectedRole === role.id}
-              onChange={(e) => handleRoleChange(e.target.value)}
-              className='mt-1 size-4 border-input bg-background text-primary focus:ring-ring'
-            />
-            <div>
-              <div className='text-sm font-medium'>{role.name}</div>
-              <div className='text-sm text-muted-foreground'>{role.description}</div>
-            </div>
-          </label>
-        ))}
+        {rolesLoading ? (
+          <div className='space-y-2'>
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className='h-12 animate-pulse rounded bg-muted' />
+            ))}
+          </div>
+        ) : (
+          roles
+            ?.filter((role) => role.isActive)
+            .map((role) => (
+              <label key={role.id} className='flex cursor-pointer items-start space-x-3'>
+                <input
+                  type='radio'
+                  name='userRole'
+                  value={role.name}
+                  checked={selectedRole === role.name}
+                  onChange={(e) => handleRoleChange(e.target.value)}
+                  className='mt-1 size-4 border-input bg-background text-primary focus:ring-ring'
+                />
+                <div>
+                  <div className='text-sm font-medium capitalize'>{role.name}</div>
+                  <div className='text-sm text-muted-foreground'>
+                    {role.description || 'Sin descripción'}
+                  </div>
+                </div>
+              </label>
+            ))
+        )}
       </div>
 
       {selectedRole === 'artist' && (

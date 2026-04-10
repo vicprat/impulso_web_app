@@ -9,7 +9,7 @@ import {
   useReactTable,
   type SortingState,
 } from '@tanstack/react-table'
-import { Plus } from 'lucide-react'
+import { Plus, Shield } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -29,6 +29,7 @@ import {
 import { type UserFilters, type UserProfile } from '@/modules/user/types'
 import { PERMISSIONS } from '@/src/config/Permissions'
 import { availableRoles } from '@/src/config/Roles'
+import { ROUTES } from '@/src/config/routes'
 
 import { columns } from './columns'
 
@@ -203,6 +204,10 @@ export default function UserManagementPage() {
             <span className='text-sm text-muted-foreground'>
               Total: {pagination.total} usuarios
             </span>
+            <Button variant='outline' onClick={() => router.push(ROUTES.ADMIN.USERS.ROLES.PATH)}>
+              <Shield className='mr-2 size-4' />
+              Gestionar Roles
+            </Button>
             <Button onClick={createUserDialog.openDialog}>
               <Plus className='mr-2 size-4' />
               Nuevo Usuario

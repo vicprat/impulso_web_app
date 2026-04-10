@@ -114,6 +114,14 @@ export const ROUTES = {
         PERMISSIONS: [PERMISSIONS.MANAGE_USERS],
         ROLES: [ROLES.MANAGER.NAME, ROLES.ADMIN.NAME],
       },
+      ROLES: {
+        DESCRIPTION: 'Gestionar Roles y Permisos',
+        ICON: 'shield',
+        LABEL: 'Roles',
+        PATH: '/admin/users/roles',
+        PERMISSIONS: [PERMISSIONS.MANAGE_ROLES],
+        ROLES: [ROLES.ADMIN.NAME],
+      },
     },
   },
 

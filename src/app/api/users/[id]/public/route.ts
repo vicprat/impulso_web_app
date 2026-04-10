@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server'
 
 import { updateUserPublicStatus } from '@/modules/user/user.service'
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id } = await params
     const { isPublic } = (await request.json()) as { isPublic: boolean }
 
     if (!id) {
