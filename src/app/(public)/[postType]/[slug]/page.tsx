@@ -12,6 +12,8 @@ import { FeaturedImage } from '../components/FeaturedImage'
 import { ImageGallery } from '../components/ImageGallery'
 import { Loader } from '../components/Loader'
 
+const VALID_POST_TYPES = ['blog', 'events', 'event']
+
 export const dynamic = 'force-dynamic'
 export default async function Page({
   params,
@@ -20,13 +22,11 @@ export default async function Page({
 }) {
   const { postType, slug } = await params
 
-  const normalizedPostType = postType.toUpperCase() === 'EVENTS' ? 'EVENT' : postType.toUpperCase()
-
-  const isValidPostType = normalizedPostType === 'BLOG' || normalizedPostType === 'EVENT'
-
-  if (!isValidPostType) {
+  if (!VALID_POST_TYPES.includes(postType.toLowerCase())) {
     notFound()
   }
+
+  const normalizedPostType = postType.toUpperCase() === 'EVENTS' ? 'EVENT' : postType.toUpperCase()
 
   const post = await blogService.getPostBySlug(slug)
 
