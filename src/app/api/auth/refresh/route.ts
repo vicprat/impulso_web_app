@@ -26,7 +26,20 @@ export async function POST(request: NextRequest) {
     const refreshedSession = await authService.refreshSession(refreshToken)
 
     if (!refreshedSession) {
-      return NextResponse.json({ error: 'Failed to refresh session' }, { status: 401 })
+      const response = NextResponse.json({ error: 'Failed to refresh session' }, { status: 401 })
+
+      const cookieOptions = {
+        httpOnly: true,
+        maxAge: 0,
+        path: '/',
+        sameSite: 'lax' as const,
+        secure: process.env.NODE_ENV === 'production',
+      }
+      response.cookies.set('access_token', '', cookieOptions)
+      response.cookies.set('refresh_token', '', cookieOptions)
+      response.cookies.set('id_token', '', cookieOptions)
+
+      return response
     }
 
     let cart = null
@@ -79,6 +92,20 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Refresh session error:', error)
-    return NextResponse.json({ error: 'Failed to refresh session' }, { status: 500 })
+    const response = NextResponse.json({ error: 'Failed to refresh session' }, { status: 500 })
+
+    // Clear potentially invalid cookies on error
+    const cookieOptions = {
+      httpOnly: true,
+      maxAge: 0,
+      path: '/',
+      sameSite: 'lax' as const,
+      secure: process.env.NODE_ENV === 'production',
+    }
+    response.cookies.set('access_token', '', cookieOptions)
+    response.cookies.set('refresh_token', '', cookieOptions)
+    response.cookies.set('id_token', '', cookieOptions)
+
+    return response
   }
 }

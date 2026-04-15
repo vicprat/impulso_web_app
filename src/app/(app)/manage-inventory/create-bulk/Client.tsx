@@ -100,7 +100,6 @@ export function Client() {
 
   const bulkCreateQueue = useBulkUpdateQueue(
     async (payload: CreateProductPayload & { id: string }) => {
-
       const { id, ...payloadWithoutId } = payload
 
       const response = await fetch('/api/management/products', {

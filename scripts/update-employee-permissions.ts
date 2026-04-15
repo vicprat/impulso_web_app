@@ -6,7 +6,6 @@ async function updateEmployeePermissions() {
   console.log('🔧 Actualizando permisos del rol employee...')
 
   try {
-
     const employeeRole = await prisma.role.findUnique({
       where: { name: 'employee' },
     })
@@ -28,7 +27,6 @@ async function updateEmployeePermissions() {
     })
 
     if (viewFinancialEntriesPermission) {
-
       await prisma.rolePermission.deleteMany({
         where: {
           permissionId: viewFinancialEntriesPermission.id,

@@ -60,4 +60,3 @@ export function downloadQRBlob(blob: Blob, filename: string) {
   link.click()
   URL.revokeObjectURL(link.href)
 }
-

@@ -6,7 +6,6 @@ async function main() {
   console.log('🌱 Iniciando seed de la base de datos...')
 
   const permissions = [
-
     {
       action: 'read',
       description: 'Ver perfil de usuario',

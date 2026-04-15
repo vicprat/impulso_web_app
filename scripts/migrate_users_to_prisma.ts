@@ -60,10 +60,8 @@ async function createDefaultRoles() {
 }
 
 async function deleteUserByEmail(email: string) {
-
   const existingUser = await prisma.user.findUnique({ where: { email } })
   if (existingUser) {
-
     await prisma.profile.deleteMany({ where: { userId: existingUser.id } })
     await prisma.links.deleteMany({ where: { userId: existingUser.id } })
     await prisma.userRole.deleteMany({ where: { userId: existingUser.id } })
@@ -86,7 +84,6 @@ async function migrateUser(userData: UserData, roles: any[]): Promise<any> {
   const { user: userInfo, profile: profileInfo, links: linksInfo, roles: userRoles } = userData
 
   try {
-
     await deleteUserByEmail(userInfo.email)
 
     const user = await prisma.user.create({
@@ -141,7 +138,6 @@ async function migrateUser(userData: UserData, roles: any[]): Promise<any> {
     }
 
     if (userRoles && userRoles.length > 0) {
-
       const ROLE_MAP = {
         artist: 'artist',
         employee: 'employee',
@@ -154,7 +150,6 @@ async function migrateUser(userData: UserData, roles: any[]): Promise<any> {
         admin: 'admin',
       }
       for (const roleName of userRoles) {
-
         const mappedRole = ROLE_MAP[roleName.toLowerCase() as keyof typeof ROLE_MAP] || 'customer'
         const role = roles.find((r) => r.name.toLowerCase() === mappedRole)
         if (role) {

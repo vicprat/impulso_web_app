@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       }
 
       if (!session) {
-        return NextResponse.json(
+        const response = NextResponse.json(
           {
             details: 'Token expired or not found in database',
             error: 'Invalid session',
@@ -67,6 +67,19 @@ export async function GET(request: NextRequest) {
           },
           { status: 401 }
         )
+
+        const cookieOptions = {
+          httpOnly: true,
+          maxAge: 0,
+          path: '/',
+          sameSite: 'lax' as const,
+          secure: process.env.NODE_ENV === 'production',
+        }
+        response.cookies.set('access_token', '', cookieOptions)
+        response.cookies.set('refresh_token', '', cookieOptions)
+        response.cookies.set('id_token', '', cookieOptions)
+
+        return response
       }
     }
 

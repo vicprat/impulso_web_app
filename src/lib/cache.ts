@@ -12,9 +12,10 @@ interface CatalogCacheEntry {
 
 const catalogCache = new Map<string, CatalogCacheEntry>()
 const CATALOG_CACHE_TTL = 24 * 3600 * 1000
-const REQUEST_DELAY_MS = 200
-const MAX_RETRY_ATTEMPTS = 3
-const RETRY_DELAY_BASE_MS = 1000
+const REQUEST_DELAY_MS = 500
+const MAX_RETRY_ATTEMPTS = 5
+const RETRY_DELAY_BASE_MS = 2000
+const THROTTLED_DELAY_BASE_MS = 5000
 
 const isProduction =
   process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production'
@@ -308,15 +309,14 @@ export class CacheManager {
                   }
                 }
               }
-              metafields(first: 50, namespace: "art_details") {
-                edges {
-                  node {
-                    namespace
-                    key
-                    value
-                  }
-                }
-              }
+              artistMetafield: metafield(namespace: "art_details", key: "artist") { value }
+              mediumMetafield: metafield(namespace: "art_details", key: "medium") { value }
+              yearMetafield: metafield(namespace: "art_details", key: "year") { value }
+              widthMetafield: metafield(namespace: "art_details", key: "width") { value }
+              heightMetafield: metafield(namespace: "art_details", key: "height") { value }
+              depthMetafield: metafield(namespace: "art_details", key: "depth") { value }
+              locationMetafield: metafield(namespace: "art_details", key: "location") { value }
+              serieMetafield: metafield(namespace: "art_details", key: "serie") { value }
             }
           }
           pageInfo {
@@ -337,7 +337,7 @@ export class CacheManager {
 
     while (hasNextPage) {
       pageCount++
-      const variables: Record<string, unknown> = { after: cursor, first: 250 }
+      const variables: Record<string, unknown> = { after: cursor, first: 100 }
 
       if (pageCount > 1) {
         await delay(REQUEST_DELAY_MS)
@@ -374,9 +374,14 @@ export class CacheManager {
                       }
                     }[]
                   }
-                  metafields: {
-                    edges: { node: { namespace: string; key: string; value: string } }[]
-                  }
+                  artistMetafield: { value: string | null } | null
+                  mediumMetafield: { value: string | null } | null
+                  yearMetafield: { value: string | null } | null
+                  widthMetafield: { value: string | null } | null
+                  heightMetafield: { value: string | null } | null
+                  depthMetafield: { value: string | null } | null
+                  locationMetafield: { value: string | null } | null
+                  serieMetafield: { value: string | null } | null
                 }
               }[]
               pageInfo: { hasNextPage: boolean; endCursor?: string }
@@ -403,9 +408,15 @@ export class CacheManager {
               continue
             }
 
-            const metafields: Record<string, string> = {}
-            for (const mf of node.metafields.edges) {
-              metafields[mf.node.key] = mf.node.value
+            const metafields: Record<string, string> = {
+              artist: node.artistMetafield?.value ?? '',
+              depth: node.depthMetafield?.value ?? '',
+              height: node.heightMetafield?.value ?? '',
+              location: node.locationMetafield?.value ?? '',
+              medium: node.mediumMetafield?.value ?? '',
+              serie: node.serieMetafield?.value ?? '',
+              width: node.widthMetafield?.value ?? '',
+              year: node.yearMetafield?.value ?? '',
             }
 
             const images = node.images.edges.map(
@@ -456,15 +467,27 @@ export class CacheManager {
           consecutiveErrors++
           retryAttempt++
 
+          const errorMessage = typeof error.message === 'string' ? error.message : ''
+          const graphQLErrors = error.graphQLErrors || []
           const isThrottled =
-            error.message?.includes('Throttled') ||
-            error.message?.includes('Rate limit') ||
+            errorMessage.includes('Throttled') ||
+            errorMessage.includes('Rate limit') ||
+            errorMessage.includes('THROTTLED') ||
+            graphQLErrors.some((e: any) => e?.message?.includes('Throttled')) ||
+            graphQLErrors.some((e: any) => e?.extensions?.code === 'THROTTLED') ||
             error.status === 429
 
-          if (isThrottled) {
-            const retryDelay = RETRY_DELAY_BASE_MS * Math.pow(2, retryAttempt)
+          if (isThrottled && retryAttempt < MAX_RETRY_ATTEMPTS) {
+            const throttledError = graphQLErrors.find(
+              (e: any) => e?.message?.includes('Throttled') || e?.extensions?.code === 'THROTTLED'
+            )
+            const retryAfterSeconds = throttledError?.extensions?.retryAfter ?? 2
+            const retryDelay = Math.max(
+              retryAfterSeconds * 1000,
+              THROTTLED_DELAY_BASE_MS * Math.pow(2, retryAttempt - 1)
+            )
             console.warn(
-              `⚠️ Shopify throttling detected. Retrying in ${retryDelay}ms... (attempt ${retryAttempt}/${MAX_RETRY_ATTEMPTS})`
+              `⚠️ Shopify throttling detected (page ${pageCount}). Retrying in ${retryDelay}ms... (attempt ${retryAttempt}/${MAX_RETRY_ATTEMPTS})`
             )
             await delay(retryDelay)
           } else if (retryAttempt < MAX_RETRY_ATTEMPTS) {

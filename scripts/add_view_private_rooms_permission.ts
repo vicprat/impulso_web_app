@@ -1,5 +1,3 @@
-
-
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -19,7 +17,6 @@ async function addViewPrivateRoomsPermission() {
   console.log('🔧 Iniciando actualización de permisos...\n')
 
   try {
-
     const permission = await prisma.permission.findUnique({
       where: { name: 'view_private_rooms' },
     })

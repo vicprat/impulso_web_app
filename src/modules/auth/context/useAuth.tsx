@@ -2,93 +2,111 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
-import { type AuthContextType, type AuthMeResponse, type User } from '../types'
-
 import { type Cart } from '@/modules/cart/types'
+
+import { type AuthContextType, type AuthMeResponse, type User } from '../types'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const REFRESH_BEFORE_EXPIRY_MS = 2 * 60 * 1000
+const SESSION_CHECK_INTERVAL_MS = 5 * 60 * 1000
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [cart, setCart] = useState<Cart | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const visibilityCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isHandlingAuthError = useRef(false)
 
-  const scheduleTokenRefresh = useCallback((expiresAt: Date) => {
+  const handleAuthError = useCallback(() => {
+    if (isHandlingAuthError.current) return
+    isHandlingAuthError.current = true
+
+    console.log('[AuthProvider] Handling auth error - clearing state')
+    setUser(null)
+    setCart(null)
+
     if (refreshTimeoutRef.current) {
       clearTimeout(refreshTimeoutRef.current)
+      refreshTimeoutRef.current = null
     }
 
-    const now = Date.now()
-    const expiryTime = new Date(expiresAt).getTime()
-    const timeUntilRefresh = expiryTime - now - REFRESH_BEFORE_EXPIRY_MS
-
-    if (timeUntilRefresh > 0) {
-      console.log(`[AuthProvider] Scheduling refresh in ${timeUntilRefresh / 1000}s`)
-      refreshTimeoutRef.current = setTimeout(async () => {
-        console.log('[AuthProvider] Triggering scheduled refresh...')
-        try {
-          const response = await fetch('/api/auth/refresh', {
-            credentials: 'include',
-            method: 'POST',
-          })
-          if (response.ok) {
-            console.log('[AuthProvider] Scheduled refresh successful')
-            const data: AuthMeResponse = await response.json()
-            setUser(data.user)
-            setCart(data.cart)
-
-            const nextExpiresAt = new Date(data.expiresAt)
-            scheduleTokenRefresh(nextExpiresAt)
-          } else {
-            console.log('[AuthProvider] Scheduled refresh failed')
-            setUser(null)
-            setCart(null)
-            if (refreshTimeoutRef.current) {
-              clearTimeout(refreshTimeoutRef.current)
-            }
-          }
-        } catch (e) {
-          console.error('[AuthProvider] Scheduled refresh error:', e)
-          setUser(null)
-          setCart(null)
-          if (refreshTimeoutRef.current) {
-            clearTimeout(refreshTimeoutRef.current)
-          }
-        }
-      }, timeUntilRefresh)
-    } else {
-      void (async () => {
-        try {
-          const response = await fetch('/api/auth/refresh', {
-            credentials: 'include',
-            method: 'POST',
-          })
-          if (response.ok) {
-            const data: AuthMeResponse = await response.json()
-            setUser(data.user)
-            setCart(data.cart)
-
-            const nextExpiresAt = new Date(data.expiresAt)
-            scheduleTokenRefresh(nextExpiresAt)
-          } else {
-            setUser(null)
-            setCart(null)
-            if (refreshTimeoutRef.current) {
-              clearTimeout(refreshTimeoutRef.current)
-            }
-          }
-        } catch {
-          setUser(null)
-          setCart(null)
-          if (refreshTimeoutRef.current) {
-            clearTimeout(refreshTimeoutRef.current)
-          }
-        }
-      })()
-    }
+    setTimeout(() => {
+      const currentPath = window.location.pathname
+      if (!currentPath.startsWith('/auth/')) {
+        window.location.href = `/auth/login?redirect=${encodeURIComponent(currentPath)}&error=session_expired`
+      }
+      isHandlingAuthError.current = false
+    }, 100)
   }, [])
+
+  const scheduleTokenRefresh = useCallback(
+    (expiresAt: Date) => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
+
+      const now = Date.now()
+      const expiryTime = new Date(expiresAt).getTime()
+      const timeUntilRefresh = expiryTime - now - REFRESH_BEFORE_EXPIRY_MS
+
+      if (timeUntilRefresh > 0) {
+        console.log(`[AuthProvider] Scheduling refresh in ${timeUntilRefresh / 1000}s`)
+        refreshTimeoutRef.current = setTimeout(async () => {
+          console.log('[AuthProvider] Triggering scheduled refresh...')
+          try {
+            const response = await fetch('/api/auth/refresh', {
+              credentials: 'include',
+              method: 'POST',
+            })
+            if (response.ok) {
+              console.log('[AuthProvider] Scheduled refresh successful')
+              const data: AuthMeResponse = await response.json()
+              setUser(data.user)
+              setCart(data.cart)
+
+              const nextExpiresAt = new Date(data.expiresAt)
+              scheduleTokenRefresh(nextExpiresAt)
+            } else if (response.status === 401) {
+              console.log('[AuthProvider] Scheduled refresh returned 401 - session invalid')
+              handleAuthError()
+            } else {
+              console.log('[AuthProvider] Scheduled refresh failed:', response.status)
+              handleAuthError()
+            }
+          } catch (e) {
+            console.error('[AuthProvider] Scheduled refresh error:', e)
+            handleAuthError()
+          }
+        }, timeUntilRefresh)
+      } else {
+        void (async () => {
+          try {
+            const response = await fetch('/api/auth/refresh', {
+              credentials: 'include',
+              method: 'POST',
+            })
+            if (response.ok) {
+              const data: AuthMeResponse = await response.json()
+              setUser(data.user)
+              setCart(data.cart)
+
+              const nextExpiresAt = new Date(data.expiresAt)
+              scheduleTokenRefresh(nextExpiresAt)
+            } else if (response.status === 401) {
+              console.log('[AuthProvider] Immediate refresh returned 401 - session invalid')
+              handleAuthError()
+            } else {
+              handleAuthError()
+            }
+          } catch {
+            handleAuthError()
+          }
+        })()
+      }
+    },
+    [handleAuthError]
+  )
 
   const refresh = useCallback(async () => {
     try {
@@ -103,22 +121,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const expiresAt = new Date(data.expiresAt)
         scheduleTokenRefresh(expiresAt)
+      } else if (response.status === 401) {
+        console.log('[AuthProvider] Manual refresh returned 401 - session invalid')
+        handleAuthError()
       } else {
-        setUser(null)
-        setCart(null)
-        if (refreshTimeoutRef.current) {
-          clearTimeout(refreshTimeoutRef.current)
-        }
+        handleAuthError()
       }
     } catch {
-      setUser(null)
-      setCart(null)
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current)
-      }
+      handleAuthError()
     }
-  }, [scheduleTokenRefresh])
+  }, [handleAuthError, scheduleTokenRefresh])
 
+  // Check auth on mount
   useEffect(() => {
     const controller = new AbortController()
 
@@ -139,6 +153,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const expiresAt = new Date(data.expiresAt)
           console.log('[AuthProvider] Token expires at:', expiresAt)
           scheduleTokenRefresh(expiresAt)
+        } else if (response.status === 401) {
+          console.log('[AuthProvider] Initial check returned 401 - session invalid')
+          handleAuthError()
         } else {
           console.log('[AuthProvider] Initial check failed:', response.status)
           setUser(null)
@@ -146,6 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
+          console.error('[AuthProvider] Initial check error:', error)
           setUser(null)
           setCart(null)
         }
@@ -164,7 +182,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearTimeout(refreshTimeoutRef.current)
       }
     }
-  }, [scheduleTokenRefresh])
+  }, [handleAuthError, scheduleTokenRefresh])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user) {
+        console.log('[AuthProvider] Tab visible - re-checking auth')
+        if (visibilityCheckTimeoutRef.current) {
+          clearTimeout(visibilityCheckTimeoutRef.current)
+        }
+        visibilityCheckTimeoutRef.current = setTimeout(async () => {
+          try {
+            const response = await fetch('/api/auth/me', {
+              credentials: 'include',
+            })
+            if (!response.ok && response.status === 401) {
+              console.log('[AuthProvider] Visibility check returned 401 - session invalid')
+              handleAuthError()
+            }
+          } catch (error) {
+            console.error('[AuthProvider] Visibility check error:', error)
+          }
+        }, 1000)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (visibilityCheckTimeoutRef.current) {
+        clearTimeout(visibilityCheckTimeoutRef.current)
+      }
+    }
+  }, [handleAuthError, user])
+
+  useEffect(() => {
+    if (!user) return
+
+    const intervalId = setInterval(async () => {
+      console.log('[AuthProvider] Periodic session health check')
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include',
+        })
+        if (!response.ok && response.status === 401) {
+          console.log('[AuthProvider] Health check returned 401 - session invalid')
+          handleAuthError()
+        }
+      } catch (error) {
+        console.error('[AuthProvider] Health check error:', error)
+      }
+    }, SESSION_CHECK_INTERVAL_MS)
+
+    return () => clearInterval(intervalId)
+  }, [handleAuthError, user])
 
   const login = useCallback(() => {
     window.location.href = '/api/auth/login'

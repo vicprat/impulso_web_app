@@ -15,4 +15,3 @@ export default function CouponDetailPage({ params }: { params: Promise<{ id: str
     </Suspense>
   )
 }
-

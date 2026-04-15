@@ -80,7 +80,9 @@ export function EditRoomModal({ isOpen, onClose, room, onSuccess }: EditRoomModa
       onSuccess?.()
     } catch (error) {
       console.error('Error updating room:', error)
-      toast.error(`Error al actualizar sala: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+      toast.error(
+        `Error al actualizar sala: ${error instanceof Error ? error.message : 'Error desconocido'}`
+      )
     }
   }
 
@@ -149,4 +151,3 @@ export function EditRoomModal({ isOpen, onClose, room, onSuccess }: EditRoomModa
     </Dialog>
   )
 }
-

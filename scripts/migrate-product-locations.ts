@@ -104,7 +104,6 @@ async function migrateProductLocations() {
   console.log('='.repeat(60))
 
   try {
-
     const products = await getAllProducts()
 
     console.log('📍 Extrayendo ubicaciones únicas...')

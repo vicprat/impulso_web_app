@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 
 import { Login } from '@/components/Auth/Login'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/modules/auth/context/useAuth'
 
 const ADMIN_ROLES = ['admin', 'manager', 'artist', 'super_admin']
@@ -14,6 +15,7 @@ export const Client = () => {
   const searchParams = useSearchParams()
   const redirectParam = searchParams.get('redirect')
   const justAuthenticated = searchParams.get('authenticated') === 'true'
+  const errorParam = searchParams.get('error')
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -43,6 +45,15 @@ export const Client = () => {
           <h2 className='mt-6 text-center text-3xl font-extrabold '>Iniciar Sesión</h2>
           <p className='mt-2 text-center text-sm text-gray-600'>Accede a tu cuenta de cliente</p>
         </div>
+
+        {errorParam === 'session_expired' && (
+          <Alert variant='destructive'>
+            <AlertDescription>
+              Tu sesión ha expirado o se inició sesión en otro dispositivo. Por favor, inicia sesión
+              nuevamente.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className='mt-8 space-y-6'>
           <div className='text-center'>

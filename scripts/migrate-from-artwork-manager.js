@@ -2,7 +2,7 @@ const { PrismaClient } = require('@prisma/client')
 const { Pool } = require('pg')
 
 const artworkManagerPool = new Pool({
-  connectionString: 'use the connection string from the supabase'
+  connectionString: 'use the connection string from the supabase',
 })
 
 const prisma = new PrismaClient()
@@ -11,7 +11,6 @@ async function extractFromArtworkManager() {
   console.log('🔍 Extrayendo datos de artwork_manager...')
 
   try {
-
     const artworkTypesResult = await artworkManagerPool.query(`
       SELECT id, name
       FROM artwork_types

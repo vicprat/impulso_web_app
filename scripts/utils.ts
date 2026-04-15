@@ -3,13 +3,13 @@ import { join } from 'path'
 
 export function loadEnvFile() {
   try {
-
     const envLocalPath = join(process.cwd(), '.env.local')
     const envLocalContent = readFileSync(envLocalPath, 'utf8')
 
-    const envVars = envLocalContent.split('\n')
-      .filter(line => line.trim() && !line.startsWith('#'))
-      .map(line => {
+    const envVars = envLocalContent
+      .split('\n')
+      .filter((line) => line.trim() && !line.startsWith('#'))
+      .map((line) => {
         const [key, ...valueParts] = line.split('=')
         const value = valueParts.join('=')
         return { key: key.trim(), value: value.trim() }
@@ -24,13 +24,13 @@ export function loadEnvFile() {
     console.log('✅ Variables de entorno cargadas desde .env.local')
   } catch (error) {
     try {
-
       const envPath = join(process.cwd(), '.env')
       const envContent = readFileSync(envPath, 'utf8')
 
-      const envVars = envContent.split('\n')
-        .filter(line => line.trim() && !line.startsWith('#'))
-        .map(line => {
+      const envVars = envContent
+        .split('\n')
+        .filter((line) => line.trim() && !line.startsWith('#'))
+        .map((line) => {
           const [key, ...valueParts] = line.split('=')
           const value = valueParts.join('=')
           return { key: key.trim(), value: value.trim() }

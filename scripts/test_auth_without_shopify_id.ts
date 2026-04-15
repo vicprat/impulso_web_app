@@ -108,8 +108,8 @@ async function testWithExistingUser() {
 
   const userWithoutShopifyId = await prisma.user.findFirst({
     where: {
-      shopifyCustomerId: null
-    }
+      shopifyCustomerId: null,
+    },
   })
 
   if (!userWithoutShopifyId) {
@@ -118,7 +118,9 @@ async function testWithExistingUser() {
   }
 
   console.log(`Usuario de prueba: ${userWithoutShopifyId.email}`)
-  console.log(`Estado actual: shopifyCustomerId = ${userWithoutShopifyId.shopifyCustomerId || 'NULL'}\n`)
+  console.log(
+    `Estado actual: shopifyCustomerId = ${userWithoutShopifyId.shopifyCustomerId || 'NULL'}\n`
+  )
 
   const mockCustomerInfo: CustomerInfo = {
     id: 'gid://shopify/Customer/123456789',
@@ -164,8 +166,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main()
 }
 
-export {
-    simulateUpsertUser,
-    testWithExistingUser,
-    testWithNewUser
-}
+export { simulateUpsertUser, testWithExistingUser, testWithNewUser }

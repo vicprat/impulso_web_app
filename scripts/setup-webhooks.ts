@@ -9,7 +9,7 @@ function loadEnvFile() {
     const envContent = fs.readFileSync(envPath, 'utf8')
     const lines = envContent.split('\n')
 
-    lines.forEach(line => {
+    lines.forEach((line) => {
       const trimmedLine = line.trim()
       if (trimmedLine && !trimmedLine.startsWith('#')) {
         const [key, ...valueParts] = trimmedLine.split('=')
@@ -23,7 +23,6 @@ function loadEnvFile() {
 }
 
 async function main() {
-
   loadEnvFile()
 
   try {
@@ -45,7 +44,6 @@ async function main() {
     webhooks.forEach((webhook) => {
       console.log(`  - ${webhook.topic}: ${webhook.endpoint?.callbackUrl}`)
     })
-
   } catch (error) {
     console.error('❌ Error durante la configuración:', error)
     process.exit(1)

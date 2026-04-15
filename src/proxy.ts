@@ -41,7 +41,13 @@ export async function proxy(request: NextRequest) {
     console.error('[Middleware] No access token found. Redirecting to login.')
     const loginUrl = new URL(ROUTES.AUTH.LOGIN.PATH, request.url)
     loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+
+    const response = NextResponse.redirect(loginUrl)
+    response.cookies.delete('access_token')
+    response.cookies.delete('refresh_token')
+    response.cookies.delete('id_token')
+
+    return response
   }
 
   try {

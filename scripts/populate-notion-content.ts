@@ -341,7 +341,6 @@ const termsSections = [
 ]
 
 const heroData = [
-
   {
     key: 'landing.hero.title',
     page: 'landing',
@@ -485,7 +484,6 @@ const heroData = [
 ]
 
 const ctaData = [
-
   {
     key: 'landing.services.cta.title',
     page: 'landing',
@@ -572,7 +570,6 @@ const ctaData = [
 ]
 
 const sectionData = [
-
   {
     key: 'landing.section.obras.title',
     page: 'landing',
@@ -755,7 +752,6 @@ const sectionData = [
 ]
 
 const cardData = [
-
   {
     key: 'landing.membership.benefitsTitle',
     page: 'landing',
@@ -1124,7 +1120,6 @@ const navigationLinks = [
 ]
 
 async function createDatabase(pageId: string, title: string, properties: any) {
-
   const res = await fetch('https://api.notion.com/v1/databases', {
     body: JSON.stringify({
       parent: { page_id: pageId, type: 'page_id' },
@@ -1470,7 +1465,6 @@ async function main() {
   console.log('🚀 Starting Notion content population...\n')
 
   try {
-
     await populateSlides()
     await populateServices()
     await populateBenefits()

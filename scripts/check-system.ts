@@ -9,7 +9,7 @@ function loadEnvFile() {
     const envContent = fs.readFileSync(envPath, 'utf8')
     const lines = envContent.split('\n')
 
-    lines.forEach(line => {
+    lines.forEach((line) => {
       const trimmedLine = line.trim()
       if (trimmedLine && !trimmedLine.startsWith('#')) {
         const [key, ...valueParts] = trimmedLine.split('=')
@@ -48,13 +48,11 @@ async function checkWebhooks(): Promise<any[]> {
 }
 
 async function checkSystem() {
-
   loadEnvFile()
 
   console.log('🔍 Verificando estado del sistema...\n')
 
   try {
-
     console.log('🔧 Variables de entorno de Shopify:')
     const shopifyEnvVars = [
       'NEXT_PUBLIC_SHOPIFY_STORE',
@@ -62,7 +60,7 @@ async function checkSystem() {
       'NEXT_PUBLIC_SHOPIFY_API_VERSION',
     ]
 
-    const shopifyEnvConfigured = shopifyEnvVars.filter(v => process.env[v]).length
+    const shopifyEnvConfigured = shopifyEnvVars.filter((v) => process.env[v]).length
 
     shopifyEnvVars.forEach((envVar) => {
       const value = process.env[envVar]
@@ -73,7 +71,6 @@ async function checkSystem() {
 
     if (shopifyEnvConfigured === shopifyEnvVars.length) {
       try {
-
         console.log('\n📋 Webhooks configurados:')
         const webhooks = await checkWebhooks()
 
@@ -97,11 +94,7 @@ async function checkSystem() {
     }
 
     console.log('\n🔧 Variables de entorno generales:')
-    const requiredEnvVars = [
-      'NEXTAUTH_URL',
-      'SHOPIFY_WEBHOOK_SECRET',
-      'REVALIDATION_SECRET',
-    ]
+    const requiredEnvVars = ['NEXTAUTH_URL', 'SHOPIFY_WEBHOOK_SECRET', 'REVALIDATION_SECRET']
 
     requiredEnvVars.forEach((envVar) => {
       const value = process.env[envVar]
@@ -127,12 +120,15 @@ async function checkSystem() {
     }
 
     console.log('\n📊 Resumen:')
-    const envVarsConfigured = requiredEnvVars.filter(v => process.env[v]).length
+    const envVarsConfigured = requiredEnvVars.filter((v) => process.env[v]).length
 
     console.log(`  Variables de Shopify: ${shopifyEnvConfigured}/${shopifyEnvVars.length}`)
     console.log(`  Variables generales: ${envVarsConfigured}/${requiredEnvVars.length}`)
 
-    if (shopifyEnvConfigured === shopifyEnvVars.length && envVarsConfigured === requiredEnvVars.length) {
+    if (
+      shopifyEnvConfigured === shopifyEnvVars.length &&
+      envVarsConfigured === requiredEnvVars.length
+    ) {
       console.log('\n✅ Sistema configurado correctamente')
       console.log('  💡 Ejecuta: npm run setup-webhooks')
     } else {
@@ -146,7 +142,6 @@ async function checkSystem() {
         console.log('  📝 Verifica REVALIDATION_SECRET en tu archivo .env')
       }
     }
-
   } catch (error) {
     console.error('❌ Error verificando sistema:', error)
     process.exit(1)
