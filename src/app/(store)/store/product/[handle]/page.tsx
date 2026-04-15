@@ -45,7 +45,12 @@ export async function generateMetadata({
       })
     }
   } catch (error) {
-    console.error('Error generating product metadata:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    if (errorMessage.includes('not found') || errorMessage.includes('Not Found')) {
+      console.warn(`Product metadata: Product not found for handle "${handle}"`)
+    } else {
+      console.error('Error generating product metadata:', error)
+    }
   }
 
   return {
